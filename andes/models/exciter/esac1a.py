@@ -2,9 +2,8 @@ from andes.core.param import NumParam
 from andes.core.var import Algeb
 
 from andes.core.service import ConstService, PostInitService
-from andes.core.discrete import LessThan, HardLimiter
+from andes.core.discrete import LessThan, Limiter
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import LVGate, IntegratorAntiWindup
 from andes.core.block import Piecewise, Integrator
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
@@ -169,27 +168,28 @@ class ESAC1AModel(ExcBase):
                                 info='V_R, Anti-windup lag',
                                 )  # LA_y == VR
 
-        # self.HVG = HVGate(u1=self.UEL,
-        #                   u2=self.LA_y,
-        #                   info='HVGate for under excitation',
-        #                   )
+        self.HVG = HVGate(u1=self.UEL,
+                          u2=self.LA_y,
+                          info='HVGate for under excitation',
+                          )
 
-        # # LVGate results in initialization bug
-        # self.LVG = LVGate(u1=self.OEL,
-        #                   u2=self.HVG_y,
-        #                   info='LVGate for under excitation',
-                        #   )
-        # self.HLR = HardLimiter(u=self.LVG_y,
-        #                        lower=self.VRMIN,
-        #                        upper=self.VRMAX,
-        #                        info='V_R before input limiter',
-                            #    )
+        self.ubd = ConstService('9999')
+        self.LVC = Limiter(u=self.HVG_y, lower=self.OEL, upper=self.ubd,
+                           info='LVGate for over excitation', no_warn=True)
+
+        self.LVO = Algeb(info='LVGate ouput',
+                         tex_name='LVG_{o}',
+                         v_str='VFE',
+                         e_str='(1-LVC_zl) * OEL + LVC_zl * HVG_y - LVO',
+                         )
+
+        self.VRL = Limiter(u=self.LVO, lower=self.VRMIN, upper=self.VRMAX,
+                           info='VR limiter')
 
         self.VR = Algeb(info='V_R',
                         tex_name='V_{R}',
                         v_str='VFE',
-                        e_str='LA_y - VR',
-                        # e_str='HLR_zi*LVG_y + HLR_zl*VRMIN + HLR_zu*VRMAX - VR'
+                        e_str='VRL_zi * LVO + VRL_zu * VRMAX + VRL_zl * VRMIN - VR',
                         )
 
         self.INT = Integrator(u='ue * (VR - VFE)',
@@ -217,7 +217,7 @@ class ESAC1AModel(ExcBase):
                          diag_eps=True,
                          )
 
-        self.vref.v_str='v + VFE / KA'
+        self.vref.v_str = 'v + VFE / KA'
 
         self.vref0 = PostInitService(info='Initial reference voltage input',
                                      tex_name='V_{ref0}',
