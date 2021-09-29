@@ -4,6 +4,7 @@ from andes.core.param import NumParam
 from andes.core.var import Algeb
 
 from andes.core.service import ConstService, VarService
+from andes.core.service import PostInitService
 
 from andes.core.block import LagAntiWindup, Lag
 from andes.core.block import LessThan, IntegratorAntiWindup
@@ -133,26 +134,31 @@ class AC8BData(ExcBaseData):
 class AC8BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
-
         self.config.add(OrderedDict((('ks', 2),
                                      )))
-
         self.config.add_extra('_help',
                               ks='Tracking gain for PID controller',
                               )
 
-        # Assume FEX is in (0, 0.433) at initial
-        self.VE0 = ConstService(info='Initial VE',
-                                tex_name=r'V_{E0}',
-                                v_str='vf0 + 0.577 * KC * XadIfd')
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
 
-        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
-                                 v_str='VE0 * KE + Se + XadIfd * KD',
-                                 )
+        self.IN = Algeb(tex_name='I_N',
+                        info='Input to FEX',
+                        v_str='1',
+                        v_iter='KC * XadIfd - INT_y * IN',
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
+                        diag_eps=True,
+                        )
 
-        self.VR0 = ConstService(info='Initial VR',
-                                tex_name=r'V_{R0}',
-                                v_str='VFE0 + VE0')
+        self.FEX = Piecewise(u=self.IN,
+                             points=(0, 0.433, 0.75, 1),
+                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
+                             info='Piecewise function FEX',
+                             )
+        self.FEX.y.v_str = '0.5'
+        self.FEX.y.v_iter = self.FEX.y.e_str
 
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name=r'V_{ref0}',
@@ -173,9 +179,10 @@ class AC8BModel(ExcBase):
                         diag_eps=True,
                         )
 
+        # chekck y0
         self.PID = PIDTrackAW(u=self.vi, kp=self.kP, ki=self.kI,
                               ks=self.config.ks,
-                              kd=self.kD, Td=self.Td, x0='VR0 / KA',
+                              kd=self.kD, Td=self.Td, x0='VFE / KA + INT_y',
                               lower=self.VPMIN, upper=self.VPMAX,
                               tex_name='PID', info='PID', name='PID',
                               )
@@ -193,19 +200,16 @@ class AC8BModel(ExcBase):
                                 v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
 
         # LA_y is VR
-        # TODO: check max and min
         self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
                                         T=self.TE,
                                         K=1,
-                                        y0=self.VE0,
+                                        y0=0,
                                         lower=self.VEMIN,
                                         upper=self.VEMAX,
                                         info=r'V_{E}, Integrator Anti-windup',
                                         )
-
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
+        self.INT.y.v_str = 0.1
+        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
 
         self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
@@ -225,22 +229,7 @@ class AC8BModel(ExcBase):
                          diag_eps=True,
                          )
 
-        self.IN = Algeb(tex_name='I_N',
-                        info='Input to FEX',
-                        v_str='safe_div(KC * XadIfd, INT_y)',
-                        e_str='ue * (KC * XadIfd - INT_y * IN)',
-                        diag_eps=True,
-                        )
-
-        # TODO: Check funs
-        # Copy from ESST3A
-        self.FEX = Piecewise(u=self.IN,
-                             points=(0, 0.433, 0.75, 1),
-                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
-                             info='Piecewise function FEX',
-                             )
-
-        self.vout.e_str = 'FEX_y * INT_y - vout'
+        self.vout.e_str = 'ue* (FEX_y * INT_y - vout)'
 
 
 class AC8B(AC8BData, AC8BModel):
