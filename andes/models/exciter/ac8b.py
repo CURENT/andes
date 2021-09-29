@@ -3,7 +3,7 @@ from collections import OrderedDict
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, VarService
+from andes.core.service import VarService
 from andes.core.service import PostInitService
 
 from andes.core.block import LagAntiWindup, Lag
@@ -134,6 +134,7 @@ class AC8BData(ExcBaseData):
 class AC8BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+        self.flags.nr_iter = True
         self.config.add(OrderedDict((('ks', 2),
                                      )))
         self.config.add_extra('_help',
@@ -160,10 +161,6 @@ class AC8BModel(ExcBase):
         self.FEX.y.v_str = '0.5'
         self.FEX.y.v_iter = self.FEX.y.e_str
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name=r'V_{ref0}',
-                                  v_str='v')
-
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
@@ -182,7 +179,7 @@ class AC8BModel(ExcBase):
         # chekck y0
         self.PID = PIDTrackAW(u=self.vi, kp=self.kP, ki=self.kI,
                               ks=self.config.ks,
-                              kd=self.kD, Td=self.Td, x0='VFE / KA + INT_y',
+                              kd=self.kD, Td=self.Td, x0='VFE / KA',
                               lower=self.VPMIN, upper=self.VPMAX,
                               tex_name='PID', info='PID', name='PID',
                               )
@@ -229,23 +226,22 @@ class AC8BModel(ExcBase):
                          diag_eps=True,
                          )
 
-        self.vout.e_str = 'ue* (FEX_y * INT_y - vout)'
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='v',
+                                     )
+
+        self.vout.e_str = 'ue * (FEX_y * INT_y - vout)'
 
 
 class AC8B(AC8BData, AC8BModel):
     """
     Exciter AC8B model.
-
     Reference:
-
     [1] PowerWorld, Exciter AC8B, [Online],
-
     [2] NEPLAN, Exciters Models, [Online],
-
     Available:
-
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20AC8B.htm
-
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):
