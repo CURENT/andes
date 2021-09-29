@@ -177,19 +177,19 @@ class ESAC1AModel(ExcBase):
         self.LVC = Limiter(u=self.HVG_y, lower=self.OEL, upper=self.ubd,
                            info='LVGate for over excitation', no_warn=True)
 
-        self.LVO = Algeb(info='LVGate ouput',
-                         tex_name='LVG_{o}',
+        self.LVG = Algeb(info='LVGate ouput',
+                         tex_name='LVG_{y}',
                          v_str='VFE',
-                         e_str='(1-LVC_zl) * OEL + LVC_zl * HVG_y - LVO',
+                         e_str='(1-LVC_zl) * OEL + LVC_zl * HVG_y - LVG',
                          )
 
-        self.VRL = Limiter(u=self.LVO, lower=self.VRMIN, upper=self.VRMAX,
+        self.VRL = Limiter(u=self.LVG, lower=self.VRMIN, upper=self.VRMAX,
                            info='VR limiter')
 
         self.VR = Algeb(info='V_R',
                         tex_name='V_{R}',
                         v_str='VFE',
-                        e_str='VRL_zi * LVO + VRL_zu * VRMAX + VRL_zl * VRMIN - VR',
+                        e_str='VRL_zi * LVG + VRL_zu * VRMAX + VRL_zl * VRMIN - VR',
                         )
 
         self.INT = Integrator(u='ue * (VR - VFE)',
