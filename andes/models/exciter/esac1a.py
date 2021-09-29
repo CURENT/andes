@@ -1,11 +1,11 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService
+from andes.core.service import ConstService, PostInitService
 from andes.core.discrete import LessThan, HardLimiter
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import LVGate, IntegratorAntiWindup
-from andes.core.block import Piecewise
+from andes.core.block import Piecewise, Integrator
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
 from andes.models.exciter.saturation import ExcQuadSat
@@ -119,22 +119,28 @@ class ESAC1AModel(ExcBase):
         self.UEL0.v_str = '-999'
         self.OEL0.v_str = '999'
 
-        # Assume FEX is in (0, 0.433) at initial
-        self.VE0 = ConstService(info='Initial VE',
-                                tex_name=r'V_{E0}',
-                                v_str='vf0 + 0.577 * KC * XadIfd')
+        self.flags.nr_iter = True
 
-        self.VR0 = ConstService(info='Initial VR',
-                                tex_name=r'V_{R0}',
-                                v_str='VFE0 + VE0')
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
 
-        self.vb0 = ConstService(info='Initial vb',
-                                tex_name='V_{b0}',
-                                v_str='VR0 / KA')
+        # NOTE: e_str `KC*XadIfd / INT_y - IN` causes numerical inaccuracies
+        self.IN = Algeb(tex_name='I_N',
+                        info='Input to FEX',
+                        v_str='1',
+                        v_iter='KC * XadIfd - INT_y * IN',
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
+                        diag_eps=True,
+                        )
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name=r'V_{ref0}',
-                                  v_str='v + vb0')
+        self.FEX = Piecewise(u=self.IN,
+                             points=(0, 0.433, 0.75, 1),
+                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
+                             info='Piecewise function FEX',
+                             )
+        self.FEX.y.v_str = '1'
+        self.FEX.y.v_iter = self.FEX.y.e_str
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
@@ -168,84 +174,60 @@ class ESAC1AModel(ExcBase):
         #                   info='HVGate for under excitation',
         #                   )
 
-        # LVGate results in initialization bug
-        # self.LVG = LVGate(u1=self.HVG_y,
-        #                   u2=self.OEL,
-        #                   info='V_R, LVGate for under excitation',
-        #                   )
-        # self.LVG = LessThan(u=self.HVG_y, bound=self.OEL, equal=False, enable=True, cache=False)
-
-        # self.HLR = HardLimiter(u=self.LA_y,
+        # # LVGate results in initialization bug
+        # self.LVG = LVGate(u1=self.OEL,
+        #                   u2=self.HVG_y,
+        #                   info='LVGate for under excitation',
+                        #   )
+        # self.HLR = HardLimiter(u=self.LVG_y,
         #                        lower=self.VRMIN,
         #                        upper=self.VRMAX,
-        #                        info='V_R input limiter',
-        #                        )
+        #                        info='V_R before input limiter',
+                            #    )
 
-        # self.VR = Algeb(info='V_R after limiter',
-        #                 tex_name='V_{R}',
-        #                 v_str='HLR_zi*LA_y + HLR_zl*VRMIN + HLR_zu*VRMAX',
-        #                 e_str='HLR_zi*LA_y + HLR_zl*VRMIN + HLR_zu*VRMAX - VR'
-        #                 )
+        self.VR = Algeb(info='V_R',
+                        tex_name='V_{R}',
+                        v_str='VFE',
+                        e_str='LA_y - VR',
+                        # e_str='HLR_zi*LVG_y + HLR_zl*VRMIN + HLR_zu*VRMAX - VR'
+                        )
 
-        self.zero = ConstService('0')
-        self.large = ConstService('999')
-
-        # self.VEin = Algeb(info='before INT',
-        #                   tex_name='V_{Ein}',
-        #                   v_str='vf0 + 0.577 * KC * vf0',
-        #                   e_str='u * (VR - VFE - VEin)'
-        #                   )
-        self.INT = IntegratorAntiWindup(u=self.LA_y,
-                                        T=self.TE,
-                                        K=1,
-                                        y0='vf0 + 0.577 * KC * XadIfd',
-                                        lower=self.zero,
-                                        upper=self.large,
-                                        info='V_E, Integrator Anti-Windup',
-                                        )
-
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
+        self.INT = Integrator(u='ue * (VR - VFE)',
+                              T=self.TE,
+                              K=1,
+                              y0=0,
+                              info='Integrator',
                               )
+        self.INT.y.v_str = 0.1
+        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
 
         self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
 
-        # SL_z0 indicates saturation
-        self.Se = Algeb(tex_name=r"V_{E}*S_e(|V_{E}|)", info='saturation output',
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
                         v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
-                        e_str='SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se',
-                        )
-
-        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
-                                 v_str='INT_y * KE + Se + XadIfd * KD',
-                                 )
-
-        self.IN = Algeb(tex_name='I_N',
-                        info='Input to FEX',
-                        v_str='safe_div(KC * XadIfd, INT_y)',
-                        e_str='ue * (KC * XadIfd + IN * INT_y)',
+                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
                         diag_eps=True,
                         )
 
-        # TODO: check funs
-        self.FEX = Piecewise(u=self.IN,
-                             points=(0, 0.433, 0.75, 1),
-                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
-                             info='Piecewise function FEX',
-                             )
-
-        # TODO: check if e_str needs modification
         self.VFE = Algeb(info='Combined saturation feedback',
-                         tex_name=r'V_{FE}',
+                         tex_name='V_{FE}',
                          unit='p.u.',
-                         v_str='INT_y * KE + Se + KD * XadIfd',
-                         e_str='(INT_y * KE + Se + KD * XadIfd) - VFE'
+                         v_str='INT_y * KE + Se + XadIfd * KD',
+                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
+                         diag_eps=True,
                          )
 
-        self.WO = Washout(u=self.VFE,
+        self.vref.v_str='v + VFE / KA'
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
+
+        self.WF = Washout(u=self.VFE,
                           T=self.TF,
                           K=self.KF,
-                          info='V_F, Washout, Feedback to input'
+                          info='Stablizing circuit feedback',
                           )
 
         self.vout.e_str = 'FEX_y * INT_y - vout'
