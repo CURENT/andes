@@ -14,12 +14,9 @@ from andes.models.exciter.saturation import ExcQuadSat
 class ESST1AData(ExcBaseData):
     def __init__(self):
         ExcBaseData.__init__(self)
-
-
         self.TR = NumParam(info='Sensing time constant',
                            tex_name='T_R',
                            default=0.01,
-                           unit='p.u.',
                            )
 
         self.VIMAX = NumParam(default=0.8,
@@ -33,12 +30,10 @@ class ESST1AData(ExcBaseData):
         self.TB = NumParam(info='Lag time constant in lead-lag',
                            tex_name='T_B',
                            default=1,
-                           unit='p.u.',
                            )
         self.TC = NumParam(info='Lead time constant in lead-lag',
                            tex_name='T_C',
                            default=1,
-                           unit='p.u.',
                            )
 
         self.VAMAX = NumParam(info='V_A upper limit',
@@ -52,12 +47,10 @@ class ESST1AData(ExcBaseData):
         self.TB1 = NumParam(info='Lag time constant in lead-lag 1',
                             tex_name=r'T_{B1}',
                             default=1,
-                            unit='p.u.',
                             )
         self.TC1 = NumParam(info='Lead time constant in lead-lag 1',
                             tex_name=r'T_{C1}',
                             default=1,
-                            unit='p.u.',
                             )
 
         self.KA = NumParam(default=80,
@@ -67,7 +60,6 @@ class ESST1AData(ExcBaseData):
         self.TA = NumParam(info='Lag time constant in regulator',
                            tex_name='T_A',
                            default=0.04,
-                           unit='p.u.',
                            )
 
         self.KLR = NumParam(default=1,
@@ -92,9 +84,6 @@ class ESST1AData(ExcBaseData):
         self.TF = NumParam(info='Feedback washout time constant',
                            tex_name='T_{F1}',
                            default=1,
-                           unit='p.u.',
-                           non_negative=True,
-                           non_zero=True,
                            )
 
         self.KC = NumParam(info='Rectifier loading factor proportional to commutating reactance',
@@ -120,8 +109,8 @@ class ESST1AModel(ExcBase):
         self.ul = ConstService('9999')
         self.ll = ConstService('-9999')
 
-        self.SWUEL = Switcher(u=self.UELcode, options=[0, 1, 2, 3], tex_name='SW_{UEL}', cache=True)
-        self.SWVOS = Switcher(u=self.VOScode, options=[0, 1, 2], tex_name='SW_{VOS}', cache=True)
+        # self.SWUEL = Switcher(u=self.UELcode, options=[0, 1, 2, 3], tex_name='SW_{UEL}', cache=True)
+        # self.SWVOS = Switcher(u=self.VOScode, options=[0, 1, 2], tex_name='SW_{VOS}', cache=True)
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
@@ -143,7 +132,8 @@ class ESST1AModel(ExcBase):
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * VOTHSG + Vs - vi)',
+                        # e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * VOTHSG + Vs - vi)',
+                        e_str='ue * (-LG_y + vref - WF_y +  UEL + VOTHSG + Vs - vi)',
                         v_str='-v + vref',
                         diag_eps=True,
                         )
@@ -157,7 +147,8 @@ class ESST1AModel(ExcBase):
                         diag_eps=True,
                         )
 
-        self.HVG1 = HVGate(u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul'),
+        self.HVG1 = HVGate(u1=dummify('0 * UEL + (1 - 0) * ul'),
+                        #    u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul'),
                            u2=self.VI,
                            info='HVGate after V_I',
                            )
@@ -208,8 +199,10 @@ class ESST1AModel(ExcBase):
                            upper=self.ul, no_upper=True,
                            info='Hard limiter for excitation current')
 
-        self.HVG = HVGate(u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
-                          u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
+        self.HVG = HVGate(u1=dummify('0 * UEL + (1 - 0) * ll'),
+                          u2=dummify('0 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
+                        #   u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
+                        #   u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
                           info='HVGate for under excitation',
                           )
 
@@ -263,7 +256,6 @@ class ESST1AModel(ExcBase):
                            info='Hardlimiter for output excitation voltage')
 
         self.vout.e_str = 'HLV_zi * LVG + HLV_zu * efdu + HLV_zl * efdl - vout',
-
 
 
 class ESST1A(ESST1AData, ESST1AModel):
