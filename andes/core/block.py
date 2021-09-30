@@ -1641,10 +1641,11 @@ class LVGate(Block):
         self.u2 = dummify(u2)
         self.enforce_tex_name((u1, u2))
 
-        self.y = Algeb(info='LVGate output', tex_name='y')
         self.sl = Selector(self.u1, self.u2, fun=np.minimum.reduce,
                            info='LVGate Selector',
                            )
+
+        self.y = Algeb(info='LVGate output', tex_name='y', discrete=self.sl)
 
         self.vars = {'y': self.y, 'sl': self.sl}
 
