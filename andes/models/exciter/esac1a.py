@@ -165,8 +165,8 @@ class ESAC1AModel(ExcBase):
                                 K=self.KA,
                                 upper=self.VAMAX,
                                 lower=self.VAMIN,
-                                info='V_R, Anti-windup lag',
-                                )  # LA_y == VR
+                                info='V_A, Anti-windup lag',
+                                )  # LA_y == VA
 
         self.HVG = HVGate(u1=self.UEL,
                           u2=self.LA_y,
