@@ -1,5 +1,6 @@
+from andes.core.common import dummify
 from andes.core.param import NumParam
-from andes.core.var import Algeb
+from andes.core.var import Algeb, ExtAlgeb
 
 from andes.core.service import ConstService, VarService
 from andes.core.discrete import LessThan, Limiter, Switcher
@@ -21,6 +22,14 @@ class ESST1AData(ExcBaseData):
                            unit='p.u.',
                            )
 
+        self.VIMAX = NumParam(default=0.8,
+                              info='Max. input voltage',
+                              tex_name='V_{IMAX}',
+                              )
+        self.VIMIN = NumParam(default=-0.1,
+                              info='Min. input voltage',
+                              tex_name='V_{IMIN}',
+                              )
         self.TB = NumParam(info='Lag time constant in lead-lag',
                            tex_name='T_B',
                            default=1,
@@ -32,6 +41,14 @@ class ESST1AData(ExcBaseData):
                            unit='p.u.',
                            )
 
+        self.VAMAX = NumParam(info='V_A upper limit',
+                              tex_name='V_{AMAX}',
+                              default=999,
+                              unit='p.u.')
+        self.VAMIN = NumParam(info='V_A lower limit',
+                              tex_name='V_{AMIN}',
+                              default=-999,
+                              unit='p.u.')
         self.TB1 = NumParam(info='Lag time constant in lead-lag 1',
                             tex_name=r'T_{B1}',
                             default=1,
@@ -103,8 +120,8 @@ class ESST1AModel(ExcBase):
         self.ul = ConstService('9999')
         self.ll = ConstService('-9999')
 
-        self.SWUEL = Switcher(u=self.UELcode, options=(0, 1, 2, 3), tex_name='SW_{UEL}', cache=True)
-        self.SWVOS = Switcher(u=self.VOScode, options=(0, 1, 2), tex_name='SW_{VOS}', cache=True)
+        self.SWUEL = Switcher(u=self.UELcode, options=[0, 1, 2, 3], tex_name='SW_{UEL}', cache=True)
+        self.SWVOS = Switcher(u=self.VOScode, options=[0, 1, 2], tex_name='SW_{VOS}', cache=True)
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
@@ -117,6 +134,11 @@ class ESST1AModel(ExcBase):
                             e_str='VOTHSG0 - VOTHSG',
                             )
 
+        self.vref0 = ConstService(info='Initial reference voltage input',
+                                  tex_name='V_{ref0}',
+                                  v_str='v + vfe0 / KA',
+                                  )
+
         # input excitation voltages;
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
@@ -125,7 +147,7 @@ class ESST1AModel(ExcBase):
                         v_str='-v + vref',
                         diag_eps=True,
                         )
-        self.HL = Limiter(u=self.HVG_y, lower=self.VIMIN, upper=self.VIMAX,
+        self.HL = Limiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
                            info='Hard limiter befor V_I')
 
         self.VI = Algeb(tex_name='V_I',
@@ -135,12 +157,12 @@ class ESST1AModel(ExcBase):
                         diag_eps=True,
                         )
 
-        self.HVG = HVGate(u1='SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul',
-                          u2=self.VI,
-                          info='HVGate after V_I',
-                          )
+        self.HVG1 = HVGate(u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul'),
+                           u2=self.VI,
+                           info='HVGate after V_I',
+                           )
 
-        self.LL = LeadLag(u=self.vi,
+        self.LL = LeadLag(u=self.HVG1_y,
                           T1=self.TC,
                           T2=self.TB,
                           info='Lead-lag compensator',
@@ -182,12 +204,12 @@ class ESST1AModel(ExcBase):
                          )
 
         self.zero = ConstService('0')
-        self.HLI = Limiter(u=self.HVG_y, lower=self.zero,
-                           upper=self.ul, no_lower=True,
+        self.HLI = Limiter(u=dummify('ILR - XadIfd'), lower=self.zero,
+                           upper=self.ul, no_upper=True,
                            info='Hard limiter for excitation current')
 
-        self.HVG = HVGate(u1='SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll',
-                          u2='SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)',
+        self.HVG = HVGate(u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
+                          u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
                           info='HVGate for under excitation',
                           )
 
@@ -210,11 +232,19 @@ class ESST1AModel(ExcBase):
                           info='V_F, Stablizing circuit feedback',
                           )
 
-        self.LVG = Algeb(info='LVGate ouput',
-                         tex_name='LVG_{y}',
-                         v_str='VFE',
-                         e_str='(1-LVC_zl) * OEL + LVC_zl * HVG_y - LVG',
-                         )
+        # vd, vq, Id, Iq from SynGen
+        self.vd = ExtAlgeb(src='vd',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_d',
+                           info='d-axis machine voltage',
+                           )
+        self.vq = ExtAlgeb(src='vq',
+                           model='SynGen',
+                           indexer=self.syn,
+                           tex_name=r'V_q',
+                           info='q-axis machine voltage',
+                           )
 
         # TODO: should I use magnitude?
         self.efdu = Algeb(info='Output exciter voltage upper limit',
@@ -229,7 +259,7 @@ class ESST1AModel(ExcBase):
                           e_str='Abs(vd + 1j*vq) * VRMIN - efdl',
                           )
 
-        self.HLV = Limiter(u=self.LVG_y, lower=self.efdu, upper=self.efdl,
+        self.HLV = Limiter(u=self.LVG, lower=self.efdu, upper=self.efdl,
                            info='Hardlimiter for output excitation voltage')
 
         self.vout.e_str = 'HLV_zi * LVG + HLV_zu * efdu + HLV_zl * efdl - vout',
