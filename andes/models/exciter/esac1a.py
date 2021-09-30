@@ -1,10 +1,10 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, PostInitService
-from andes.core.discrete import LessThan, Limiter
+from andes.core.service import PostInitService
+from andes.core.discrete import LessThan
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import Piecewise, Integrator
+from andes.core.block import Piecewise, Integrator, LVGate
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
 from andes.models.exciter.saturation import ExcQuadSat
@@ -173,26 +173,12 @@ class ESAC1AModel(ExcBase):
                           info='HVGate for under excitation',
                           )
 
-        self.ubd = ConstService('9999')
-        self.LVC = Limiter(u=self.HVG_y, lower=self.OEL, upper=self.ubd,
-                           info='LVGate for over excitation', no_warn=True)
+        self.LVG = LVGate(u1=self.HVG_y,
+                          u2=self.OEL,
+                          info='HVGate for under excitation',
+                          )
 
-        self.LVG = Algeb(info='LVGate ouput',
-                         tex_name='LVG_{y}',
-                         v_str='VFE',
-                         e_str='(1-LVC_zl) * OEL + LVC_zl * HVG_y - LVG',
-                         )
-
-        self.VRL = Limiter(u=self.LVG, lower=self.VRMIN, upper=self.VRMAX,
-                           info='VR limiter')
-
-        self.VR = Algeb(info='V_R',
-                        tex_name='V_{R}',
-                        v_str='VFE',
-                        e_str='VRL_zi * LVG + VRL_zu * VRMAX + VRL_zl * VRMIN - VR',
-                        )
-
-        self.INT = Integrator(u='ue * (VR - VFE)',
+        self.INT = Integrator(u='ue * (LVG_y - VFE)',
                               T=self.TE,
                               K=1,
                               y0=0,
