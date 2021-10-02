@@ -1602,7 +1602,7 @@ class Model:
             for item in self.services_icheck.values():
                 item.check()
 
-    def numba_jitify(self, parallel=False, cache=False):
+    def numba_jitify(self, parallel=False, cache=False, nopython=False):
         """
         Optionally convert `self.calls.f` and `self.calls.g` to
         JIT compiled functions.
@@ -1621,8 +1621,16 @@ class Model:
         if self.flags.jited is True:
             return
 
-        self.calls.f = self._jitify_func_only(self.calls.f, parallel=parallel, cache=cache)
-        self.calls.g = self._jitify_func_only(self.calls.g, parallel=parallel, cache=cache)
+        self.calls.f = self._jitify_func_only(self.calls.f,
+                                              parallel=parallel,
+                                              cache=cache,
+                                              nopython=nopython,
+                                              )
+        self.calls.g = self._jitify_func_only(self.calls.g,
+                                              parallel=parallel,
+                                              cache=cache,
+                                              nopython=nopython,
+                                              )
 
         for jname in self.calls.j:
             self.calls.j[jname] = self._jitify_func_only(self.calls.j[jname],

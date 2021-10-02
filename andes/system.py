@@ -642,11 +642,15 @@ class System:
         if self.config.numba:
             use_parallel = True if self.config.numba_parallel else False
             use_cache = True if self.config.numba_cache else False
+            nopython = True if self.config.numba_nopython else False
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
             for mdl in models.values():
-                mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
+                mdl.numba_jitify(parallel=use_parallel,
+                                 cache=use_cache,
+                                 nopython=nopython,
+                                 )
 
     def init(self, models: OrderedDict, routine: str):
         """
