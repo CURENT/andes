@@ -1630,10 +1630,15 @@ class Model:
 
         self.flags.jited = True
 
-    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
+    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False,
+                          nopython=False):
+        """
+        Helper function for converting a function to a numba jit'ed function.
+        """
+
         import numba
         if func is not None:
-            return numba.jit(func, parallel=parallel, cache=cache, nopython=True)
+            return numba.jit(func, parallel=parallel, cache=cache, nopython=nopython)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

@@ -10,7 +10,6 @@ System class for power system data and methods
 #  (at your option) any later version.
 #
 #  File name: system.py
-#  Last modified: 8/16/20, 7:26 PM
 
 import configparser
 import importlib
@@ -137,6 +136,7 @@ class System:
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('numba_cache', 1),
+                                     ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
@@ -153,6 +153,7 @@ class System:
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
                               numba_cache='enable machine code caching for numba.jit',
+                              numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
@@ -168,6 +169,7 @@ class System:
                               numba=(0, 1),
                               numba_parallel=(0, 1),
                               numba_cache=(0, 1),
+                              numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
