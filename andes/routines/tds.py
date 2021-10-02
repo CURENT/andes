@@ -830,7 +830,7 @@ class TDS(BaseRoutine):
         system.s_update_var(models=models)  # update VarService
 
         # evalute the RHS of `f` and check the limiters (anti-windup)
-        # 12/08/2020: Moded `l_update_eq` to before `g_update`
+        # 12/08/2020: Moved `l_update_eq` to before `g_update`
         #   because some algebraic variables depend on pegged states.
         system.f_update(models=models)
         system.l_update_eq(models=models)
