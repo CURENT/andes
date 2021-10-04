@@ -1,3 +1,7 @@
+"""
+Utility functions for compiling functions with numba.
+"""
+
 from typing import Union, Callable
 
 
@@ -13,7 +17,7 @@ def to_jit(func: Union[Callable, None],
     based on the argument types.
     """
 
-    import numba
+    import numba  # NOQA
     if func is not None:
         return numba.jit(func,
                          parallel=parallel,

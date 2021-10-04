@@ -11,10 +11,11 @@ Base class for building ANDES models.
 #  File name: model.py
 
 import logging
-import scipy as sp
 
 from collections import OrderedDict
 from typing import Iterable, Sized
+
+import scipy as sp
 
 from andes.core.block import Block
 from andes.core.common import ModelFlags, JacTriplet, Config
@@ -27,6 +28,7 @@ from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Rep
 from andes.core.service import SwBlock
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
+
 from andes.shared import jac_names, jac_types, jac_full_names
 from andes.shared import np, pd
 

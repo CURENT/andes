@@ -640,9 +640,9 @@ class System:
         Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
-            use_parallel = True if self.config.numba_parallel else False
-            use_cache = True if self.config.numba_cache else False
-            nopython = True if self.config.numba_nopython else False
+            use_parallel = bool(self.config.numba_parallel)
+            use_cache = bool(self.config.numba_cache)
+            nopython = bool(self.config.numba_nopython)
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
