@@ -2,7 +2,6 @@
 Utility functions for loading andes stock test cases
 """
 import os
-import platform
 import tempfile
 import pathlib
 import logging
