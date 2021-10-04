@@ -5,7 +5,7 @@ from andes.core.service import PostInitService
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import Piecewise, LVGate
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
 
 
 class ESAC1AData(ExcBaseData):
@@ -107,7 +107,7 @@ class ESAC1AData(ExcBaseData):
                                )
 
 
-class ESAC1AModel(ExcBase):
+class ESAC1AModel(ExcBase, ExcACSat):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         ExcVsum.__init__(self)
@@ -173,7 +173,7 @@ class ESAC1AModel(ExcBase):
 
         self.INTin = 'ue * (LVG_y - VFE)'
 
-        ExcSat.__init__(self)
+        ExcACSat.__init__(self)
 
         self.vref.v_str = 'v + VFE / KA'
 
