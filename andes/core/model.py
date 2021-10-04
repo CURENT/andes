@@ -29,7 +29,9 @@ from andes.core.symprocessor import SymProcessor
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
 from andes.shared import jac_names, jac_types, jac_full_names
 from andes.shared import np, pd
+
 from andes.utils.func import list_flatten
+from andes.utils.numba import to_jit
 
 logger = logging.getLogger(__name__)
 
@@ -1620,32 +1622,22 @@ class Model:
         if self.flags.jited is True:
             return
 
-        self.calls.f = self._jitify_func_only(self.calls.f,
-                                              parallel=parallel,
-                                              cache=cache,
-                                              nopython=nopython,
-                                              )
-        self.calls.g = self._jitify_func_only(self.calls.g,
-                                              parallel=parallel,
-                                              cache=cache,
-                                              nopython=nopython,
-                                              )
+        self.calls.f = to_jit(self.calls.f,
+                              parallel=parallel,
+                              cache=cache,
+                              nopython=nopython,
+                              )
+        self.calls.g = to_jit(self.calls.g,
+                              parallel=parallel,
+                              cache=cache,
+                              nopython=nopython,
+                              )
 
         for jname in self.calls.j:
-            self.calls.j[jname] = self._jitify_func_only(self.calls.j[jname],
-                                                         parallel=parallel, cache=cache)
+            self.calls.j[jname] = to_jit(self.calls.j[jname],
+                                         parallel=parallel, cache=cache)
 
         self.flags.jited = True
-
-    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False,
-                          nopython=False):
-        """
-        Helper function for converting a function to a numba jit'ed function.
-        """
-
-        import numba
-        if func is not None:
-            return numba.jit(func, parallel=parallel, cache=cache, nopython=nopython)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'
