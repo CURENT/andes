@@ -1,13 +1,13 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService
-
+from andes.core.service import PostInitService
+from andes.core.discrete import LessThan
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import LVGate, AntiWindup, IntegratorAntiWindup
+from andes.core.block import Piecewise, Integrator, LVGate
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
-# from andes.models.exciter.saturation import ExcQuadSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
+from andes.models.exciter.saturation import ExcQuadSat
 
 
 class ESAC1AData(ExcBaseData):
@@ -28,6 +28,14 @@ class ESAC1AData(ExcBaseData):
                            default=1,
                            unit='p.u.',
                            )
+        self.VAMAX = NumParam(info='V_A upper limit',
+                              tex_name='V_{AMAX}',
+                              default=999,
+                              unit='p.u.')
+        self.VAMIN = NumParam(info='V_A lower limit',
+                              tex_name='V_{AMIN}',
+                              default=-999,
+                              unit='p.u.')
         self.KA = NumParam(default=80,
                            info='Regulator gain',
                            tex_name='K_A',
@@ -49,6 +57,38 @@ class ESAC1AData(ExcBaseData):
                            tex_name='T_E',
                            default=0.8,
                            unit='p.u.',
+                           )
+        self.E1 = NumParam(info='First saturation point',
+                           tex_name='E_1',
+                           default=0.,
+                           unit='p.u.',
+                           )
+        self.SE1 = NumParam(info='Value at first saturation point',
+                            tex_name='S_{E1}',
+                            default=0.,
+                            unit='p.u.',
+                            )
+        self.E2 = NumParam(info='Second saturation point',
+                           tex_name='E_2',
+                           default=1.,
+                           unit='p.u.',
+                           )
+        self.SE2 = NumParam(info='Value at second saturation point',
+                            tex_name='S_{E2}',
+                            default=1.,
+                            unit='p.u.',
+                            )
+        self.KC = NumParam(info='Rectifier loading factor proportional to commutating reactance',
+                           tex_name='K_C',
+                           default=0.1,
+                           )
+        self.KD = NumParam(info='Ifd feedback gain',
+                           tex_name='K_D',
+                           default=0,
+                           )
+        self.KE = NumParam(info='Gain added to saturation',
+                           tex_name='K_E',
+                           default=1,
                            )
         self.KF = NumParam(default=0.1,
                            info='Feedback gain',
@@ -72,97 +112,116 @@ class ESAC1AData(ExcBaseData):
 class ESAC1AModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
+        ExcVsum.__init__(self)
+
+        # TODO: check values
+        self.UEL0.v_str = '-999'
+        self.OEL0.v_str = '999'
+
+        self.flags.nr_iter = True
+
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
+
+        # NOTE: e_str `KC*XadIfd / INT_y - IN` causes numerical inaccuracies
+        self.IN = Algeb(tex_name='I_N',
+                        info='Input to FEX',
+                        v_str='1',
+                        v_iter='KC * XadIfd - INT_y * IN',
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
+                        diag_eps=True,
+                        )
+
+        self.FEX = Piecewise(u=self.IN,
+                             points=(0, 0.433, 0.75, 1),
+                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
+                             info='Piecewise function FEX',
+                             )
+        self.FEX.y.v_str = '1'
+        self.FEX.y.v_iter = self.FEX.y.e_str
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
                       )
 
-        # TODO: add self.vref
-
-        # TODO: modify v_str for VF
-        # input excitation voltages; PSS outputs summed at vi
+        # input excitation voltages;
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='-LG_y + vref + VF - vi',
+                        e_str='ue * (-LG_y + vref + UEL + OEL + Vs - vi)',
                         v_str='-v + vref',
+                        diag_eps=True,
                         )
 
-        # TODO: check info
         self.LL = LeadLag(u=self.vi, T1=self.TC, T2=self.TB,
-                          info='Regulator',
+                          info='V_A, Lead-lag compensator',
                           zero_out=True,
-                          )  # LL_y == VA ???
+                          )  # LL_y == VA
 
-        # TODO: replace upper and lower
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
                                 K=self.KA,
-                                upper=self.VRU,
-                                lower=self.VRL,
-                                info='Anti-windup lag',
-                                )  # LA_y == VR
+                                upper=self.VAMAX,
+                                lower=self.VAMIN,
+                                info='V_A, Anti-windup lag',
+                                )  # LA_y == VA
 
-        # TODO: check if eqn is correct
-        self.UEL = Algeb(info='Interface var for under exc. limiter',
-                         tex_name='U_{EL}',
-                         v_str='0',
-                         e_str='0 - UEL'
-                         )
-
-        # TODO: check info
-        self.HG = HVGate(u1=self.UEL,
-                         u2=self.LA_y,
-                         info='HVGate for under excitation',
-                         )
-
-        # TODO: check if eqn is correct, seems wrong
-        self.OEL = Algeb(info='Interface var for under exc. limiter',
-                         tex_name='O_{EL}',
-                         v_str='0',
-                         e_str='0 - OEL'
-                         )
-        # TODO: check info
-        self.LG = LVGate(u1=self.HG_y,
-                         u2=self.OEL,
-                         info='LVGate for under excitation',
-                         )
-
-        self.AW = AntiWindup(u=self.LG_y,
-                             lower=self.VRMIN,
-                             upper=self.VRMAX,
-                             tex_name=r'lim_{LG}',
-                             )
-
-        # TODO: check y0
-        # TODO: add self.vf0
-        self.large = ConstService('999')
-        self.IAW = IntegratorAntiWindup(u='ue * (AW_y - VFE)',
-                                        T=self.TE,
-                                        K=1,
-                                        y0=self.vf0,
-                                        lower=self.zero,
-                                        upper=self.large,
-                                        info='Integrator Anti-Windup',
-                                        )
-
-        # TODO: add VFE
-
-        self.VF = Washout(u=self.INT_y,
-                          T=self.TF,
-                          K=self.KF,
-                          info='Feedback to input'
+        self.HVG = HVGate(u1=self.UEL,
+                          u2=self.LA_y,
+                          info='HVGate for under excitation',
                           )
 
-        # TODO: add saturation VX
+        self.LVG = LVGate(u1=self.HVG_y,
+                          u2=self.OEL,
+                          info='HVGate for under excitation',
+                          )
 
-        # TODO: add FEX
+        self.INT = Integrator(u='ue * (LVG_y - VFE)',
+                              T=self.TE,
+                              K=1,
+                              y0=0,
+                              info='Integrator',
+                              )
+        self.INT.y.v_str = 0.1
+        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
+
+        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
+                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
+                        diag_eps=True,
+                        )
+
+        self.VFE = Algeb(info='Combined saturation feedback',
+                         tex_name='V_{FE}',
+                         unit='p.u.',
+                         v_str='INT_y * KE + Se + XadIfd * KD',
+                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
+                         diag_eps=True,
+                         )
+
+        self.vref.v_str = 'v + VFE / KA'
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
+
+        self.WF = Washout(u=self.VFE,
+                          T=self.TF,
+                          K=self.KF,
+                          info='Stablizing circuit feedback',
+                          )
+
+        self.vout.e_str = 'FEX_y * INT_y - vout'
 
 
 class ESAC1A(ESAC1AData, ESAC1AModel):
     """
-    Static exciter type 3A model
+    Exciter ESAC1A.
     """
 
     def __init__(self, system, config):
