@@ -8,10 +8,14 @@ from andes.core.service import PostInitService
 from andes.core.block import LagAntiWindup, Lag
 from andes.core.block import Piecewise, PIDTrackAW
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
 
 
 class AC8BData(ExcBaseData):
+    """
+    AC8B data.
+    """
+
     def __init__(self):
         ExcBaseData.__init__(self)
         self.TR = NumParam(info='Sensing time constant',
@@ -128,7 +132,11 @@ class AC8BData(ExcBaseData):
                            )
 
 
-class AC8BModel(ExcBase):
+class AC8BModel(ExcBase, ExcVsum, ExcACSat):
+    """
+    Implementation of the AC8B model.
+    """
+
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.flags.nr_iter = True
@@ -187,7 +195,7 @@ class AC8BModel(ExcBase):
 
         self.INTin = 'ue * (LA_y - VFE)'
 
-        ExcSat.__init__(self)
+        ExcACSat.__init__(self)
 
         self.vref0 = PostInitService(info='Initial reference voltage input',
                                      tex_name='V_{ref0}',

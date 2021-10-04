@@ -122,9 +122,11 @@ class ExcBase(Model):
         # Subclasses also need to define `self.vref`.
 
 
-class ExcVsum():
+class ExcVsum:
     """
-    Subclass for exciter model.
+    Subclass for the input section of exciters.
+
+    It creates the placeholder variables for OEL, UEL, stabilizer, and ``vref``.
     """
 
     def __init__(self):
@@ -153,9 +155,9 @@ class ExcVsum():
                           )
 
 
-class ExcSat():
+class ExcACSat:
     """
-    Subclass for exciter model saturation part.
+    Subclass for the saturation commonly used in AC-type exciters.
     """
 
     def __init__(self):

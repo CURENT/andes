@@ -77,7 +77,7 @@ class IEEET3Data(ExcBaseData):
                            )
 
 
-class IEEET3Model(ExcBase):
+class IEEET3Model(ExcBase, ExcVsum):
     """
     IEEE Type 3 exciter model.
     """
