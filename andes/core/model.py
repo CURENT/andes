@@ -9,7 +9,6 @@ Base class for building ANDES models.
 #  (at your option) any later version.
 #
 #  File name: model.py
-#  Last modified: 8/16/20, 7:27 PM
 
 import logging
 import scipy as sp
