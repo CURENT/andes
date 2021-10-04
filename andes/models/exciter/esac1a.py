@@ -107,7 +107,7 @@ class ESAC1AData(ExcBaseData):
                                )
 
 
-class ESAC1AModel(ExcBase, ExcACSat):
+class ESAC1AModel(ExcBase, ExcVsum, ExcACSat):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         ExcVsum.__init__(self)

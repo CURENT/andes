@@ -12,6 +12,10 @@ from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
 
 
 class AC8BData(ExcBaseData):
+    """
+    AC8B data.
+    """
+
     def __init__(self):
         ExcBaseData.__init__(self)
         self.TR = NumParam(info='Sensing time constant',
@@ -128,7 +132,11 @@ class AC8BData(ExcBaseData):
                            )
 
 
-class AC8BModel(ExcBase, ExcACSat):
+class AC8BModel(ExcBase, ExcVsum, ExcACSat):
+    """
+    Implementation of the AC8B model.
+    """
+
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.flags.nr_iter = True
