@@ -2,12 +2,10 @@ from andes.core.param import NumParam
 from andes.core.var import Algeb
 
 from andes.core.service import PostInitService
-from andes.core.discrete import LessThan
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import Piecewise, Integrator, LVGate
+from andes.core.block import Piecewise, LVGate
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
-from andes.models.exciter.saturation import ExcQuadSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcSat
 
 
 class ESAC1AData(ExcBaseData):
@@ -119,10 +117,6 @@ class ESAC1AModel(ExcBase):
 
         self.flags.nr_iter = True
 
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
-
         # NOTE: e_str `KC*XadIfd / INT_y - IN` causes numerical inaccuracies
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
@@ -177,30 +171,9 @@ class ESAC1AModel(ExcBase):
                           info='HVGate for under excitation',
                           )
 
-        self.INT = Integrator(u='ue * (LVG_y - VFE)',
-                              T=self.TE,
-                              K=1,
-                              y0=0,
-                              info='Integrator',
-                              )
-        self.INT.y.v_str = 0.1
-        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
+        self.INTin = 'ue * (LVG_y - VFE)'
 
-        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
-
-        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
-                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
-                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
-                        diag_eps=True,
-                        )
-
-        self.VFE = Algeb(info='Combined saturation feedback',
-                         tex_name='V_{FE}',
-                         unit='p.u.',
-                         v_str='INT_y * KE + Se + XadIfd * KD',
-                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
-                         diag_eps=True,
-                         )
+        ExcSat.__init__(self)
 
         self.vref.v_str = 'v + VFE / KA'
 

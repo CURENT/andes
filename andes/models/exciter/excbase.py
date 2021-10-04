@@ -9,6 +9,9 @@ from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
 from andes.core.service import ExtService, ConstService
+from andes.core.block import Integrator
+from andes.core.discrete import LessThan
+from andes.models.exciter.saturation import ExcQuadSat
 
 
 class ExcBaseData(ModelData):
@@ -148,3 +151,41 @@ class ExcVsum():
                           v_str='vref0',
                           e_str='vref0 - vref'
                           )
+
+
+class ExcSat():
+    """
+    Subclass for exciter model saturation part.
+    """
+
+    def __init__(self):
+
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
+
+        # Input (VR - VFE)
+        self.INT = Integrator(u=self.INTin,
+                              T=self.TE,
+                              K=1,
+                              y0=0,
+                              info='V_E, integrator',
+                              )
+        self.INT.y.v_str = 0.1
+        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
+
+        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
+                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
+                        diag_eps=True,
+                        )
+
+        self.VFE = Algeb(info='Combined saturation feedback',
+                         tex_name='V_{FE}',
+                         unit='p.u.',
+                         v_str='INT_y * KE + Se + XadIfd * KD',
+                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
+                         diag_eps=True,
+                         )
