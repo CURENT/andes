@@ -212,23 +212,18 @@ def get_log_dir():
     """
     Get the directory for log file.
 
-    On Linux or macOS, ``/tmp/andes`` is the default. On Windows, ``%APPDATA%/andes`` is the default.
+    The default is ``<tempdir>/andes``, where ``<tempdir>`` is provided by ``tempfile.gettempdir()``.
 
     Returns
     -------
     str
         The path to the temporary logging directory
     """
-    path = ''
-    if platform.system() in ('Linux', 'Darwin'):
-        path = tempfile.mkdtemp(prefix='andes-')
+    tempdir = os.path.join(tempfile.gettempdir(), 'andes')
+    if not os.path.exists(tempdir):
+        os.mkdir(tempdir)
 
-    elif platform.system() == 'Windows':
-        appdata = os.getenv('APPDATA')
-        path = os.path.join(appdata, 'andes')
-
-    if not os.path.exists(path):
-        os.makedirs(path)
+    path = tempfile.mkdtemp(prefix='andes-', dir=tempdir)
     return path
 
 
