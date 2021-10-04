@@ -14,7 +14,7 @@ import logging
 import scipy as sp
 
 from collections import OrderedDict
-from typing import Iterable, Sized, Callable, Union
+from typing import Iterable, Sized
 
 from andes.core.block import Block
 from andes.core.common import ModelFlags, JacTriplet, Config
