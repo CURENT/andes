@@ -3,17 +3,19 @@ from collections import OrderedDict
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, VarService
+from andes.core.service import PostInitService
 
 from andes.core.block import LagAntiWindup, Lag
-from andes.core.block import LessThan, IntegratorAntiWindup
 from andes.core.block import Piecewise, PIDTrackAW
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
-from andes.models.exciter.saturation import ExcQuadSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
 
 
 class AC8BData(ExcBaseData):
+    """
+    AC8B data.
+    """
+
     def __init__(self):
         ExcBaseData.__init__(self)
         self.TR = NumParam(info='Sensing time constant',
@@ -119,7 +121,7 @@ class AC8BData(ExcBaseData):
                            )
         self.KD = NumParam(default=0,
                            info='Ifd feedback gain',
-                           tex_name='K_C',
+                           tex_name='K_D',
                            vrange=(0, 1),
                            )
 
@@ -130,57 +132,42 @@ class AC8BData(ExcBaseData):
                            )
 
 
-class AC8BModel(ExcBase):
+class AC8BModel(ExcBase, ExcVsum, ExcACSat):
+    """
+    Implementation of the AC8B model.
+    """
+
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
-
+        self.flags.nr_iter = True
         self.config.add(OrderedDict((('ks', 2),
                                      )))
-
         self.config.add_extra('_help',
                               ks='Tracking gain for PID controller',
                               )
 
-        # Assume FEX is in (0, 0.433) at initial
-        self.VE0 = ConstService(info='Initial VE',
-                                tex_name=r'V_{E0}',
-                                v_str='vf0 + 0.577 * KC * XadIfd')
+        self.IN = Algeb(tex_name='I_N',
+                        info='Input to FEX',
+                        v_str='1',
+                        v_iter='KC * XadIfd - INT_y * IN',
+                        e_str='ue * (KC * XadIfd - INT_y * IN)',
+                        diag_eps=True,
+                        )
 
-        self.VR0 = ConstService(info='Initial VR',
-                                tex_name=r'V_{R0}',
-                                v_str='VFE0 + VE0')
-
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name=r'V_{ref0}',
-                                  v_str='v')
+        self.FEX = Piecewise(u=self.IN,
+                             points=(0, 0.433, 0.75, 1),
+                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
+                             info='Piecewise function FEX',
+                             )
+        self.FEX.y.v_str = '0.5'
+        self.FEX.y.v_iter = self.FEX.y.e_str
 
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
                       )
 
-        self.UEL = Algeb(info='Interface var for under exc. limiter',
-                         tex_name='U_{EL}',
-                         v_str='0',
-                         e_str='0 - UEL'
-                         )
-        self.OEL = Algeb(info='Interface var for over exc. limiter',
-                         tex_name='O_{EL}',
-                         v_str='0',
-                         e_str='0 - OEL'
-                         )
-        self.Vs = Algeb(info='Voltage compensation from PSS',
-                        tex_name='V_{s}',
-                        v_str='0',
-                        e_str='0 - Vs'
-                        )
-
-        self.vref = Algeb(info='Reference voltage input',
-                          tex_name='V_{ref}',
-                          unit='p.u.',
-                          v_str='vref0',
-                          e_str='vref0 - vref'
-                          )
+        ExcVsum.__init__(self)
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
@@ -190,9 +177,10 @@ class AC8BModel(ExcBase):
                         diag_eps=True,
                         )
 
+        # chekck y0
         self.PID = PIDTrackAW(u=self.vi, kp=self.kP, ki=self.kI,
                               ks=self.config.ks,
-                              kd=self.kD, Td=self.Td, x0='VR0 / KA',
+                              kd=self.kD, Td=self.Td, x0='VFE / KA',
                               lower=self.VPMIN, upper=self.VPMAX,
                               tex_name='PID', info='PID', name='PID',
                               )
@@ -205,79 +193,26 @@ class AC8BModel(ExcBase):
                                 info=r'V_{R}, Anti-windup lag',
                                 )
 
-        self.VEMAX = VarService(info='Maximum excitation output',
-                                tex_name=r'V_{EMAX}',
-                                v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
+        self.INTin = 'ue * (LA_y - VFE)'
 
-        # LA_y is VR
-        # TODO: check max and min
-        self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
-                                        T=self.TE,
-                                        K=1,
-                                        y0=self.VE0,
-                                        lower=self.VEMIN,
-                                        upper=self.VEMAX,
-                                        info=r'V_{E}, Integrator Anti-windup',
-                                        )
+        ExcACSat.__init__(self)
 
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='v',
+                                     )
 
-        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
-
-        # SL_z0 indicates saturation
-        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
-                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
-                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
-                        diag_eps=True,
-                        )
-
-        self.VFE0 = ConstService(info='Initial VFE', tex_name=r'V_{FE0}',
-                                 v_str='INT_y * KE + Se + XadIfd * KD',
-                                 )
-
-        # INT_y is VE
-        self.VFE = Algeb(info='Combined saturation feedback',
-                         tex_name='V_{FE}',
-                         unit='p.u.',
-                         v_str='INT_y * KE + Se + XadIfd * KD',
-                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
-                         diag_eps=True,
-                         )
-
-        self.IN = Algeb(tex_name='I_N',
-                        info='Input to FEX',
-                        v_str='safe_div(KC * XadIfd, INT_y)',
-                        e_str='ue * (KC * XadIfd - INT_y * IN)',
-                        diag_eps=True,
-                        )
-
-        # TODO: Check funs
-        # Copy from ESST3A
-        self.FEX = Piecewise(u=self.IN,
-                             points=(0, 0.433, 0.75, 1),
-                             funs=('1', '1 - 0.577*IN', 'sqrt(0.75 - IN ** 2)', '1.732*(1 - IN)', 0),
-                             info='Piecewise function FEX',
-                             )
-
-        self.vout.e_str = 'FEX_y * INT_y - vout'
+        self.vout.e_str = 'ue * (FEX_y * INT_y - vout)'
 
 
 class AC8B(AC8BData, AC8BModel):
     """
     Exciter AC8B model.
-
     Reference:
-
     [1] PowerWorld, Exciter AC8B, [Online],
-
     [2] NEPLAN, Exciters Models, [Online],
-
     Available:
-
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20AC8B.htm
-
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):

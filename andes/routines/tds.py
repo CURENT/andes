@@ -34,6 +34,7 @@ class TDS(BaseRoutine):
                                      ('tstep', 1/30),
                                      ('max_iter', 15),
                                      ('refresh_event', 0),
+                                     ('test_init', 1),
                                      ('check_conn', 1),
                                      ('g_scale', 1),
                                      ('qrt', 0),
@@ -53,6 +54,7 @@ class TDS(BaseRoutine):
                               tstep='the initial step step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
+                              test_init='test if initialization passes',
                               check_conn='re-check connectivity after event',
                               g_scale='scale algebraic residuals with time step size',
                               qrt='quasi-real-time stepping',
@@ -72,6 +74,7 @@ class TDS(BaseRoutine):
                               tstep='float',
                               max_iter='>=10',
                               refresh_event=(0, 1),
+                              test_init=(0, 1),
                               check_conn=(0, 1),
                               g_scale='positive',
                               qrt='bool',
@@ -120,6 +123,7 @@ class TDS(BaseRoutine):
         self.plotter = None
         self.plt = None
         self.initialized = False
+        self.test_ok = None
         self.qrt_start = None
         self.headroom = 0.0
 
@@ -175,8 +179,11 @@ class TDS(BaseRoutine):
         self.Teye = spdiag(system.dae.Tf.tolist())
         self.qg = np.zeros(system.dae.n + system.dae.m)
 
+        self.initialized = True
+
         # test if residuals are close enough to zero
-        self.initialized = self.test_init()
+        if self.config.test_init:
+            self.test_ok = self.test_init()
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
@@ -203,10 +210,14 @@ class TDS(BaseRoutine):
 
         _, s1 = elapsed(t0)
 
-        if self.initialized is True:
-            logger.info("Initialization for dynamics was successful in %s.", s1)
+        logger.info("Initialization for dynamics completed in %s.", s1)
+
+        if self.test_ok is True:
+            logger.info("Initialization was successful.")
+        elif self.test_ok is False:
+            logger.error("Initialization failed!!")
         else:
-            logger.error("Initialization for dynamics failed in %s.", s1)
+            logger.warning("Initialization results were not verified.")
 
         if system.dae.n == 0:
             tqdm.write('No differential equation detected.')
@@ -819,7 +830,7 @@ class TDS(BaseRoutine):
         system.s_update_var(models=models)  # update VarService
 
         # evalute the RHS of `f` and check the limiters (anti-windup)
-        # 12/08/2020: Moded `l_update_eq` to before `g_update`
+        # 12/08/2020: Moved `l_update_eq` to before `g_update`
         #   because some algebraic variables depend on pegged states.
         system.f_update(models=models)
         system.l_update_eq(models=models)

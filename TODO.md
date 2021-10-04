@@ -5,8 +5,11 @@
 * Separate array-enabled parameters from NumParam into
   `BaseConvParam`, which implements `iconvert` and `oconvert`,
   and then `ListParam`
+* Improve the robustness of accessing the fields of `pycode` by properly
+  handling `KeyError`s.
 
 # Later Versions
+
 * Allow selection of output variables
 * `PQTS` model for PQ with time-series.
 * Generalize two-terminal and multi-terminal devices
@@ -34,8 +37,9 @@
 * [X] Allow arrays as device parameter
 * [X] An `Summary` model for storing system summary
 * [X] Allow export of equation values. Using equation values are not recommended
-      due to convergence considerations (partial derivatives not used).
+  due to convergence considerations (partial derivatives not used).
 * [X] Robust iterative initialization for variables
+
 ## Version 1.1.0 (completed)
 
 ## Milestones

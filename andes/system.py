@@ -10,7 +10,6 @@ System class for power system data and methods
 #  (at your option) any later version.
 #
 #  File name: system.py
-#  Last modified: 8/16/20, 7:26 PM
 
 import configparser
 import importlib
@@ -137,6 +136,7 @@ class System:
                                      ('numba', 0),
                                      ('numba_parallel', 0),
                                      ('numba_cache', 1),
+                                     ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
@@ -153,6 +153,7 @@ class System:
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
                               numba_cache='enable machine code caching for numba.jit',
+                              numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
@@ -168,6 +169,7 @@ class System:
                               numba=(0, 1),
                               numba_parallel=(0, 1),
                               numba_cache=(0, 1),
+                              numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
@@ -638,13 +640,17 @@ class System:
         Helper function to compile all functions with Numba before init.
         """
         if self.config.numba:
-            use_parallel = True if self.config.numba_parallel else False
-            use_cache = True if self.config.numba_cache else False
+            use_parallel = bool(self.config.numba_parallel)
+            use_cache = bool(self.config.numba_cache)
+            nopython = bool(self.config.numba_nopython)
 
             logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
                         use_parallel, use_cache)
             for mdl in models.values():
-                mdl.numba_jitify(parallel=use_parallel, cache=use_cache)
+                mdl.numba_jitify(parallel=use_parallel,
+                                 cache=use_cache,
+                                 nopython=nopython,
+                                 )
 
     def init(self, models: OrderedDict, routine: str):
         """

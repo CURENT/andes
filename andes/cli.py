@@ -172,8 +172,9 @@ def preamble():
                 r' /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.' + '\n')
 
     log_path = find_log_path(logging.getLogger("andes"))
+
     if len(log_path):
-        logger.debug(f'Logging to file {log_path[0]}')
+        logger.debug('Logging to file "%s"', log_path[0])
 
 
 def main():

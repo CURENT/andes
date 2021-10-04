@@ -9,13 +9,13 @@ Base class for building ANDES models.
 #  (at your option) any later version.
 #
 #  File name: model.py
-#  Last modified: 8/16/20, 7:27 PM
 
 import logging
-import scipy as sp
 
 from collections import OrderedDict
-from typing import Iterable, Sized, Callable, Union
+from typing import Iterable, Sized
+
+import scipy as sp
 
 from andes.core.block import Block
 from andes.core.common import ModelFlags, JacTriplet, Config
@@ -28,9 +28,12 @@ from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Rep
 from andes.core.service import SwBlock
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
+
 from andes.shared import jac_names, jac_types, jac_full_names
 from andes.shared import np, pd
+
 from andes.utils.func import list_flatten
+from andes.utils.numba import to_jit
 
 logger = logging.getLogger(__name__)
 
@@ -1602,7 +1605,7 @@ class Model:
             for item in self.services_icheck.values():
                 item.check()
 
-    def numba_jitify(self, parallel=False, cache=False):
+    def numba_jitify(self, parallel=False, cache=False, nopython=False):
         """
         Optionally convert `self.calls.f` and `self.calls.g` to
         JIT compiled functions.
@@ -1621,19 +1624,22 @@ class Model:
         if self.flags.jited is True:
             return
 
-        self.calls.f = self._jitify_func_only(self.calls.f, parallel=parallel, cache=cache)
-        self.calls.g = self._jitify_func_only(self.calls.g, parallel=parallel, cache=cache)
+        self.calls.f = to_jit(self.calls.f,
+                              parallel=parallel,
+                              cache=cache,
+                              nopython=nopython,
+                              )
+        self.calls.g = to_jit(self.calls.g,
+                              parallel=parallel,
+                              cache=cache,
+                              nopython=nopython,
+                              )
 
         for jname in self.calls.j:
-            self.calls.j[jname] = self._jitify_func_only(self.calls.j[jname],
-                                                         parallel=parallel, cache=cache)
+            self.calls.j[jname] = to_jit(self.calls.j[jname],
+                                         parallel=parallel, cache=cache)
 
         self.flags.jited = True
-
-    def _jitify_func_only(self, func: Union[Callable, None], parallel=False, cache=False):
-        import numba
-        if func is not None:
-            return numba.jit(func, parallel=parallel, cache=cache, nopython=True)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

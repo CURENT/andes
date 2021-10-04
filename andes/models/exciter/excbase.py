@@ -9,6 +9,9 @@ from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
 from andes.core.service import ExtService, ConstService
+from andes.core.block import Integrator
+from andes.core.discrete import LessThan
+from andes.models.exciter.saturation import ExcQuadSat
 
 
 class ExcBaseData(ModelData):
@@ -117,3 +120,74 @@ class ExcBase(Model):
         # Note:
         # Subclasses need to define `self.vref0` in the appropriate place.
         # Subclasses also need to define `self.vref`.
+
+
+class ExcVsum:
+    """
+    Subclass for the input section of exciters.
+
+    It creates the placeholder variables for OEL, UEL, stabilizer, and ``vref``.
+    """
+
+    def __init__(self):
+        self.UEL0 = ConstService('0')
+        self.UEL = Algeb(info='Interface var for under exc. limiter',
+                         tex_name='U_{EL}',
+                         v_str='UEL0',
+                         e_str='UEL0 - UEL'
+                         )
+        self.OEL0 = ConstService('0')
+        self.OEL = Algeb(info='Interface var for over exc. limiter',
+                         tex_name='O_{EL}',
+                         v_str='OEL0',
+                         e_str='OEL0 - OEL'
+                         )
+        self.Vs = Algeb(info='Voltage compensation from PSS',
+                        tex_name='V_{s}',
+                        v_str='0',
+                        e_str='0 - Vs'
+                        )
+        self.vref = Algeb(info='Reference voltage input',
+                          tex_name='V_{ref}',
+                          unit='p.u.',
+                          v_str='vref0',
+                          e_str='vref0 - vref'
+                          )
+
+
+class ExcACSat:
+    """
+    Subclass for the saturation commonly used in AC-type exciters.
+    """
+
+    def __init__(self):
+
+        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
+                              info='Field voltage saturation',
+                              )
+
+        # Input (VR - VFE)
+        self.INT = Integrator(u=self.INTin,
+                              T=self.TE,
+                              K=1,
+                              y0=0,
+                              info='V_E, integrator',
+                              )
+        self.INT.y.v_str = 0.1
+        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
+
+        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
+
+        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
+                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
+                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
+                        diag_eps=True,
+                        )
+
+        self.VFE = Algeb(info='Combined saturation feedback',
+                         tex_name='V_{FE}',
+                         unit='p.u.',
+                         v_str='INT_y * KE + Se + XadIfd * KD',
+                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
+                         diag_eps=True,
+                         )

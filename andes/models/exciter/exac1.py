@@ -9,6 +9,10 @@ from andes.core.discrete import LessThan
 
 
 class EXAC1Data(ExcBaseData):
+    """
+    EXAC1 parameters.
+    """
+
     def __init__(self):
         ExcBaseData.__init__(self)
 
@@ -101,6 +105,10 @@ class EXAC1Data(ExcBaseData):
 
 
 class EXAC1Model(ExcBase):
+    """
+    EXAC1 implementation.
+    """
+
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.flags.nr_iter = True
