@@ -2,13 +2,13 @@ from andes.core.common import dummify
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 
-from andes.core.service import ConstService, VarService
-from andes.core.discrete import LessThan, Limiter, Switcher
-from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import Piecewise, Integrator
+from andes.core.service import ConstService, VarService  # NOQA
+from andes.core.discrete import LessThan, Limiter, Switcher  # NOQA
+from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate  # NOQA
+from andes.core.block import Piecewise, Integrator  # NOQA
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
-from andes.models.exciter.saturation import ExcQuadSat
+from andes.models.exciter.saturation import ExcQuadSat  # NOQA
 
 
 class ESST1AData(ExcBaseData):
@@ -66,7 +66,6 @@ class ESST1AData(ExcBaseData):
                             info='Exciter output current limiter gain',
                             tex_name=r'K_LR',
                             )
-
 
         self.VRMAX = NumParam(info='Maximum excitation limit',
                               tex_name='V_{RMAX}',
@@ -138,17 +137,17 @@ class ESST1AModel(ExcBase):
                         diag_eps=True,
                         )
         self.HL = Limiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
-                           info='Hard limiter befor V_I')
+                          info='Hard limiter befor V_I')
 
         self.VI = Algeb(tex_name='V_I',
                         info='V_I',
-                        v_str='1', # ?
+                        v_str='1',  # ?
                         e_str='ue * (HL_zi * vi + HL_zl * VIMIN + HL_zu * VIMAX - VI)',
                         diag_eps=True,
                         )
 
         self.HVG1 = HVGate(u1=dummify('0 * UEL + (1 - 0) * ul'),
-                        #    u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul'),
+                           #    u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ul'),
                            u2=self.VI,
                            info='HVGate after V_I',
                            )
@@ -201,8 +200,8 @@ class ESST1AModel(ExcBase):
 
         self.HVG = HVGate(u1=dummify('0 * UEL + (1 - 0) * ll'),
                           u2=dummify('0 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
-                        #   u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
-                        #   u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
+                          #   u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
+                          #   u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
                           info='HVGate for under excitation',
                           )
 
@@ -241,10 +240,10 @@ class ESST1AModel(ExcBase):
 
         # TODO: should I use magnitude?
         self.efdu = Algeb(info='Output exciter voltage upper limit',
-                           tex_name='LVG_{y}',
-                           v_str='VFE',
-                           e_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd - efdu',
-                           )
+                          tex_name='LVG_{y}',
+                          v_str='VFE',
+                          e_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd - efdu',
+                          )
 
         self.efdl = Algeb(info='Output exciter voltage lower limit',
                           tex_name='LVG_{y}',
