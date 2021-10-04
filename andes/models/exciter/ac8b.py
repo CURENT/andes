@@ -3,15 +3,12 @@ from collections import OrderedDict
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import VarService
 from andes.core.service import PostInitService
 
 from andes.core.block import LagAntiWindup, Lag
-from andes.core.block import LessThan, IntegratorAntiWindup
 from andes.core.block import Piecewise, PIDTrackAW
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
-from andes.models.exciter.saturation import ExcQuadSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcSat
 
 
 class AC8BData(ExcBaseData):
@@ -141,10 +138,6 @@ class AC8BModel(ExcBase):
                               ks='Tracking gain for PID controller',
                               )
 
-        self.SAT = ExcQuadSat(self.E1, self.SE1, self.E2, self.SE2,
-                              info='Field voltage saturation',
-                              )
-
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
                         v_str='1',
@@ -192,39 +185,9 @@ class AC8BModel(ExcBase):
                                 info=r'V_{R}, Anti-windup lag',
                                 )
 
-        self.VEMAX = VarService(info='Maximum excitation output',
-                                tex_name=r'V_{EMAX}',
-                                v_str='safe_div(VFEMAX - KD * XadIfd, KE + Se)')
+        self.INTin = 'ue * (LA_y - VFE)'
 
-        # LA_y is VR
-        self.INT = IntegratorAntiWindup(u='ue * (LA_y - VFE)',
-                                        T=self.TE,
-                                        K=1,
-                                        y0=0,
-                                        lower=self.VEMIN,
-                                        upper=self.VEMAX,
-                                        info=r'V_{E}, Integrator Anti-windup',
-                                        )
-        self.INT.y.v_str = 0.1
-        self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
-
-        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
-
-        # SL_z0 indicates saturation
-        self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
-                        v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',
-                        e_str='ue * (SL_z0 * (INT_y - SAT_A) ** 2 * SAT_B - Se)',
-                        diag_eps=True,
-                        )
-
-        # INT_y is VE
-        self.VFE = Algeb(info='Combined saturation feedback',
-                         tex_name='V_{FE}',
-                         unit='p.u.',
-                         v_str='INT_y * KE + Se + XadIfd * KD',
-                         e_str='ue * (INT_y * KE + Se + XadIfd * KD - VFE)',
-                         diag_eps=True,
-                         )
+        ExcSat.__init__(self)
 
         self.vref0 = PostInitService(info='Initial reference voltage input',
                                      tex_name='V_{ref0}',
