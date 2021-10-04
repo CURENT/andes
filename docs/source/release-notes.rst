@@ -22,7 +22,9 @@ This release features parallel processing that cuts the time for
 
 New exciter models are contributed by Jinning Wang.
 
-- Added ``AC8B`` and ``IEEET3``.
+- Added ``AC8B``, ``IEEET3`` and ``ESAC1A``.
+
+Other changes include disallowing numba's ``nopython`` mode.
 
 v1.4.2 (2021-09-12)
 ```````````````````
