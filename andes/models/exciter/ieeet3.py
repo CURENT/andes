@@ -115,7 +115,6 @@ class IEEET3Model(ExcBase):
                              v_str='Abs(KP * (vd + 1j*vq) + 1j*KI*(Id + 1j*Iq))',
                              )
 
-        # Assume V4 is not 0 at initial
         self.V40 = ConstService('sqrt(VE ** 2 - (0.78 * XadIfd) ** 2)')
         self.VR0 = ConstService(info='Initial VR',
                                 tex_name='V_{R0}',
@@ -129,7 +128,6 @@ class IEEET3Model(ExcBase):
                                   tex_name='V_{ref0}',
                                   v_str='v + vb0')
 
-        # TODO: Why set VRMAX to 999?
         # Set VRMAX to 999 when VRMAX = 0
         self._zVRM = FlagValue(self.VRMAX, value=0,
                                tex_name='z_{VRMAX}',
@@ -152,18 +150,17 @@ class IEEET3Model(ExcBase):
                         diag_eps=True,
                         )
 
-        # LA3_y is V_R
         self.LA3 = LagAntiWindup(u='ue * (vi - WF_y)',
                                  T=self.TA,
                                  K=self.KA,
                                  upper=self.VRMAXc,
                                  lower=self.VRMIN,
                                  info=r'V_{R}, Lag Anti-Windup',
-                                 )
+                                 )  # LA3_y is V_R
 
         self.zero = ConstService(v_str='0.0')
         self.one = ConstService(v_str='1.0')
-        # LA1_y is final output
+
         self.LA1 = LagAntiWindup(u='ue * (LA3_y + V4)',
                                  T=self.TE,
                                  K=self.one,
@@ -171,7 +168,7 @@ class IEEET3Model(ExcBase):
                                  upper=self.VBMAX,
                                  lower=self.zero,
                                  info=r'E_{FD}, vout, Lag Anti-Windup',
-                                 )
+                                 )  # LA1_y is final output
 
         self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
                           info='V_F, stablizing circuit feedback, washout')

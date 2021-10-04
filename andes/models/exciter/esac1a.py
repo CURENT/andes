@@ -114,7 +114,6 @@ class ESAC1AModel(ExcBase):
         ExcBase.__init__(self, system, config)
         ExcVsum.__init__(self)
 
-        # TODO: check values
         self.UEL0.v_str = '-999'
         self.OEL0.v_str = '999'
 
