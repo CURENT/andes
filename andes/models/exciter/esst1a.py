@@ -3,7 +3,7 @@ from collections import OrderedDict
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 
-from andes.core.service import PostInitService, ConstService
+from andes.core.service import PostInitService, ConstService, VarService
 from andes.core.discrete import Switcher, Limiter
 from andes.core.block import LagAntiWindup, Lag, HVGate, LVGate
 from andes.core.block import Piecewise, PIDTrackAW, LeadLag, Washout
@@ -200,7 +200,6 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
         self.SWUEL = Switcher(u=self.UELc, options=[0, 1, 2, 3], tex_name='SW_{UEL}', cache=True)
         self.SWVOS = Switcher(u=self.VOSc, options=[0, 1, 2], tex_name='SW_{VOS}', cache=True)
 
-
         # control block begin
         self.LG = Lag(self.v, T=self.TR, K=1,
                       info='Voltage transducer',
@@ -240,7 +239,12 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                         diag_eps=True,
                         )
 
-        self.HVG1 = HVGate(u1=dummify('SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll'),
+        self.UEL2 = Algeb(tex_name='UEL_2',
+                          info='UEL_2 as HVG1 u1',
+                          v_str='SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll',
+                          e_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll - UEL2)',
+                          )
+        self.HVG1 = HVGate(u1=self.UEL2,
                            u2=self.VI,
                            info='HVGate after V_I',
                            )
@@ -268,27 +272,35 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                 )  # LA_y is VA
 
         self.ILR0 = ConstService(v_str='0', tex_name='I_{LR0}', info='ILR initial value')
-        # TODO: v_str
         self.ILR = Algeb(info='exciter output current limit reference',
                          tex_name='I_{LR}}',
-                         v_str='1',
+                         v_str='ILR0',
                          e_str='ILR0 - ILR',
                          )
 
         self.zero = ConstService('0')
-        self.HLI = Limiter(u=dummify('ILR - XadIfd'), lower=self.zero,
-                           upper=self.ul, no_upper=True,
+        self.HLI = Limiter(u='XadIfd - ILR',
+                           lower=self.zero, upper=self.ul, no_upper=True,
                            info='Hard limiter for excitation current')
 
-        # TODO: u2, KLR
-        self.HVG = HVGate(u1=dummify('SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll'),
-                          u2=dummify('SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)'),
+        self.UEL3 = Algeb(tex_name='UEL_3',
+                          info='UEL_3 as HVG u1',
+                          v_str='SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll',
+                          e_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll - UEL3)',
+                          )
+        self.HVGu2 = Algeb(tex_name=r'HVG_{u2}',
+                           info='HVG u2',
+                           v_str='SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)',
+                           e_str='ue * (SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd) - HVGu2)',
+                           )
+        self.HVG = HVGate(u1=self.UEL3,
+                          u2=self.HVGu2,
                           info='HVGate for under excitation',
                           )
 
         self.LVG = LVGate(u1=self.HVG_y,
                           u2=self.OEL,
-                          info='HVGate for under excitation',
+                          info='HVGate for over excitation',
                           )
 
         # vd, vq, Id, Iq from SynGen
@@ -305,20 +317,15 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                            info='q-axis machine voltage',
                            )
 
-        # TODO: v_str
-        self.efdu = Algeb(info='Output exciter voltage upper bound',
-                          tex_name='LVG_{y}',
-                          v_str='1',
-                          e_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd - efdu',
-                          )
-        # TODO: v_str
-        self.efdl = Algeb(info='Output exciter voltage lower bound',
-                          tex_name='LVG_{y}',
-                          v_str='1',
-                          e_str='Abs(vd + 1j*vq) * VRMIN - efdl',
-                          )
+        self.efdu = VarService(info='Output exciter voltage upper bound',
+                               tex_name='efd_{u}',
+                               v_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd',
+                               )
+        self.efdl = VarService(info='Output exciter voltage lower bound',
+                               tex_name='efd_{l}',
+                               v_str='Abs(vd + 1j*vq) * VRMIN'
+                               )
 
-        # TODO: lower and upper
         self.vol = Limiter(u=self.LVG_y, info='vout limiter',
                            lower=self.efdu, upper=self.efdl,
                            )
@@ -329,7 +336,6 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                           info='V_F, Stablizing circuit feedback',
                           )
 
-        # self.vout.e_str = '1'
         self.vout.e_str = 'ue * (vol_zi * LVG_y + vol_zl * efdl + vol_zu * efdu  - vout)'
 
 
