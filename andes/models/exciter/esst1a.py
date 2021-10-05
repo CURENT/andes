@@ -111,7 +111,11 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.flags.nr_iter = True
-        
+
+        ExcVsum.__init__(self)
+        self.UEL0.v_str = '-999'
+        self.OEL0.v_str = '999'
+
         self.ul = ConstService('9999')
         self.ll = ConstService('-9999')
 
@@ -127,21 +131,22 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                             v_str='VOTHSG0',
                             e_str='VOTHSG0 - VOTHSG',
                             )
+
+        self.ILR0 = ConstService(v_str='0', tex_name='I_{LR0}', info='ILR initial value')
+        self.VA0 = ConstService(tex_name='V_{A0}',
+                                v_str='vf0 - SWVOS_s2 * VOTHSG + (1 - HLI_zl) * KLR * (XadIfd - ILR0)',
+                                info='VA (LA_y) initial value')
         # TODO: check v_str
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
-                                  v_str='v',
+                                  v_str='v - VA0/KA - SWVOS_s1 * VOTHSG - SWUEL_s1 * UEL',
                                   )
-
-        ExcVsum.__init__(self)
-        self.UEL0.v_str = '-999'
-        self.OEL0.v_str = '999'
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
                         e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * VOTHSG + Vs - vi)',
-                        v_str='-v + vref',
+                        v_str='VA0 / KA',
                         diag_eps=True,
                         )
 
@@ -151,7 +156,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
 
         self.VI = Algeb(tex_name='V_I',
                         info='V_I',
-                        v_str='vil_zi * vi + vil_zl * VIMIN + vil_zu * VIMAX',
+                        v_str='VA0 / KA',
                         e_str='ue * (vil_zi * vi + vil_zl * VIMIN + vil_zu * VIMAX - VI)',
                         diag_eps=True,
                         )
@@ -188,7 +193,6 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                 info='V_A, Anti-windup lag',
                                 )  # LA_y is VA
 
-        self.ILR0 = ConstService(v_str='0', tex_name='I_{LR0}', info='ILR initial value')
         self.ILR = Algeb(info='exciter output current limit reference',
                          tex_name='I_{LR}}',
                          v_str='ILR0',
@@ -210,9 +214,10 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                           v_str='SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll',
                           e_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll - UEL3)',
                           )
+        # TODO: v_str may need change
         self.HVGu2 = Algeb(tex_name=r'HVG_{u2}',
                            info='HVG u2',
-                           v_str='SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd)',
+                           v_str='vf0',
                            e_str='ue * (SWVOS_s2 * VOTHSG + LA_y - (1 - HLI_zl) * KLR * (ILR - XadIfd) - HVGu2)',
                            )
         self.HVG = HVGate(u1=self.UEL3,
@@ -240,16 +245,16 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                            )
 
         self.efdu = VarService(info='Output exciter voltage upper bound',
-                               tex_name='efd_{u}',
+                               tex_name=r'efd_{u}',
                                v_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd',
                                )
         self.efdl = VarService(info='Output exciter voltage lower bound',
-                               tex_name='efd_{l}',
+                               tex_name=r'efd_{l}',
                                v_str='Abs(vd + 1j*vq) * VRMIN'
                                )
 
         self.vol = Limiter(u=self.LVG_y, info='vout limiter',
-                           lower=self.efdu, upper=self.efdl,
+                           lower=self.efdl, upper=self.efdu,
                            )
 
         self.WF = Washout(u=self.LVG_y,
