@@ -18,88 +18,6 @@ class ESST1AData(ExcBaseData):
 
     def __init__(self):
         ExcBaseData.__init__(self)
-        self.kP = NumParam(info='PID proportional coeff.',
-                           tex_name='k_P',
-                           default=10,
-                           vrange=(10, 500),
-                           )
-        self.kI = NumParam(info='PID integrative coeff.',
-                           tex_name='k_I',
-                           default=10,
-                           vrange=(10, 500),
-                           )
-        self.kD = NumParam(info='PID direvative coeff.',
-                           tex_name='k_D',
-                           default=10,
-                           vrange=(10, 500),
-                           )
-        self.Td = NumParam(info='PID direvative time constant.',
-                           tex_name='T_d',
-                           default=0.2,
-                           vrange=(0, 0.5),
-                           )
-
-        self.VPMAX = NumParam(info='PID maximum limit',
-                              tex_name='V_{PMAX}',
-                              default=999,
-                              unit='p.u.')
-        self.VPMIN = NumParam(info='PID minimum limit',
-                              tex_name='V_{PMIN}',
-                              default=-999,
-                              unit='p.u.')
-
-
-        # TODO: check default value for VFEMAX
-        self.VFEMAX = NumParam(info='Maximum VFE',
-                               tex_name=r'V_{FEMAX}',
-                               default=999,
-                               unit='p.u.')
-
-        # TODO: check default value for VEMIN
-        self.VEMIN = NumParam(info='Minimum excitation output',
-                              tex_name=r'V_{EMIN}',
-                              default=-999,
-                              unit='p.u.')
-
-        self.TE = NumParam(info='Exciter integrator time constant',
-                           tex_name='T_E',
-                           default=0.8,
-                           unit='p.u.',
-                           )
-
-        self.E1 = NumParam(info='First saturation point',
-                           tex_name='E_1',
-                           default=0.,
-                           unit='p.u.',
-                           )
-        self.SE1 = NumParam(info='Value at first saturation point',
-                            tex_name='S_{E1}',
-                            default=0.,
-                            unit='p.u.',
-                            )
-        self.E2 = NumParam(info='Second saturation point',
-                           tex_name='E_2',
-                           default=1.,
-                           unit='p.u.',
-                           )
-        self.SE2 = NumParam(info='Value at second saturation point',
-                            tex_name='S_{E2}',
-                            default=1.,
-                            unit='p.u.',
-                            )
-
-        self.KE = NumParam(info='Gain added to saturation',
-                           tex_name='K_E',
-                           default=1,
-                           unit='p.u.',
-                           )
-        self.KD = NumParam(default=0,
-                           info='Ifd feedback gain',
-                           tex_name='K_D',
-                           vrange=(0, 1),
-                           )
-
-        # -- cut line
         self.TR = NumParam(info='Sensing time constant',
                            tex_name='T_R',
                            default=0.01,
@@ -212,8 +130,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
         # TODO: check v_str
         self.vref0 = ConstService(info='Initial reference voltage input',
                                   tex_name='V_{ref0}',
-                                #   v_str='v + vfe0 / KA',
-                                  v_str='1',
+                                  v_str='v',
                                   )
 
         ExcVsum.__init__(self)
@@ -228,13 +145,14 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                         diag_eps=True,
                         )
 
-        self.vil = Limiter(u=self.vi, lower=self.VIMIN, upper=self.VIMAX,
+        self.vil = Limiter(u=self.vi,
+                        #    lower=self.ll, upper=self.ul,
+                           lower=self.VIMIN, upper=self.VIMAX,
                            info='Hard limiter before V_I')
 
-        # TODO: check v_str
         self.VI = Algeb(tex_name='V_I',
                         info='V_I',
-                        v_str='1',
+                        v_str='vil_zi * vi + vil_zl * VIMIN + vil_zu * VIMAX',
                         e_str='ue * (vil_zi * vi + vil_zl * VIMIN + vil_zu * VIMAX - VI)',
                         diag_eps=True,
                         )
@@ -279,8 +197,9 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                          )
 
         self.zero = ConstService('0')
-        self.HLI = Limiter(u='XadIfd - ILR',
-                           lower=self.zero, upper=self.ul, no_upper=True,
+        self.HLI = Limiter(u='XadIfd - ILR', no_upper=True,
+                        #    lower=self.zero, upper=self.ul,
+                           lower=self.VRMIN, upper=self.VRMAX,
                            info='Hard limiter for excitation current')
 
         self.UEL3 = Algeb(tex_name='UEL_3',
@@ -327,7 +246,8 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                )
 
         self.vol = Limiter(u=self.LVG_y, info='vout limiter',
-                           lower=self.efdu, upper=self.efdl,
+                        #    lower=self.efdu, upper=self.efdl,
+                           lower=self.VRMIN, upper=self.VRMAX,
                            )
 
         self.WF = Washout(u=self.LVG_y,
