@@ -146,8 +146,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                         )
 
         self.vil = Limiter(u=self.vi,
-                        #    lower=self.ll, upper=self.ul,
-                           lower=self.VIMIN, upper=self.VIMAX,
+                           lower=self.ll, upper=self.ul,
                            info='Hard limiter before V_I')
 
         self.VI = Algeb(tex_name='V_I',
@@ -198,8 +197,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
 
         self.zero = ConstService('0')
         self.HLI = Limiter(u='XadIfd - ILR', no_upper=True,
-                        #    lower=self.zero, upper=self.ul,
-                           lower=self.VRMIN, upper=self.VRMAX,
+                           lower=self.zero, upper=self.ul,
                            info='Hard limiter for excitation current')
 
         self.UEL3 = Algeb(tex_name='UEL_3',
@@ -246,8 +244,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                )
 
         self.vol = Limiter(u=self.LVG_y, info='vout limiter',
-                        #    lower=self.efdu, upper=self.efdl,
-                           lower=self.VRMIN, upper=self.VRMAX,
+                           lower=self.efdu, upper=self.efdl,
                            )
 
         self.WF = Washout(u=self.LVG_y,
