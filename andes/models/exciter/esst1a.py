@@ -195,8 +195,13 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                          e_str='ILR0 - ILR',
                          )
 
+        self.ifl = Algeb(info='exciter output current limiter input',
+                         tex_name='I_{fl}}',
+                         v_str='XadIfd - ILR',
+                         e_str='XadIfd - ILR - ifl',
+                         )
         self.zero = ConstService('0')
-        self.HLI = Limiter(u='XadIfd - ILR', no_upper=True,
+        self.HLI = Limiter(u=self.ifl, no_upper=True,
                            lower=self.zero, upper=self.ul,
                            info='Hard limiter for excitation current')
 
