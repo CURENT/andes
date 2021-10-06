@@ -638,18 +638,21 @@ class System:
         """
         Helper function to compile all functions with Numba before init.
         """
-        if self.config.numba:
-            use_parallel = bool(self.config.numba_parallel)
-            use_cache = bool(self.config.numba_cache)
-            nopython = bool(self.config.numba_nopython)
+        if not self.config.numba:
+            return
 
-            logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
-                        use_parallel, use_cache)
-            for mdl in models.values():
-                mdl.numba_jitify(parallel=use_parallel,
-                                 cache=use_cache,
-                                 nopython=nopython,
-                                 )
+        use_parallel = bool(self.config.numba_parallel)
+        use_cache = bool(self.config.numba_cache)
+        nopython = bool(self.config.numba_nopython)
+
+        logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
+                    use_parallel, use_cache)
+
+        for mdl in models.values():
+            mdl.numba_jitify(parallel=use_parallel,
+                             cache=use_cache,
+                             nopython=nopython,
+                             )
 
     def init(self, models: OrderedDict, routine: str):
         """
