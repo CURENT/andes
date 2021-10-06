@@ -30,7 +30,7 @@ from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
 from andes.utils.paths import confirm_overwrite
-from andes.utils.paths import get_config_path, get_dot_andes_path
+from andes.utils.paths import get_config_path, andes_root
 from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
@@ -214,6 +214,7 @@ class System:
         """
         Reload a new case in the same System object.
         """
+
         self.options.update(kwargs)
         self.files.set(case=case, **kwargs)
         # TODO: clear all flags and empty data
@@ -1431,14 +1432,15 @@ class System:
         pycode = None
         loaded = False
 
-        pycode = load_pycode_dot_andes()
+        # if have not been loaded
+        if not reload_pycode('pycode'):
+            pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
+            pycode = load_pycode_from_path(pycode_path)
+
         if not pycode:
             # or use `pycode` in the andes source folder
-            try:
-                pycode = importlib.import_module("andes.pycode")
-                logger.info("Loaded generated Python code in andes source dir.")
-            except ImportError:
-                pass
+            if not reload_pycode('andes.pycode'):
+                pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
 
         # DO NOT USE `elif` here since below depends on the above.
         if pycode:
@@ -1935,33 +1937,39 @@ class System:
         return out
 
 
-def load_pycode_dot_andes():
+def load_pycode_from_path(pycode_path):
     """
     Helper function to load pycode from ``.andes``.
     """
 
-    MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
+    MODULE_PATH = os.path.join(pycode_path, '__init__.py')
     MODULE_NAME = 'pycode'
 
-    if MODULE_NAME in sys.modules:
-        pycode = sys.modules[MODULE_NAME]
-        for _, m in inspect.getmembers(pycode, inspect.ismodule):
-            importlib.reload(m)
-
-        logger.info('Reloaded generated Python code in "~/.andes/pycode".')
-        return pycode
-
+    pycode = None
     if os.path.isfile(MODULE_PATH):
         try:
             spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
             pycode = importlib.util.module_from_spec(spec)  # NOQA
             sys.modules[spec.name] = pycode
             spec.loader.exec_module(pycode)
-            logger.info('Loaded generated Python code in "~/.andes/pycode".')
+            logger.info('Loaded generated Python code in "%s".', pycode_path)
         except ImportError:
-            pycode = None
+            pass
 
     return pycode
+
+
+def reload_pycode(module_name):
+
+    if module_name in sys.modules:
+        pycode = sys.modules[module_name]
+        for _, m in inspect.getmembers(pycode, inspect.ismodule):
+            importlib.reload(m)
+
+        logger.info('Reloaded generated Python code in "~/.andes/pycode".')
+        return pycode
+
+    return None
 
 
 def _append_model_name(model_name, idx):
