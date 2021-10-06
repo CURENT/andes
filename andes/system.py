@@ -12,7 +12,6 @@ System class for power system data and methods
 #  File name: system.py
 
 import configparser
-from imp import reload
 import importlib
 import logging
 import os
