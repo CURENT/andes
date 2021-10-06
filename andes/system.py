@@ -1427,6 +1427,13 @@ class System:
     def _call_from_pycode(self):
         """
         Helper function to import generated pycode.
+
+        ``pycode`` is imported in the following sequence:
+
+        - a user-provided path from CLI
+        - ``~/.andes/pycode``
+        - ``<andes_root>/pycode``
+
         """
 
         loaded = False
@@ -1959,13 +1966,18 @@ def load_pycode_from_path(pycode_path):
 
 
 def reload_pycode(module_name):
+    """
+    Helper function for reloading an existing module.
+
+    It is used to reload the ``pycode`` module after regenerating code.
+    """
 
     if module_name in sys.modules:
         pycode = sys.modules[module_name]
         for _, m in inspect.getmembers(pycode, inspect.ismodule):
             importlib.reload(m)
 
-        logger.info('Reloaded generated Python code in "~/.andes/pycode".')
+        logger.info('Reloaded generated Python code of module "%s".', module_name)
         return pycode
 
     return None
