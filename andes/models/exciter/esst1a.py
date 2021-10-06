@@ -1,15 +1,13 @@
-from collections import OrderedDict
-
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 
 from andes.core.service import PostInitService, ConstService, VarService
-from andes.core.discrete import Switcher, Limiter
+from andes.core.discrete import Switcher
 from andes.core.block import LagAntiWindup, Lag, HVGate, LVGate, GainLimiter
-from andes.core.block import Piecewise, PIDTrackAW, LeadLag, Washout
+from andes.core.block import LeadLag, Washout
 
 from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
-from andes.core.common import dummify
+
 
 class ESST1AData(ExcBaseData):
     """
@@ -150,32 +148,28 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                    v_str='vf0 - SWVOS_s2 * SG + LR_y',
                                    info='VA (LA_y) initial value')
 
-        self.vb0 = ConstService(info='Initial vb',
-                                tex_name='V_{b0}',
-                                v_str='VA0 / KA - SWVOS_s1 * SG0 - SWUEL_s1 * UEL0 + LR_y')
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vb0',
-                                  )
+        self.vref.v_str = 'v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL'
+        self.vref.v_iter = 'v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL'
+
+        self.vref0 = PostInitService(info='Initial reference voltage input',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
                         e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs - vi)',
-                        v_str='ue * VA0 / KA',
+                        v_iter='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs)',
+                        v_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs)',
                         diag_eps=True,
                         )
 
-        self.vil = Limiter(u=self.vi,
-                           lower=self.ll, upper=self.ul,
-                           info='Hard limiter before V_I')
-
-        self.VI = Algeb(tex_name='V_I',
-                        info='V_I',
-                        v_str='ue * VA0 / KA',
-                        e_str='ue * (vil_zi * vi + vil_zl * VIMIN + vil_zu * VIMAX - VI)',
-                        diag_eps=True,
-                        )
+        self.vil = GainLimiter(u=self.vi,
+                               K=1, R=1,
+                               upper=self.VIMAX, lower=self.VIMIN,
+                               info='Exciter voltage input limiter',
+                               )
 
         self.UEL2 = Algeb(tex_name='UEL_2',
                           info='UEL_2 as HVG1 u1',
@@ -183,7 +177,7 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                           e_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll - UEL2)',
                           )
         self.HVG1 = HVGate(u1=self.UEL2,
-                           u2=self.VI,
+                           u2=self.vil_y,
                            info='HVGate after V_I',
                            )
 
@@ -210,10 +204,11 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
                                 )  # LA_y is VA
 
         self.vas = Algeb(tex_name=r'V_{As}',
-                           info='V_A after subtraction, as HVG u2',
-                           v_str='ue * vf0',
-                           e_str='ue * (SWVOS_s2 * SG + LA_y - LR_y - vas)',
-                           )
+                         info='V_A after subtraction, as HVG u2',
+                         v_str='ue * (SWVOS_s2 * SG + LA_y - LR_y)',
+                         v_iter='ue * (SWVOS_s2 * SG + LA_y - LR_y)',
+                         e_str='ue * (SWVOS_s2 * SG + LA_y - LR_y - vas)',
+                         )
 
         self.UEL3 = Algeb(tex_name='UEL_3',
                           info='UEL_3 as HVG u1',
