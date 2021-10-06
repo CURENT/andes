@@ -28,12 +28,12 @@ class IEEET3Data(ExcBaseData):
                            default=0.04,
                            unit='p.u.',
                            )
-        self.VRMAX = NumParam(info='Maximum excitation limit',
-                              tex_name='V_{RMAX}',
+        self.VRMAX = NumParam(info='Maximum regulator limit',
+                              tex_name=r'V_{RMAX}',
                               default=7.3,
                               unit='p.u.')
-        self.VRMIN = NumParam(info='Minimum excitation limit',
-                              tex_name='V_{RMIN}',
+        self.VRMIN = NumParam(info='Minimum regulator limit',
+                              tex_name=r'V_{RMIN}',
                               default=-7.3,
                               unit='p.u.')
         self.VBMAX = NumParam(info='VB upper limit',
