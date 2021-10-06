@@ -12,6 +12,7 @@ System class for power system data and methods
 #  File name: system.py
 
 import configparser
+from imp import reload
 import importlib
 import logging
 import os
@@ -1429,18 +1430,17 @@ class System:
         Helper function to import generated pycode.
         """
 
-        pycode = None
         loaded = False
 
-        # if have not been loaded
-        if not reload_pycode('pycode'):
+        # below are executed serially because of priority
+        pycode = reload_pycode('pycode')
+        if not pycode:
             pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
             pycode = load_pycode_from_path(pycode_path)
-
         if not pycode:
-            # or use `pycode` in the andes source folder
-            if not reload_pycode('andes.pycode'):
-                pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
+            pycode = reload_pycode('andes.pycode')
+        if not pycode:
+            pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
 
         # DO NOT USE `elif` here since below depends on the above.
         if pycode:
@@ -1954,7 +1954,7 @@ def load_pycode_from_path(pycode_path):
             spec.loader.exec_module(pycode)
             logger.info('Loaded generated Python code in "%s".', pycode_path)
         except ImportError:
-            pass
+            logger.debug('Failed loading generated Python code in "%s".', pycode_path)
 
     return pycode
 
