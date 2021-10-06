@@ -23,11 +23,11 @@ class ESST1AData(ExcBaseData):
 
         self.VIMAX = NumParam(default=0.8,
                               info='Max. input voltage',
-                              tex_name='V_{IMAX}',
+                              tex_name=r'V_{IMAX}',
                               )
         self.VIMIN = NumParam(default=-0.1,
                               info='Min. input voltage',
-                              tex_name='V_{IMIN}',
+                              tex_name=r'V_{IMIN}',
                               )
         self.TB = NumParam(info='Lag time constant in lead-lag',
                            tex_name='T_B',
@@ -48,11 +48,11 @@ class ESST1AData(ExcBaseData):
                             )
 
         self.VAMAX = NumParam(info='V_A upper limit',
-                              tex_name='V_{AMAX}',
+                              tex_name=r'V_{AMAX}',
                               default=999,
                               unit='p.u.')
         self.VAMIN = NumParam(info='V_A lower limit',
-                              tex_name='V_{AMIN}',
+                              tex_name=r'V_{AMIN}',
                               default=-999,
                               unit='p.u.')
 
@@ -75,11 +75,11 @@ class ESST1AData(ExcBaseData):
                             )
 
         self.VRMAX = NumParam(info='Maximum voltage regulator output limit',
-                              tex_name='V_{RMAX}',
+                              tex_name=r'V_{RMAX}',
                               default=7.3,
                               unit='p.u.',)
         self.VRMIN = NumParam(info='Minimum voltage regulator output limit',
-                              tex_name='V_{RMIN}',
+                              tex_name=r'V_{RMIN}',
                               default=-7.3,
                               unit='p.u.',)
 
@@ -98,11 +98,11 @@ class ESST1AData(ExcBaseData):
                            )
 
         self.UELc = NumParam(info='Alternate UEL inputs, input code 1-3',
-                             tex_name='UEL',
+                             tex_name='UEL_c',
                              default=1,
                              )
         self.VOSc = NumParam(info='Alternate Stabilizer inputs, input code 1-2',
-                             tex_name='VOS',
+                             tex_name='VOS_c',
                              default=1,
                              )
 
@@ -267,11 +267,16 @@ class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
 class ESST1A(ESST1AData, ESST1AModel):
     """
     Exciter ESST1A model.
+
     Reference:
+
     [1] PowerWorld, Exciter ESST1A, [Online],
+
     [2] NEPLAN, Exciters Models, [Online],
+
     Available:
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESST1A.htm
+
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):
