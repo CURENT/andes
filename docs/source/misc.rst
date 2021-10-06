@@ -76,33 +76,6 @@ if any input changes.
 ``EventFlag`` is a ``VarService`` that will be evaluated at each
 iteration after discrete components and before equations.
 
-Per Unit System
-==============================
-
-The bases for AC system are
-
-- :math:`S_b^{ac}`: three-phase power in MVA. By default, :math:`S_b^{ac}=100 MVA` (in ``System.config.mva``).
-
-- :math:`V_b^{ac}`: phase-to-phase voltage in kV.
-
-- :math:`I_b^{ac}`: current base :math:`I_b^{ac} = \frac{S_b^{ac}} {\sqrt{3} V_b^{ac}}`
-
-The bases for DC system are
-
-- :math:`S_b^{dc}`: power in MVA. It is assumed to be the same as :math:`S_b^{ac}`.
-
-- :math:`V_b^{dc}`: voltage in kV.
-
-Some device parameters with specific properties are per unit values under the corresponding
-device base ``Sn`` and ``Vn`` (if applicable).
-These properties are documented in :py:mod:`andes.core.param.NumParam`.
-
-After setting up the system, these parameters will be converted to the system base MVA
-as specified in the config file (100 MVA by default).
-The parameter values in the system base will be stored in the ``v`` attribute of the ``NumParam``,
-and the original inputs in the device base will be stored to the ``vin`` attribute.
-Values in the ``v`` attribute is what get utilized in computation.
-Writing new values directly to ``vin`` will not affect the values in ``v`` afterwards.
 
 Profiling Import
 ========================================
