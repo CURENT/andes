@@ -27,11 +27,11 @@ class ESAC1AData(ExcBaseData):
                            unit='p.u.',
                            )
         self.VAMAX = NumParam(info='V_A upper limit',
-                              tex_name='V_{AMAX}',
+                              tex_name=r'V_{AMAX}',
                               default=999,
                               unit='p.u.')
         self.VAMIN = NumParam(info='V_A lower limit',
-                              tex_name='V_{AMIN}',
+                              tex_name=r'V_{AMIN}',
                               default=-999,
                               unit='p.u.')
         self.KA = NumParam(default=80,
@@ -44,11 +44,11 @@ class ESAC1AData(ExcBaseData):
                            unit='p.u.',
                            )
         self.VRMAX = NumParam(info='Max. exc. limit (0-unlimited)',
-                              tex_name='V_{RMAX}',
+                              tex_name=r'V_{RMAX}',
                               default=7.3,
                               unit='p.u.')
         self.VRMIN = NumParam(info='Min. excitation limit',
-                              tex_name='V_{RMIN}',
+                              tex_name=r'V_{RMIN}',
                               default=-7.3,
                               unit='p.u.')
         self.TE = NumParam(info='Integrator time constant',
@@ -62,7 +62,7 @@ class ESAC1AData(ExcBaseData):
                            unit='p.u.',
                            )
         self.SE1 = NumParam(info='Value at first saturation point',
-                            tex_name='S_{E1}',
+                            tex_name=r'S_{E1}',
                             default=0.,
                             unit='p.u.',
                             )
@@ -72,7 +72,7 @@ class ESAC1AData(ExcBaseData):
                            unit='p.u.',
                            )
         self.SE2 = NumParam(info='Value at second saturation point',
-                            tex_name='S_{E2}',
+                            tex_name=r'S_{E2}',
                             default=1.,
                             unit='p.u.',
                             )
