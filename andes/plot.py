@@ -270,7 +270,7 @@ class TDSData:
              legend=None, grid=False, greyscale=False, latex=True,
              dpi=DPI, line_width=1.0, font_size=12, savefig=None, save_format=None, show=True,
              title=None, linestyles=None, use_bqplot=False,
-             hline1=None, hline2=None, vline1=None, vline2=None,
+             hline1=None, hline2=None, vline1=None, vline2=None, hline=None, vline=None,
              fig=None, ax=None, backend=None,
              set_xlim=True, set_ylim=True, autoscale=False,
              legend_bbox=None, legend_loc=None, legend_ncol=1,
@@ -359,6 +359,10 @@ class TDSData:
             Dashed horizontal line 1
         vline2: float, optional
             Dashed vertical line 2
+        hline: float or Iterable
+            y-axis location of horizontal line(s)
+        vline: float or Iterable
+            x-axis location of vertical line(s)
 
         Returns
         -------
@@ -414,7 +418,7 @@ class TDSData:
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
                          legend_bbox=legend_bbox, legend_loc=legend_loc, legend_ncol=legend_ncol,
-                         figsize=figsize,
+                         figsize=figsize, hline=hline, vline=vline,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -471,7 +475,8 @@ class TDSData:
     def plot_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None, linestyles=None,
                   left=None, right=None, ymin=None, ymax=None, legend=None, grid=False, fig=None, ax=None,
                   latex=True, dpi=DPI, line_width=1.0, font_size=12, greyscale=False, savefig=None,
-                  save_format=None, show=True, title=None, hline1=None, hline2=None, vline1=None,
+                  save_format=None, show=True, title=None,
+                  hline1=None, hline2=None, vline1=None, hline=None, vline=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None, legend_ncol=1,
                   mask=True,
@@ -594,14 +599,40 @@ class TDSData:
         if title:
             ax.set_title(title)
 
+        # --- process hlines and vlines
+        if hline1 or hline2 or vline1 or vline2:
+            logger.warning("hline1, hline2, vline1, and vline2 are deprecated. Use `hline` and `vline`.")
+
+        if isinstance(hline, (float, int, np.floating, np.integer)):
+            hline = [hline]
+        elif isinstance(hline, tuple):
+            hline = list(hline)
+        elif hline is None:
+            hline = []
+
+        if isinstance(vline, (float, int, np.floating, np.integer)):
+            vline = [vline]
+        elif isinstance(vline, tuple):
+            vline = list(vline)
+        elif vline is None:
+            vline = []
+
+        # process the legacy hline1, hline2, and vline1 and vline2
         if hline1:
-            ax.axhline(y=hline1, linewidth=1, ls=':', color='grey')
+            hline.append(hline1)
         if hline2:
-            ax.axhline(y=hline2, linewidth=1, ls=':', color='grey')
+            hline.append(hline2)
         if vline1:
-            ax.axvline(x=vline1, linewidth=1, ls=':', color='grey')
+            vline.append(vline1)
         if vline2:
-            ax.axvline(x=vline2, linewidth=1, ls=':', color='grey')
+            vline.append(vline2)
+
+        for loc in hline:
+            ax.axhline(y=loc, linewidth=1, ls=':', color='grey')
+        for loc in vline:
+            ax.axvline(x=loc, linewidth=1, ls=':', color='grey')
+
+        # --- hline and vline finished ---
 
         plt.draw()
 
