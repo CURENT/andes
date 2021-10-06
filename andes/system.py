@@ -30,7 +30,7 @@ from andes.routines import all_routines
 from andes.utils.tab import Tab
 from andes.utils.misc import elapsed
 from andes.utils.paths import confirm_overwrite
-from andes.utils.paths import get_config_path, get_dot_andes_path
+from andes.utils.paths import get_config_path, andes_root
 from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
@@ -40,7 +40,6 @@ from andes.shared import matrix, spmatrix, sparse, Pool
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True
-pycode = None
 
 
 class ExistingModels:
@@ -214,6 +213,7 @@ class System:
         """
         Reload a new case in the same System object.
         """
+
         self.options.update(kwargs)
         self.files.set(case=case, **kwargs)
         # TODO: clear all flags and empty data
@@ -368,8 +368,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        if pycode:
-            self._call_from_pycode()
+        self._call_from_pycode()
 
     def _find_stale_models(self):
         """
@@ -639,18 +638,21 @@ class System:
         """
         Helper function to compile all functions with Numba before init.
         """
-        if self.config.numba:
-            use_parallel = bool(self.config.numba_parallel)
-            use_cache = bool(self.config.numba_cache)
-            nopython = bool(self.config.numba_nopython)
+        if not self.config.numba:
+            return
 
-            logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
-                        use_parallel, use_cache)
-            for mdl in models.values():
-                mdl.numba_jitify(parallel=use_parallel,
-                                 cache=use_cache,
-                                 nopython=nopython,
-                                 )
+        use_parallel = bool(self.config.numba_parallel)
+        use_cache = bool(self.config.numba_cache)
+        nopython = bool(self.config.numba_nopython)
+
+        logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
+                    use_parallel, use_cache)
+
+        for mdl in models.values():
+            mdl.numba_jitify(parallel=use_parallel,
+                             cache=use_cache,
+                             nopython=nopython,
+                             )
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -1410,38 +1412,51 @@ class System:
         Helper function for loading ModelCall from pickle file.
         """
 
-        self.calls = self._load_pkl()
         loaded = False
+        any_calls = self._load_pkl()
 
-        if self.calls is not None:
-            loaded = True
+        if any_calls is not None:
+            self.calls = any_calls
 
             for name, model_call in self.calls.items():
                 if name in self.__dict__:
                     self.__dict__[name].calls = model_call
+
+            loaded = True
 
         return loaded
 
     def _call_from_pycode(self):
         """
         Helper function to import generated pycode.
+
+        ``pycode`` is imported in the following sequence:
+
+        - a user-provided path from CLI
+        - ``~/.andes/pycode``
+        - ``<andes_root>/pycode``
+
         """
-        pycode = None
+
         loaded = False
 
-        pycode = load_pycode_dot_andes()
+        # below are executed serially because of priority
+        pycode = reload_submodules('pycode')
         if not pycode:
-            # or use `pycode` in the andes source folder
-            try:
-                pycode = importlib.import_module("andes.pycode")
-                logger.info("Loaded generated Python code in andes source dir.")
-            except ImportError:
-                pass
+            pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
+            pycode = load_pycode_from_path(pycode_path)
+        if not pycode:
+            pycode = reload_submodules('andes.pycode')
+        if not pycode:
+            pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
 
         # DO NOT USE `elif` here since below depends on the above.
         if pycode:
-            self._expand_pycode(pycode)
-            loaded = True
+            try:
+                self._expand_pycode(pycode)
+                loaded = True
+            except KeyError:
+                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
 
         return loaded
 
@@ -1930,26 +1945,44 @@ class System:
         return out
 
 
-def load_pycode_dot_andes():
+def load_pycode_from_path(pycode_path):
     """
     Helper function to load pycode from ``.andes``.
     """
-    pycode = None
 
-    MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
+    MODULE_PATH = os.path.join(pycode_path, '__init__.py')
     MODULE_NAME = 'pycode'
 
+    pycode = None
     if os.path.isfile(MODULE_PATH):
         try:
             spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
             pycode = importlib.util.module_from_spec(spec)  # NOQA
             sys.modules[spec.name] = pycode
             spec.loader.exec_module(pycode)
-            logger.info('Loaded generated Python code in "~/.andes/pycode".')
+            logger.info('Loaded generated Python code in "%s".', pycode_path)
         except ImportError:
-            pass
+            logger.debug('Failed loading generated Python code in "%s".', pycode_path)
 
     return pycode
+
+
+def reload_submodules(module_name):
+    """
+    Helper function for reloading an existing module and its submodules.
+
+    It is used to reload the ``pycode`` module after regenerating code.
+    """
+
+    if module_name in sys.modules:
+        pycode = sys.modules[module_name]
+        for _, m in inspect.getmembers(pycode, inspect.ismodule):
+            importlib.reload(m)
+
+        logger.info('Reloaded generated Python code of module "%s".', module_name)
+        return pycode
+
+    return None
 
 
 def _append_model_name(model_name, idx):

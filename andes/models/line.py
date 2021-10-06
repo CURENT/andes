@@ -65,21 +65,25 @@ class LineData(ModelData):
                           )
         self.b1 = NumParam(default=0.0,
                            info="from-side susceptance",
+                           y=True,
                            tex_name='b_1',
                            unit='p.u.',
                            )
         self.g1 = NumParam(default=0.0,
                            info="from-side conductance",
+                           y=True,
                            tex_name='g_1',
                            unit='p.u.',
                            )
         self.b2 = NumParam(default=0.0,
                            info="to-side susceptance",
+                           y=True,
                            tex_name='b_2',
                            unit='p.u.',
                            )
         self.g2 = NumParam(default=0.0,
                            info="to-side conductance",
+                           y=True,
                            tex_name='g_2',
                            unit='p.u.',
                            )
