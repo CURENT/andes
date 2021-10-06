@@ -1439,12 +1439,12 @@ class System:
         loaded = False
 
         # below are executed serially because of priority
-        pycode = reload_pycode('pycode')
+        pycode = reload_submodules('pycode')
         if not pycode:
             pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
             pycode = load_pycode_from_path(pycode_path)
         if not pycode:
-            pycode = reload_pycode('andes.pycode')
+            pycode = reload_submodules('andes.pycode')
         if not pycode:
             pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
 
@@ -1965,9 +1965,9 @@ def load_pycode_from_path(pycode_path):
     return pycode
 
 
-def reload_pycode(module_name):
+def reload_submodules(module_name):
     """
-    Helper function for reloading an existing module.
+    Helper function for reloading an existing module and its submodules.
 
     It is used to reload the ``pycode`` module after regenerating code.
     """
