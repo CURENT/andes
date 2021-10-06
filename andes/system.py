@@ -368,8 +368,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        if pycode:
-            self._call_from_pycode()
+        self._call_from_pycode()
 
     def _find_stale_models(self):
         """
@@ -1410,15 +1409,17 @@ class System:
         Helper function for loading ModelCall from pickle file.
         """
 
-        self.calls = self._load_pkl()
         loaded = False
+        any_calls = self._load_pkl()
 
-        if self.calls is not None:
-            loaded = True
+        if any_calls is not None:
+            self.calls = any_calls
 
             for name, model_call in self.calls.items():
                 if name in self.__dict__:
                     self.__dict__[name].calls = model_call
+
+            loaded = True
 
         return loaded
 
@@ -1426,6 +1427,7 @@ class System:
         """
         Helper function to import generated pycode.
         """
+
         pycode = None
         loaded = False
 
@@ -1440,8 +1442,11 @@ class System:
 
         # DO NOT USE `elif` here since below depends on the above.
         if pycode:
-            self._expand_pycode(pycode)
-            loaded = True
+            try:
+                self._expand_pycode(pycode)
+                loaded = True
+            except KeyError:
+                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
 
         return loaded
 
@@ -1934,10 +1939,17 @@ def load_pycode_dot_andes():
     """
     Helper function to load pycode from ``.andes``.
     """
-    pycode = None
 
     MODULE_PATH = get_dot_andes_path() + '/pycode/__init__.py'
     MODULE_NAME = 'pycode'
+
+    if MODULE_NAME in sys.modules:
+        pycode = sys.modules[MODULE_NAME]
+        for _, m in inspect.getmembers(pycode, inspect.ismodule):
+            importlib.reload(m)
+
+        logger.info('Reloaded generated Python code in "~/.andes/pycode".')
+        return pycode
 
     if os.path.isfile(MODULE_PATH):
         try:
@@ -1947,7 +1959,7 @@ def load_pycode_dot_andes():
             spec.loader.exec_module(pycode)
             logger.info('Loaded generated Python code in "~/.andes/pycode".')
         except ImportError:
-            pass
+            pycode = None
 
     return pycode
 
