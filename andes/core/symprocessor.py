@@ -371,6 +371,12 @@ class SymProcessor:
         Create output source code file for generated code.
 
         Generated code are stored at ``~/.andes/pycode``.
+
+        Notes
+        -----
+        In the current implementation, each model saves a ``.py`` file.
+        In systems with slow disk access (such as networked file systems),
+        this function can be the bottleneck.
         """
 
         pycode_path = get_pycode_path(pycode_path, mkdir=True)
