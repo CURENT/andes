@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.4.4 (2021-10-05)
+````````````````````
+- Bug fixes for refreshing generated code.
+
 v1.4.3 (2021-09-25)
 ```````````````````
 This release features parallel processing that cuts the time for
