@@ -1,12 +1,15 @@
 # v1.5
 
-# Milestones
+## Milestones
 
 * Separate array-enabled parameters from NumParam into
   `BaseConvParam`, which implements `iconvert` and `oconvert`,
   and then `ListParam`
 * Improve the robustness of accessing the fields of `pycode` by properly
   handling `KeyError`s.
+* Numba code generation for all models. Add a function for triggering
+  all the JIT compilation before simulation.
+* Unit Model Test framework.
 
 # Later Versions
 
@@ -25,11 +28,13 @@
 * Eigenvalue analysis report sort options: by damping, frequency, or eigenvalue
 * Root loci plots
 
-# v1.4
+# Previous
+
+## v1.4
 
 * [X] Disallow linking ExtAlgeb to State and ExtState to Algeb (check in prepare).
 
-# v1.3
+## v1.3
 
 ## Milestones
 
