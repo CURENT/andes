@@ -650,6 +650,17 @@ class Exciter(GroupBase):
         self.PSS = BackRef()
 
 
+class VoltComp(GroupBase):
+    """
+    Voltage compensator group for synchronous generators.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params.extend(('rc', 'xc',))
+        self.common_vars.extend(('vcomp',))
+
+
 class PSS(GroupBase):
     """Power system stabilizer group."""
 
