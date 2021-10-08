@@ -3,10 +3,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb
 
-from andes.core.service import ConstService, VarService
-
-
-from andes.core.service import ExtService, ConstService
+from andes.core.service import ConstService, VarService, ExtService
 
 
 class IEEEVCData(ModelData):
@@ -88,8 +85,8 @@ class IEEEVCModel(Model):
                            )
 
         self.vct = VarService(tex_name=r'V_{CT}',
-                             v_str='Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))',
-                             )
+                              v_str='Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))',
+                              )
         self.vcomp0 = ConstService(v_str='Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))')
         # output voltage
         self.vcomp = Algeb(info='Compensator output voltage to exciter',
@@ -113,7 +110,7 @@ class IEEEVC(IEEEVCData, IEEEVCModel):
     Available:
 
     https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Voltage%20Compensator%20IEEEVC.htm?TocPath=%7C%7C%7CIEEEVC%7C_____0
-    
+
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):
