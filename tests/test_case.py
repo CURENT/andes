@@ -211,7 +211,7 @@ class TestPlot(unittest.TestCase):
                         title='Bus Voltage Plot',
                         left=0.2, right=1.5,
                         ymin=0.95, ymax=1.05, legend=True, grid=True, greyscale=True,
-                        hline1=1.01, hline2=1.02, vline1=0.5, vline2=0.8,
+                        hline=[1.01, 1.02], vline=[0.5, 0.8],
                         dpi=80, line_width=1.2, font_size=11, show=False,
                         )
 
