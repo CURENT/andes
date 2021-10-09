@@ -106,12 +106,12 @@ class ExcBase(Model):
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
                           )
-        self.v = ExtAlgeb(model='Bus',
-                          src='v',
-                          indexer=self.bus,
-                          tex_name=r'V',
-                          info='Bus voltage magnitude',
-                          )
+        self.vbus = ExtAlgeb(model='Bus',
+                             src='v',
+                             indexer=self.bus,
+                             tex_name='V',
+                             info='Bus voltage magnitude',
+                             )
 
         self.vcomp = ExtAlgeb(model='VoltComp',
                               src='vcomp',
@@ -119,6 +119,16 @@ class ExcBase(Model):
                               tex_name=r'V_{comp}',
                               info='Voltage comp. output',
                               )
+
+        # `self.v` is actually `ETERM` in other software
+        # TODO:
+        # Preferably, its name needs to be changed to `eterm`.
+        # That requires updates in equations of all exciters.
+        self.v = Algeb(info='Eterm, sum of vbus and vcomp',
+                       tex_name='E_{term}',
+                       v_str='vbus',
+                       e_str='vbus - v'
+                       )
 
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',

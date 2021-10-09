@@ -451,6 +451,7 @@ class ExtVar(BaseVar):
         self.parent = ext_model
 
         if isinstance(ext_model, GroupBase):
+            # determine the number of elements based on `indexer.v`
             if self.indexer.n > 0 and isinstance(self.indexer.v[0], (list, np.ndarray)):
                 self._n = [len(i) for i in self.indexer.v]  # number of elements in each sublist
                 self._idx = np.concatenate([np.array(i) for i in self.indexer.v])
