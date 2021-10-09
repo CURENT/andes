@@ -1598,34 +1598,43 @@ class System:
         """
         models_and_groups = list(self.models.values()) + list(self.groups.values())
 
+        # create an empty list of lists for all `BackRef` instances
         for model in models_and_groups:
             for ref in model.services_ref.values():
                 ref.v = [list() for _ in range(model.n)]
 
+        # `model` is the model who stores `IdxParam`s to other models
+        # `BackRef` is declared at other models specified by the `model` parameter
+        # of `IdxParam`s.
+
         for model in models_and_groups:
             if model.n == 0:
                 continue
+
+            # skip: a group is not allowed to link to other groups
             if not hasattr(model, "idx_params"):
-                # skip: group does not link to another group
                 continue
 
-            for ref in model.idx_params.values():
-                if ref.model not in self.models and (ref.model not in self.groups):
+            for idxp in model.idx_params.values():
+                if (idxp.model not in self.models) and (idxp.model not in self.groups):
                     continue
-                dest_model = self.__dict__[ref.model]
+                dest = self.__dict__[idxp.model]
 
-                if dest_model.n == 0:
+                if dest.n == 0:
                     continue
 
-                for n in (model.class_name, model.group):
-                    if n not in dest_model.services_ref:
+                for name in (model.class_name, model.group):
+                    # `BackRef` not requested by the linked models or groups
+                    if name not in dest.services_ref:
                         continue
 
-                    for model_idx, dest_idx in zip(model.idx.v, ref.v):
-                        if dest_idx not in dest_model.uid:
+                    for model_idx, dest_idx in zip(model.idx.v, idxp.v):
+                        if dest_idx not in dest.uid:
                             continue
-                        uid = dest_model.idx2uid(dest_idx)
-                        dest_model.services_ref[n].v[uid].append(model_idx)
+
+                        dest.set_backref(name,
+                                         from_idx=model_idx,
+                                         to_idx=dest_idx)
 
             # set model ``in_use`` flag
             if isinstance(model, Model):

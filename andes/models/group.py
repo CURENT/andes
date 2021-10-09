@@ -336,6 +336,17 @@ class GroupBase:
 
         return ret
 
+    def set_backref(self, name, from_idx, to_idx):
+        """
+        Set idxes to ``BackRef`, and set them to models.
+        """
+
+        uid = self.idx2uid(to_idx)
+        self.services_ref[name].v[uid].append(from_idx)
+
+        model = self.idx2model(to_idx)
+        model.set_backref(name, from_idx, to_idx)
+
     def get_next_idx(self, idx=None, model_name=None):
         """
         Get a no-conflict idx for a new device.
@@ -647,6 +658,7 @@ class Exciter(GroupBase):
         self.common_params.extend(('syn',))
         self.common_vars.extend(('vout', 'vi',))
 
+        self.VoltComp = BackRef()
         self.PSS = BackRef()
 
 
