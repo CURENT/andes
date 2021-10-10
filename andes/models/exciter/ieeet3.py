@@ -143,7 +143,6 @@ class IEEET3Model(ExcBase, ExcVsum):
                                      tex_name='V_{ref0}',
                                      v_str='vref')
 
-
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',

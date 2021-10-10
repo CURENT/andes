@@ -1,6 +1,6 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
-from andes.core.service import ConstService, PostInitService
+from andes.core.service import PostInitService
 from andes.core.block import LeadLag, Washout, Lag
 from andes.core.discrete import HardLimiter
 

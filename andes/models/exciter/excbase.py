@@ -8,7 +8,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
-from andes.core.service import ExtService, ConstService, BackRef, IdxRepeat
+from andes.core.service import ExtService, ConstService, BackRef
 from andes.core.block import Integrator
 from andes.core.discrete import LessThan
 from andes.models.exciter.saturation import ExcQuadSat

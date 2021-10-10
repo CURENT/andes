@@ -60,9 +60,9 @@ class SEXSModel(ExcBase):
                           )
 
         self.vref0 = PostInitService(info='Constant vref',
-                                  tex_name='V_{ref0}',
-                                  v_str='vref',
-                                  )
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         # input excitation voltages; PSS outputs summed at vi
         self.vi = Algeb(info='Total input voltages',
