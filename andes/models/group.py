@@ -338,7 +338,7 @@ class GroupBase:
 
     def set_backref(self, name, from_idx, to_idx):
         """
-        Set idxes to ``BackRef`, and set them to models.
+        Set idxes to ``BackRef``, and set them to models.
         """
 
         uid = self.idx2uid(to_idx)
