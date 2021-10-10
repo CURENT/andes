@@ -129,10 +129,14 @@ class SymProcessor:
             if var in self.parent.__dict__ and self.parent.__dict__[var].tex_name is not None:
                 self.tex_names[Symbol(var)] = Symbol(self.parent.__dict__[var].tex_name)
 
+        # additional variables by conventions
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
+        self.inputs_dict['__ones'] = Symbol('__ones')
+        self.inputs_dict['__zeros'] = Symbol('__zeros')
 
+        # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
         self.lambdify_func[0]['imag'] = np.imag
         self.lambdify_func[0]['real'] = np.real

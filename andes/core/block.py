@@ -211,8 +211,9 @@ class Block:
 
     def export(self):
         """
-        Method for exporting instances defined in this class in a dictionary. This method calls the ``define``
-        method first and returns ``self.vars``.
+        Method for exporting instances defined in this class in a dictionary.
+
+        This method calls the ``define`` method first and returns ``self.vars``.
 
         Returns
         -------
