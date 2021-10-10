@@ -27,6 +27,12 @@ when compensators exist, the input voltage will be bus voltage (vbus) plus
 (Eterm - vbus).
 If no compensator exists, exciter will use bus voltages and function as expected.
 
+- Added reserved variable names ``__ones`` and ``__zeros`` for ones and
+  zeros with length equal to the device number.
+
+``__ones`` and ``__zeros`` are useful for vectorizing ``choicelist``
+in ``Piecewise`` functions.
+
 v1.4.4 (2021-10-05)
 ````````````````````
 - Bug fixes for refreshing generated code.
