@@ -8,7 +8,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
-from andes.core.service import ExtService, ConstService, BackRef
+from andes.core.service import ExtService, ConstService, BackRef, IdxRepeat
 from andes.core.block import Integrator
 from andes.core.discrete import LessThan
 from andes.models.exciter.saturation import ExcQuadSat
@@ -28,6 +28,18 @@ class ExcBaseData(ModelData):
 
 
 class ExcBase(Model):
+    """
+    Base model for exciters.
+
+    Notes
+    -----
+    As of v1.4.5, the input voltage Eterm (variable ``self.v``)
+    is converted to type ``Algeb``.
+    Since variables are evaluated after services,
+    ``ConstService`` of exciters can no longer depend on ``v``.
+
+    TODO: programmatically disallow ``ConstService`` use uninitialized variables.
+    """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Exciter'
@@ -113,21 +125,15 @@ class ExcBase(Model):
                              info='Bus voltage magnitude',
                              )
 
-        self.vcomp = ExtAlgeb(model='VoltComp',
-                              src='vcomp',
-                              indexer=self.VoltComp,
-                              tex_name=r'V_{comp}',
-                              info='Voltage comp. output',
-                              )
-
         # `self.v` is actually `ETERM` in other software
         # TODO:
         # Preferably, its name needs to be changed to `eterm`.
         # That requires updates in equations of all exciters.
-        self.v = Algeb(info='Eterm, sum of vbus and vcomp',
+        self.v = Algeb(info='Input to exciter (bus v or Eterm)',
                        tex_name='E_{term}',
                        v_str='vbus',
-                       e_str='vbus - v'
+                       e_str='vbus - v',
+                       v_str_add=True,
                        )
 
         # output excitation voltage
@@ -170,8 +176,8 @@ class ExcVsum:
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
                           e_str='vref0 - vref'
+                          # TODO: subclass to provide `vi.v_str`
                           )
 
 

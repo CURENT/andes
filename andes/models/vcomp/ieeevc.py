@@ -76,25 +76,28 @@ class IEEEVCModel(Model):
                            info='q-axis machine current',
                            )
 
-        # from Exciter
-        self.vi = ExtAlgeb(model='Exciter', src='vi', indexer=self.avr, tex_name='v_i',
-                           info='Exciter input voltage',
-                           e_str='u * vcomp',
-                           ename='Vi',
-                           tex_ename='V_i',
-                           )
-
         self.vct = VarService(tex_name=r'V_{CT}',
-                              v_str='Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))',
+                              v_str='u * Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))',
                               )
-        self.vcomp0 = ConstService(v_str='Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))')
-        # output voltage
+        # self.vcomp0 = ConstService(v_str='u * Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))')
+
+        # output voltage.
+        # `vcomp` is the additional voltage to be added to bus terminal voltage
         self.vcomp = Algeb(info='Compensator output voltage to exciter',
                            tex_name=r'v_{comp}',
-                           v_str='vcomp0 - v',
-                           e_str='u * (vct - v - vcomp)',
-                           diag_eps=True,
+                           v_str='vct - u * v',
+                           e_str='vct - u * v - vcomp',
                            )
+
+        # do not need to interface to exciters here.
+        # Let the exciters pick up `vcomp` through back referencing
+
+        self.Eterm = ExtAlgeb(model='Exciter',
+                              src='v',
+                              indexer=self.avr,
+                              v_str='vcomp',
+                              e_str='vcomp',
+                              )
 
 
 class IEEEVC(IEEEVCData, IEEEVCModel):

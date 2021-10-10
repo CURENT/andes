@@ -7,7 +7,7 @@ from andes.models.exciter.saturation import ExcQuadSat
 
 from andes.core.param import NumParam
 from andes.core.var import Algeb, State
-from andes.core.service import ConstService
+from andes.core.service import ConstService, PostInitService
 from andes.core.block import LeadLag, Washout, Lag, LessThan, LagAntiWindup
 
 
@@ -114,17 +114,16 @@ class EXDC2Model(ExcBase):
                                 tex_name='V_{b0}',
                                 v_str='vr0 / KA')
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='vb0 + v',
-                                  )  # derived classes to-do: provide `v_str`
-
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + vb0',
                           e_str='vref0 - vref'
                           )
+        self.vref0 = PostInitService(info='Constant v ref',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.SL = LessThan(u=self.vout,
                            bound=self.SAT_A,

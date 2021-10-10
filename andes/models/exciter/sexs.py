@@ -1,7 +1,7 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService
+from andes.core.service import ConstService, PostInitService
 
 from andes.core.block import LagAntiWindup, LeadLag
 
@@ -52,17 +52,18 @@ class SEXSModel(ExcBase):
 
         self.TA = ConstService(v_str='TATB * TB')
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='vf0/K + v',
-                                  )
-
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + vf0 / K',
                           e_str='vref0 - vref'
                           )
+
+        self.vref0 = PostInitService(info='Constant vref',
+                                  tex_name='V_{ref0}',
+                                  v_str='vref',
+                                  )
+
         # input excitation voltages; PSS outputs summed at vi
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',

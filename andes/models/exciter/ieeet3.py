@@ -1,7 +1,7 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 
-from andes.core.service import ConstService, FlagValue, VarService
+from andes.core.service import ConstService, FlagValue, VarService, PostInitService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
@@ -124,10 +124,6 @@ class IEEET3Model(ExcBase, ExcVsum):
                                 tex_name='V_{b0}',
                                 v_str='VR0 / KA')
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vb0')
-
         # Set VRMAX to 999 when VRMAX = 0
         self._zVRM = FlagValue(self.VRMAX, value=0,
                                tex_name='z_{VRMAX}',
@@ -140,6 +136,13 @@ class IEEET3Model(ExcBase, ExcVsum):
                       info='Sensing delay')
 
         ExcVsum.__init__(self)
+
+        self.vref.v_str = 'v + vb0'
+
+        self.vref0 = PostInitService(info='Constant vref',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref')
+
 
         # NOTE: for offline exciters, `vi` equation ignores ext. voltage changes
         self.vi = Algeb(info='Total input voltages',
@@ -203,6 +206,7 @@ class IEEET3(IEEET3Data, IEEET3Model):
 
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
+
     def __init__(self, system, config):
         IEEET3Data.__init__(self)
         IEEET3Model.__init__(self, system, config)
