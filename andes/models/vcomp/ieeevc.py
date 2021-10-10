@@ -3,7 +3,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import NumParam, IdxParam, ExtParam
 from andes.core.var import Algeb, ExtAlgeb
 
-from andes.core.service import ConstService, VarService, ExtService
+from andes.core.service import VarService, ExtService
 
 
 class IEEEVCData(ModelData):
@@ -79,7 +79,6 @@ class IEEEVCModel(Model):
         self.vct = VarService(tex_name=r'V_{CT}',
                               v_str='u * Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))',
                               )
-        # self.vcomp0 = ConstService(v_str='u * Abs((vd + 1j*vq) + (rc + 1j * xc) * (Id + 1j*Iq))')
 
         # output voltage.
         # `vcomp` is the additional voltage to be added to bus terminal voltage
