@@ -670,7 +670,7 @@ class System:
             logger.warning("Numba not found. JIT compilation is skipped.")
 
         for mdl in models.values():
-            # link externals first
+            # link externals services first
             for instance in mdl.services_ext.values():
                 ext_name = instance.model
                 try:
