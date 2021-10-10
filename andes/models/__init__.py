@@ -24,6 +24,7 @@ file_classes = OrderedDict([
     ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1N', 'TGOV1DB', 'IEEEG1', 'IEESGO']),
+    ('vcomp', ['IEEEVC']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
                  'IEEET1', 'EXAC1', 'EXAC4', 'ESST4B', 'AC8B', 'IEEET3',
                  'ESAC1A', 'ESST1A']),

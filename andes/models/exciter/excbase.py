@@ -8,7 +8,7 @@ from andes.core.model import ModelData, Model
 from andes.core.param import IdxParam, ExtParam
 from andes.core.var import Algeb, ExtState, ExtAlgeb
 
-from andes.core.service import ExtService, ConstService
+from andes.core.service import ExtService, ConstService, BackRef
 from andes.core.block import Integrator
 from andes.core.discrete import LessThan
 from andes.models.exciter.saturation import ExcQuadSat
@@ -28,10 +28,25 @@ class ExcBaseData(ModelData):
 
 
 class ExcBase(Model):
+    """
+    Base model for exciters.
+
+    Notes
+    -----
+    As of v1.4.5, the input voltage Eterm (variable ``self.v``)
+    is converted to type ``Algeb``.
+    Since variables are evaluated after services,
+    ``ConstService`` of exciters can no longer depend on ``v``.
+
+    TODO: programmatically disallow ``ConstService`` use uninitialized variables.
+    """
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Exciter'
         self.flags.tds = True
+
+        # Voltage compensator idx-es
+        self.VoltComp = BackRef()
 
         # from synchronous generators, get u, Sn, Vn, bus; tm0; omega
         self.ug = ExtParam(src='u',
@@ -103,12 +118,23 @@ class ExcBase(Model):
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
                           )
-        self.v = ExtAlgeb(model='Bus',
-                          src='v',
-                          indexer=self.bus,
-                          tex_name=r'V',
-                          info='Bus voltage magnitude',
-                          )
+        self.vbus = ExtAlgeb(model='Bus',
+                             src='v',
+                             indexer=self.bus,
+                             tex_name='V',
+                             info='Bus voltage magnitude',
+                             )
+
+        # `self.v` is actually `ETERM` in other software
+        # TODO:
+        # Preferably, its name needs to be changed to `eterm`.
+        # That requires updates in equations of all exciters.
+        self.v = Algeb(info='Input to exciter (bus v or Eterm)',
+                       tex_name='E_{term}',
+                       v_str='vbus',
+                       e_str='vbus - v',
+                       v_str_add=True,
+                       )
 
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',
@@ -150,8 +176,8 @@ class ExcVsum:
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
                           e_str='vref0 - vref'
+                          # TODO: subclass to provide `vi.v_str`
                           )
 
 

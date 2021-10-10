@@ -792,6 +792,17 @@ class Model:
 
         return self.uid[idx]
 
+    def set_backref(self, name, from_idx, to_idx):
+        """
+        Helper function for setting idx-es to ``BackRef``.
+        """
+
+        if name not in self.services_ref:
+            return
+
+        uid = self.idx2uid(to_idx)
+        self.services_ref[name].v[uid].append(from_idx)
+
     def get(self, src: str, idx, attr: str = 'v', allow_none=False, default=0.0):
         """
         Get the value of an attribute of a model property.
@@ -1269,16 +1280,10 @@ class Model:
             for idx, fun in enumerate(self.calls.vjac[jname]):
                 try:
                     self.triplets.vjac[jname][idx][:] = ret[idx]
-                except ValueError as e:
+                except (ValueError, IndexError, FloatingPointError) as e:
                     row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error('%s shape error: j_idx=%s, d%s / d%s',
-                                 jname, idx, row_name, col_name)
-
-                    raise e
-                except FloatingPointError as e:
-                    row_name, col_name = self._jac_eq_var_name(jname, idx)
-                    logger.error('%s eval error: j_idx=%s, d%s / d%s',
-                                 jname, idx, row_name, col_name)
+                    logger.error('%s: error calculating or storing Jacobian <%s>: j_idx=%s, d%s / d%s',
+                                 self.class_name, jname, idx, row_name, col_name)
 
                     raise e
 
@@ -1679,12 +1684,20 @@ class Model:
             kwargs = self.get_inputs(refresh=True)
 
             for idx, name in enumerate(self.calls.init_seq):
-                # single variable
+                # single variable - do assignment
                 if isinstance(name, str):
                     instance = self.__dict__[name]
                     _eval_discrete(instance)
                     if instance.v_str is not None:
-                        instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+                        if not instance.v_str_add:
+                            # assignment is for most variable initialization
+                            instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+                        else:
+                            # in-place add initial values.
+                            # Voltage compensators can set part of the `v` of exciters.
+                            # Exciters will then set the bus voltage part.
+                            instance.v[:] += self.calls.ia[name](*self.ia_args[name])
+
                     # single variable iterative solution
                     if name in self.calls.ii:
                         self.solve_iter(name, kwargs)
