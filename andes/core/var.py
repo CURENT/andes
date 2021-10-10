@@ -50,6 +50,14 @@ class BaseVar:
         local-storage of the corresponding equation value
     e_str : str
         the string/symbolic representation of the equation
+    v_str : str
+        explicit initialization equation
+    v_str_add : bool
+        True if the value of `v_str` will be added to the variable.
+        Useful when other models access this variable and set part
+        of the initial value
+    v_iter : str
+        implicit iterative equation in the form of 0 = v_iter
     """
 
     def __init__(self,
@@ -63,6 +71,7 @@ class BaseVar:
                  discrete: Optional[Discrete] = None,
                  v_setter: Optional[bool] = False,
                  e_setter: Optional[bool] = False,
+                 v_str_add: Optional[bool] = False,
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
@@ -84,6 +93,7 @@ class BaseVar:
         self.discrete = discrete
         self.v_setter = v_setter        # True if this variable sets the variable value
         self.e_setter = e_setter        # True if this var sets the equation value
+        self.v_str_add = v_str_add
 
         self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
@@ -411,10 +421,16 @@ class ExtVar(BaseVar):
         when ``e_str`` exists..
         """
 
-        if self.e_str is None:
+        if self.e_str is None or (self.n == 0):
             return
 
-        slice_idx = slice(self.r[0], self.r[-1] + 1)
+        try:
+            slice_idx = slice(self.r[0], self.r[-1] + 1)
+        except IndexError as e:
+            print(self.owner.class_name)
+            print(self.name)
+            raise e
+
         if isinstance(self, ExtState):
             self.e = dae.h[slice_idx]
         elif isinstance(self, ExtAlgeb):
