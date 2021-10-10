@@ -9,6 +9,24 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.4.5 (2021-10-xx)
+```````````````````
+- Allow ``BackRef`` to populate to models through ``Group``.
+
+When model `A` stores an ``IdxParam`` pointing to a group, if ``BackRef``
+with the name `A` are declared in both the group and the model,
+both ``BackRef`` will retrieve the backward references from model `A`.
+
+- Allow ``BaseVar`` to accept partial initializations.
+
+If ``BaseVar.v_str_add = True``, the value of `v_str` will be added in place
+to variable value.
+An example is that voltage compensator sets part of the input voltage, and
+exciter reads the bus voltage. Exciter has `v.v_str_add = True` so that
+when compensators exist, the input voltage will be bus voltage (vbus) plus
+(Eterm - vbus).
+If no compensator exists, exciter will use bus voltages and function as expected.
+
 v1.4.4 (2021-10-05)
 ````````````````````
 - Bug fixes for refreshing generated code.
