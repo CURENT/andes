@@ -57,6 +57,10 @@ class TGOV1DBData(TGOV1Data):
 
 
 class TGOV1Model(TGBase):
+    """
+    Implement TGOV1 model.
+    """
+
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
@@ -109,6 +113,10 @@ class TGOV1NModel(TGOV1Model):
 
 
 class TGOV1DBModel(TGOV1Model):
+    """
+    Model TGOV1 with deadband.
+    """
+
     def __init__(self, system, config):
         TGOV1Model.__init__(self, system, config)
         self.DB = DeadBand1(u=self.wd, center=0.0, lower=self.dbL,
@@ -117,6 +125,19 @@ class TGOV1DBModel(TGOV1Model):
                             )
         self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
         self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
+
+
+class TGOV1NDBModel(TGOV1DBModel):
+    """
+    Implementation of TGOV1NDB
+    """
+
+    def __init__(self, system, config):
+        TGOV1DBModel.__init__(self, system, config)
+        self.pref.v_str = 'tm0'
+        self.pref.e_str = 'pref0 - pref'
+
+        self.pd.e_str = 'ue*(DB_y * gain + pref + paux) - pd'
 
 
 class TGOV1ModelAlt(TGBase):
@@ -211,3 +232,13 @@ class TGOV1DB(TGOV1DBData, TGOV1DBModel):
     def __init__(self, system, config):
         TGOV1DBData.__init__(self)
         TGOV1DBModel.__init__(self, system, config)
+
+
+class TGOV1NDB(TGOV1DBData, TGOV1NDBModel):
+    """
+    TGOV1N turbine governor model with speed input deadband.
+    """
+
+    def __init__(self, system, config):
+        TGOV1DBData.__init__(self)
+        TGOV1NDBModel.__init__(self, system, config)
