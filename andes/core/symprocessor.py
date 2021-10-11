@@ -225,7 +225,9 @@ class SymProcessor:
             s_args[name] = [str(i) for i in expr.free_symbols]
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
+        # TODO: below triggers DeprecationWarning with SymPy 1.9
         self.s_matrix = Matrix(list(s_syms.values()))
+
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
