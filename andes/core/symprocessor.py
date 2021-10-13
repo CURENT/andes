@@ -5,8 +5,9 @@ Symbolic processor class for ANDES models.
 import os
 import logging
 import pprint
-
+import sympy
 import numpy as np
+
 from collections import OrderedDict, defaultdict
 
 from sympy import Symbol, Matrix
@@ -16,6 +17,10 @@ from sympy import SparseMatrix
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
+from andes.utils.sympy import fixPiecewise
+
+
+sympy.Piecewise = fixPiecewise
 
 logger = logging.getLogger(__name__)
 
@@ -390,6 +395,9 @@ class SymProcessor:
         file_path = os.path.join(pycode_path, f'{self.class_name}.py')
         header = \
             """from collections import OrderedDict  # NOQA
+
+import numpy
+
 
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
 from numpy import greater_equal, less_equal, greater, less, equal   # NOQA
