@@ -6,7 +6,7 @@ from andes.core.discrete import Switcher
 from andes.core.block import LagAntiWindup, Lag, HVGate, LVGate, GainLimiter
 from andes.core.block import LeadLag, Washout
 
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
+from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum
 
 
 class ESST1AData(ExcBaseData):
@@ -107,7 +107,7 @@ class ESST1AData(ExcBaseData):
                              )
 
 
-class ESST1AModel(ExcBase, ExcVsum, ExcACSat):
+class ESST1AModel(ExcBase, ExcVsum):
     """
     Implementation of the ESST1A model.
     """
