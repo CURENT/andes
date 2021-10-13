@@ -19,18 +19,19 @@ class fixPiecewise(sym.Piecewise):
         def broadcastarg(arg):
             if arg.has(sym.Symbol):
                 return printer._print(arg)
-            elif arg == 0:
+            if arg == 0:
                 return printer._module+'.zeros_like({0})'.format(s)
-            else:
-                return printer._print(arg*sym.Symbol(printer._module+'.ones_like({0})'.format(s)))
+
+            return printer._print(arg*sym.Symbol(printer._module+'.ones_like({0})'.format(s)))
 
         def broadcastcond(cond):
             if cond.has(sym.Symbol):
                 return printer._print(cond)
-            else:
-                return printer._module+'.full({0}.shape,{1})'.format(printer._print(s), printer._print(cond))
 
-        "Piecewise function printer"
+            return printer._module+'.full({0}.shape,{1})'.format(printer._print(s), printer._print(cond))
+
+        # Piecewise function printer
+
         exprs = '[{}]'.format(','.join(broadcastarg(arg.expr) for arg in self.args))
         conds = '[{}]'.format(','.join(broadcastcond(arg.cond) for arg in self.args))
         # If [default_value, True] is a (expr, cond) sequence in a Piecewise object
