@@ -20,7 +20,7 @@ class fixPiecewise(sym.Piecewise):
             if arg.has(sym.Symbol):
                 return printer._print(arg)
             elif arg == 0:
-                return printer._print(sym.Symbol(printer._module+'.zeros_like({0})'.format(s)))
+                return printer._module+'.zeros_like({0})'.format(s)
             else:
                 return printer._print(arg*sym.Symbol(printer._module+'.ones_like({0})'.format(s)))
 
