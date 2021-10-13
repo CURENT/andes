@@ -167,6 +167,8 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
 
         ExcVsum.__init__(self)
 
+        self.vref.v_str = 'v'
+
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
