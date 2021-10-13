@@ -622,7 +622,9 @@ class Model:
 
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
-                                      ('sys_mva', 'S_{b,sys}')
+                                      ('sys_mva', 'S_{b,sys}'),
+                                      ('__ones', 'O_{nes}'),
+                                      ('__zeros', 'Z_{eros}'),
                                       ))
 
         # Model behavior flags
