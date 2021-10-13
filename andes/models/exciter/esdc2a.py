@@ -139,7 +139,7 @@ class ESDC2AModel(ExcBase):
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        v_str='vref0 - v',
+                        v_str='vfe0 / KA',
                         e_str='(vref - v - WF_y) - vi',
                         )
 
