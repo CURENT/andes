@@ -188,8 +188,39 @@ KVXOPT contains inplace add and set functions for sparse matrix
 contributed by CURENT.
 These inplace functions significantly speed up large-scale system simulations.
 
-To install ``KVXOPT`` run
+To install ``KVXOPT``, run the following command in the terminal or Anaconda Prompt
 
 .. code:: bash
 
       python -m pip install kvxopt
+
+numba
+-----
+
+.. note::
+
+    Numba is supported starting from ANDES 1.5.0.
+
+Numba is allows numerical functions calls to be compiled into machine code.
+It can accelerates simulations by as high as 30%.
+The speed up is visible in medium-scale systems with multiple models.
+Such systems involve heavy function calls but rather moderate load
+for linear equation solvers.
+It is is less significant in large-scale systems where
+solving equations is the major time consumer.
+
+To install ``numba``, run the following command in the terminal or Anaconda Prompt
+
+.. code:: bash
+
+    python -m pip install numba
+
+Numba needs to be turned on manually. See the tutorial for editing ANDES configuration.
+To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
+set ``numba = 1`` and ``numba_cache = 1``.
+
+Just-in-time compilation will compile the code upon the first execution
+based on the input types.
+When compilation is triggered, ANDES may appear frozen due to the compilation lag.
+The option ``numba_cache = 1`` will cache compiled machine code, so that
+the compilation lag only occurs once until the next code generation.
