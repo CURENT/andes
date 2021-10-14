@@ -74,12 +74,11 @@ See the GitHub repository for a full list of contributors.
    tutorial.rst
    modeling.rst
    cases.rst
+   release-notes.rst
+   faq.rst
+   misc.rst
    modelref.rst
    configref.rst
-   faq.rst
-   troubleshooting.rst
-   misc.rst
-   release-notes.rst
    copyright.rst
 
 

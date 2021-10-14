@@ -1,6 +1,6 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
-from andes.core.service import ConstService
+from andes.core.service import PostInitService
 from andes.core.block import LeadLag, Washout, Lag
 from andes.core.discrete import HardLimiter
 
@@ -71,17 +71,17 @@ class EXST1Model(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vf0 / KA',
-                                  )
-
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + vf0 / KA',
                           e_str='vref0 - vref'
                           )
+
+        self.vref0 = PostInitService(info='constant vref',
+                                     v_str='vref',
+                                     tex_name='V_{ref0}',
+                                     )
 
         # input excitation voltages; PSS outputs summed at vi
         self.vi = Algeb(info='Total input voltages',

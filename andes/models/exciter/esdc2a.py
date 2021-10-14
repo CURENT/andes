@@ -1,7 +1,7 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, VarService, FlagValue
+from andes.core.service import ConstService, VarService, FlagValue, PostInitService
 
 from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
 from andes.core.block import LessThan
@@ -124,22 +124,22 @@ class ESDC2AModel(ExcBase):
         self.vfe0 = ConstService(v_str='vf0*KE + Se0',
                                  tex_name='V_{FE0}',
                                  )
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vfe0 / KA',
-                                  )
 
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + vfe0 / KA',
                           e_str='vref0 - vref'
                           )
+        self.vref0 = PostInitService(info='Const reference voltage',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        v_str='vref0 - v',
+                        v_str='vfe0 / KA',
                         e_str='(vref - v - WF_y) - vi',
                         )
 

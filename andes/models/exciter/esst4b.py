@@ -5,7 +5,7 @@ from andes.core.common import dummify
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 from andes.core.block import Lag, PITrackAW, LVGate, Piecewise, GainLimiter  # NOQA
-from andes.core.service import ConstService, VarService
+from andes.core.service import ConstService, VarService, PostInitService
 
 
 class ESST4BData(ExcBaseData):
@@ -214,16 +214,16 @@ class ESST4BModel(ExcBase):
                               info='Feedback gain with HL',
                               )
 
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v',
-                                  )
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v',
                           e_str='vref0 - vref'
                           )
+        self.vref0 = PostInitService(info='Const reference voltage',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',

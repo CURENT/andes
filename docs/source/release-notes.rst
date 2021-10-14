@@ -9,6 +9,56 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.4 Notes
 ----------
 
+v1.5.0 (2021-10-13)
+```````````````````
+- Support numba just-in-time compilation of all equation and Jacobian calls.
+
+This option accelerates simulations by up to 30%.
+The acceleration is visible in medium-scale systems with multiple models.
+Such systems involve heavy function calls but rather moderate load
+for linear equation solvers.
+The speed up is less significant in large-scale systems where
+solving equations is the major time consumer.
+
+Numba is required an can be installed with ``pip install numba`` or
+``conda install numba``.
+
+To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
+set ``numba = 1`` and ``numba_cache = 1``.
+
+Just-in-time compilation will compile the code upon the first execution
+based on the input types.
+When compilation is triggered, ANDES may appear frozen due to the compilation
+lag.
+The option ``numba_cache = 1`` will cache compiled machine code, so that
+the compilation lag only occurs once until the next ``andes prep``.
+
+- Allow ``BackRef`` to populate to models through ``Group``.
+
+When model `A` stores an ``IdxParam`` pointing to a group, if ``BackRef``
+with the name `A` are declared in both the group and the model,
+both ``BackRef`` will retrieve the backward references from model `A`.
+
+- Allow ``BaseVar`` to accept partial initializations.
+
+If ``BaseVar.v_str_add = True``, the value of `v_str` will be added in place
+to variable value.
+An example is that voltage compensator sets part of the input voltage, and
+exciter reads the bus voltage. Exciter has `v.v_str_add = True` so that
+when compensators exist, the input voltage will be bus voltage (vbus) plus
+(Eterm - vbus).
+If no compensator exists, exciter will use bus voltages and function as expected.
+
+- Added reserved variable names ``__ones`` and ``__zeros`` for ones and
+  zeros with length equal to the device number.
+
+``__ones`` and ``__zeros`` are useful for vectorizing ``choicelist``
+in ``Piecewise`` functions.
+
+v1.4.4 (2021-10-05)
+````````````````````
+- Bug fixes for refreshing generated code.
+
 v1.4.3 (2021-09-25)
 ```````````````````
 This release features parallel processing that cuts the time for

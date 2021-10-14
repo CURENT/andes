@@ -5,8 +5,9 @@ Symbolic processor class for ANDES models.
 import os
 import logging
 import pprint
-
+import sympy
 import numpy as np
+
 from collections import OrderedDict, defaultdict
 
 from sympy import Symbol, Matrix
@@ -16,6 +17,10 @@ from sympy import SparseMatrix
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
+from andes.utils.sympy import FixPiecewise
+
+
+sympy.Piecewise = FixPiecewise
 
 logger = logging.getLogger(__name__)
 
@@ -129,10 +134,14 @@ class SymProcessor:
             if var in self.parent.__dict__ and self.parent.__dict__[var].tex_name is not None:
                 self.tex_names[Symbol(var)] = Symbol(self.parent.__dict__[var].tex_name)
 
+        # additional variables by conventions
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
+        self.inputs_dict['__ones'] = Symbol('__ones')
+        self.inputs_dict['__zeros'] = Symbol('__zeros')
 
+        # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
         self.lambdify_func[0]['imag'] = np.imag
         self.lambdify_func[0]['real'] = np.real
@@ -221,7 +230,9 @@ class SymProcessor:
             s_args[name] = [str(i) for i in expr.free_symbols]
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
+        # TODO: below triggers DeprecationWarning with SymPy 1.9
         self.s_matrix = Matrix(list(s_syms.values()))
+
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
@@ -371,6 +382,12 @@ class SymProcessor:
         Create output source code file for generated code.
 
         Generated code are stored at ``~/.andes/pycode``.
+
+        Notes
+        -----
+        In the current implementation, each model saves a ``.py`` file.
+        In systems with slow disk access (such as networked file systems),
+        this function can be the bottleneck.
         """
 
         pycode_path = get_pycode_path(pycode_path, mkdir=True)
@@ -378,6 +395,9 @@ class SymProcessor:
         file_path = os.path.join(pycode_path, f'{self.class_name}.py')
         header = \
             """from collections import OrderedDict  # NOQA
+
+import numpy
+
 
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
 from numpy import greater_equal, less_equal, greater, less, equal   # NOQA

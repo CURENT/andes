@@ -148,8 +148,7 @@ class JacTriplet:
         vv : array-like
             Value indices
         """
-        if len(ii) == 0 and len(jj) == 0:
-            return
+
         self.ijac[j_full_name].append(ii)
         self.jjac[j_full_name].append(jj)
         self.vjac[j_full_name].append(vv)

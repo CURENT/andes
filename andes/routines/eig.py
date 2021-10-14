@@ -323,11 +323,53 @@ class EIG(BaseRoutine):
             system.exit_code += 1
         return succeed
 
-    def plot(self, mu=None, fig=None, ax=None, left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=100, show=True, latex=True):
+    def plot(self, mu=None, fig=None, ax=None,
+             left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
+             line_width=0.5, dpi=100, figsize=None, base_color='black',
+             show=True, latex=True):
         """
         Plot utility for eigenvalues in the S domain.
+
+        Parameters
+        ----------
+        mu : array, optional
+            an array of complex eigenvalues
+        fig : figure handl, optional
+            existing matplotlib figure handle
+        ax : axis handle, optional
+            existing axis handle
+        left : int, optional
+            left tick for the x-axis, by default -6
+        right : float, optional
+            right tick, by default 0.5
+        ymin : int, optional
+            bottom tick, by default -8
+        ymax : int, optional
+            top tick, by default 8
+        damping : float, optional
+            damping value for which the dash plots are drawn
+        line_width : float, optional
+            default line width, by default 0.5
+        dpi : int, optional
+            figure dpi, by default 100
+        figsize : [type], optional
+            default figure size, by default None
+        base_color : str, optional
+            base color for negative eigenvalues
+        show : bool, optional
+            True to show figure after plot, by default True
+        latex : bool, optional
+            True to use latex, by default True
+
+        Returns
+        -------
+        figure
+            matplotlib figure object
+        axis
+            matplotlib axis object
+
         """
+
         mpl.rc('font', family='Times New Roman', size=12)
 
         if mu is None:
@@ -353,24 +395,34 @@ class EIG(BaseRoutine):
             set_latex()
 
         if fig is None or ax is None:
-            fig, ax = plt.subplots(dpi=dpi)
+            fig = plt.figure(dpi=dpi, figsize=figsize)
+            ax = plt.gca()
 
         ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='green')
-        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color='black')
+        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color=base_color)
         ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='red')
+
+        # axes lines
         ax.axhline(linewidth=0.5, color='grey', linestyle='--')
         ax.axvline(linewidth=0.5, color='grey', linestyle='--')
 
         # TODO: Improve the damping and range
-        # plot 5% damping lines
+        # --- plot 5% damping lines ---
         xin = np.arange(left, 0, 0.01)
         yneg = xin / damping
         ypos = - xin / damping
 
         ax.plot(xin, yneg, color='grey', linewidth=line_width, linestyle='--')
         ax.plot(xin, ypos, color='grey', linewidth=line_width, linestyle='--')
-        ax.set_xlabel('Real')
-        ax.set_ylabel('Imaginary')
+        # --- damping lines end ---
+
+        if latex:
+            ax.set_xlabel('Real [$s^{-1}$]')
+            ax.set_ylabel('Imaginary [$s^{-1}$]')
+        else:
+            ax.set_xlabel('Real [s -1]')
+            ax.set_ylabel('Imaginary [s -1]')
+
         ax.set_xlim(left=left, right=right)
         ax.set_ylim(ymin, ymax)
 

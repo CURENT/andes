@@ -4,6 +4,21 @@
 Frequently Asked Questions
 **************************
 
+Program Startup
+===============
+
+Q: Why do I get an "ImportError: DLL load failed" when running ANDES?
+
+Platform: Windows, error message:
+
+    ImportError: DLL load failed: The specified module could not be found.
+
+This usually happens when andes is not installed in a Conda environment
+but instead in a system-wide Python whose library path was not correctly
+set in environment variables.
+
+The easiest fix is to install andes in a Conda environment.
+
 General
 =======
 

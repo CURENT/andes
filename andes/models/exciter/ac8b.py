@@ -46,33 +46,31 @@ class AC8BData(ExcBaseData):
                            )
 
         self.VPMAX = NumParam(info='PID maximum limit',
-                              tex_name='V_{PMAX}',
+                              tex_name=r'V_{PMAX}',
                               default=999,
                               unit='p.u.')
         self.VPMIN = NumParam(info='PID minimum limit',
-                              tex_name='V_{PMIN}',
+                              tex_name=r'V_{PMIN}',
                               default=-999,
                               unit='p.u.')
 
-        self.VRMAX = NumParam(info='Maximum excitation limit',
-                              tex_name='V_{RMAX}',
+        self.VRMAX = NumParam(info='Maximum regulator limit',
+                              tex_name=r'V_{RMAX}',
                               default=7.3,
                               unit='p.u.',
                               vrange=(1, 10))
-        self.VRMIN = NumParam(info='Minimum excitation limit',
-                              tex_name='V_{RMIN}',
+        self.VRMIN = NumParam(info='Minimum regulator limit',
+                              tex_name=r'V_{RMIN}',
                               default=1,
                               unit='p.u.',
                               vrange=(-1, 1.5))
 
-        # TODO: check default value for VFEMAX
-        self.VFEMAX = NumParam(info='Maximum VFE',
+        self.VFEMAX = NumParam(info='Exciter field current limit',
                                tex_name=r'V_{FEMAX}',
                                default=999,
                                unit='p.u.')
 
-        # TODO: check default value for VEMIN
-        self.VEMIN = NumParam(info='Minimum excitation output',
+        self.VEMIN = NumParam(info='Minimum exciter voltage output',
                               tex_name=r'V_{EMIN}',
                               default=-999,
                               unit='p.u.')
@@ -99,7 +97,7 @@ class AC8BData(ExcBaseData):
                            unit='p.u.',
                            )
         self.SE1 = NumParam(info='Value at first saturation point',
-                            tex_name='S_{E1}',
+                            tex_name=r'S_{E1}',
                             default=0.,
                             unit='p.u.',
                             )
@@ -109,7 +107,7 @@ class AC8BData(ExcBaseData):
                            unit='p.u.',
                            )
         self.SE2 = NumParam(info='Value at second saturation point',
-                            tex_name='S_{E2}',
+                            tex_name=r'S_{E2}',
                             default=1.,
                             unit='p.u.',
                             )
@@ -168,6 +166,8 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
                       )
 
         ExcVsum.__init__(self)
+
+        self.vref.v_str = 'v'
 
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',

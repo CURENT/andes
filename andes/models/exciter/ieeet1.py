@@ -1,7 +1,7 @@
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 
-from andes.core.service import ConstService, FlagValue
+from andes.core.service import ConstService, FlagValue, PostInitService
 
 from andes.core.block import LagAntiWindup, Washout, Lag
 from andes.core.block import LessThan
@@ -115,10 +115,6 @@ class IEEET1Model(ExcBase):
         self.vb0 = ConstService(info='Initial vb',
                                 tex_name='V_{b0}',
                                 v_str='vr0 / KA')
-        self.vref0 = ConstService(info='Initial reference voltage input',
-                                  tex_name='V_{ref0}',
-                                  v_str='v + vb0',
-                                  )
         self.vfe0 = ConstService(v_str='vf0 * KE + Se0',
                                  tex_name='V_{FE0}',
                                  )
@@ -126,9 +122,14 @@ class IEEET1Model(ExcBase):
         self.vref = Algeb(info='Reference voltage input',
                           tex_name='V_{ref}',
                           unit='p.u.',
-                          v_str='vref0',
+                          v_str='v + vb0',
                           e_str='vref0 - vref'
                           )
+
+        self.vref0 = PostInitService(info='Const reference voltage',
+                                     tex_name='V_{ref0}',
+                                     v_str='vref',
+                                     )
 
         self.LG = Lag(u=self.v, T=self.TR, K=1,
                       info='Sensing delay',
