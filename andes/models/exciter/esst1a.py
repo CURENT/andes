@@ -120,8 +120,8 @@ class ESST1AModel(ExcBase, ExcVsum):
         self.UEL0.v_str = '-999'
         self.OEL0.v_str = '999'
 
-        self.ul = ConstService('9999')
-        self.ll = ConstService('-9999')
+        self.ulim = ConstService('9999')
+        self.llim = ConstService('-9999')
 
         self.SWUEL = Switcher(u=self.UELc, options=[0, 1, 2, 3], tex_name='SW_{UEL}', cache=True)
         self.SWVOS = Switcher(u=self.VOSc, options=[0, 1, 2], tex_name='SW_{VOS}', cache=True)
@@ -139,7 +139,7 @@ class ESST1AModel(ExcBase, ExcVsum):
         self.zero = ConstService('0')
         self.LR = GainLimiter(u='XadIfd - ILR',
                               K=self.KLR, R=1,
-                              upper=self.ul, lower=self.zero,
+                              upper=self.ulim, lower=self.zero,
                               no_upper=True,
                               info='Exciter output current gain limiter',
                               )
@@ -173,8 +173,8 @@ class ESST1AModel(ExcBase, ExcVsum):
 
         self.UEL2 = Algeb(tex_name='UEL_2',
                           info='UEL_2 as HVG1 u1',
-                          v_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll)',
-                          e_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * ll - UEL2)',
+                          v_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * llim)',
+                          e_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * llim - UEL2)',
                           )
         self.HVG1 = HVGate(u1=self.UEL2,
                            u2=self.vil_y,
@@ -212,8 +212,8 @@ class ESST1AModel(ExcBase, ExcVsum):
 
         self.UEL3 = Algeb(tex_name='UEL_3',
                           info='UEL_3 as HVG u1',
-                          v_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll)',
-                          e_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * ll - UEL3)',
+                          v_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * llim)',
+                          e_str='ue * (SWUEL_s3 * UEL + (1 - SWUEL_s3) * llim - UEL3)',
                           )
         self.HVG = HVGate(u1=self.UEL3,
                           u2=self.vas,
