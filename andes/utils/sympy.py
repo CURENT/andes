@@ -1,7 +1,7 @@
 import sympy as sym
 
 
-class fixPiecewise(sym.Piecewise):
+class FixPiecewise(sym.Piecewise):
     """
     A derived Piecewise that fixes the printing of ``select`` to allow compilation with numba.
 

@@ -17,10 +17,10 @@ from sympy import SparseMatrix
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
-from andes.utils.sympy import fixPiecewise
+from andes.utils.sympy import FixPiecewise
 
 
-sympy.Piecewise = fixPiecewise
+sympy.Piecewise = FixPiecewise
 
 logger = logging.getLogger(__name__)
 
