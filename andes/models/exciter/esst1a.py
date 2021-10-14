@@ -1,3 +1,7 @@
+"""
+ESST3A model.
+"""
+
 from andes.core.param import NumParam
 from andes.core.var import Algeb, ExtAlgeb
 
