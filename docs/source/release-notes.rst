@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.1 (2021-10-14)
+```````````````````
+- Restored compatibility with SymPy 1.6.
+
 v1.5.0 (2021-10-13)
 ```````````````````
 - Support numba just-in-time compilation of all equation and Jacobian calls.
