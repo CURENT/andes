@@ -237,6 +237,7 @@ class UMFPACKSolver(SuiteSparseSolver):
 
     Utilizes ``kvxopt.umfpack`` for factorization.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -260,9 +261,8 @@ class UMFPACKSolver(SuiteSparseSolver):
 class KLUSolver(SuiteSparseSolver):
     """
     KLU solver.
-
-    Requires package ``kvxoptklu``.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -287,6 +287,7 @@ class SciPySolver:
     """
     Base class for scipy family solvers.
     """
+
     def __init__(self):
         pass
 
