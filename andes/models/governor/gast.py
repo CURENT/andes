@@ -1,9 +1,16 @@
+"""
+Governor GAST.
+"""
+
 from andes.core import NumParam, ConstService, Algeb, LagAntiWindup
 from andes.core.block import Lag, LVGate
 from andes.models.governor.tgbase import TGBaseData, TGBase
 
 
 class GASTData(TGBaseData):
+    """
+    Data for governor GAST.
+    """
     def __init__(self):
         super().__init__()
         self.R = NumParam(info='Speed regulation gain (mach. base default)',
