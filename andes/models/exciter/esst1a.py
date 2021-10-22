@@ -1,5 +1,5 @@
 """
-ESST3A model.
+ESST1A model.
 """
 
 from andes.core.param import NumParam
