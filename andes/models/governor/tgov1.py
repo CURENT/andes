@@ -96,7 +96,7 @@ class TGOV1Model(TGBase):
                           T1=self.T2,
                           T2=self.T3,
                           )
-        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y - Dt * wd) - pout'
 
 
 class TGOV1NModel(TGOV1Model):
@@ -124,7 +124,7 @@ class TGOV1DBModel(TGOV1Model):
                             info='deadband for under speed',
                             )
         self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
-        self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
+        self.pout.e_str = '(LL_y - Dt * DB_y) - pout'
 
 
 class TGOV1NDBModel(TGOV1DBModel):
@@ -189,7 +189,7 @@ class TGOV1ModelAlt(TGBase):
                           e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y',
                           )
 
-        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y - Dt * wd) - pout'
 
 
 class TGOV1(TGOV1Data, TGOV1Model):
