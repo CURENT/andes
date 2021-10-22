@@ -111,7 +111,223 @@ GENROU:
         S10: S10
         S12: S12
 
+# Voltage compensator models
+IEEEVC:
+    inputs:
+        - BUS
+        - ID
+        - rc
+        - xc
+    destination: IEEEVC
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        rc : rc
+        xc : xc
+
 # Exciter models
+IEEET3:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - VBMAX
+        - KE
+        - TE
+        - KF
+        - TF
+        - KP
+        - KI
+    destination: IEEET3
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR : TR
+        KA : KA
+        TA : TA
+        VRMAX : VRMAX
+        VRMIN : VRMIN
+        VBMAX : VBMAX
+        KE : KE
+        TE : TE
+        KF : KF
+        TF : TF
+        KP : KP
+        KI : KI
+
+
+ESST1A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - VIMAX
+        - VIMIN
+        - TB
+        - TC
+        - TB1
+        - TC1
+        - VAMAX
+        - VAMIN
+        - KA
+        - TA
+        - ILR
+        - KLR
+        - VRMAX
+        - VRMIN
+        - KF
+        - TF
+        - KC
+        - UEL
+        - VOS
+    destination: ESST1A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR : TR
+        VIMAX : VIMAX
+        VIMIN : VIMIN
+        TB : TB
+        TC : TC
+        TB1 : TB1
+        TC1 : TC1
+        VAMAX : VAMAX
+        VAMIN : VAMIN
+        KA : KA
+        TA : TA
+        ILR : ILR
+        KLR : KLR
+        VRMAX : VRMAX
+        VRMIN : VRMIN
+        KF : KF
+        TF : TF
+        KC : KC
+        UELc : UEL
+        VOSc : VOS
+
+ESAC1A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - TB
+        - TC
+        - VAMAX
+        - VAMIN
+        - KA
+        - TA
+        - VRMAX
+        - VRMIN
+        - TE
+        - E1
+        - SE1
+        - E2
+        - SE2
+        - KC
+        - KD
+        - KE
+        - KF
+        - TF
+        - Switch
+    destination: ESAC1A
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR : TR
+        TB : TB
+        TC : TC
+        VAMAX : VAMAX
+        VAMIN : VAMIN
+        KA : KA
+        TA : TA
+        VRMAX : VRMAX
+        VRMIN : VRMIN
+        TE : TE
+        E1 : E1
+        SE1 : SE1
+        E2 : E2
+        SE2 : SE2
+        KC : KC
+        KD : KD
+        KE : KE
+        KF : KF
+        TF: TF
+
+AC8B:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - kP
+        - kI
+        - kD
+        - Td
+        - VPMAX
+        - VPMIN
+        - VRMAX
+        - VRMIN
+        - VFEMAX
+        - VEMIN
+        - TA
+        - KA
+        - TE
+        - KC
+        - KD
+        - KE
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: AC8B
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR : TR
+        kP : kP
+        kI : kI
+        kD : kD
+        Td : Td
+        VPMAX : VPMAX
+        VPMIN : VPMIN
+        VRMAX : VRMAX
+        VRMIN : VRMIN
+        VFEMAX : VFEMAX
+        VEMIN : VEMIN
+        TA : TA
+        KA : KA
+        TE : TE
+        KC : KC
+        KD : KD
+        KE : KE
+        E1 : E1
+        SE1 : SE1
+        E2 : E2
+        SE2 : SE2
+
 EXAC1:
     inputs:
         - BUS
@@ -527,6 +743,38 @@ IEEET1:
         SE1: SE1
         E2: E2
         SE2: SE2
+
+
+GAST:
+    inputs:
+        - BUS
+        - ID
+        - R
+        - VMAX
+        - VMIN
+        - KT
+        - AT
+        - T1
+        - T2
+        - T3
+        - Dt
+    destination: GAST
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        R: R
+        VMAX: VMAX
+        VMIN: VMIN
+        KT: KT
+        AT: AT
+        T1: T1
+        T2: T2
+        T3: T3
+        Dt: Dt
 
 TGOV1:
     inputs:
