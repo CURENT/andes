@@ -84,7 +84,7 @@ class TGOV1Model(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='ue * tm0',
-                        e_str='ue*(wd + pref + paux) * gain - pd')
+                        e_str='ue*(- wd + pref + paux) * gain - pd')
 
         self.LAG = LagAntiWindup(u=self.pd,
                                  K=1,
@@ -164,7 +164,7 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
-                        e_str='(wd + pref + paux) * gain - pd')
+                        e_str='(- wd + pref + paux) * gain - pd')
 
         self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
