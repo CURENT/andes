@@ -20,15 +20,15 @@ class FixPiecewise(sym.Piecewise):
             if arg.has(sym.Symbol):
                 return printer._print(arg)
             if arg == 0:
-                return printer._module+'.zeros_like({0})'.format(s)
+                return 'zeros_like({0})'.format(s)
 
-            return printer._print(arg*sym.Symbol(printer._module+'.ones_like({0})'.format(s)))
+            return printer._print(arg*sym.Symbol('ones_like({0})'.format(s)))
 
         def broadcastcond(cond):
             if cond.has(sym.Symbol):
                 return printer._print(cond)
 
-            return printer._module+'.full({0}.shape,{1})'.format(printer._print(s), printer._print(cond))
+            return 'full({0}.shape,{1})'.format(printer._print(s), printer._print(cond))
 
         # Piecewise function printer
 
@@ -39,5 +39,5 @@ class FixPiecewise(sym.Piecewise):
         #     *as long as* it is the last element in self.args.
         # If this is not the case, it may be triggered prematurely.
         return '{}({}, {}, default={})'.format(
-            printer._module_format(printer._module + '.select'), conds, exprs,
+            printer._module_format('select'), conds, exprs,
             printer._print(sym.S.NaN))

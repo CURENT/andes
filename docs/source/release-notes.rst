@@ -6,8 +6,12 @@ Release Notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v1.4 Notes
+v1.5 Notes
 ----------
+
+v1.5.1 (2021-10-14)
+```````````````````
+- Restored compatibility with SymPy 1.6.
 
 v1.5.0 (2021-10-13)
 ```````````````````
@@ -15,23 +19,22 @@ v1.5.0 (2021-10-13)
 
 This option accelerates simulations by up to 30%.
 The acceleration is visible in medium-scale systems with multiple models.
-Such systems involve heavy function calls but rather moderate load
+Such systems involve heavy function calls but a rather moderate load
 for linear equation solvers.
 The speed up is less significant in large-scale systems where
 solving equations is the major time consumer.
 
-Numba is required an can be installed with ``pip install numba`` or
+Numba is required and can be installed with ``pip install numba`` or
 ``conda install numba``.
 
 To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
 set ``numba = 1`` and ``numba_cache = 1``.
 
-Just-in-time compilation will compile the code upon the first execution
+The just-in-time compilation will compile the code upon the first execution
 based on the input types.
-When compilation is triggered, ANDES may appear frozen due to the compilation
-lag.
+When compilation is triggered, ANDES may appear frozen due to the compilation lag.
 The option ``numba_cache = 1`` will cache compiled machine code, so that
-the compilation lag only occurs once until the next ``andes prep``.
+the lag only occurs once until the next ``andes prep``.
 
 - Allow ``BackRef`` to populate to models through ``Group``.
 
@@ -54,6 +57,9 @@ If no compensator exists, exciter will use bus voltages and function as expected
 
 ``__ones`` and ``__zeros`` are useful for vectorizing ``choicelist``
 in ``Piecewise`` functions.
+
+v1.4 Notes
+----------
 
 v1.4.4 (2021-10-05)
 ````````````````````
