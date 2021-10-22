@@ -74,13 +74,13 @@ class TGOV1Model(TGBase):
                           e_str='pref0 * R - pref',
                           )
 
-        self.wd = Algeb(info='Generator under speed',
+        self.wd = Algeb(info='Generator speed deviation',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
                         e_str='ue * (wref - omega) - wd',
                         )
-        self.pd = Algeb(info='Pref plus under speed times gain',
+        self.pd = Algeb(info='Pref plus speed deviation times gain',
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='ue * tm0',
@@ -121,7 +121,7 @@ class TGOV1DBModel(TGOV1Model):
         TGOV1Model.__init__(self, system, config)
         self.DB = DeadBand1(u=self.wd, center=0.0, lower=self.dbL,
                             upper=self.dbU, tex_name='DB',
-                            info='deadband for under speed',
+                            info='deadband for speed deviation',
                             )
         self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
         self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
@@ -154,13 +154,13 @@ class TGOV1ModelAlt(TGBase):
                           v_str='tm0 * R',
                           e_str='pref0 * R - pref',
                           )
-        self.wd = Algeb(info='Generator under speed',
+        self.wd = Algeb(info='Generator speed deviation',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
                         e_str='ue * (wref - omega) - wd',
                         )
-        self.pd = Algeb(info='Pref plus under speed times gain',
+        self.pd = Algeb(info='Pref plus speed deviation times gain',
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
