@@ -1781,6 +1781,18 @@ class Model:
         else:
             logger.warning(f"{self.class_name}: iterative initialization failed for {self.idx.v[pos]}.")
 
+    def externalize(self):
+        """
+        Externalize internal data as a snapshot.
+        """
+        pass
+
+    def internalize(self):
+        """
+        Internalize snapshot data.
+        """
+        pass
+
 
 def _eval_discrete(instance):
 
