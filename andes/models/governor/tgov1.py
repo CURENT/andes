@@ -78,13 +78,13 @@ class TGOV1Model(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='ue * (wref - omega) - wd',
+                        e_str='ue * (omega - wref) - wd',
                         )
         self.pd = Algeb(info='Pref plus speed deviation times gain',
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='ue * tm0',
-                        e_str='ue*(wd + pref + paux) * gain - pd')
+                        e_str='ue*(- wd + pref + paux) * gain - pd')
 
         self.LAG = LagAntiWindup(u=self.pd,
                                  K=1,
@@ -96,7 +96,7 @@ class TGOV1Model(TGBase):
                           T1=self.T2,
                           T2=self.T3,
                           )
-        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y - Dt * wd) - pout'
 
 
 class TGOV1NModel(TGOV1Model):
@@ -124,7 +124,7 @@ class TGOV1DBModel(TGOV1Model):
                             info='deadband for speed deviation',
                             )
         self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
-        self.pout.e_str = '(LL_y + Dt * DB_y) - pout'
+        self.pout.e_str = '(LL_y - Dt * DB_y) - pout'
 
 
 class TGOV1NDBModel(TGOV1DBModel):
@@ -158,13 +158,13 @@ class TGOV1ModelAlt(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='ue * (wref - omega) - wd',
+                        e_str='ue * (omega - wref) - wd',
                         )
         self.pd = Algeb(info='Pref plus speed deviation times gain',
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='tm0',
-                        e_str='(wd + pref + paux) * gain - pd')
+                        e_str='(- wd + pref + paux) * gain - pd')
 
         self.LAG_y = State(info='State in lag transfer function',
                            tex_name=r"x'_{LAG}",
@@ -189,7 +189,7 @@ class TGOV1ModelAlt(TGBase):
                           e_str='T2 / T3 * (LAG_y - LL_x) + LL_x - LL_y',
                           )
 
-        self.pout.e_str = 'ue * (LL_y + Dt * wd) - pout'
+        self.pout.e_str = 'ue * (LL_y - Dt * wd) - pout'
 
 
 class TGOV1(TGOV1Data, TGOV1Model):

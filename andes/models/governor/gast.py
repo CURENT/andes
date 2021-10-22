@@ -78,7 +78,7 @@ class GASTModel(TGBase):
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
-                        e_str='ue * (wref - omega) - wd',
+                        e_str='ue * (omega - wref) - wd',
                         )
         self.pd = Algeb(info='Pref plus under speed times gain',
                         unit='p.u.',
