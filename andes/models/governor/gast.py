@@ -84,7 +84,7 @@ class GASTModel(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='ue * tm0',
-                        e_str='ue*(wd + pref + paux) * gain - pd')
+                        e_str='ue*(- wd + pref + paux) * gain - pd')
 
         self.v9 = Algeb(tex_name=r'V_{9}',
                         info='V_9 for LVGate input',
