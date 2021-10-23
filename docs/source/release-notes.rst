@@ -9,9 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
-v1.5.1 (2021-10-14)
+v1.5.1 (2021-10-23)
 ```````````````````
 - Restored compatibility with SymPy 1.6.
+- Added a group for voltage compensators.
+- New models: ``IEEEVC`` and ``GAST``.
 
 v1.5.0 (2021-10-13)
 ```````````````````
