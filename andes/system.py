@@ -710,6 +710,12 @@ class System:
             if not mdl.n:
                 continue
 
+            # Fixes an issue if the cache was manually built but stale
+            # after assigning addresses for simulation
+            # Assigning memory will affect the cache of `v_adders` and `e_adders`.
+
+            mdl.cache.refresh()
+
             # ``getters` that retrieve variable values from DAE
             for var in mdl.cache.v_getters.values():
                 self._getters[var.v_code].append(var)
