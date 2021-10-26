@@ -1348,7 +1348,7 @@ class System:
 
         """
         np_ver = np.__version__.split('.')
-        # Read only frist two elements. Last one may contain 'rcxx'
+        # Read only first two elements. Last one may contain 'rcxx'
         np_ver = tuple([int(i) for i in np_ver[:2]])
         if np_ver < (1, 20):
             logger.debug("Dumping calls to calls.pkl with dill")
