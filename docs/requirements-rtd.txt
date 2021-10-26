@@ -1,7 +1,7 @@
 cvxopt
 numpy
 scipy
-sympy>=1.6,1.9
+sympy>=1.6,<1.9
 pandas
 matplotlib
 openpyxl
