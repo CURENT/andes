@@ -79,6 +79,9 @@ class ModelCache:
         ----------
         name : str, list, optional
             name or list of cached to refresh, by default None for refreshing all
+
+        TODO: bug found in Example notebook 2. Time domain initialization fails
+        after refreshing.
         """
         if name is None:
             for name in self._callbacks.keys():
