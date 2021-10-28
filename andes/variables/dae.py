@@ -202,7 +202,7 @@ class DAE:
 
     def __init__(self, system):
         self.system = system
-        self.t = np.array(0)
+        self.t = np.array(0, dtype=float)
         self.ts = DAETimeSeries(self)
 
         self.m, self.n, self.o = 0, 0, 0

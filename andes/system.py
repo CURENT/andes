@@ -18,6 +18,7 @@ import os
 import sys
 import inspect
 import dill
+import time
 
 from collections import OrderedDict
 from typing import Dict, Tuple, Union, Optional
@@ -37,6 +38,8 @@ from andes.io.streaming import Streaming
 
 from andes.shared import np, jac_names, dilled_vars, IP_ADD
 from andes.shared import matrix, spmatrix, sparse, Pool
+
+from multiprocess import Process
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True
@@ -134,7 +137,6 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('numba_cache', 1),
                                      ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
@@ -151,7 +153,6 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
-                              numba_cache='enable machine code caching for numba.jit',
                               numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
@@ -167,7 +168,6 @@ class System:
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
-                              numba_cache=(0, 1),
                               numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
@@ -317,6 +317,33 @@ class System:
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
+
+    def _mp_precompile(self, models, ncpu):
+        """
+        Wrapper for multiprocessed numba compilation.
+        """
+
+        t0, _ = elapsed()
+
+        self._init_numba(models)
+        self.setup()
+
+        def _precompile_model(model: Model):
+            model.precompile()
+
+        print(f"Precompiling with numba for {len(models)} models on {ncpu} processes.")
+
+        jobs = list()
+        for model in models.values():
+            p = Process(target=_precompile_model, args=[model])
+            p.start()
+            jobs.append(p)
+
+        for job in jobs:
+            job.join()
+
+        _, s = elapsed(t0)
+        logger.info('Precompiled %d models in %s.', len(models), s)
 
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
@@ -642,17 +669,56 @@ class System:
             return
 
         use_parallel = bool(self.config.numba_parallel)
-        use_cache = bool(self.config.numba_cache)
         nopython = bool(self.config.numba_nopython)
 
-        logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
-                    use_parallel, use_cache)
+        logger.info("Numba compilation initiated with caching. Parallel=%s.",
+                    use_parallel)
 
         for mdl in models.values():
             mdl.numba_jitify(parallel=use_parallel,
-                             cache=use_cache,
                              nopython=nopython,
                              )
+
+    def precompile(self, models: OrderedDict, nomp=False,
+                   ncpu: int = os.cpu_count()):
+        """
+        Trigger precompilation for the given models.
+
+        Arguments are the same as ``prepare``.
+        """
+
+        t0, _ = elapsed()
+
+        self._init_numba(models)
+        self.setup()
+
+        def _precompile_model(model: Model):
+            model.precompile()
+
+        if nomp is True:
+            for name, mdl in models.items():
+                _precompile_model(mdl)
+                logger.debug("Model <%s> precompiled.", name)
+
+        else:
+            jobs = []
+            for idx, (name, mdl) in enumerate(models.items()):
+                job = Process(
+                    name='Process {0:d}'.format(idx),
+                    target=_precompile_model,
+                    args=(mdl,),
+                    )
+                jobs.append(job)
+                job.start()
+
+                if (idx % ncpu == ncpu - 1) or (idx == len(models) - 1):
+                    time.sleep(0.02)
+                    for job in jobs:
+                        job.join()
+                    jobs = []
+
+        _, s = elapsed(t0)
+        logger.info('Precompiled %d models in %s.', len(models), s)
 
     def init(self, models: OrderedDict, routine: str):
         """
