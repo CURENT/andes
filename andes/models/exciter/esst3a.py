@@ -196,11 +196,11 @@ class ESST3AModel(ExcBase):
 
         self.FEX = Piecewise(u=self.IN,
                              points=(0, 0.433, 0.75, 1),
-                             funs=('__ones + (__zeros * IN)',
-                                   '__ones * (1 - 0.577*IN)',
-                                   '__ones * sqrt(0.75 - IN ** 2)',
-                                   '__ones * 1.732*(1 - IN)',
-                                   '__zeros * IN'),
+                             funs=('1',
+                                   '1 - 0.577*IN',
+                                   'sqrt(0.75 - IN ** 2)',
+                                   '1.732 * (1 - IN)',
+                                   '0'),
                              info='Piecewise function FEX',
                              )
 

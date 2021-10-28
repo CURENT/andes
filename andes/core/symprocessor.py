@@ -138,8 +138,6 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
-        self.inputs_dict['__ones'] = Symbol('__ones')
-        self.inputs_dict['__zeros'] = Symbol('__zeros')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x

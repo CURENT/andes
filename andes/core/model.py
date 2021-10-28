@@ -626,8 +626,6 @@ class Model:
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
                                       ('sys_mva', 'S_{b,sys}'),
-                                      ('__ones', 'O_{nes}'),
-                                      ('__zeros', 'Z_{eros}'),
                                       ))
 
         # Model behavior flags
@@ -970,12 +968,6 @@ class Model:
         self._input['dae_t'] = self.system.dae.t
         self._input['sys_f'] = self.system.config.freq
         self._input['sys_mva'] = self.system.config.mva
-
-        # two vectors with the length of the number of devices.
-        #   Useful in the choices of `PieceWise`, which need to be vectors
-        #   for numba to compile.
-        self._input['__ones'] = np.ones(self.n)
-        self._input['__zeros'] = np.zeros(self.n)
 
     def refresh_inputs_arg(self):
         """

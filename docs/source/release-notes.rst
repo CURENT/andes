@@ -12,6 +12,7 @@ v1.5 Notes
 v1.5.2 (2021-10-27)
 ```````````````````
 - Bug fixes.
+- Removed ``__zeros`` and ``__ones`` as they are no longer needed.
 
 v1.5.1 (2021-10-23)
 ```````````````````
