@@ -87,7 +87,7 @@ report can be viewed in any web browser.
 What won't not work
 ===================
 
-You might have heard that PyPy is faster than CPython with a built-in JIT compiler.
+You might have heard that PyPy is faster than CPython due to a built-in JIT compiler.
 Before you spend an hour compiling the dependencies, here is the fact:
 PyPy won't work for speeding up ANDES.
 
