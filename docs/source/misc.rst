@@ -83,3 +83,17 @@ To speed up the command-line program, import profiling is used to breakdown the 
 
 With tool ``profimp``, ``andes`` can be profiled with ``profimp "import andes" --html > andes_import.htm``. The
 report can be viewed in any web browser.
+
+What won't not work
+===================
+
+You might have heard that PyPy is faster than CPython with a built-in JIT compiler.
+Before you spend an hour compiling the dependencies, here is the fact:
+PyPy won't work for speeding up ANDES.
+
+PyPy is often much slower than CPython when using CPython extension modules
+(see the PyPy_FAQ_).
+Unfortunately, NumPy is one of the highly optimized libraries that heavily
+use CPython extension modules.
+
+.. _PyPy_FAQ: https://doc.pypy.org/en/latest/faq.html#do-c-extension-modules-work-with-pypy
