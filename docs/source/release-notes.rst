@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.2 (2021-10-27)
+```````````````````
+- Bug fixes.
+
 v1.5.1 (2021-10-23)
 ```````````````````
 - Restored compatibility with SymPy 1.6.
