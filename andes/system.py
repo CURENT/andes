@@ -318,33 +318,6 @@ class System:
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
-    def _mp_precompile(self, models, ncpu):
-        """
-        Wrapper for multiprocessed numba compilation.
-        """
-
-        t0, _ = elapsed()
-
-        self._init_numba(models)
-        self.setup()
-
-        def _precompile_model(model: Model):
-            model.precompile()
-
-        print(f"Precompiling with numba for {len(models)} models on {ncpu} processes.")
-
-        jobs = list()
-        for model in models.values():
-            p = Process(target=_precompile_model, args=[model])
-            p.start()
-            jobs.append(p)
-
-        for job in jobs:
-            job.join()
-
-        _, s = elapsed(t0)
-        logger.info('Precompiled %d models in %s.', len(models), s)
-
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
         Wrapper function for multiprocess prepare.
