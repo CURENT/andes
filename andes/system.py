@@ -295,7 +295,7 @@ class System:
         elif not incremental and models is None:
             models = self.models
         else:
-            models = self._to_orddct(models)
+            models = self._get_models(models)
 
         total = len(models)
         width = len(str(total))
@@ -653,10 +653,10 @@ class System:
                              nopython=nopython,
                              )
 
-    def compile(self,
-                models: Union[OrderedDict, None] = None,
-                nomp: bool = False,
-                ncpu: int = os.cpu_count()):
+    def precompile(self,
+                   models: Union[OrderedDict, None] = None,
+                   nomp: bool = False,
+                   ncpu: int = os.cpu_count()):
         """
         Trigger precompilation for the given models.
 
@@ -667,16 +667,20 @@ class System:
 
         if models is None:
             models = self.models
+        else:
+            models = self._get_models(models)
 
         self.setup()
         self._init_numba(models)
 
-        def _compile_model(model: Model):
-            model.compile()
+        def _precompile_model(model: Model):
+            model.precompile()
+
+        logger.info("Compilation in progress. This might take a minute...")
 
         if nomp is True:
             for name, mdl in models.items():
-                _compile_model(mdl)
+                _precompile_model(mdl)
                 logger.debug("Model <%s> compiled.", name)
 
         # multi-processed implementation. `Pool.map` runs very slow somehow.
@@ -685,7 +689,7 @@ class System:
             for idx, (name, mdl) in enumerate(models.items()):
                 job = Process(
                     name='Process {0:d}'.format(idx),
-                    target=_compile_model,
+                    target=_precompile_model,
                     args=(mdl,),
                     )
                 jobs.append(job)
@@ -698,7 +702,10 @@ class System:
                     jobs = []
 
         _, s = elapsed(t0)
-        logger.info('Compiled %d models in %s.', len(models), s)
+        logger.info('Numba compiled %d model%s in %s.',
+                    len(models),
+                    '' if len(models) == 1 else 's',
+                    s)
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -1567,23 +1574,30 @@ class System:
 
         The output is an OrderedDict of model names and instances.
         """
-        if models is None:
-            models = self.exist.pflow
-        if isinstance(models, str):
-            models = {models: self.__dict__[models]}
+        out = OrderedDict()
+
+        if isinstance(models, OrderedDict):
+            out.update(models)
+
+        elif models is None:
+            out.update(self.exist.pflow)
+
+        elif isinstance(models, str):
+            out[models] = self.__dict__[models]
+
         elif isinstance(models, Model):
-            models = {models.class_name: models}
+            out[models.class_name] = models
+
         elif isinstance(models, list):
-            models = OrderedDict()
             for item in models:
                 if isinstance(item, Model):
-                    models[item.class_name] = item
+                    out[item.class_name] = item
                 elif isinstance(item, str):
-                    models[item] = self.__dict__[item]
+                    out[item] = self.__dict__[item]
                 else:
                     raise TypeError(f'Unknown type {type(item)}')
-        # do nothing for OrderedDict type
-        return models
+
+        return out
 
     def _store_tf(self, models):
         """

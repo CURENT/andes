@@ -1678,7 +1678,7 @@ class Model:
 
         self.flags.jited = True
 
-    def compile(self):
+    def precompile(self):
         """
         Trigger numba compilation for this model.
 
