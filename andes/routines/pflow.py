@@ -8,7 +8,7 @@ from collections import OrderedDict
 from andes.utils.misc import elapsed
 from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
-from andes.shared import np, matrix, sparse, newton_krylov, IP_ADD
+from andes.shared import np, matrix, sparse, newton_krylov
 
 logger = logging.getLogger(__name__)
 
@@ -156,11 +156,10 @@ class PFlow(BaseRoutine):
         if '.' in sp_module:
             sp_module = sp_module.split('.')[0]
 
-        if IP_ADD:
-            if self.system.config.ipadd:
-                ipadd_status = f'Fast in-place ({sp_module})'
-            else:
-                ipadd_status = 'Standard (ipadd disabled in config)'
+        if self.system.config.ipadd:
+            ipadd_status = f'Fast in-place ({sp_module})'
+        else:
+            ipadd_status = 'Standard (ipadd disabled in config)'
 
         out = list()
         out.append('')

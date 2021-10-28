@@ -36,7 +36,7 @@ from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, jac_names, dilled_vars, IP_ADD
+from andes.shared import np, jac_names, dilled_vars
 from andes.shared import matrix, spmatrix, sparse, Pool
 
 from multiprocess import Process
@@ -988,7 +988,7 @@ class System:
             for mdl in models.values():
                 for rows, cols, vals in mdl.triplets.zip_ijv(j_name):
                     try:
-                        if self.config.ipadd and IP_ADD:
+                        if self.config.ipadd:
                             self.dae.__dict__[j_name].ipadd(vals, rows, cols)
                         else:
                             self.dae.__dict__[j_name] += spmatrix(vals, rows, cols, j_size, 'd')
@@ -1015,7 +1015,7 @@ class System:
         aidx = self.Bus.islanded_a
         vidx = self.Bus.islanded_v
 
-        if self.config.ipadd and IP_ADD:
+        if self.config.ipadd:
             self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
             self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
         else:
