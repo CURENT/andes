@@ -397,11 +397,11 @@ class SymProcessor:
 import numpy
 
 
-from numpy import ones_like, zeros_like, full, array                 # NOQA
+from numpy import ones_like, zeros_like, full, array                # NOQA
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
 from numpy import greater_equal, less_equal, greater, less, equal   # NOQA
 from numpy import logical_and, logical_or, logical_not              # NOQA
-from numpy import real, imag, conj, angle, radians                  # NOQA
+from numpy import real, imag, conj, angle, radians, abs             # NOQA
 from numpy import arcsin, arccos, arctan, arctan2                   # NOQA
 from numpy import log                                               # NOQA
 

@@ -1661,20 +1661,20 @@ class Model:
         if self.flags.jited is True:
             return
 
-        self.calls.f = to_jit(self.calls.f,
-                              parallel=parallel,
-                              cache=cache,
-                              nopython=nopython,
-                              )
-        self.calls.g = to_jit(self.calls.g,
-                              parallel=parallel,
-                              cache=cache,
-                              nopython=nopython,
-                              )
+        kwargs = {'parallel': parallel,
+                  'cache': cache,
+                  'nopython': nopython,
+                  }
+
+        self.calls.f = to_jit(self.calls.f, **kwargs)
+        self.calls.g = to_jit(self.calls.g, **kwargs)
 
         for jname in self.calls.j:
-            self.calls.j[jname] = to_jit(self.calls.j[jname],
-                                         parallel=parallel, cache=cache)
+            self.calls.j[jname] = to_jit(self.calls.j[jname], **kwargs)
+
+        for name, instance in self.services_var.items():
+            if instance.v_str is not None:
+                self.calls.s[name] = to_jit(self.calls.s[name], **kwargs)
 
         self.flags.jited = True
 
@@ -1699,6 +1699,10 @@ class Model:
 
         for jname, jfunc in self.calls.j.items():
             jfunc(*self.j_args[jname])
+
+        for name, instance in self.services_var.items():
+            if instance.v_str is not None:
+                self.calls.s[name](*self.s_args[name])
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'
