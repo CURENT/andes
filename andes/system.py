@@ -653,7 +653,9 @@ class System:
                              nopython=nopython,
                              )
 
-    def precompile(self, models: OrderedDict, nomp=False,
+    def precompile(self,
+                   models: Union[OrderedDict, None] = None,
+                   nomp: bool = False,
                    ncpu: int = os.cpu_count()):
         """
         Trigger precompilation for the given models.
@@ -662,6 +664,9 @@ class System:
         """
 
         t0, _ = elapsed()
+
+        if models is None:
+            models = self.models
 
         self.setup()
         self._init_numba(models)
@@ -674,6 +679,7 @@ class System:
                 _precompile_model(mdl)
                 logger.debug("Model <%s> precompiled.", name)
 
+        # multi-processed implementation. `Pool.map` runs very slow somehow.
         else:
             jobs = []
             for idx, (name, mdl) in enumerate(models.items()):
