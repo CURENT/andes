@@ -12,3 +12,4 @@ tqdm
 pyyaml
 coloredlogs
 chardet
+numba

@@ -2,6 +2,7 @@ kvxopt>=1.2.5
 numpy
 scipy
 sympy>=1.6,<1.9
+numba
 pandas
 matplotlib
 openpyxl
