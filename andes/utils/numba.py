@@ -4,6 +4,8 @@ Utility functions for compiling functions with numba.
 
 from typing import Union, Callable
 
+from andes.shared import numba
+
 
 def to_jit(func: Union[Callable, None],
            parallel: bool = False,
@@ -17,7 +19,6 @@ def to_jit(func: Union[Callable, None],
     based on the argument types.
     """
 
-    import numba  # NOQA
     if func is not None:
         return numba.jit(func,
                          parallel=parallel,

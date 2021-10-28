@@ -638,6 +638,7 @@ class System:
         """
         Helper function to compile all functions with Numba before init.
         """
+
         if not self.config.numba:
             return
 
@@ -662,8 +663,8 @@ class System:
 
         t0, _ = elapsed()
 
-        self._init_numba(models)
         self.setup()
+        self._init_numba(models)
 
         def _precompile_model(model: Model):
             model.precompile()
@@ -703,10 +704,8 @@ class System:
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
-        try:
-            self._init_numba(models)
-        except ImportError:
-            logger.warning("Numba not found. JIT compilation is skipped.")
+
+        self._init_numba(models)
 
         for mdl in models.values():
             # link externals services first

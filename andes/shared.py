@@ -50,6 +50,7 @@ for jname in jac_names:
 tqdm = LazyImport('from tqdm import tqdm')
 
 pd = LazyImport('import pandas')
+numba = LazyImport('import numba')
 cupy = LazyImport('import cupy')
 mpl = LazyImport('import matplotlib')
 unittest = LazyImport('import unittest')
