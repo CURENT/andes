@@ -295,6 +295,7 @@ class TDS(BaseRoutine):
             resume = True
             logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
+            logger.debug("Initial step size for resumed simulation is h=%.4fs.", self.h)
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
 
@@ -405,6 +406,10 @@ class TDS(BaseRoutine):
         """
         system = self.system
         dae = self.system.dae
+
+        if self.h == 0:
+            logger.error("Current step size is zero. Integration is not permitted.")
+            return False
 
         self.mis = [1, 1]
         self.niter = 0
@@ -532,6 +537,89 @@ class TDS(BaseRoutine):
         self.last_converged = self.converged
 
         return self.converged
+
+    def mock_itm_step(self):
+        """
+        Integrate with Implicit Trapezoidal Method (ITM) to the current time.
+
+        This function has an internal Newton-Raphson loop for algebraized semi-explicit DAE.
+        The function returns the convergence status when done but does NOT progress simulation time.
+
+        Returns
+        -------
+        bool
+            Convergence status in ``self.converged``.
+
+        """
+        system = self.system
+        dae = self.system.dae
+
+        if self.h == 0:
+            logger.error("Current step size is zero. Integration is not permitted.")
+            return False
+
+        self.mis = [1, 1]
+        self.niter = 0
+        self.converged = False
+
+        self.x0[:] = dae.x
+        self.y0[:] = dae.y
+        self.f0[:] = dae.f
+
+        while True:
+            self.fg_update(models=system.exist.pflow_tds)
+
+            # lazy Jacobian update
+
+            reason = ''
+            if dae.t == 0:
+                reason = 't=0'
+            elif self.config.honest:
+                reason = 'using honest method'
+            elif self.custom_event:
+                reason = 'custom event set'
+            elif not self.last_converged:
+                reason = 'non-convergence in the last step'
+            elif self.niter > 4 and (self.niter + 1) % 3 == 0:
+                reason = 'update every 6 iterations'
+            elif dae.t - self._last_switch_t < 0.1:
+                reason = 'within 0.1s of event'
+
+            if reason:
+                system.j_update(models=system.exist.pflow_tds, info=reason)
+
+                # set flag in `solver.worker.factorize`, not `solver.factorize`.
+                self.solver.worker.factorize = True
+
+            # `Tf` should remain constant throughout the simulation, even if the corresponding diff. var.
+            # is pegged by the anti-windup limiters.
+
+            # solve implicit trapezoidal method (ITM) integration
+            if self.config.g_scale > 0:
+                gxs = self.config.g_scale * self.h * dae.gx
+                gys = self.config.g_scale * self.h * dae.gy
+            else:
+                gxs = dae.gx
+                gys = dae.gy
+
+            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, gxs],
+                              [-self.h * 0.5 * dae.fy, gys]], 'd')
+
+            # equation `self.qg[:dae.n] = 0` is the implicit form of differential equations using ITM
+            self.qg[:dae.n] = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
+
+            # reset the corresponding q elements for pegged anti-windup limiter
+            for item in system.antiwindups:
+                for key, _, eqval in item.x_set:
+                    np.put(self.qg, key, eqval)
+
+            # set or scale the algebraic residuals
+            if self.config.g_scale > 0:
+                self.qg[dae.n:] = self.config.g_scale * self.h * dae.g
+            else:
+                self.qg[dae.n:] = dae.g
+
+            return
 
     def _csv_step(self):
         """
