@@ -20,8 +20,12 @@ class TestSnapshot(unittest.TestCase):
         os.remove('test_ss.pkl')
 
     def load_ss(self):
+
+        # load a snapshot
         test_dir = os.path.dirname(__file__)
         ss = load_ss(os.path.join(test_dir, 'kundur_full_2s.pkl'))
+
+        # set a new simulation end time
         ss.TDS.config.tf = 2
         ss.TDS.run()
 

@@ -22,7 +22,10 @@ def load_ss(path):
     Load an ANDES snapshot and return a System object.
     """
 
-    system = andes.System()  # process `pycode`
+    # the line below is needed to properly import `pycode`.
+    # TODO: properly import `pycode` beforehand
+    system = andes.System()
+
     with open(path, 'rb') as file:
         system = dill.load(file)
 
