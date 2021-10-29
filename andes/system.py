@@ -684,6 +684,9 @@ class System:
         else:
             models = self._get_models(models)
 
+        # turn on numba for precompilation
+        self.config.numba = 1
+
         self.setup()
         self._init_numba(models)
 
