@@ -58,6 +58,9 @@ class ModelCache:
 
         return self.__getattribute__(item)
 
+    def __getstate__(self):
+        return self.__dict__
+
     def add_callback(self, name: str, callback):
         """
         Add a cache attribute and a callback function for updating the attribute.
@@ -80,8 +83,6 @@ class ModelCache:
         name : str, list, optional
             name or list of cached to refresh, by default None for refreshing all
 
-        TODO: bug found in Example notebook 2. Time domain initialization fails
-        after refreshing.
         """
         if name is None:
             for name in self._callbacks.keys():

@@ -146,6 +146,9 @@ class DAETimeSeries:
 
         return super().__getattribute__(attr)
 
+    def __getstate__(self):
+        return self.__dict__
+
 
 class DAE:
     r"""
