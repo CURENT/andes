@@ -265,6 +265,10 @@ def read_add(system, file):
                             cond_values.append(dyr_dict[psse_model][col])
 
                     try:
+                        logger.debug("<%s> trying to find <%s> using cond_names=%s and cond_values=%s",
+                                     psse_model, model, cond_names, cond_values)
+                        logger.debug("<%s> contains %d devices", model, system.__dict__[model].n)
+
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
                                                                      allow_none=allow_none)
                     except IndexError as e:
