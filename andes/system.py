@@ -17,8 +17,9 @@ import logging
 import os
 import sys
 import inspect
-import dill
 import time
+
+import dill
 
 from collections import OrderedDict
 from typing import Dict, Tuple, Union, Optional
@@ -37,9 +38,8 @@ from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
 from andes.shared import np, jac_names, dilled_vars
-from andes.shared import matrix, spmatrix, sparse, Pool
+from andes.shared import matrix, spmatrix, sparse, Pool, Process
 
-from multiprocess import Process
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True

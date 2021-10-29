@@ -1,8 +1,12 @@
+"""
+Test ANDES snapshot based on dill.
+"""
+
 import os
-import andes
+import unittest
 import numpy as np
 
-import unittest
+import andes
 from andes.utils.snapshot import save_ss, load_ss
 
 
@@ -12,6 +16,10 @@ class TestSnapshot(unittest.TestCase):
     """
 
     def test_save_ss(self):
+        """
+        Test saving a snapshot.
+        """
+
         ss = andes.run(andes.get_case("kundur/kundur_full.xlsx"))
         ss.TDS.config.tf = 2
         ss.TDS.run()
@@ -20,6 +28,9 @@ class TestSnapshot(unittest.TestCase):
         os.remove('test_ss.pkl')
 
     def load_ss(self):
+        """
+        Test loading a snapshot and continuing the simulation.
+        """
 
         # load a snapshot
         test_dir = os.path.dirname(__file__)
