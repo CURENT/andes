@@ -149,24 +149,17 @@ class PFlow(BaseRoutine):
         """
         Output a summary for the PFlow routine.
         """
-        ipadd_status = 'Standard (ipadd not available)'
 
         # extract package name, `kvxopt` or `kvxopt`
         sp_module = sparse.__module__
         if '.' in sp_module:
             sp_module = sp_module.split('.')[0]
 
-        if self.system.config.ipadd:
-            ipadd_status = f'Fast in-place ({sp_module})'
-        else:
-            ipadd_status = 'Standard (ipadd disabled in config)'
-
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
         out.append(f'{"Sparse solver":>16s}: {self.solver.sparselib.upper()}')
         out.append(f'{"Solution method":>16s}: {self.config.method} method')
-        out.append(f'{"Sparse addition":>16s}: {ipadd_status}')
         out_str = '\n'.join(out)
         logger.info(out_str)
 
