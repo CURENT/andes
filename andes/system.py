@@ -64,6 +64,12 @@ class System:
     These attributes include `models`, `groups`, `routines` and `calls` for loaded models, groups,
     analysis routines, and generated numerical function calls, respectively.
 
+    Parameters
+    ----------
+    no_undill : bool, optional
+        True to disable the call to ``System.undill()`` at the end of object creation.
+        False by default.
+
     Notes
     -----
     System stores model and routine instances as attributes.
@@ -95,6 +101,7 @@ class System:
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
+                 no_undill: Optional[bool] = False,
                  **kwargs
                  ):
         self.name = name
@@ -195,6 +202,9 @@ class System:
 
         # internal flags
         self.is_setup = False        # if system has been setup
+
+        if not no_undill:
+            self.undill()
 
     def _set_numpy(self):
         """
@@ -612,7 +622,11 @@ class System:
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
-        Set arrays (`v` and `e`) in internal variables.
+        Set arrays (`v` and `e`) for internal variables to access
+        dae arrays in place.
+
+        This function needs to be called after de-serializing a System object,
+        where the internal variables are incorrectly assigned new memory.
 
         Parameters
         ----------
@@ -2017,6 +2031,23 @@ class System:
             out[name] = instance.as_dict(vin=vin)
 
         return out
+
+    def fix_address(self):
+        """
+        Fixes addressing issues after loading a snapshot.
+
+        This function properly sets ``v`` and ``e`` of internal
+        variables as views of the corresponding DAE arrays.
+
+        Inputs will be refreshed for each model.
+        """
+
+        self.set_var_arrays(self.models)
+
+        for model in self.models.values():
+            model.get_inputs(refresh=True)
+
+        return True
 
 
 def load_pycode_from_path(pycode_path):
