@@ -14,6 +14,8 @@ v1.5.2 (2021-10-27)
 - Added ``andes prep -c`` to precompile the generated code.
 - Compiled numba code is always cached.
 - Removed ``__zeros`` and ``__ones`` as they are no longer needed.
+- Added utility functions for saving and loading system snapshots.
+  See ``andes/utils/snapshot.py``.
 - Bug fixes.
 
 v1.5.1 (2021-10-23)
