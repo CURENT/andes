@@ -211,7 +211,7 @@ class REGCA1Model(Model):
                                  )
 
         self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
-                             funs=('__zeros', '(v - Lvpnt0) * kLVG', '__ones'),
+                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
                              info='Ip gain during low voltage',
                              tex_name='L_{VG}',
                              )
@@ -229,7 +229,7 @@ class REGCA1Model(Model):
                               points=('Zerox', 'Brkpt'),
                               funs=('0 + 9999*(1-Lvplsw)',
                                     '(S2_y - Zerox) * kLVPL + 9999 * (1-Lvplsw)',
-                                    '9999 * __ones'),
+                                    '9999'),
                               info='Low voltage Ipcmd upper limit',
                               tex_name='L_{VPL}',
                               )

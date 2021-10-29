@@ -685,7 +685,7 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
 
 
 def prepare(quick=False, incremental=False, models=None,
-            nomp=False, **kwargs):
+            precompile=False, nomp=False, **kwargs):
     """
     Run code generation.
 
@@ -699,6 +699,8 @@ def prepare(quick=False, incremental=False, models=None,
     cli : bool
         True to indicate running from CLI.
         It will set `quick` to True if not `full`.
+    precompile : bool
+        True to compile model function calls after code generation.
 
     Warnings
     --------
@@ -727,6 +729,9 @@ def prepare(quick=False, incremental=False, models=None,
     system = System(options=kwargs)
     system.prepare(quick=quick, incremental=incremental, models=models,
                    nomp=nomp, ncpu=ncpu)
+
+    if precompile:
+        system.precompile(models, nomp=nomp, ncpu=ncpu)
 
     if cli is True:
         return 0

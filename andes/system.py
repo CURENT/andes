@@ -17,6 +17,8 @@ import logging
 import os
 import sys
 import inspect
+import time
+
 import dill
 
 from collections import OrderedDict
@@ -35,8 +37,9 @@ from andes.utils.paths import get_pycode_path, get_pkl_path
 from andes.core import Config, Model, AntiWindup
 from andes.io.streaming import Streaming
 
-from andes.shared import np, jac_names, dilled_vars, IP_ADD
-from andes.shared import matrix, spmatrix, sparse, Pool
+from andes.shared import np, jac_names, dilled_vars
+from andes.shared import matrix, spmatrix, sparse, Pool, Process
+
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True
@@ -60,6 +63,12 @@ class System:
     System contains a several special `OrderedDict` member attributes for housekeeping.
     These attributes include `models`, `groups`, `routines` and `calls` for loaded models, groups,
     analysis routines, and generated numerical function calls, respectively.
+
+    Parameters
+    ----------
+    no_undill : bool, optional
+        True to disable the call to ``System.undill()`` at the end of object creation.
+        False by default.
 
     Notes
     -----
@@ -92,6 +101,7 @@ class System:
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
+                 no_undill: Optional[bool] = False,
                  **kwargs
                  ):
         self.name = name
@@ -134,7 +144,6 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('numba_cache', 1),
                                      ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
                                      ('np_divide', 'warn'),
@@ -151,7 +160,6 @@ class System:
                               warn_abnormal='warn initialization out of normal values',
                               numba='use numba for JIT compilation',
                               numba_parallel='enable parallel for numba.jit',
-                              numba_cache='enable machine code caching for numba.jit',
                               numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
                               np_divide='treatment for division by zero',
@@ -167,7 +175,6 @@ class System:
                               warn_abnormal=(0, 1),
                               numba=(0, 1),
                               numba_parallel=(0, 1),
-                              numba_cache=(0, 1),
                               numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
@@ -195,6 +202,9 @@ class System:
 
         # internal flags
         self.is_setup = False        # if system has been setup
+
+        if not no_undill:
+            self.undill()
 
     def _set_numpy(self):
         """
@@ -295,7 +305,7 @@ class System:
         elif not incremental and models is None:
             models = self.models
         else:
-            models = self._to_orddct(models)
+            models = self._get_models(models)
 
         total = len(models)
         width = len(str(total))
@@ -612,7 +622,11 @@ class System:
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
-        Set arrays (`v` and `e`) in internal variables.
+        Set arrays (`v` and `e`) for internal variables to access
+        dae arrays in place.
+
+        This function needs to be called after de-serializing a System object,
+        where the internal variables are incorrectly assigned new memory.
 
         Parameters
         ----------
@@ -638,21 +652,77 @@ class System:
         """
         Helper function to compile all functions with Numba before init.
         """
+
         if not self.config.numba:
             return
 
         use_parallel = bool(self.config.numba_parallel)
-        use_cache = bool(self.config.numba_cache)
         nopython = bool(self.config.numba_nopython)
 
-        logger.info("Numba compilation initiated, parallel=%s, cache=%s.",
-                    use_parallel, use_cache)
+        logger.info("Numba compilation initiated with caching. Parallel=%s.",
+                    use_parallel)
 
         for mdl in models.values():
             mdl.numba_jitify(parallel=use_parallel,
-                             cache=use_cache,
                              nopython=nopython,
                              )
+
+    def precompile(self,
+                   models: Union[OrderedDict, None] = None,
+                   nomp: bool = False,
+                   ncpu: int = os.cpu_count()):
+        """
+        Trigger precompilation for the given models.
+
+        Arguments are the same as ``prepare``.
+        """
+
+        t0, _ = elapsed()
+
+        if models is None:
+            models = self.models
+        else:
+            models = self._get_models(models)
+
+        # turn on numba for precompilation
+        self.config.numba = 1
+
+        self.setup()
+        self._init_numba(models)
+
+        def _precompile_model(model: Model):
+            model.precompile()
+
+        logger.info("Compilation in progress. This might take a minute...")
+
+        if nomp is True:
+            for name, mdl in models.items():
+                _precompile_model(mdl)
+                logger.debug("Model <%s> compiled.", name)
+
+        # multi-processed implementation. `Pool.map` runs very slow somehow.
+        else:
+            jobs = []
+            for idx, (name, mdl) in enumerate(models.items()):
+                job = Process(
+                    name='Process {0:d}'.format(idx),
+                    target=_precompile_model,
+                    args=(mdl,),
+                    )
+                jobs.append(job)
+                job.start()
+
+                if (idx % ncpu == ncpu - 1) or (idx == len(models) - 1):
+                    time.sleep(0.02)
+                    for job in jobs:
+                        job.join()
+                    jobs = []
+
+        _, s = elapsed(t0)
+        logger.info('Numba compiled %d model%s in %s.',
+                    len(models),
+                    '' if len(models) == 1 else 's',
+                    s)
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -664,10 +734,8 @@ class System:
         - Call the model `init()` method, which initializes internal variables.
         - Copy variables to DAE and then back to the model.
         """
-        try:
-            self._init_numba(models)
-        except ImportError:
-            logger.warning("Numba not found. JIT compilation is skipped.")
+
+        self._init_numba(models)
 
         for mdl in models.values():
             # link externals services first
@@ -949,7 +1017,7 @@ class System:
             for mdl in models.values():
                 for rows, cols, vals in mdl.triplets.zip_ijv(j_name):
                     try:
-                        if self.config.ipadd and IP_ADD:
+                        if self.config.ipadd:
                             self.dae.__dict__[j_name].ipadd(vals, rows, cols)
                         else:
                             self.dae.__dict__[j_name] += spmatrix(vals, rows, cols, j_size, 'd')
@@ -976,7 +1044,7 @@ class System:
         aidx = self.Bus.islanded_a
         vidx = self.Bus.islanded_v
 
-        if self.config.ipadd and IP_ADD:
+        if self.config.ipadd:
             self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
             self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
         else:
@@ -1348,7 +1416,8 @@ class System:
 
         """
         np_ver = np.__version__.split('.')
-        np_ver = tuple([int(i) for i in np_ver])
+        # Read only first two elements. Last one may contain 'rcxx'
+        np_ver = tuple([int(i) for i in np_ver[:2]])
         if np_ver < (1, 20):
             logger.debug("Dumping calls to calls.pkl with dill")
             dill.settings['recurse'] = True
@@ -1522,23 +1591,30 @@ class System:
 
         The output is an OrderedDict of model names and instances.
         """
-        if models is None:
-            models = self.exist.pflow
-        if isinstance(models, str):
-            models = {models: self.__dict__[models]}
+        out = OrderedDict()
+
+        if isinstance(models, OrderedDict):
+            out.update(models)
+
+        elif models is None:
+            out.update(self.exist.pflow)
+
+        elif isinstance(models, str):
+            out[models] = self.__dict__[models]
+
         elif isinstance(models, Model):
-            models = {models.class_name: models}
+            out[models.class_name] = models
+
         elif isinstance(models, list):
-            models = OrderedDict()
             for item in models:
                 if isinstance(item, Model):
-                    models[item.class_name] = item
+                    out[item.class_name] = item
                 elif isinstance(item, str):
-                    models[item] = self.__dict__[item]
+                    out[item] = self.__dict__[item]
                 else:
                     raise TypeError(f'Unknown type {type(item)}')
-        # do nothing for OrderedDict type
-        return models
+
+        return out
 
     def _store_tf(self, models):
         """
@@ -1958,6 +2034,23 @@ class System:
             out[name] = instance.as_dict(vin=vin)
 
         return out
+
+    def fix_address(self):
+        """
+        Fixes addressing issues after loading a snapshot.
+
+        This function properly sets ``v`` and ``e`` of internal
+        variables as views of the corresponding DAE arrays.
+
+        Inputs will be refreshed for each model.
+        """
+
+        self.set_var_arrays(self.models)
+
+        for model in self.models.values():
+            model.get_inputs(refresh=True)
+
+        return True
 
 
 def load_pycode_from_path(pycode_path):

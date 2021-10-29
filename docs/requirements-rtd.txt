@@ -1,7 +1,7 @@
-cvxopt
+kvxopt>1.2.5
 numpy
 scipy
-sympy>=1.6
+sympy>=1.6,<1.9
 pandas
 matplotlib
 openpyxl
@@ -15,3 +15,4 @@ ipython
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
+docutils<0.18

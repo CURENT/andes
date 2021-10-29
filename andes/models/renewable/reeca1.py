@@ -532,11 +532,11 @@ class REECA1Model(Model):
 
         self.VDL1 = Piecewise(u=self.s0_y,
                               points=('Vq1', 'Vq2', 'Vq3', 'Vq4'),
-                              funs=(f'({self.s0_y.name} * __zeros) + Iq1',
+                              funs=('Iq1',
                                     f'({self.s0_y.name} - Vq1) * kVq12 + Iq1',
                                     f'({self.s0_y.name} - Vq2) * kVq23 + Iq2',
                                     f'({self.s0_y.name} - Vq3) * kVq34 + Iq3',
-                                    f'({self.s0_y.name} * __zeros) + Iq4'),
+                                    'Iq4'),
                               tex_name='V_{DL1}',
                               info='Piecewise linear characteristics of Vq-Iq',
                               )
@@ -559,11 +559,11 @@ class REECA1Model(Model):
 
         self.VDL2 = Piecewise(u=self.s0_y,
                               points=('Vp1', 'Vp2', 'Vp3', 'Vp4'),
-                              funs=(f'({self.s0_y.name} * __zeros) + Ip1',
+                              funs=('Ip1',
                                     f'({self.s0_y.name} - Vp1) * kVp12 + Ip1',
                                     f'({self.s0_y.name} - Vp2) * kVp23 + Ip2',
                                     f'({self.s0_y.name} - Vp3) * kVp34 + Ip3',
-                                    f'({self.s0_y.name} * __zeros) + Ip4'),
+                                    'Ip4'),
                               tex_name='V_{DL2}',
                               info='Piecewise linear characteristics of Vp-Ip',
                               )
@@ -588,12 +588,12 @@ class REECA1Model(Model):
         Ipmax2sq = '(Imax**2 - IqHL_y**2)'
 
         # `Ipmax20`-squared (non-negative)
-        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((__zeros, Le({Ipmax2sq0}, 0.0)), ({Ipmax2sq0}, True), \
+        self.Ipmax2sq0 = ConstService(v_str=f'Piecewise((0, Le({Ipmax2sq0}, 0.0)), ({Ipmax2sq0}, True), \
                                               evaluate=False)',
                                       tex_name='I_{pmax20,nn}^2',
                                       )
 
-        self.Ipmax2sq = VarService(v_str=f'Piecewise((__zeros, Le({Ipmax2sq}, 0.0)), ({Ipmax2sq}, True), \
+        self.Ipmax2sq = VarService(v_str=f'Piecewise((0, Le({Ipmax2sq}, 0.0)), ({Ipmax2sq}, True), \
                                            evaluate=False)',
                                    tex_name='I_{pmax2}^2',
                                    )
@@ -615,12 +615,12 @@ class REECA1Model(Model):
 
         Iqmax2sq0 = '(Imax**2 - Ipcmd0**2)'  # initialization equation by using `Ipcmd0`
 
-        self.Iqmax2sq0 = ConstService(v_str=f'Piecewise((__zeros, Le({Iqmax2sq0}, 0.0)), ({Iqmax2sq0}, True), \
+        self.Iqmax2sq0 = ConstService(v_str=f'Piecewise((0, Le({Iqmax2sq0}, 0.0)), ({Iqmax2sq0}, True), \
                                               evaluate=False)',
                                       tex_name='I_{qmax,nn}^2',
                                       )
 
-        self.Iqmax2sq = VarService(v_str=f'Piecewise((__zeros, Le({Iqmax2sq}, 0.0)), ({Iqmax2sq}, True), \
+        self.Iqmax2sq = VarService(v_str=f'Piecewise((0, Le({Iqmax2sq}, 0.0)), ({Iqmax2sq}, True), \
                                            evaluate=False)',
                                    tex_name='I_{qmax2}^2')
 

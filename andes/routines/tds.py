@@ -295,6 +295,7 @@ class TDS(BaseRoutine):
             resume = True
             logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
+            logger.debug("Initial step size for resumed simulation is h=%.4fs.", self.h)
 
         self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
 
@@ -405,6 +406,10 @@ class TDS(BaseRoutine):
         """
         system = self.system
         dae = self.system.dae
+
+        if self.h == 0:
+            logger.error("Current step size is zero. Integration is not permitted.")
+            return False
 
         self.mis = [1, 1]
         self.niter = 0

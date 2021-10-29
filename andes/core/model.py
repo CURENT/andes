@@ -58,6 +58,9 @@ class ModelCache:
 
         return self.__getattribute__(item)
 
+    def __getstate__(self):
+        return self.__dict__
+
     def add_callback(self, name: str, callback):
         """
         Add a cache attribute and a callback function for updating the attribute.
@@ -80,8 +83,6 @@ class ModelCache:
         name : str, list, optional
             name or list of cached to refresh, by default None for refreshing all
 
-        TODO: bug found in Example notebook 2. Time domain initialization fails
-        after refreshing.
         """
         if name is None:
             for name in self._callbacks.keys():
@@ -626,8 +627,6 @@ class Model:
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
                                       ('sys_mva', 'S_{b,sys}'),
-                                      ('__ones', 'O_{nes}'),
-                                      ('__zeros', 'Z_{eros}'),
                                       ))
 
         # Model behavior flags
@@ -663,7 +662,7 @@ class Model:
         self.cache.add_callback('e_setters', self._e_setters)
 
         self._input = OrderedDict()    # cached dictionary of inputs
-        self._input_z = OrderedDict()  # discrete flags in an OrderedDict
+        self._input_z = OrderedDict()  # discrete flags, storage only.
         self._rhs_f = OrderedDict()    # RHS of external f
         self._rhs_g = OrderedDict()    # RHS of external g
 
@@ -962,20 +961,43 @@ class Model:
         for instance in self.cache.all_vars.values():
             self._input[instance.name] = instance.v
 
-        # append config variables
+        # append config variables as arrays
         for key, val in self.config.as_dict(refresh=True).items():
             self._input[key] = np.array(val)
 
-        # update`dae_t` and `sys_f`
+        # --- below are numpy scalars ---
+        # update`dae_t` and `sys_f`, and `sys_mva`
+        self._input['sys_f'] = np.array(self.system.config.freq, dtype=float)
+        self._input['sys_mva'] = np.array(self.system.config.mva, dtype=float)
         self._input['dae_t'] = self.system.dae.t
-        self._input['sys_f'] = self.system.config.freq
-        self._input['sys_mva'] = self.system.config.mva
 
-        # two vectors with the length of the number of devices.
-        #   Useful in the choices of `PieceWise`, which need to be vectors
-        #   for numba to compile.
-        self._input['__ones'] = np.ones(self.n)
-        self._input['__zeros'] = np.zeros(self.n)
+    def mock_refresh_inputs(self):
+        """
+        Use mock data to fill the inputs.
+
+        This function is used to generate input data of the desired type
+        to trigget JIT compilation.
+        """
+
+        self.get_inputs()
+        mock_arr = np.array([1.])
+
+        for key in self._input.keys():
+            try:
+                key_ndim = self._input[key].ndim
+            except AttributeError:
+                logger.error(key)
+                logger.error(self.class_name)
+
+            key_type = self._input[key].dtype
+
+            if key_ndim == 0:
+                self._input[key] = mock_arr.reshape(()).astype(key_type)
+            elif key_ndim == 1:
+                self._input[key] = mock_arr.astype(key_type)
+
+            else:
+                raise NotImplementedError("Unkonwn input data dimension %s" % key_ndim)
 
     def refresh_inputs_arg(self):
         """
@@ -1621,7 +1643,7 @@ class Model:
             for item in self.services_icheck.values():
                 item.check()
 
-    def numba_jitify(self, parallel=False, cache=False, nopython=False):
+    def numba_jitify(self, parallel=False, cache=True, nopython=False):
         """
         Optionally convert `self.calls.f` and `self.calls.g` to
         JIT compiled functions.
@@ -1640,22 +1662,48 @@ class Model:
         if self.flags.jited is True:
             return
 
-        self.calls.f = to_jit(self.calls.f,
-                              parallel=parallel,
-                              cache=cache,
-                              nopython=nopython,
-                              )
-        self.calls.g = to_jit(self.calls.g,
-                              parallel=parallel,
-                              cache=cache,
-                              nopython=nopython,
-                              )
+        kwargs = {'parallel': parallel,
+                  'cache': cache,
+                  'nopython': nopython,
+                  }
+
+        self.calls.f = to_jit(self.calls.f, **kwargs)
+        self.calls.g = to_jit(self.calls.g, **kwargs)
 
         for jname in self.calls.j:
-            self.calls.j[jname] = to_jit(self.calls.j[jname],
-                                         parallel=parallel, cache=cache)
+            self.calls.j[jname] = to_jit(self.calls.j[jname], **kwargs)
+
+        for name, instance in self.services_var.items():
+            if instance.v_str is not None:
+                self.calls.s[name] = to_jit(self.calls.s[name], **kwargs)
 
         self.flags.jited = True
+
+    def precompile(self):
+        """
+        Trigger numba compilation for this model.
+
+        This function requires the system to be setup, i.e.,
+        memory allocated for storage.
+        """
+
+        self.get_inputs()
+        if self.n == 0:
+            self.mock_refresh_inputs()
+        self.refresh_inputs_arg()
+
+        if callable(self.calls.f):
+            self.calls.f(*self.f_args)
+
+        if callable(self.calls.g):
+            self.calls.g(*self.g_args)
+
+        for jname, jfunc in self.calls.j.items():
+            jfunc(*self.j_args[jname])
+
+        for name, instance in self.services_var.items():
+            if instance.v_str is not None:
+                self.calls.s[name](*self.s_args[name])
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

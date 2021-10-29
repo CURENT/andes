@@ -18,42 +18,11 @@ import numpy as np         # NOQA
 from andes.utils.lazyimport import LazyImport
 from distutils.spawn import find_executable
 
-# Library preference:
-# KVXOPT + ipadd > CVXOPT + ipadd > KXVOPT > CVXOPT (+ KLU or not)
-
-try:
-    import kvxopt
-    from kvxopt import umfpack   # test if shared libs can be found
-    from kvxopt import spmatrix as kspmatrix
-    KIP_ADD = True
-except ImportError:
-    kvxopt = None
-    kspmatrix = None
-    KIP_ADD = False
-
-if KIP_ADD is False:
-    from cvxopt import spmatrix as cspmatrix
-    if hasattr(cspmatrix, 'ipadd'):
-        CIP_ADD = True
-    else:
-        CIP_ADD = False
-
-
-if kvxopt is None or (KIP_ADD is False and CIP_ADD is True):
-    from cvxopt import umfpack                           # NOQA
-    from cvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-    from cvxopt import mul, div                          # NOQA
-    from cvxopt.lapack import gesv                       # NOQA
-    from cvxopt import printing                          # NOQA
-    klu = None
-    IP_ADD = CIP_ADD
-else:
-    from kvxopt import umfpack, klu                      # NOQA
-    from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-    from kvxopt import mul, div                          # NOQA
-    from kvxopt.lapack import gesv                       # NOQA
-    from kvxopt import printing                          # NOQA
-    IP_ADD = KIP_ADD
+from kvxopt import umfpack, klu                      # NOQA
+from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
+from kvxopt import mul, div                          # NOQA
+from kvxopt.lapack import gesv                       # NOQA
+from kvxopt import printing                          # NOQA
 
 printing.options['dformat'] = '%.1f'
 printing.options['width'] = -1
@@ -81,6 +50,7 @@ for jname in jac_names:
 tqdm = LazyImport('from tqdm import tqdm')
 
 pd = LazyImport('import pandas')
+numba = LazyImport('import numba')
 cupy = LazyImport('import cupy')
 mpl = LazyImport('import matplotlib')
 unittest = LazyImport('import unittest')
