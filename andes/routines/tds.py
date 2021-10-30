@@ -10,10 +10,12 @@ import logging
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
+from andes.routines.daeint import method_map, Trapezoid
+
 from andes.utils.misc import elapsed, is_notebook, is_interactive
 from andes.utils.tab import Tab
 from andes.shared import tqdm, np, pd
-from andes.shared import matrix, sparse, spdiag
+from andes.shared import matrix, spdiag
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,8 @@ class TDS(BaseRoutine):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
-        self.config.add(OrderedDict((('tol', 1e-6),
+        self.config.add(OrderedDict((('method', 'trapezoid'),
+                                     ('tol', 1e-6),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
                                      ('fixt', 1),
@@ -45,6 +48,7 @@ class TDS(BaseRoutine):
                                      ('store_i', 0.0),
                                      )))
         self.config.add_extra("_help",
+                              method='DAE solution method',
                               tol="convergence tolerance",
                               t0="simulation starting time",
                               tf="simulation ending time",
@@ -65,6 +69,7 @@ class TDS(BaseRoutine):
                               store_i='store RHS of external algeb. equations',
                               )
         self.config.add_extra("_alt",
+                              method=tuple(method_map.keys()),
                               tol="float",
                               t0=">=0",
                               tf=">t0",
@@ -133,6 +138,10 @@ class TDS(BaseRoutine):
         self.f0 = None
         self.Ac = None
         self.inc = None
+
+        # set DAE solver
+        self.method = Trapezoid()
+        self.set_method(self.config.method)
 
     def init(self):
         """
@@ -393,10 +402,7 @@ class TDS(BaseRoutine):
 
     def itm_step(self):
         """
-        Integrate with Implicit Trapezoidal Method (ITM) to the current time.
-
-        This function has an internal Newton-Raphson loop for algebraized semi-explicit DAE.
-        The function returns the convergence status when done but does NOT progress simulation time.
+        Integrate for the step size of ``self.h`` using implicit trapezoid method.
 
         Returns
         -------
@@ -404,139 +410,7 @@ class TDS(BaseRoutine):
             Convergence status in ``self.converged``.
 
         """
-        system = self.system
-        dae = self.system.dae
-
-        if self.h == 0:
-            logger.error("Current step size is zero. Integration is not permitted.")
-            return False
-
-        self.mis = [1, 1]
-        self.niter = 0
-        self.converged = False
-
-        self.x0[:] = dae.x
-        self.y0[:] = dae.y
-        self.f0[:] = dae.f
-
-        while True:
-            self.fg_update(models=system.exist.pflow_tds)
-
-            # lazy Jacobian update
-
-            reason = ''
-            if dae.t == 0:
-                reason = 't=0'
-            elif self.config.honest:
-                reason = 'using honest method'
-            elif self.custom_event:
-                reason = 'custom event set'
-            elif not self.last_converged:
-                reason = 'non-convergence in the last step'
-            elif self.niter > 4 and (self.niter + 1) % 3 == 0:
-                reason = 'update every 6 iterations'
-            elif dae.t - self._last_switch_t < 0.1:
-                reason = 'within 0.1s of event'
-
-            if reason:
-                system.j_update(models=system.exist.pflow_tds, info=reason)
-
-                # set flag in `solver.worker.factorize`, not `solver.factorize`.
-                self.solver.worker.factorize = True
-
-            # `Tf` should remain constant throughout the simulation, even if the corresponding diff. var.
-            # is pegged by the anti-windup limiters.
-
-            # solve implicit trapezoidal method (ITM) integration
-            if self.config.g_scale > 0:
-                gxs = self.config.g_scale * self.h * dae.gx
-                gys = self.config.g_scale * self.h * dae.gy
-            else:
-                gxs = dae.gx
-                gys = dae.gy
-
-            self.Ac = sparse([[self.Teye - self.h * 0.5 * dae.fx, gxs],
-                              [-self.h * 0.5 * dae.fy, gys]], 'd')
-
-            # equation `self.qg[:dae.n] = 0` is the implicit form of differential equations using ITM
-            self.qg[:dae.n] = dae.Tf * (dae.x - self.x0) - self.h * 0.5 * (dae.f + self.f0)
-
-            # reset the corresponding q elements for pegged anti-windup limiter
-            for item in system.antiwindups:
-                for key, _, eqval in item.x_set:
-                    np.put(self.qg, key, eqval)
-
-            # set or scale the algebraic residuals
-            if self.config.g_scale > 0:
-                self.qg[dae.n:] = self.config.g_scale * self.h * dae.g
-            else:
-                self.qg[dae.n:] = dae.g
-
-            # calculate variable corrections
-            if not self.config.linsolve:
-                inc = self.solver.solve(self.Ac, matrix(self.qg))
-            else:
-                inc = self.solver.linsolve(self.Ac, matrix(self.qg))
-
-            # check for np.nan first
-            if np.isnan(inc).any():
-                self.err_msg = 'NaN found in solution. Convergence is not likely'
-                self.niter = self.config.max_iter + 1
-                self.busted = True
-                break
-
-            # reset small values to reduce chattering
-            inc[np.where(np.abs(inc) < self.tol_zero)] = 0
-
-            # set new values
-            dae.x -= inc[:dae.n].ravel()
-            dae.y -= inc[dae.n: dae.n + dae.m].ravel()
-
-            # synchronize solutions to model internal storage
-            system.vars_to_models()
-
-            # store `inc` to self for debugging
-            self.inc = inc
-
-            mis = np.max(np.abs(inc))
-
-            # store initial maximum mismatch
-            if self.niter == 0:
-                self.mis[0] = mis
-            else:
-                self.mis[-1] = mis
-
-            self.niter += 1
-
-            # converged
-            if mis <= self.config.tol:
-                self.converged = True
-                break
-            # non-convergence cases
-            if self.niter > self.config.max_iter:
-                tqdm.write(f'* Max. iter. {self.config.max_iter} reached for t={dae.t:.6f}s, '
-                           f'h={self.h:.6f}s, max inc={mis:.4g} ')
-
-                # debug helpers
-                g_max = np.argmax(abs(dae.g))
-                inc_max = np.argmax(abs(inc))
-                self._debug_g(g_max)
-                self._debug_ac(inc_max)
-                break
-
-            if (mis > 1e6) and (mis > 1e6 * self.mis[0]):
-                self.err_msg = 'Error increased too quickly.'
-                break
-
-        if not self.converged:
-            dae.x[:] = np.array(self.x0)
-            dae.y[:] = np.array(self.y0)
-            dae.f[:] = np.array(self.f0)
-            system.vars_to_models()
-
-        self.last_converged = self.converged
-
-        return self.converged
+        return self.method.step(self)
 
     def _csv_step(self):
         """
@@ -1034,3 +908,18 @@ class TDS(BaseRoutine):
             system.streaming.sync_and_handle()
             system.streaming.vars_to_modules()
             system.streaming.vars_to_pmu()
+
+    def set_method(self, name: str = 'trapezoid'):
+        """
+        Set DAE solution method.
+
+        name : str, optional, default: trapezoid
+            DAE solver name
+        """
+
+        if name not in method_map:
+            logger.error('"%s" is not a registered dae method name. " \
+                         "Falling back to trapezoid.', name)
+            name = 'trapezoid'
+
+        self.method = method_map[name]()

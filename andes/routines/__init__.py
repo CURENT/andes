@@ -10,3 +10,5 @@ all_routines = OrderedDict([('pflow', ['PFlow']),
 
 class_names = list_flatten(list(all_routines.values()))
 routine_cli = OrderedDict([(item.lower(), item) for item in class_names])
+
+from andes.routines import daeint    # NOQA
