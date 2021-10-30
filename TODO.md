@@ -5,10 +5,10 @@
 * Separate array-enabled parameters from NumParam into
   `BaseConvParam`, which implements `iconvert` and `oconvert`,
   and then `ListParam`
-* Improve the robustness of accessing the fields of `pycode` by properly
-  handling `KeyError`s.
-* Numba code generation for all models. Add a function for triggering
-  all the JIT compilation before simulation.
+[x] Improve the robustness of accessing the fields of `pycode` by properly
+    handling `KeyError`s.
+[x] Numba code generation for all models. Add a function for triggering
+    all the JIT compilation before simulation. `andes prep -c` does it.
 * Unit Model Test framework.
 
 # Later Versions
