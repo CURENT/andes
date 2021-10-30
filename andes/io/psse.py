@@ -10,9 +10,13 @@ import os
 
 import andes.io
 
+from andes.core.symprocessor import resolve_deps
+from andes.models import file_classes
+from andes.utils.func import list_flatten
 from andes.shared import deg2rad, pd, yaml
 from andes.utils.misc import to_number
 from collections import defaultdict
+
 logger = logging.getLogger(__name__)
 
 
@@ -213,7 +217,7 @@ def read_add(system, file):
     with open(f'{dirname}/psse-dyr.yaml', 'r') as f:
         dyr_yaml = yaml.full_load(f)
 
-    sorted_models = sort_psse_models(dyr_yaml)
+    sorted_models = sort_psse_models(dyr_yaml, system)
 
     for psse_model in dyr_dict:
         if psse_model in dyr_yaml:
@@ -265,6 +269,10 @@ def read_add(system, file):
                             cond_values.append(dyr_dict[psse_model][col])
 
                     try:
+                        logger.debug("<%s> trying to find <%s> using cond_names=%s and cond_values=%s",
+                                     psse_model, model, cond_names, cond_values)
+                        logger.debug("<%s> contains %d devices", model, system.__dict__[model].n)
+
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
                                                                      allow_none=allow_none)
                     except IndexError as e:
@@ -627,21 +635,54 @@ def _add_devices_from_dict(params, system):
             system.add(name, p)
 
 
-def sort_psse_models(dyr_yaml):
+def sort_psse_models(dyr_yaml, system):
     """
     Sort supported models so that model names are ordered by dependency.
+
+    Dependency is determined by checking the ``find`` key in
+    ``psse-dyr.yaml`` for each model.
+
+    Returns
+    -------
+    list
+        The sequence of model names for loading parameters.
     """
-    from andes.models import file_classes
-    from andes.utils.func import list_flatten
 
     andes_models = list_flatten(list(file_classes.values()))
-    number = dict()
+    graph = defaultdict(list)
 
     for psse_model in dyr_yaml:
-        dest = dyr_yaml[psse_model]['destination']
-        if dest in andes_models:
-            number[dest] = andes_models.index(dest)
 
-    sorted_models = [k for k, v in sorted(number.items(), key=lambda item: item[1])]
+        # build model dependency graph
+        if 'find' in dyr_yaml[psse_model]:
+            # below is a list of `dict_keys`
+            dep_models = [item.keys() for item in dyr_yaml[psse_model]['find'].values()]
 
-    return sorted_models
+            # extract strings from single-element `dict_keys`
+            dep_models = [list(item)[0] for item in dep_models]
+            graph[psse_model].extend(dep_models)
+
+    # resolve PSS/E model dependency based on `find`
+    # `find` requires the model indices to have existed
+    for key in graph:
+        value = list(graph[key])
+        for item in graph[key]:
+            if item in system.groups:
+                value.remove(item)
+                value.extend(list(system.groups[item].models.keys()))
+        graph[key] = value
+
+    sequence = resolve_deps(graph)
+    # does not support ciruclar dependencies
+    for item in sequence:
+        if not isinstance(item, str):
+            raise NotImplementedError("Circular depencency exists for models %s. %s".
+                                      item, "Please report this bug.")
+
+    # prepend no-dependency models to the front
+    nodep_models = list()
+    for item in andes_models:
+        if item not in sequence:
+            nodep_models.append(item)
+
+    return nodep_models + sequence

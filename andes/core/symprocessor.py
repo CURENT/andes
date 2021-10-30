@@ -642,6 +642,19 @@ def _store_deps(name, sympified, vars_int_dict, deps):
 def resolve_deps(graph):
     """
     Resolve dependency for a dict-based graph using recursion.
+
+    Parameters
+    ----------
+    graph : dict
+        Each key is a variable name, and the corresponding value
+        is the list of variables the key depends on.
+
+    Returns
+    -------
+    list
+        A list of initialization sequence. Elements are either a
+        variable name or a list of mutually-dependent variables
+        that need iterative initialization.
     """
 
     seq = list()      # sequence after resolving dependency
