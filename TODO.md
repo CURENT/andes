@@ -14,6 +14,7 @@
 # Later Versions
 
 * Allow selection of output variables
+* Timeseries data input support. Reading data from file.
 * `PQTS` model for PQ with time-series.
 * Generalize two-terminal and multi-terminal devices
 * Allow for semi-analytical derivation of equations
