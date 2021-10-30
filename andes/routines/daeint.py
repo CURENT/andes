@@ -17,6 +17,14 @@ class ImplicitIter:
     """
 
     @staticmethod
+    def calc_jac(tds, gxs, gys):
+        pass
+
+    @staticmethod
+    def calc_q(x, f, Tf, h, x0, f0):
+        pass
+
+    @staticmethod
     def step(tds):
         """
         Integrate with Implicit Trapezoidal Method (ITM) to the current time.
@@ -82,10 +90,10 @@ class ImplicitIter:
                 gys = dae.gy
 
             # calculate complete Jacobian matrix ``Ac```
-            tds.Ac = Trapezoid.calc_jac(tds, gxs, gys)
+            tds.Ac = tds.method.calc_jac(tds, gxs, gys)
 
             # equation `tds.qg[:dae.n] = 0` is the implicit form of differential equations using ITM
-            tds.qg[:dae.n] = Trapezoid.calc_q(dae.x, dae.f, dae.Tf, tds.h, tds.x0, tds.f0)
+            tds.qg[:dae.n] = tds.method.calc_q(dae.x, dae.f, dae.Tf, tds.h, tds.x0, tds.f0)
 
             # reset the corresponding q elements for pegged anti-windup limiter
             for item in system.antiwindups:
