@@ -655,7 +655,10 @@ def sort_psse_models(dyr_yaml, system):
 
         # build model dependency graph
         if 'find' in dyr_yaml[psse_model]:
-            dep_models = [item.keys() for item in dyr_yaml[psse_model]['find'].values()]   # is a list of `dict_keys`
+            # below is a list of `dict_keys`
+            dep_models = [item.keys() for item in dyr_yaml[psse_model]['find'].values()]
+
+            # extract strings from single-element `dict_keys`
             dep_models = [list(item)[0] for item in dep_models]
             graph[psse_model].extend(dep_models)
 
