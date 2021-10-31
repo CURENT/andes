@@ -13,22 +13,22 @@ class FixPiecewise(sym.Piecewise):
         Updated numpy code printer.
         """
 
-        # find any symbol:
-        s = list(self.atoms(sym.Symbol))[0]
-
         def broadcastarg(arg):
             if arg.has(sym.Symbol):
                 return printer._print(arg)
             if arg == 0:
-                return 'zeros_like({0})'.format(s)
+                return '__zeros'
 
-            return printer._print(arg*sym.Symbol('ones_like({0})'.format(s)))
+            return '__ones'
 
         def broadcastcond(cond):
             if cond.has(sym.Symbol):
                 return printer._print(cond)
 
-            return 'full({0}.shape,{1})'.format(printer._print(s), printer._print(cond))
+            if cond:
+                return '__trues'
+            else:
+                return '__falses'
 
         # Piecewise function printer
 

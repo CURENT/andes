@@ -627,8 +627,10 @@ class Model:
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
                                       ('sys_mva', 'S_{b,sys}'),
-                                      ('__ones', '1'),
                                       ('__zeros', '0'),
+                                      ('__ones', '1'),
+                                      ('__falses', '0'),
+                                      ('__trues', '1'),
                                       ))
 
         # Model behavior flags
@@ -968,8 +970,10 @@ class Model:
             self._input[key] = np.array(val)
 
         # zeros and ones
-        self._input['__ones'] = np.ones(self.n)
         self._input['__zeros'] = np.zeros(self.n)
+        self._input['__ones'] = np.ones(self.n)
+        self._input['__falses'] = np.full(self.n, False)
+        self._input['__trues'] = np.full(self.n, True)
 
         # --- below are numpy scalars ---
         # update`dae_t` and `sys_f`, and `sys_mva`

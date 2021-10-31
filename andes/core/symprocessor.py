@@ -25,6 +25,8 @@ sympy.Piecewise = FixPiecewise
 
 logger = logging.getLogger(__name__)
 
+select_args_add = ["__zeros", "__ones", "__falses", "__trues"]
+
 
 class SymProcessor:
     """
@@ -139,8 +141,10 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
-        self.inputs_dict['__ones'] = Symbol('__ones')
         self.inputs_dict['__zeros'] = Symbol('__zeros')
+        self.inputs_dict['__ones'] = Symbol('__ones')
+        self.inputs_dict['__falses'] = Symbol('__falses')
+        self.inputs_dict['__trues'] = Symbol('__trues')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -208,9 +212,9 @@ class SymProcessor:
                 self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
                                                       modules=self.lambdify_func)
 
-                # manually append `__ones` and `__zeros` if `select` exists
+                # manually append additional arguments for select.
                 if 'select' in inspect.getsource(self.calls.__dict__[ename]):
-                    eargs.extend(["__zeros", "__ones"])
+                    eargs.extend(select_args_add)
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -242,7 +246,7 @@ class SymProcessor:
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
             if 'select' in inspect.getsource(s_calls[name]):
-                s_args[name].extend(["__zeros", "__ones"])
+                s_args[name].extend(select_args_add)
 
         # TODO: below triggers DeprecationWarning with SymPy 1.9
         self.s_matrix = Matrix(list(s_syms.values()))
@@ -318,9 +322,9 @@ class SymProcessor:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
-            # manually append `__ones` and `__zeros` if `select` exists
+            # manually append additional arguments for select
             if 'select' in inspect.getsource(self.calls.j[jname]):
-                self.calls.j_args[jname].extend(["__zeros", "__ones"])
+                self.calls.j_args[jname].extend(select_args_add)
 
         self.calls.j_names = list(j_calls.keys())
 
@@ -417,8 +421,6 @@ class SymProcessor:
         header = \
             """from collections import OrderedDict  # NOQA
 
-import numpy
-
 from numpy import ones_like, zeros_like, full, array                # NOQA
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
 from numpy import greater_equal, less_equal, greater, less, equal   # NOQA
@@ -434,7 +436,7 @@ from andes.core.npfunc import *                                     # NOQA
         out.append(header)
 
         # checksum
-        out.append(f'md5 = "{self.calls.md5}"\n\n')
+        out.append(f'md5 = "{self.calls.md5}"\n')
 
         # equations
         out.append(self._rename_func(self.calls.f, 'f_update', yf))
@@ -458,7 +460,7 @@ from andes.core.npfunc import *                                     # NOQA
 
         # variables
         for name in dilled_vars:
-            out.append(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+            out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]))
 
         out_str = '\n'.join(out)
 
@@ -498,9 +500,9 @@ from andes.core.npfunc import *                                     # NOQA
         # remove `Indicator`
         src = src.replace("Indicator", "")
 
-        # append `__zeros` and `__ones` to the argument list
+        # append additional arguments for select
         if 'select' in src:
-            src = src.replace("):", ", __zeros, __ones):")
+            src = src.replace("):", ", __zeros, __ones, __falses, __trues):")
 
         if yapf_pycode:
             try:
@@ -549,8 +551,6 @@ from andes.core.npfunc import *                                     # NOQA
                 deps[name].extend(instance.deps)
 
         # resolve dependency
-        if self.parent.class_name == 'PVD1':
-            print(deps)
         self.init_seq = resolve_deps(deps)
         self.calls.init_seq = self.init_seq
 
@@ -642,21 +642,21 @@ from andes.core.npfunc import *                                     # NOQA
             ia_args[name] = [str(i) for i in fs]
             init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_a[name]):
-                ia_args[name].extend(["__zeros", "__ones"])
+                ia_args[name].extend(select_args_add)
 
         for name, expr in self.init_itn.items():
             fs = self._check_expr_symbols(expr)
             ii_args[name] = [str(i) for i in fs]
             init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_i[name]):
-                ii_args[name].extend(["__zeros", "__ones"])
+                ii_args[name].extend(select_args_add)
 
             jexpr = self.init_jac[name]
             fs = self._check_expr_symbols(jexpr)
             ij_args[name] = [str(i) for i in fs]
             init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_j[name]):
-                ij_args[name].extend(["__zeros", "__ones"])
+                ij_args[name].extend(select_args_add)
 
         self.calls.ia = init_a
         self.calls.ii = init_i
