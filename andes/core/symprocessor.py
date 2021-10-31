@@ -397,14 +397,13 @@ class SymProcessor:
         this function can be the bottleneck.
         """
 
-        pycode_path = get_pycode_path(pycode_path, mkdir=True)
+        out = list()
+        yf = yapf_pycode
 
-        file_path = os.path.join(pycode_path, f'{self.class_name}.py')
         header = \
             """from collections import OrderedDict  # NOQA
 
 import numpy
-
 
 from numpy import ones_like, zeros_like, full, array                # NOQA
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
@@ -416,39 +415,55 @@ from numpy import log                                               # NOQA
 
 from andes.core.npfunc import *                                     # NOQA
 
-
 """
-        yf = yapf_pycode
+        # header goes first
+        out.append(header)
+
+        # checksum
+        out.append(f'md5 = "{self.calls.md5}"\n\n')
+
+        # equations
+        out.append(self._rename_func(self.calls.f, 'f_update', yf))
+        out.append(self._rename_func(self.calls.g, 'g_update', yf))
+
+        # jacobians
+        for name in self.calls.j:
+            out.append(self._rename_func(self.calls.j[name], f'{name}_update', yf))
+
+        # initialization: assignments
+        for name in self.calls.ia:
+            out.append(self._rename_func(self.calls.ia[name], f'{name}_ia', yf))
+        for name in self.calls.ii:
+            out.append(self._rename_func(self.calls.ii[name], f'{name}_ii', yf))
+        for name in self.calls.ij:
+            out.append(self._rename_func(self.calls.ij[name], f'{name}_ij', yf))
+
+        # services
+        for name in self.calls.s:
+            out.append(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
+
+        # variables
+        for name in dilled_vars:
+            out.append(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+
+        out_str = '\n'.join(out)
+
+        pycode_path = get_pycode_path(pycode_path, mkdir=True)
+        file_path = os.path.join(pycode_path, f'{self.class_name}.py')
+
+        # do not overwrite file if already up to date
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as f:
+                fread = f.readlines()
+
+            fread = ''.join(fread)
+            if fread == out_str:
+                logger.debug("<%s>: generated code is up-to-date and not overwritten.",
+                             self.parent.class_name)
+                return
 
         with open(file_path, 'w') as f:
-            f.write(header)
-
-            # checksum
-            f.write(f'md5 = "{self.calls.md5}"\n\n')
-
-            # equations
-            f.write(self._rename_func(self.calls.f, 'f_update', yf))
-            f.write(self._rename_func(self.calls.g, 'g_update', yf))
-
-            # jacobians
-            for name in self.calls.j:
-                f.write(self._rename_func(self.calls.j[name], f'{name}_update', yf))
-
-            # initialization: assignments
-            for name in self.calls.ia:
-                f.write(self._rename_func(self.calls.ia[name], f'{name}_ia', yf))
-            for name in self.calls.ii:
-                f.write(self._rename_func(self.calls.ii[name], f'{name}_ii', yf))
-            for name in self.calls.ij:
-                f.write(self._rename_func(self.calls.ij[name], f'{name}_ij', yf))
-
-            # services
-            for name in self.calls.s:
-                f.write(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
-
-            # variables
-            for name in dilled_vars:
-                f.write(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+            f.write(out_str)
 
     def _rename_func(self, func, func_name, yapf_pycode=False):
         """
@@ -483,7 +498,7 @@ from andes.core.npfunc import *                                     # NOQA
         """
         self.v_str_syms = OrderedDict()
         self.v_iter_syms = OrderedDict()
-        deps = dict()
+        deps = OrderedDict()
 
         # convert to symbols
         for name, instance in self.cache.all_vars.items():
@@ -514,6 +529,8 @@ from andes.core.npfunc import *                                     # NOQA
                 deps[name].extend(instance.deps)
 
         # resolve dependency
+        if self.parent.class_name == 'PVD1':
+            print(deps)
         self.init_seq = resolve_deps(deps)
         self.calls.init_seq = self.init_seq
 
@@ -642,7 +659,8 @@ def _store_deps(name, sympified, vars_int_dict, deps):
     """
 
     deps[name] = []
-    for fs in sympified.free_symbols:
+    free_symbols = sorted(sympified.free_symbols, key=lambda s: s.name)
+    for fs in free_symbols:
         if fs not in vars_int_dict.values():
             continue
         if fs not in deps[name]:
