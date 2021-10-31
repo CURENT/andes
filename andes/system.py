@@ -437,7 +437,7 @@ class System:
 
         # assign address at the end before adding devices and processing parameters
         self.set_address(self.exist.pflow)
-        self.set_dae_names(self.exist.pflow)
+        self.set_dae_names(self.exist.pflow)        # needs perf. optimization
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
 

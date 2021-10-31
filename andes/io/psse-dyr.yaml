@@ -124,8 +124,11 @@ IEEEVC:
             SynGen:
                 bus: BUS
                 subidx: ID
+        avr:
+            Exciter:
+                syn: syn
     outputs:
-        syn: syn
+        avr: avr
         rc : rc
         xc : xc
 
@@ -244,7 +247,6 @@ ESAC1A:
         - KE
         - KF
         - TF
-        - Switch
     destination: ESAC1A
     find:
         syn:

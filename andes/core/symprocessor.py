@@ -4,6 +4,7 @@ Symbolic processor class for ANDES models.
 
 import os
 import logging
+import inspect
 import pprint
 import sympy
 import numpy as np
@@ -23,6 +24,8 @@ from andes.utils.sympy import FixPiecewise
 sympy.Piecewise = FixPiecewise
 
 logger = logging.getLogger(__name__)
+
+select_args_add = ["__zeros", "__ones", "__falses", "__trues"]
 
 
 class SymProcessor:
@@ -138,6 +141,10 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
+        self.inputs_dict['__zeros'] = Symbol('__zeros')
+        self.inputs_dict['__ones'] = Symbol('__ones')
+        self.inputs_dict['__falses'] = Symbol('__falses')
+        self.inputs_dict['__trues'] = Symbol('__trues')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -156,6 +163,7 @@ class SymProcessor:
             if item not in self.inputs_dict.values():
                 raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
 
+        fs = sorted(fs, key=lambda s: s.name)
         return fs
 
     def generate_equations(self):
@@ -194,11 +202,19 @@ class SymProcessor:
                             eargs.append(str(s))
 
                     elist.append(expr)
+
+            sym_args = sorted(sym_args, key=lambda s: s.name)
+            eargs.sort()
+
             if len(elist) == 0 or not any(elist):  # `any`, not `all`
                 self.calls.__dict__[ename] = None
             else:
                 self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
                                                       modules=self.lambdify_func)
+
+                # manually append additional arguments for select.
+                if 'select' in inspect.getsource(self.calls.__dict__[ename]):
+                    eargs.extend(select_args_add)
 
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
@@ -223,10 +239,14 @@ class SymProcessor:
             except (SympifyError, TypeError) as e:
                 logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                 raise e
-            self._check_expr_symbols(expr)
+
+            fs = self._check_expr_symbols(expr)
             s_syms[name] = expr
-            s_args[name] = [str(i) for i in expr.free_symbols]
+            s_args[name] = [str(i) for i in fs]
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+
+            if 'select' in inspect.getsource(s_calls[name]):
+                s_args[name].extend(select_args_add)
 
         # TODO: below triggers DeprecationWarning with SymPy 1.9
         self.s_matrix = Matrix(list(s_syms.values()))
@@ -296,8 +316,15 @@ class SymProcessor:
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
+            # sort for stable argument list
+            j_args[jname].sort(key=lambda s: s.name)
+
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
+
+            # manually append additional arguments for select
+            if 'select' in inspect.getsource(self.calls.j[jname]):
+                self.calls.j_args[jname].extend(select_args_add)
 
         self.calls.j_names = list(j_calls.keys())
 
@@ -388,14 +415,11 @@ class SymProcessor:
         this function can be the bottleneck.
         """
 
-        pycode_path = get_pycode_path(pycode_path, mkdir=True)
+        out = list()
+        yf = yapf_pycode
 
-        file_path = os.path.join(pycode_path, f'{self.class_name}.py')
         header = \
             """from collections import OrderedDict  # NOQA
-
-import numpy
-
 
 from numpy import ones_like, zeros_like, full, array                # NOQA
 from numpy import nan, pi, sin, cos, tan, sqrt, exp, select         # NOQA
@@ -407,39 +431,55 @@ from numpy import log                                               # NOQA
 
 from andes.core.npfunc import *                                     # NOQA
 
-
 """
-        yf = yapf_pycode
+        # header goes first
+        out.append(header)
+
+        # checksum
+        out.append(f'md5 = "{self.calls.md5}"\n')
+
+        # equations
+        out.append(self._rename_func(self.calls.f, 'f_update', yf))
+        out.append(self._rename_func(self.calls.g, 'g_update', yf))
+
+        # jacobians
+        for name in self.calls.j:
+            out.append(self._rename_func(self.calls.j[name], f'{name}_update', yf))
+
+        # initialization: assignments
+        for name in self.calls.ia:
+            out.append(self._rename_func(self.calls.ia[name], f'{name}_ia', yf))
+        for name in self.calls.ii:
+            out.append(self._rename_func(self.calls.ii[name], f'{name}_ii', yf))
+        for name in self.calls.ij:
+            out.append(self._rename_func(self.calls.ij[name], f'{name}_ij', yf))
+
+        # services
+        for name in self.calls.s:
+            out.append(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
+
+        # variables
+        for name in dilled_vars:
+            out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+
+        out_str = '\n'.join(out)
+
+        pycode_path = get_pycode_path(pycode_path, mkdir=True)
+        file_path = os.path.join(pycode_path, f'{self.class_name}.py')
+
+        # do not overwrite file if already up to date
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as f:
+                fread = f.readlines()
+
+            fread = ''.join(fread)
+            if fread == out_str:
+                logger.debug("<%s>: generated code is up-to-date and not overwritten.",
+                             self.parent.class_name)
+                return
 
         with open(file_path, 'w') as f:
-            f.write(header)
-
-            # checksum
-            f.write(f'md5 = "{self.calls.md5}"\n\n')
-
-            # equations
-            f.write(self._rename_func(self.calls.f, 'f_update', yf))
-            f.write(self._rename_func(self.calls.g, 'g_update', yf))
-
-            # jacobians
-            for name in self.calls.j:
-                f.write(self._rename_func(self.calls.j[name], f'{name}_update', yf))
-
-            # initialization: assignments
-            for name in self.calls.ia:
-                f.write(self._rename_func(self.calls.ia[name], f'{name}_ia', yf))
-            for name in self.calls.ii:
-                f.write(self._rename_func(self.calls.ii[name], f'{name}_ii', yf))
-            for name in self.calls.ij:
-                f.write(self._rename_func(self.calls.ij[name], f'{name}_ij', yf))
-
-            # services
-            for name in self.calls.s:
-                f.write(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
-
-            # variables
-            for name in dilled_vars:
-                f.write(f'\n{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+            f.write(out_str)
 
     def _rename_func(self, func, func_name, yapf_pycode=False):
         """
@@ -447,16 +487,22 @@ from andes.core.npfunc import *                                     # NOQA
 
         This function does not check for name conflicts.
         Install `yapf` for optional code reformatting (takes extra processing time).
+
+        It also patches function argument list for select.
         """
-        import inspect
 
         if func is None:
             return f"# empty {func_name}\n"
 
         src = inspect.getsource(func)
         src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
+
         # remove `Indicator`
         src = src.replace("Indicator", "")
+
+        # append additional arguments for select
+        if 'select' in src:
+            src = src.replace("):", ", __zeros, __ones, __falses, __trues):")
 
         if yapf_pycode:
             try:
@@ -474,7 +520,7 @@ from andes.core.npfunc import *                                     # NOQA
         """
         self.v_str_syms = OrderedDict()
         self.v_iter_syms = OrderedDict()
-        deps = dict()
+        deps = OrderedDict()
 
         # convert to symbols
         for name, instance in self.cache.all_vars.items():
@@ -592,18 +638,25 @@ from andes.core.npfunc import *                                     # NOQA
         ij_args = OrderedDict()
 
         for name, expr in self.init_asn.items():
-            self._check_expr_symbols(expr)
-            ia_args[name] = [str(i) for i in expr.free_symbols]
+            fs = self._check_expr_symbols(expr)
+            ia_args[name] = [str(i) for i in fs]
             init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_a[name]):
+                ia_args[name].extend(select_args_add)
 
         for name, expr in self.init_itn.items():
-            self._check_expr_symbols(expr)
-            ii_args[name] = [str(i) for i in expr.free_symbols]
+            fs = self._check_expr_symbols(expr)
+            ii_args[name] = [str(i) for i in fs]
             init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_i[name]):
+                ii_args[name].extend(select_args_add)
 
             jexpr = self.init_jac[name]
-            ij_args[name] = [str(i) for i in jexpr.free_symbols]
+            fs = self._check_expr_symbols(jexpr)
+            ij_args[name] = [str(i) for i in fs]
             init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_j[name]):
+                ij_args[name].extend(select_args_add)
 
         self.calls.ia = init_a
         self.calls.ii = init_i
@@ -632,7 +685,8 @@ def _store_deps(name, sympified, vars_int_dict, deps):
     """
 
     deps[name] = []
-    for fs in sympified.free_symbols:
+    free_symbols = sorted(sympified.free_symbols, key=lambda s: s.name)
+    for fs in free_symbols:
         if fs not in vars_int_dict.values():
             continue
         if fs not in deps[name]:
@@ -642,6 +696,19 @@ def _store_deps(name, sympified, vars_int_dict, deps):
 def resolve_deps(graph):
     """
     Resolve dependency for a dict-based graph using recursion.
+
+    Parameters
+    ----------
+    graph : dict
+        Each key is a variable name, and the corresponding value
+        is the list of variables the key depends on.
+
+    Returns
+    -------
+    list
+        A list of initialization sequence. Elements are either a
+        variable name or a list of mutually-dependent variables
+        that need iterative initialization.
     """
 
     seq = list()      # sequence after resolving dependency

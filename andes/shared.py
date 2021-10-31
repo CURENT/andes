@@ -33,6 +33,10 @@ from andes.utils.paths import get_dot_andes_path         # NOQA
 # --- constants ---
 
 deg2rad = math.pi/180
+pi2o3 = math.pi * 2 / 3
+sqrt3 = math.sqrt(3)
+isqrt3 = math.sqrt(1/3)
+
 jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 
