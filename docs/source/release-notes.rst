@@ -14,6 +14,9 @@ v1.5.3 (2021-11-xx)
 - Revered ``__zeros`` and ``__ones``.
 - Generated ``select`` functions use ``__zeros`` and ``__ones``
   to avoid memory allocation.
+- Stabilized the argument list of pycode. If the pycode is identical
+  to existing ones, the existing file will not be overwritten.
+  As a result, compiled code is fully cached.
 
 v1.5.2 (2021-10-27)
 ```````````````````
