@@ -20,7 +20,10 @@ class TestSnapshot(unittest.TestCase):
         Test saving a snapshot.
         """
 
-        ss = andes.run(andes.get_case("kundur/kundur_full.xlsx"))
+        ss = andes.run(andes.get_case("kundur/kundur_full.xlsx"),
+                       default_config=True,  # remove if outside tests
+                       )
+
         ss.TDS.config.tf = 2
         ss.TDS.run()
 

@@ -156,6 +156,7 @@ class SymProcessor:
             if item not in self.inputs_dict.values():
                 raise ValueError(f'{self.class_name} expression "{expr}" contains unknown symbol "{item}"')
 
+        fs = sorted(fs, key=lambda s: s.name)
         return fs
 
     def generate_equations(self):
@@ -194,6 +195,10 @@ class SymProcessor:
                             eargs.append(str(s))
 
                     elist.append(expr)
+
+            sym_args = sorted(sym_args, key=lambda s: s.name)
+            eargs.sort()
+
             if len(elist) == 0 or not any(elist):  # `any`, not `all`
                 self.calls.__dict__[ename] = None
             else:
@@ -223,9 +228,10 @@ class SymProcessor:
             except (SympifyError, TypeError) as e:
                 logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                 raise e
-            self._check_expr_symbols(expr)
+
+            fs = self._check_expr_symbols(expr)
             s_syms[name] = expr
-            s_args[name] = [str(i) for i in expr.free_symbols]
+            s_args[name] = [str(i) for i in fs]
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
         # TODO: below triggers DeprecationWarning with SymPy 1.9
@@ -296,6 +302,9 @@ class SymProcessor:
                 j_calls[jname].append(e_symbolic)
 
         for jname in j_calls:
+            # sort for stable argument list
+            j_args[jname].sort(key=lambda s: s.name)
+
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
@@ -592,17 +601,18 @@ from andes.core.npfunc import *                                     # NOQA
         ij_args = OrderedDict()
 
         for name, expr in self.init_asn.items():
-            self._check_expr_symbols(expr)
-            ia_args[name] = [str(i) for i in expr.free_symbols]
+            fs = self._check_expr_symbols(expr)
+            ia_args[name] = [str(i) for i in fs]
             init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
 
         for name, expr in self.init_itn.items():
-            self._check_expr_symbols(expr)
-            ii_args[name] = [str(i) for i in expr.free_symbols]
+            fs = self._check_expr_symbols(expr)
+            ii_args[name] = [str(i) for i in fs]
             init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
 
             jexpr = self.init_jac[name]
-            ij_args[name] = [str(i) for i in jexpr.free_symbols]
+            fs = self._check_expr_symbols(jexpr)
+            ij_args[name] = [str(i) for i in fs]
             init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
 
         self.calls.ia = init_a
