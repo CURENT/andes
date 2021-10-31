@@ -627,6 +627,8 @@ class Model:
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
                                       ('sys_mva', 'S_{b,sys}'),
+                                      ('__ones', '1'),
+                                      ('__zeros', '0'),
                                       ))
 
         # Model behavior flags
@@ -964,6 +966,10 @@ class Model:
         # append config variables as arrays
         for key, val in self.config.as_dict(refresh=True).items():
             self._input[key] = np.array(val)
+
+        # zeros and ones
+        self._input['__ones'] = np.ones(self.n)
+        self._input['__zeros'] = np.zeros(self.n)
 
         # --- below are numpy scalars ---
         # update`dae_t` and `sys_f`, and `sys_mva`

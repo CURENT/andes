@@ -4,6 +4,7 @@ Symbolic processor class for ANDES models.
 
 import os
 import logging
+import inspect
 import pprint
 import sympy
 import numpy as np
@@ -138,6 +139,8 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = Symbol('dae_t')
         self.inputs_dict['sys_f'] = Symbol('sys_f')
         self.inputs_dict['sys_mva'] = Symbol('sys_mva')
+        self.inputs_dict['__ones'] = Symbol('__ones')
+        self.inputs_dict['__zeros'] = Symbol('__zeros')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -200,6 +203,10 @@ class SymProcessor:
                 self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
                                                       modules=self.lambdify_func)
 
+                # manually append `__ones` and `__zeros` if `select` exists
+                if 'select' in inspect.getsource(self.calls.__dict__[ename]):
+                    eargs.extend(["__zeros", "__ones"])
+
         # convert to SymPy matrices
         self.f_matrix = Matrix(self.f_list)
         self.g_matrix = Matrix(self.g_list)
@@ -227,6 +234,9 @@ class SymProcessor:
             s_syms[name] = expr
             s_args[name] = [str(i) for i in expr.free_symbols]
             s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+
+            if 'select' in inspect.getsource(s_calls[name]):
+                s_args[name].extend(["__zeros", "__ones"])
 
         # TODO: below triggers DeprecationWarning with SymPy 1.9
         self.s_matrix = Matrix(list(s_syms.values()))
@@ -298,6 +308,10 @@ class SymProcessor:
         for jname in j_calls:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
+
+            # manually append `__ones` and `__zeros` if `select` exists
+            if 'select' in inspect.getsource(self.calls.j[jname]):
+                self.calls.j_args[jname].extend(["__zeros", "__ones"])
 
         self.calls.j_names = list(j_calls.keys())
 
@@ -447,16 +461,22 @@ from andes.core.npfunc import *                                     # NOQA
 
         This function does not check for name conflicts.
         Install `yapf` for optional code reformatting (takes extra processing time).
+
+        It also patches function argument list for select.
         """
-        import inspect
 
         if func is None:
             return f"# empty {func_name}\n"
 
         src = inspect.getsource(func)
         src = src.replace("def _lambdifygenerated(", f"def {func_name}(")
+
         # remove `Indicator`
         src = src.replace("Indicator", "")
+
+        # append `__zeros` and `__ones` to the argument list
+        if 'select' in src:
+            src = src.replace("):", ", __zeros, __ones):")
 
         if yapf_pycode:
             try:
@@ -595,15 +615,21 @@ from andes.core.npfunc import *                                     # NOQA
             self._check_expr_symbols(expr)
             ia_args[name] = [str(i) for i in expr.free_symbols]
             init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_a[name]):
+                ia_args[name].extend(["__zeros", "__ones"])
 
         for name, expr in self.init_itn.items():
             self._check_expr_symbols(expr)
             ii_args[name] = [str(i) for i in expr.free_symbols]
             init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_i[name]):
+                ii_args[name].extend(["__zeros", "__ones"])
 
             jexpr = self.init_jac[name]
             ij_args[name] = [str(i) for i in jexpr.free_symbols]
             init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
+            if 'select' in inspect.getsource(init_j[name]):
+                ij_args[name].extend(["__zeros", "__ones"])
 
         self.calls.ia = init_a
         self.calls.ii = init_i

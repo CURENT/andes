@@ -9,6 +9,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.3 (2021-11-xx)
+```````````````````
+- Revered ``__zeros`` and ``__ones``.
+- Generated ``select`` functions use ``__zeros`` and ``__ones``
+  to avoid memory allocation.
+
 v1.5.2 (2021-10-27)
 ```````````````````
 - Removed ``CVXOPT`` dependency.
