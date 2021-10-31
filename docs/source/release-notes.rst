@@ -9,14 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
-v1.5.3 (2021-11-xx)
+v1.5.3 (2021-10-31)
 ```````````````````
-- Revered ``__zeros`` and ``__ones``.
-- Generated ``select`` functions use ``__zeros`` and ``__ones``
-  to avoid memory allocation.
+- Revered special arguments for the generated ``select`` function.
 - Stabilized the argument list of pycode. If the pycode is identical
   to existing ones, the existing file will not be overwritten.
   As a result, compiled code is fully cached.
+- Partially seperated time-domain integration method into ``daeint.py``.
 
 v1.5.2 (2021-10-27)
 ```````````````````
