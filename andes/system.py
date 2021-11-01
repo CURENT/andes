@@ -279,7 +279,6 @@ class System:
         Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
         the System instance on which prepare is called.
         """
-        # info
         if incremental is True:
             mode_text = 'rapid incremental mode'
         elif quick is True:

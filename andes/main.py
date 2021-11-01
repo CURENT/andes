@@ -726,7 +726,7 @@ def prepare(quick=False, incremental=False, models=None,
     if full is True:
         quick = False
 
-    system = System(options=kwargs)
+    system = System(options=kwargs, no_undill=True)
     system.prepare(quick=quick, incremental=incremental, models=models,
                    nomp=nomp, ncpu=ncpu)
 
