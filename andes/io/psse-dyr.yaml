@@ -175,6 +175,8 @@ ESST1A:
     inputs:
         - BUS
         - ID
+        - UEL
+        - VOS
         - TR
         - VIMAX
         - VIMIN
@@ -193,8 +195,6 @@ ESST1A:
         - KF
         - TF
         - KC
-        - UEL
-        - VOS
     destination: ESST1A
     find:
         syn:
