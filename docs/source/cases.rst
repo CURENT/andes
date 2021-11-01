@@ -71,8 +71,42 @@ MATPOWER cases has been tested in ANDES for power flow calculation.
 All following cases are calculated with the provided initial values
 using the full Newton-Raphson iterative approach.
 
+Note:
+
+The 70K and the USA synthetic systems have difficulties to converge
+using the provided initial values. One can solve the case in MATPOWER
+and save it as a new case for ANDES.
+For example, the SyntheticUSA case can be converted in MATLAB with
+
+.. code:: matlab
+
+    mpc = runpf(case_SyntheticUSA)
+    savecase('USA.m', mpc)
+
+And then solve it with ANDES from command line:
+
+.. code:: bash
+
+    andes run USA.m
+
+The output should look like
+
+    -> Power flow calculation
+    Sparse solver: KLU
+    Solution method: NR method
+    Power flow initialized.
+    0: \|F(x)\| = 140.5782767
+    1: \|F(x)\| = 29.61673314
+    2: \|F(x)\| = 4.161452394
+    3: \|F(x)\| = 0.2337870537
+    4: \|F(x)\| = 0.001149488448
+    5: \|F(x)\| = 3.646516689e-08
+    Converged in 6 iterations in 1.6082 seconds.
+
+Performance
+```````````
 The numerical library used for sparse matrix factorization is KLU.
-In addition, Jacobians are updated in place ``spmatrix.ipadd``.
+In addition, Jacobians are updated in place ``kvxopt.spmatrix.ipadd``.
 Computations are performed on macOS 10.15.4 with i9-9980H, 16 GB
 2400 MHz DDR4, running ANDES 0.9.1, CVXOPT 1.2.4 and NumPy 1.18.1.
 
@@ -80,6 +114,7 @@ The statistics of convergence, number of iterations, and solution time
 (including equation evaluation, Jacobian, and factorization time) are
 reported in the following table.
 The computation time may vary depending on operating system and hardware.
+All the cases are original in MATPOWER 7.0.
 
 +--------------------------+------------+-----------------+----------+
 |        File Name         | Converged? | # of Iterations | Time [s] |
