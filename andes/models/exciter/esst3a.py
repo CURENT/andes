@@ -1,12 +1,10 @@
+from andes.core.block import (GainLimiter, HVGate, Lag, LagAntiWindup, LeadLag,
+                              Piecewise,)
 from andes.core.common import dummify
-from andes.core.param import NumParam
-from andes.core.var import Algeb, ExtAlgeb
-
-from andes.core.service import ConstService, VarService, PostInitService
-from andes.core.block import LagAntiWindup, LeadLag, Lag, HVGate
-from andes.core.block import Piecewise, GainLimiter
 from andes.core.discrete import HardLimiter
-
+from andes.core.param import NumParam
+from andes.core.service import ConstService, PostInitService, VarService
+from andes.core.var import Algeb, ExtAlgeb
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
 

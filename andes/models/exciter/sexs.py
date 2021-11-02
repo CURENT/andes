@@ -1,10 +1,7 @@
-from andes.core.param import NumParam
-from andes.core.var import Algeb
-
-from andes.core.service import ConstService, PostInitService
-
 from andes.core.block import LagAntiWindup, LeadLag
-
+from andes.core.param import NumParam
+from andes.core.service import ConstService, PostInitService
+from andes.core.var import Algeb
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
 

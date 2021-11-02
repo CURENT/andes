@@ -1,6 +1,7 @@
+import io
 import logging
 import os
-import io
+
 logger = logging.getLogger(__name__)
 
 

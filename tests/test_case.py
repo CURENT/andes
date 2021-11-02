@@ -1,8 +1,9 @@
-import unittest
-import andes
 import os
+import unittest
+
 import numpy as np
 
+import andes
 from andes.utils.paths import get_case
 
 

@@ -11,27 +11,25 @@ Base class for building ANDES models.
 #  File name: model.py
 
 import logging
-
 from collections import OrderedDict
 from typing import Iterable, Sized
 
 import scipy as sp
 
 from andes.core.block import Block
-from andes.core.common import ModelFlags, JacTriplet, Config
+from andes.core.common import Config, JacTriplet, ModelFlags
 from andes.core.discrete import Discrete
 from andes.core.documenter import Documenter
-from andes.core.param import BaseParam, IdxParam, DataParam, NumParam, ExtParam, TimerParam
-from andes.core.service import BaseService, ConstService, BackRef, VarService, PostInitService
-from andes.core.service import ExtService, NumRepeat, NumReduce, RandomService, DeviceFinder
-from andes.core.service import NumSelect, FlagValue, ParamCalc, InitChecker, Replace, ApplyFunc
-from andes.core.service import SwBlock
+from andes.core.param import (BaseParam, DataParam, ExtParam, IdxParam,
+                              NumParam, TimerParam,)
+from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
+                                DeviceFinder, ExtService, FlagValue,
+                                InitChecker, NumReduce, NumRepeat, NumSelect,
+                                ParamCalc, PostInitService, RandomService,
+                                Replace, SwBlock, VarService,)
 from andes.core.symprocessor import SymProcessor
-from andes.core.var import BaseVar, Algeb, State, ExtAlgeb, ExtState
-
-from andes.shared import jac_names, jac_types, jac_full_names
-from andes.shared import np, pd
-
+from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
+from andes.shared import jac_full_names, jac_names, jac_types, np, pd
 from andes.utils.func import list_flatten
 from andes.utils.numba import to_jit
 

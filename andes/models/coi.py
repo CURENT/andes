@@ -3,11 +3,11 @@ Classes for Center of Inertia calculation.
 """
 import numpy as np
 
+from andes.core.model import Model, ModelData
 from andes.core.param import ExtParam
-from andes.core.service import NumRepeat, IdxRepeat, BackRef
-from andes.core.service import NumReduce, RefFlatten, ExtService, ConstService
-from andes.core.var import ExtState, Algeb, ExtAlgeb
-from andes.core.model import ModelData, Model
+from andes.core.service import (BackRef, ConstService, ExtService, IdxRepeat,
+                                NumReduce, NumRepeat, RefFlatten,)
+from andes.core.var import Algeb, ExtAlgeb, ExtState
 
 
 class COIData(ModelData):

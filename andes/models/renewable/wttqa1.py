@@ -1,7 +1,8 @@
 import numpy as np
 
-from andes.core import ModelData, IdxParam, NumParam, Model, ConstService, ExtParam, ExtAlgeb, Lag, Piecewise, \
-    ExtState, ExtService, Switcher, Algeb
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        ExtState, IdxParam, Lag, Model, ModelData, NumParam,
+                        Piecewise, Switcher,)
 from andes.core.block import PIAWHardLimit
 from andes.core.service import NumSelect
 

@@ -2,9 +2,9 @@
 Module for renewable energy generator (converter) model A.
 """
 
-from andes.core import ModelData, IdxParam, NumParam, Model, ExtAlgeb, ExtService, ConstService, ExtParam, Algeb, \
-    Piecewise, Lag
-from andes.core.block import LagAntiWindupRate, GainLimiter
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        IdxParam, Lag, Model, ModelData, NumParam, Piecewise,)
+from andes.core.block import GainLimiter, LagAntiWindupRate
 
 
 class REGCA1Data(ModelData):

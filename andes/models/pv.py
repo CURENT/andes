@@ -1,10 +1,11 @@
 import logging
 from collections import OrderedDict
-from andes.core.model import Model, ModelData
-from andes.core.param import NumParam, IdxParam, DataParam
-from andes.core.var import Algeb, ExtAlgeb
-from andes.core.service import BackRef
+
 from andes.core.discrete import SortedLimiter
+from andes.core.model import Model, ModelData
+from andes.core.param import DataParam, IdxParam, NumParam
+from andes.core.service import BackRef
+from andes.core.var import Algeb, ExtAlgeb
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,11 @@
 from collections import OrderedDict
 
+from andes.core.block import Lag, LagAntiWindup, PIDTrackAW, Piecewise
 from andes.core.param import NumParam
-from andes.core.var import Algeb
-
 from andes.core.service import PostInitService
-
-from andes.core.block import LagAntiWindup, Lag
-from andes.core.block import Piecewise, PIDTrackAW
-
-from andes.models.exciter.excbase import ExcBase, ExcBaseData, ExcVsum, ExcACSat
+from andes.core.var import Algeb
+from andes.models.exciter.excbase import (ExcACSat, ExcBase, ExcBaseData,
+                                          ExcVsum,)
 
 
 class AC8BData(ExcBaseData):

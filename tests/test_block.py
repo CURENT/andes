@@ -1,8 +1,10 @@
-from andes.core.block import HVGate, LVGate
-from andes.core.var import Algeb
-from andes.core.common import DummyValue
-import numpy as np
 import unittest
+
+import numpy as np
+
+from andes.core.block import HVGate, LVGate
+from andes.core.common import DummyValue
+from andes.core.var import Algeb
 
 
 class TestGates(unittest.TestCase):

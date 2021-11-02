@@ -12,23 +12,22 @@ This module imports shared libraries either directly or with `LazyImport`.
 
 import math
 import os
-import coloredlogs         # NOQA
-import numpy as np         # NOQA
-
-from andes.utils.lazyimport import LazyImport
 from distutils.spawn import find_executable
 
-from kvxopt import umfpack, klu                      # NOQA
-from kvxopt import spmatrix, matrix, sparse, spdiag  # NOQA
-from kvxopt import mul, div                          # NOQA
-from kvxopt.lapack import gesv                       # NOQA
-from kvxopt import printing                          # NOQA
+import coloredlogs  # NOQA
+import numpy as np  # NOQA
+from kvxopt import printing  # NOQA
+from kvxopt import (div, klu, matrix, mul, sparse, spdiag, spmatrix,  # NOQA
+                    umfpack,)
+from kvxopt.lapack import gesv  # NOQA
+
+from andes.utils.lazyimport import LazyImport
 
 printing.options['dformat'] = '%.1f'
 printing.options['width'] = -1
 
-from andes.utils.texttable import Texttable              # NOQA
-from andes.utils.paths import get_dot_andes_path         # NOQA
+from andes.utils.paths import get_dot_andes_path  # NOQA
+from andes.utils.texttable import Texttable  # NOQA
 
 # --- constants ---
 

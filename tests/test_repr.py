@@ -2,9 +2,10 @@
 Test __repr__ of modeling elements.
 """
 
-import unittest
-import andes
 import contextlib
+import unittest
+
+import andes
 
 
 class TestRepr(unittest.TestCase):

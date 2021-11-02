@@ -4,7 +4,7 @@ Module for information container models.
 These models are not used in DAE calculations.
 """
 
-from andes.core.model import ModelData, Model
+from andes.core.model import Model, ModelData
 from andes.core.param import DataParam
 
 

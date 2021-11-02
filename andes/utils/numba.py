@@ -2,7 +2,7 @@
 Utility functions for compiling functions with numba.
 """
 
-from typing import Union, Callable
+from typing import Callable, Union
 
 from andes.shared import numba
 

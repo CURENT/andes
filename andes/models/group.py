@@ -1,8 +1,9 @@
 import logging
-import numpy as np
 from collections import OrderedDict
-from andes.core.service import BackRef
 
+import numpy as np
+
+from andes.core.service import BackRef
 from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,11 @@
 from collections import OrderedDict
 
-from andes.core import ModelData, IdxParam, NumParam, Model, ExtParam, ExtAlgeb, ExtService, ConstService, \
-    Switcher, Lag, Algeb, Limiter, LeadLag, LessThan
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        IdxParam, Lag, LeadLag, LessThan, Limiter, Model,
+                        ModelData, NumParam, Switcher,)
 from andes.core.block import DeadBand1, PITrackAW
-from andes.core.service import DataSelect, DeviceFinder, CurrentSign, VarService, NumSelect, VarHold
+from andes.core.service import (CurrentSign, DataSelect, DeviceFinder,
+                                NumSelect, VarHold, VarService,)
 
 
 class REPCA1Data(ModelData):

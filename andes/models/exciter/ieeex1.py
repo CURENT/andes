@@ -1,6 +1,5 @@
 from andes.core.service import VarService
-
-from andes.models.exciter.exdc2 import EXDC2Model, EXDC2Data
+from andes.models.exciter.exdc2 import EXDC2Data, EXDC2Model
 
 
 class IEEEX1Model(EXDC2Model):

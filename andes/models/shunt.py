@@ -1,15 +1,14 @@
-import logging
 import ast
+import logging
+from collections import OrderedDict
 
 import numpy as np
 
-from collections import OrderedDict
-
+from andes.core.discrete import ShuntAdjust
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
-from andes.core.var import ExtAlgeb, Algeb
-from andes.core.service import SwBlock, ConstService
-from andes.core.discrete import ShuntAdjust
+from andes.core.service import ConstService, SwBlock
+from andes.core.var import Algeb, ExtAlgeb
 
 logger = logging.getLogger(__name__)
 

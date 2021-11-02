@@ -1,14 +1,14 @@
 import logging
-import numpy as np
-
 from collections import OrderedDict
 
-from andes.shared import tqdm
-from andes.core.param import TimerParam, IdxParam, DataParam, NumParam
-from andes.core.model import Model, ModelData
-from andes.core.var import ExtAlgeb
-from andes.core.service import ConstService
+import numpy as np
+
 from andes.core.discrete import Switcher
+from andes.core.model import Model, ModelData
+from andes.core.param import DataParam, IdxParam, NumParam, TimerParam
+from andes.core.service import ConstService
+from andes.core.var import ExtAlgeb
+from andes.shared import tqdm
 
 logger = logging.getLogger(__name__)
 

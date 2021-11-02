@@ -1,9 +1,7 @@
-from andes.core.model import ModelData, Model
-
-from andes.core.param import NumParam, IdxParam, ExtParam
+from andes.core.model import Model, ModelData
+from andes.core.param import ExtParam, IdxParam, NumParam
+from andes.core.service import ExtService, VarService
 from andes.core.var import Algeb, ExtAlgeb
-
-from andes.core.service import VarService, ExtService
 
 
 class IEEEVCData(ModelData):

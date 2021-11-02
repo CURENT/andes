@@ -3,13 +3,11 @@ Synchronous generator classes
 """
 import logging
 
-from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam, ExtParam
-from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.discrete import LessThan
-from andes.core.service import ConstService, ExtService
-from andes.core.service import InitChecker, FlagValue
-
+from andes.core.model import Model, ModelData
+from andes.core.param import ExtParam, IdxParam, NumParam
+from andes.core.service import ConstService, ExtService, FlagValue, InitChecker
+from andes.core.var import Algeb, ExtAlgeb, State
 from andes.models.exciter import ExcQuadSat
 
 logger = logging.getLogger(__name__)

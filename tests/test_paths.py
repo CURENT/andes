@@ -1,7 +1,8 @@
-import unittest
-from andes.utils.paths import list_cases
-import andes
 import os
+import unittest
+
+import andes
+from andes.utils.paths import list_cases
 
 
 class TestPaths(unittest.TestCase):

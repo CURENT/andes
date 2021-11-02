@@ -1,10 +1,11 @@
 import numpy as np
 
-from andes.core import IdxParam, NumParam, ConstService, ExtParam, ExtService, ExtAlgeb, Algeb, LeadLag, \
-    HardLimiter, Lag
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        HardLimiter, IdxParam, Lag, LeadLag, NumParam,)
 from andes.core.block import IntegratorAntiWindup
-from andes.core.service import InitChecker, PostInitService, ParamCalc, NumSelect, FlagValue
-from andes.models.governor.tgbase import TGBaseData, TGBase
+from andes.core.service import (FlagValue, InitChecker, NumSelect, ParamCalc,
+                                PostInitService,)
+from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class IEEEG1Data(TGBaseData):

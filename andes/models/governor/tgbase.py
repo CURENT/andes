@@ -1,5 +1,5 @@
-from andes.core import ModelData, IdxParam, NumParam, Model, ExtParam, ExtService, ConstService, ExtState, \
-    ExtAlgeb, Algeb
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        ExtState, IdxParam, Model, ModelData, NumParam,)
 from andes.core.service import NumSelect
 
 

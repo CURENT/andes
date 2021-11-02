@@ -1,12 +1,9 @@
+from andes.core.block import (HVGate, Integrator, Lag, LagAntiWindup, LeadLag,
+                              LessThan, Washout,)
 from andes.core.param import NumParam
+from andes.core.service import (ConstService, FlagValue, PostInitService,
+                                VarService,)
 from andes.core.var import Algeb
-
-from andes.core.service import ConstService, VarService, FlagValue, PostInitService
-
-from andes.core.block import LagAntiWindup, LeadLag, Washout, Lag, HVGate
-from andes.core.block import LessThan
-from andes.core.block import Integrator
-
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
 

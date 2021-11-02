@@ -1,6 +1,7 @@
 import os
-import dill
 import unittest
+
+import dill
 import numpy as np
 
 import andes

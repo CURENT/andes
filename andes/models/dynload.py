@@ -2,12 +2,11 @@
 Module for dynamic loads.
 """
 
-from andes.core.model import ModelData, Model
-from andes.core.param import IdxParam, NumParam, ExtParam
+from andes.core.model import Model, ModelData
+from andes.core.param import ExtParam, IdxParam, NumParam
+from andes.core.service import (ConstService, DeviceFinder, ExtService,
+                                InitChecker,)
 from andes.core.var import ExtAlgeb
-
-from andes.core.service import ConstService, ExtService, InitChecker
-from andes.core.service import DeviceFinder
 
 
 class ZIPData(ModelData):

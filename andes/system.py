@@ -13,33 +13,29 @@ System class for power system data and methods
 
 import configparser
 import importlib
+import inspect
 import logging
 import os
 import sys
-import inspect
 import time
+from collections import OrderedDict
+from typing import Dict, Optional, Tuple, Union
 
 import dill
 
-from collections import OrderedDict
-from typing import Dict, Tuple, Union, Optional
-
 import andes.io
+from andes.core import AntiWindup, Config, Model
+from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
-from andes.variables import FileMan, DAE
 from andes.routines import all_routines
-from andes.utils.tab import Tab
+from andes.shared import (Pool, Process, dilled_vars, jac_names, matrix, np,
+                          sparse, spmatrix,)
 from andes.utils.misc import elapsed
-from andes.utils.paths import confirm_overwrite
-from andes.utils.paths import get_config_path, andes_root
-from andes.utils.paths import get_pycode_path, get_pkl_path
-from andes.core import Config, Model, AntiWindup
-from andes.io.streaming import Streaming
-
-from andes.shared import np, jac_names, dilled_vars
-from andes.shared import matrix, spmatrix, sparse, Pool, Process
-
+from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
+                               get_pkl_path, get_pycode_path,)
+from andes.utils.tab import Tab
+from andes.variables import DAE, FileMan
 
 logger = logging.getLogger(__name__)
 dill.settings['recurse'] = True

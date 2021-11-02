@@ -1,10 +1,9 @@
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
-
-from andes.core.param import NumParam
-from andes.core.var import Algeb
-from andes.core.block import LeadLag, Lag
-from andes.core.service import PostInitService
+from andes.core.block import Lag, LeadLag
 from andes.core.discrete import HardLimiter
+from andes.core.param import NumParam
+from andes.core.service import PostInitService
+from andes.core.var import Algeb
+from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
 
 class EXAC4Data(ExcBaseData):

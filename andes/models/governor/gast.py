@@ -2,9 +2,9 @@
 Governor GAST.
 """
 
-from andes.core import NumParam, ConstService, Algeb, LagAntiWindup
+from andes.core import Algeb, ConstService, LagAntiWindup, NumParam
 from andes.core.block import Lag, LVGate
-from andes.models.governor.tgbase import TGBaseData, TGBase
+from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class GASTData(TGBaseData):

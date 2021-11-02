@@ -1,12 +1,12 @@
 import logging
-import numpy as np
-
-from typing import List, Union
 from collections import OrderedDict
+from typing import List, Union
+
+import numpy as np
 
 from andes.core import JacTriplet
 from andes.core.var import BaseVar
-from andes.shared import pd, spmatrix, jac_names
+from andes.shared import jac_names, pd, spmatrix
 
 logger = logging.getLogger(__name__)
 

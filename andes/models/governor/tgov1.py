@@ -1,6 +1,7 @@
-from andes.core import NumParam, ConstService, Algeb, LagAntiWindup, LeadLag, State, AntiWindup
+from andes.core import (Algeb, AntiWindup, ConstService, LagAntiWindup,
+                        LeadLag, NumParam, State,)
 from andes.core.block import DeadBand1
-from andes.models.governor.tgbase import TGBaseData, TGBase
+from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class TGOV1Data(TGBaseData):

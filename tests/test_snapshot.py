@@ -4,10 +4,11 @@ Test ANDES snapshot based on dill.
 
 import os
 import unittest
+
 import numpy as np
 
 import andes
-from andes.utils.snapshot import save_ss, load_ss
+from andes.utils.snapshot import load_ss, save_ss
 
 
 class TestSnapshot(unittest.TestCase):
@@ -21,6 +22,7 @@ class TestSnapshot(unittest.TestCase):
         """
 
         ss = andes.run(andes.get_case("kundur/kundur_full.xlsx"),
+                       no_output=True,
                        default_config=True,  # remove if outside tests
                        )
 
