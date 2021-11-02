@@ -83,7 +83,7 @@ class PFlow(BaseRoutine):
             system.g_update(self.models)
             system.j_update(models=self.models)
 
-        _ , s1 = elapsed(t0)
+        _, s1 = elapsed(t0)
         logger.info('Power flow initialized in %s.', s1)
         return system.dae.xy
 
