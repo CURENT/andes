@@ -19,13 +19,13 @@ class FixPiecewise(sym.Piecewise):
             if arg == 0:
                 return '__zeros'
 
-            return '__ones'
+            return printer._print(arg * sym.Symbol('__ones'))
 
         def broadcastcond(cond):
             if cond.has(sym.Symbol):
                 return printer._print(cond)
 
-            if cond:
+            if bool(cond):
                 return '__trues'
             else:
                 return '__falses'
