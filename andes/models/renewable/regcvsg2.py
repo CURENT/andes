@@ -1,8 +1,7 @@
-from andes.core.param import NumParam
 from andes.core.block import Lag
-
-from andes.models.renewable.regcvsg import REGCVSGData, VSGOuterPIData
-from andes.models.renewable.regcvsg import REGCVSGModelBase, VSGOuterPIModel
+from andes.core.param import NumParam
+from andes.models.renewable.regcvsg import (REGCVSGData, REGCVSGModelBase,
+                                            VSGOuterPIData, VSGOuterPIModel,)
 
 
 class VSGInnerLagData:

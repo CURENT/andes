@@ -13,10 +13,11 @@ Induction machine models
 #  Last modified: 8/16/20, 7:25 PM
 
 import logging
+
 from andes.core.model import Model, ModelData
 from andes.core.param import IdxParam, NumParam
-from andes.core.var import Algeb, State, ExtAlgeb
 from andes.core.service import ConstService
+from andes.core.var import Algeb, ExtAlgeb, State
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,8 @@
 """Electric vehicle model"""
 
+from andes.core.discrete import Limiter
 from andes.core.param import NumParam
 from andes.core.var import Algeb
-from andes.core.discrete import Limiter
-
 from andes.models.distributed.esd1 import ESD1Data, ESD1Model
 
 

@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
+from andes.core.block import (GainLimiter, Lag, LVGate, Piecewise,  # NOQA
+                              PITrackAW,)
 from andes.core.common import dummify
 from andes.core.param import NumParam
+from andes.core.service import ConstService, PostInitService, VarService
 from andes.core.var import Algeb, ExtAlgeb
-from andes.core.block import Lag, PITrackAW, LVGate, Piecewise, GainLimiter  # NOQA
-from andes.core.service import ConstService, VarService, PostInitService
+from andes.models.exciter.excbase import ExcBase, ExcBaseData
 
 
 class ESST4BData(ExcBaseData):

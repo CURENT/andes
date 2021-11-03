@@ -3,16 +3,16 @@ ANDES command-line interface and argument parsers.
 """
 
 import argparse
-import sys
-import os
-import logging
-import platform
 import importlib
-
+import logging
+import os
+import platform
+import sys
 from time import strftime
+
 from andes.main import config_logger, find_log_path
-from andes.utils.paths import get_log_dir
 from andes.routines import routine_cli
+from andes.utils.paths import get_log_dir
 
 logger = logging.getLogger(__name__)
 

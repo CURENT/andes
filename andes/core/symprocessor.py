@@ -2,24 +2,21 @@
 Symbolic processor class for ANDES models.
 """
 
-import os
-import logging
 import inspect
+import logging
+import os
 import pprint
-import sympy
-import numpy as np
-
 from collections import OrderedDict, defaultdict
 
-from sympy import Symbol, Matrix
-from sympy import sympify, lambdify, latex, SympifyError
-from sympy import SparseMatrix
+import numpy as np
+import sympy
+from sympy import (Matrix, SparseMatrix, Symbol, SympifyError, lambdify, latex,
+                   sympify,)
 
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
 from andes.utils.sympy import FixPiecewise
-
 
 sympy.Piecewise = FixPiecewise
 

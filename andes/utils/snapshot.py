@@ -3,12 +3,18 @@ Utility functions for saving and loading snapshots.
 """
 
 import dill
+
 import andes
 
 
 def save_ss(path, system):
     """
     Save a system with all internal states as a snapshot.
+
+    Warnings
+    --------
+    One limitation of the current implementation is version dependency.
+    The snapshots only work with the specific ANDES version that created it.
     """
 
     system.remove_pycapsule()

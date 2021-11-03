@@ -8,16 +8,16 @@
 #  File name: block.py
 #  Last modified: 8/16/20, 7:28 PM
 
-from typing import Optional, Iterable, Union, List, Tuple
-
-from andes.core.var import Algeb, State
-from andes.core.discrete import AntiWindup, LessThan, Selector, HardLimiter, AntiWindupRate, RateLimiter
-from andes.core.discrete import DeadBand
-from andes.core.service import EventFlag
-from andes.core.common import JacTriplet
-from andes.core.common import ModelFlags, dummify
 from collections import OrderedDict
+from typing import Iterable, List, Optional, Tuple, Union
+
 import numpy as np
+
+from andes.core.common import JacTriplet, ModelFlags, dummify
+from andes.core.discrete import (AntiWindup, AntiWindupRate, DeadBand,
+                                 HardLimiter, LessThan, RateLimiter, Selector,)
+from andes.core.service import EventFlag
+from andes.core.var import Algeb, State
 
 
 class Block:

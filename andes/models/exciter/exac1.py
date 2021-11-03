@@ -1,11 +1,11 @@
+from andes.core.block import (Integrator, Lag, LagAntiWindup, LeadLag,
+                              Piecewise, Washout,)
+from andes.core.discrete import LessThan
+from andes.core.param import NumParam
+from andes.core.service import PostInitService
+from andes.core.var import Algeb
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
-
-from andes.core.param import NumParam
-from andes.core.var import Algeb
-from andes.core.block import LeadLag, Lag, Piecewise, LagAntiWindup, Integrator, Washout
-from andes.core.service import PostInitService
-from andes.core.discrete import LessThan
 
 
 class EXAC1Data(ExcBaseData):

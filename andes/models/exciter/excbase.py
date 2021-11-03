@@ -4,13 +4,12 @@ Base module for exciters.
 Exciters share generator and bus information.
 """
 
-from andes.core.model import ModelData, Model
-from andes.core.param import IdxParam, ExtParam
-from andes.core.var import Algeb, ExtState, ExtAlgeb
-
-from andes.core.service import ExtService, ConstService, BackRef
 from andes.core.block import Integrator
 from andes.core.discrete import LessThan
+from andes.core.model import Model, ModelData
+from andes.core.param import ExtParam, IdxParam
+from andes.core.service import BackRef, ConstService, ExtService
+from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.models.exciter.saturation import ExcQuadSat
 
 

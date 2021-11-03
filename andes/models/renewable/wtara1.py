@@ -1,4 +1,5 @@
-from andes.core import ModelData, IdxParam, NumParam, Model, ConstService, Algeb, ExtService, ExtAlgeb
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtService, IdxParam,
+                        Model, ModelData, NumParam,)
 
 
 class WTARA1Data(ModelData):

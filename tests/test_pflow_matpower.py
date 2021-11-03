@@ -1,5 +1,6 @@
-import unittest
 import os
+import unittest
+
 import andes
 from andes.utils.paths import get_case
 

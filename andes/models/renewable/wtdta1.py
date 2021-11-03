@@ -1,4 +1,5 @@
-from andes.core import ModelData, IdxParam, NumParam, Model, ExtParam, ExtAlgeb, ExtService, ConstService, Algeb
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+                        IdxParam, Model, ModelData, NumParam,)
 from andes.core.block import Integrator
 from andes.core.var import AliasState
 

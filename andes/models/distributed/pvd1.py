@@ -3,14 +3,13 @@ Distributed PV models.
 """
 from collections import OrderedDict
 
+from andes.core.block import DeadBand1, GainLimiter, Lag
+from andes.core.discrete import Limiter, Switcher
 from andes.core.model import Model, ModelData
-from andes.core.param import NumParam, IdxParam
-from andes.core.block import Lag, DeadBand1, GainLimiter
-from andes.core.var import ExtAlgeb, Algeb
-
-from andes.core.service import ConstService, ExtService, VarService
-from andes.core.service import DataSelect, DeviceFinder
-from andes.core.discrete import Switcher, Limiter
+from andes.core.param import IdxParam, NumParam
+from andes.core.service import (ConstService, DataSelect, DeviceFinder,
+                                ExtService, VarService,)
+from andes.core.var import Algeb, ExtAlgeb
 
 
 class PVD1Data(ModelData):

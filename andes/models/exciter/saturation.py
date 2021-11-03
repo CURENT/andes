@@ -1,6 +1,5 @@
-from andes.core.common import dummify
-
 from andes.core.block import Block
+from andes.core.common import dummify
 from andes.core.service import ConstService, FlagValue, InitChecker
 
 

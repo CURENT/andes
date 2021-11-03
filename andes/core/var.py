@@ -8,10 +8,11 @@
 #  File name: var.py
 #  Last modified: 8/16/20, 7:27 PM
 
-from typing import Optional, Union, List
-from andes.core.param import BaseParam
+from typing import List, Optional, Union
+
 from andes.core.common import DummyValue
 from andes.core.discrete import Discrete
+from andes.core.param import BaseParam
 from andes.core.service import BaseService
 from andes.models.group import GroupBase
 from andes.shared import np

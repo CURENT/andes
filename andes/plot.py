@@ -2,17 +2,15 @@
 The Andes plotting tool.
 """
 
-import os
-import re
 import logging
 import math
+import os
+import re
 
 import numpy as np
 
-from andes.shared import mpl, plt
-from andes.shared import set_latex
-
 from andes.core.var import BaseVar
+from andes.shared import mpl, plt, set_latex
 
 logger = logging.getLogger(__name__)
 DPI = 100

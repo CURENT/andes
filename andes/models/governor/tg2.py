@@ -2,8 +2,9 @@
 Turbine governor type 2 from Milano's book.
 """
 
-from andes.core import NumParam, ConstService, Algeb, DeadBandRT, LeadLag, HardLimiter
-from andes.models.governor.tgbase import TGBaseData, TGBase
+from andes.core import (Algeb, ConstService, DeadBandRT, HardLimiter, LeadLag,
+                        NumParam,)
+from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class TG2Data(TGBaseData):

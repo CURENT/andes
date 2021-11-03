@@ -3,8 +3,7 @@ Support for Jupyter widgets.
 """
 
 import ipywidgets as widgets
-
-from ipywidgets import VBox, HBox
+from ipywidgets import HBox, VBox
 
 
 def edit_system(system):

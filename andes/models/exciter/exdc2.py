@@ -2,13 +2,12 @@
 Module for EXDC2 exciter.
 """
 
+from andes.core.block import Lag, LagAntiWindup, LeadLag, LessThan, Washout
+from andes.core.param import NumParam
+from andes.core.service import ConstService, PostInitService
+from andes.core.var import Algeb, State
 from andes.models.exciter.excbase import ExcBase, ExcBaseData
 from andes.models.exciter.saturation import ExcQuadSat
-
-from andes.core.param import NumParam
-from andes.core.var import Algeb, State
-from andes.core.service import ConstService, PostInitService
-from andes.core.block import LeadLag, Washout, Lag, LessThan, LagAntiWindup
 
 
 class EXDC2Data(ExcBaseData):

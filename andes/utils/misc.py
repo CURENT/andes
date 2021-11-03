@@ -1,6 +1,7 @@
 import logging
-from _pydecimal import Decimal, ROUND_DOWN
 from time import time
+
+from _pydecimal import ROUND_DOWN, Decimal
 
 logger = logging.getLogger(__name__)
 

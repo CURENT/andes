@@ -1,8 +1,10 @@
 import logging
 from collections import OrderedDict
+
 from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, DataParam, NumParam
+from andes.core.param import DataParam, IdxParam, NumParam
 from andes.core.var import Algeb, ExtAlgeb, State  # NOQA
+
 logger = logging.getLogger(__name__)
 
 

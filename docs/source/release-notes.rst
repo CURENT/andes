@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.4 (2021-11-02)
+```````````````````
+- Fixed a bug in generated ``select`` functions that omitted the
+  coefficients of ``__ones``.
+
 v1.5.3 (2021-10-31)
 ```````````````````
 - Revered special arguments for the generated ``select`` function.

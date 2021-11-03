@@ -6,7 +6,8 @@ import logging
 
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve
-from andes.shared import np, matrix, umfpack, klu, cupy
+
+from andes.shared import cupy, klu, matrix, np, umfpack
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ Documenter class for ANDES models.
 
 from collections import OrderedDict
 
-from andes.utils.tab import math_wrap, make_doc_table
+from andes.utils.tab import make_doc_table, math_wrap
 
 
 class Documenter:

@@ -1,9 +1,11 @@
 """
 Tests for group functions.
 """
-import andes
-import numpy as np
 import unittest
+
+import numpy as np
+
+import andes
 
 
 class TestGroup(unittest.TestCase):

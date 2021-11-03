@@ -2,10 +2,9 @@
 REECA1 model with inertia emulation.
 """
 
-from andes.core.param import NumParam, IdxParam
-from andes.core.var import ExtAlgeb, ExtState
+from andes.core.param import IdxParam, NumParam
 from andes.core.service import DeviceFinder
-
+from andes.core.var import ExtAlgeb, ExtState
 from andes.models.renewable.reeca1 import REECA1Data, REECA1Model
 
 

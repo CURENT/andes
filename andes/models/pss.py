@@ -1,16 +1,19 @@
 """
 Power system stabilizer models.
 """
-from andes.core.param import NumParam, IdxParam, ExtParam
-from andes.core.var import Algeb, ExtAlgeb, ExtState
-from andes.core.block import Lag2ndOrd, LeadLag2ndOrd, LeadLag, WashoutOrLag, Gain, Lag, GainLimiter
-from andes.core.service import ExtService, DataSelect, DeviceFinder, Replace, ConstService
-from andes.core.discrete import Switcher, Limiter, Derivative
-from andes.core.model import ModelData, Model
+import logging
 from collections import OrderedDict
+
 import numpy as np
 
-import logging
+from andes.core.block import (Gain, GainLimiter, Lag, Lag2ndOrd, LeadLag,
+                              LeadLag2ndOrd, WashoutOrLag,)
+from andes.core.discrete import Derivative, Limiter, Switcher
+from andes.core.model import Model, ModelData
+from andes.core.param import ExtParam, IdxParam, NumParam
+from andes.core.service import (ConstService, DataSelect, DeviceFinder,
+                                ExtService, Replace,)
+from andes.core.var import Algeb, ExtAlgeb, ExtState
 
 logger = logging.getLogger(__name__)
 

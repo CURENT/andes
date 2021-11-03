@@ -9,13 +9,13 @@
 #  Last modified: 11/15/20, 3:29 PM
 
 import logging
+from typing import List, Tuple, Union
+
 import numpy as np
 
-from typing import Union, Tuple, List
-
 from andes.core.common import dummify
-from andes.utils.tab import Tab
 from andes.utils.func import interp_n2
+from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
 

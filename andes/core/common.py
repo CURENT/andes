@@ -1,13 +1,12 @@
-import pprint
 import logging
+import pprint
+from collections import OrderedDict, defaultdict
+from typing import Iterable
 
 from sympy import Expr
 
-from typing import Iterable
-from collections import defaultdict, OrderedDict
-
 from andes.shared import jac_full_names, jac_names, jac_types
-from andes.utils.tab import math_wrap, make_doc_table
+from andes.utils.tab import make_doc_table, math_wrap
 
 logger = logging.getLogger(__name__)
 

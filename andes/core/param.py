@@ -12,12 +12,12 @@ Module for parameters used for describing models.
 #  File name: param.py
 #  Last modified: 8/16/20, 7:27 PM
 
-from typing import Optional, Union, Callable, List, Tuple, Type, Iterable
-
-import math
 import logging
+import math
+from typing import Callable, Iterable, List, Optional, Tuple, Type, Union
 
 from andes.shared import np
+
 logger = logging.getLogger(__name__)
 
 

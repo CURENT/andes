@@ -9,14 +9,14 @@
 #  Last modified: 8/16/20, 7:28 PM
 
 import logging
+from collections import OrderedDict
+from typing import Callable, Optional, Type, Union
+
 import numpy as np
 
-from collections import OrderedDict
-from typing import Optional, Union, Callable, Type
-
+from andes.core.common import dummify
 from andes.core.param import BaseParam
 from andes.utils.func import list_flatten
-from andes.core.common import dummify
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)

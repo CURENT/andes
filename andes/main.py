@@ -10,27 +10,26 @@
 #  File name: main.py
 #  Last modified: 8/16/20, 7:26 PM
 
+import cProfile
 import glob
+import io
 import logging
 import os
-import io
-import sys
 import platform
 import pprint
-import cProfile
 import pstats
-from time import sleep
-from subprocess import call
-from typing import Optional, Union
+import sys
 from functools import partial
+from subprocess import call
+from time import sleep
+from typing import Optional, Union
 
 import andes
-from andes.system import System
 from andes.routines import routine_cli
+from andes.shared import Pool, Process, coloredlogs, unittest
+from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
-from andes.utils.paths import get_config_path, tests_root, get_log_dir
-from andes.shared import coloredlogs, unittest
-from andes.shared import Pool, Process
+from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
 logger = logging.getLogger(__name__)
 
@@ -636,6 +635,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
     if shell is True:
         try:
             from IPython import embed
+
             # load plotter before entering IPython
             if system is None:
                 logger.warning("IPython: The System object has not been created.")
@@ -726,7 +726,7 @@ def prepare(quick=False, incremental=False, models=None,
     if full is True:
         quick = False
 
-    system = System(options=kwargs)
+    system = System(options=kwargs, no_undill=True)
     system.prepare(quick=quick, incremental=incremental, models=models,
                    nomp=nomp, ncpu=ncpu)
 

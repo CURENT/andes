@@ -1,11 +1,11 @@
 import logging
-from time import strftime
 from collections import OrderedDict
+from time import strftime
 
 from andes import __version__ as version
 from andes.io.txt import dump_data
-from andes.utils.misc import elapsed
 from andes.shared import np
+from andes.utils.misc import elapsed
 
 logger = logging.getLogger(__name__)
 all_formats = {}

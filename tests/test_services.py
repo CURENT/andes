@@ -1,7 +1,8 @@
 import unittest
 
-import andes
 import numpy as np
+
+import andes
 from andes.core.common import DummyValue
 
 
