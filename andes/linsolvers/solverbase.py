@@ -18,7 +18,7 @@ class Solver:
 
         # check if `sparselib` library has been successfully imported
         if (sparselib not in globals()) or globals()[sparselib] is None:
-            self.sparselib = 'umfpack'
+            self.sparselib = 'klu'
 
         # solvers
         self.umfpack = UMFPACKSolver()
