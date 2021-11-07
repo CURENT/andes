@@ -538,6 +538,9 @@ class TDS(BaseRoutine):
 
         self.h = self.deltat
 
+        # do not skip over the end time at the first step
+        self.h = min(self.h, config.tf - system.dae.t)
+
         # if from CSV, determine `h` from data
         if self.data_csv is not None:
             if self.data_csv.shape[0] > 1:
