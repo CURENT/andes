@@ -121,8 +121,8 @@ class ModelData:
     Models should inherit this class to define the parameters from input files.
 
     Inherit this class to create the specific class for holding input parameters for a new model.
-    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENCLS`
-    should be named `GENCLSData`.
+    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENROU`
+    should be named `GENROUData`.
 
     Parameters should be defined in the ``__init__`` function of the derived class.
 
