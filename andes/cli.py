@@ -10,6 +10,8 @@ import platform
 import sys
 from time import strftime
 
+from ._version import get_versions
+
 from andes.main import config_logger, find_log_path
 from andes.routines import routine_cli
 from andes.utils.paths import get_log_dir
@@ -33,6 +35,9 @@ def create_parser():
         help='Verbosity level in 10-DEBUG, 20-INFO, 30-WARNING, '
              'or 40-ERROR.',
         type=int, default=20, choices=(1, 10, 20, 30, 40))
+
+    parser.add_argument(
+        '--version', help='show version info and exit', action='store_true')
 
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
                                                              '[plot] plot results; '
@@ -180,10 +185,18 @@ def preamble():
 
 
 def main():
-    """Main command-line interface"""
+    """
+    Main command-line interface
+    """
+
     parser = create_parser()
     args = parser.parse_args()
 
+    if args.version is True:
+        print(get_versions()['version'])
+        return
+
+    # Set up logging
     config_logger(stream=True,
                   stream_level=args.verbose,
                   file=True,
@@ -200,6 +213,7 @@ def main():
     else:
         preamble()
 
+    # Run the command
     if args.command is None:
         parser.parse_args(sys.argv.append('--help'))
 

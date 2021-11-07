@@ -82,6 +82,8 @@ def config_logger(stream=True,
 
     sh_formatter = logging.Formatter(sh_formatter_str)
     if len(lg.handlers) == 0:
+
+        # create a StreamHandler
         if stream is True:
             sh = logging.StreamHandler()
             sh.setFormatter(sh_formatter)
@@ -100,6 +102,7 @@ def config_logger(stream=True,
         globals()['logger'] = lg
 
     else:
+        # update the handlers
         set_logger_level(logger, logging.StreamHandler, stream_level)
         set_logger_level(logger, logging.FileHandler, file_level)
 
@@ -383,6 +386,7 @@ def run_case(case, *, routine='pflow', profile=False,
                       add_book=add_book)
         return system
 
+    # run the requested routine
     if routine is not None:
         if isinstance(routine, str):
             routine = [routine]
@@ -472,7 +476,7 @@ def set_logger_level(lg, type_to_set, level):
     Set logging level for the given type of handler.
     """
 
-    for ii, h in enumerate(lg.handlers):
+    for h in lg.handlers:
         if isinstance(h, type_to_set):
             h.setLevel(level)
 
@@ -494,6 +498,7 @@ def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
 
     Return values from `run_case` are not preserved. Always return `True` when done.
     """
+
     # start processes
     jobs = []
     for idx, file in enumerate(cases):
@@ -527,6 +532,7 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     verbose : 10, 20, 30, 40, 50
         Verbosity level outside multiprocessing
     """
+
     pool = Pool(ncpu)
     print("Cases are processed in the following order:")
     print('\n'.join([f'"{name}"' for name in cases]))
@@ -571,6 +577,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(),
         An instance of system (if `cli == False`) or an exit code otherwise..
 
     """
+
     if is_interactive() and len(logger.handlers) == 0:
         config_logger(file=False, stream_level=verbose)
 
@@ -660,6 +667,7 @@ def plot(**kwargs):
     """
     Wrapper for the plot tool.
     """
+
     from andes.plot import tdsplot
     tdsplot(**kwargs)
 
@@ -667,8 +675,9 @@ def plot(**kwargs):
 def misc(edit_config='', save_config='', show_license=False, clean=True, recursive=False,
          overwrite=None, **kwargs):
     """
-    Misc functions.
+    Miscellaneous commands.
     """
+
     if edit_conf(edit_config):
         return
     if show_license:
@@ -726,10 +735,12 @@ def prepare(quick=False, incremental=False, models=None,
     if full is True:
         quick = False
 
+    # run code generation
     system = System(options=kwargs, no_undill=True)
     system.prepare(quick=quick, incremental=incremental, models=models,
                    nomp=nomp, ncpu=ncpu)
 
+    # compile model function calls
     if precompile:
         system.precompile(models, nomp=nomp, ncpu=ncpu)
 
