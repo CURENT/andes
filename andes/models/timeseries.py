@@ -9,7 +9,7 @@ from collections import OrderedDict
 from andes.core.model import ModelData, Model  # noaq
 from andes.core.param import DataParam, IdxParam, NumParam  # noqa
 from andes.core.discrete import Switcher
-from andes.shared import pd, np
+from andes.shared import pd, np, tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class TimeSeriesData(ModelData):
         ModelData.__init__(self)
 
         self.mode = NumParam(default='1',
-                             info='Mode to apply the timeseries. '
+                             info='Mode for applying timeseries. '
                                   '1: exact time, '
                                   '2: interpolated',
                              vrange=(1, 2),
@@ -139,6 +139,57 @@ class TimeSeriesModel(Model):
             out.append(df[tkey].to_numpy())
 
         return out
+
+    def apply_exact(self, t):
+        """
+        Apply the timeseries data at the exact time.
+
+        Parameters
+        ----------
+        t : float
+            the current time
+        """
+        # convert from numpy scalar to float
+        t = t.tolist()
+
+        for ii in range(self.n):
+            idx = self.idx.v[ii]
+
+            # skip offline devices
+            if self.u.v[ii] == 0:
+                continue
+
+            # check mode
+            if self.SW.s1[ii] != 1:
+                continue
+
+            idx = self.idx.v[ii]
+            df = self._data[idx]
+            tkey = self.tkey.v[ii]
+
+            # check if current time is a valid time stamp
+            if t not in df[tkey]:
+                continue
+
+            fields = self.fields.v[ii]
+            dests = self.dests.v[ii]
+
+            model = self.model.v[ii]
+            dev_idx = self.dev.v[ii]
+
+            # apply the value change
+            for field, dest in zip(fields, dests):
+                value = df.loc[df[tkey] == t, field].values[0]
+                self.system.__dict__[model].set(dest, dev_idx, 'v', value)
+
+                tqdm.write("<TimeSeries %s> set %s=%g for %s.%s at t=%g" %
+                           (idx, dest, value, model, dev_idx, t))
+
+    def apply_interpolate(self, t):
+        """
+        Apply timeseries data at the interpolated time.
+        """
+        raise NotImplementedError
 
 
 class TimeSeries(TimeSeriesData, TimeSeriesModel):
