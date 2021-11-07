@@ -16,34 +16,30 @@ class TestSnapshot(unittest.TestCase):
     Test ANDES snapshot.
     """
 
-    def test_save_ss(self):
+    def test_save_load_ss(self):
         """
-        Test saving a snapshot
+        Test loading a snapshot and continuing the simulation
         """
 
+        # --- save a snapshot ---
         ss = andes.run(andes.get_case("kundur/kundur_full.xlsx"),
                        no_output=True,
                        default_config=True,  # remove if outside tests
                        )
 
-        ss.TDS.config.tf = 1
+        ss.TDS.config.tf = 2.0
         ss.TDS.run()
 
-        save_ss('test_ss.pkl', ss)
-        os.remove('test_ss.pkl')
+        path = save_ss('kundur_full_2s.pkl', ss)
 
-    def test_load_ss(self):
-        """
-        Test loading a snapshot and continuing the simulation
-        """
-
-        # load a snapshot
-        test_dir = os.path.dirname(__file__)
-        ss = load_ss(os.path.join(test_dir, 'kundur_full_2s.pkl'))
+        # --- load a snapshot ---
+        ss = load_ss(path)
 
         # set a new simulation end time
-        ss.TDS.config.tf = 3
+        ss.TDS.config.tf = 3.0
         ss.TDS.run()
 
         np.testing.assert_almost_equal(ss.GENROU.omega.v,
                                        np.array([1.00549119, 1.00529052, 1.00426882, 1.0039297]))
+
+        os.remove(path)
