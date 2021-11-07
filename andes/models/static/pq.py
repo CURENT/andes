@@ -1,13 +1,11 @@
-import logging
+"""
+Steady-state PQ model.
+"""
+
 from collections import OrderedDict
 
-from andes.core.discrete import Limiter
-from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam
-from andes.core.service import ConstService, ExtService
-from andes.core.var import ExtAlgeb
-
-logger = logging.getLogger(__name__)
+from andes.core import (ModelData, IdxParam, NumParam, Model,
+                        ExtAlgeb, ExtService, ConstService, Limiter)
 
 
 class PQData(ModelData):
