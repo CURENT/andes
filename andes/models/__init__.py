@@ -15,6 +15,7 @@ from collections import OrderedDict
 file_classes = OrderedDict([
     ('info', ['Summary']),
     ('timer', ['Toggler', 'Fault', 'Alter']),
+    ('timeseries', ['TimeSeries']),
     ('bus', ['Bus']),
     ('static', ['PQ', 'PV', 'Slack']),
     ('shunt', ['Shunt', "ShuntTD", 'ShuntSw']),

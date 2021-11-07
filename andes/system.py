@@ -488,6 +488,7 @@ class System:
 
         if self.is_setup:
             raise NotImplementedError("Adding devices are not allowed after setup.")
+
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 
