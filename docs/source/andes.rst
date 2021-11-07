@@ -5,6 +5,7 @@ Subpackages
 
    moduledoc/andes.core
    moduledoc/andes.io
+   moduledoc/andes.linsolvers
    moduledoc/andes.models
    moduledoc/andes.routines
    moduledoc/andes.utils
