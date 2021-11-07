@@ -5,7 +5,7 @@ CuPy solver that requires the ``cupy`` package.
 import numpy as np
 
 from andes.shared import cupy
-from andes.solvers.scipy import SciPySolver
+from andes.linsolvers.scipy import SciPySolver
 
 
 class CuPySolver(SciPySolver):

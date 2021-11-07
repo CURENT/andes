@@ -1,6 +1,6 @@
-from andes.solvers.cupy import CuPySolver
-from andes.solvers.scipy import SpSolve
-from andes.solvers.suitesparse import UMFPACKSolver, KLUSolver
+from andes.linsolvers.cupy import CuPySolver
+from andes.linsolvers.scipy import SpSolve
+from andes.linsolvers.suitesparse import UMFPACKSolver, KLUSolver
 
 
 class Solver:
