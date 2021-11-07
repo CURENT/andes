@@ -9,10 +9,13 @@
     handling `KeyError`s.
 [x] Numba code generation for all models. Add a function for triggering
     all the JIT compilation before simulation. `andes prep -c` does it.
-* Unit Model Test framework.
+* Unit Model Test framework - a difficult task. Testing models will
+  require proper inputs (from external models), addressing from the system,
+  proper initialization, and the coupling with integration methods.
 
 # Later Versions
 
+* Center-of-inertia for rotor angle and speed.
 * Allow selection of output variables
 * Timeseries data input support. Reading data from file.
 * `PQTS` model for PQ with time-series.

@@ -44,14 +44,6 @@ andes.core.service module
    :undoc-members:
    :show-inheritance:
 
-andes.core.solver module
-------------------------
-
-.. automodule:: andes.core.solver
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.core.common module
 ------------------------
 

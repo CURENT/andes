@@ -11,6 +11,10 @@ def save_ss(path, system):
     """
     Save a system with all internal states as a snapshot.
 
+    Returns
+    -------
+    Path to the saved snapshot.
+
     Warnings
     --------
     One limitation of the current implementation is version dependency.
@@ -21,6 +25,8 @@ def save_ss(path, system):
 
     with open(path, 'wb') as file:
         dill.dump(system, file, recurse=True)
+
+    return path
 
 
 def load_ss(path):

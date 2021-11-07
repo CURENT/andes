@@ -1,13 +1,11 @@
-import logging
+"""
+Steady-state PV model.
+"""
+
 from collections import OrderedDict
 
-from andes.core.discrete import SortedLimiter
-from andes.core.model import Model, ModelData
-from andes.core.param import DataParam, IdxParam, NumParam
-from andes.core.service import BackRef
-from andes.core.var import Algeb, ExtAlgeb
-
-logger = logging.getLogger(__name__)
+from andes.core import (ModelData, NumParam, DataParam, IdxParam, Model,
+                        BackRef, ExtAlgeb, Algeb, SortedLimiter)
 
 
 class PVData(ModelData):
@@ -36,12 +34,6 @@ class PVData(ModelData):
         self.vmin = NumParam(default=0.6, info="minimum allowed voltage", tex_name=r'v_{min}')
         self.ra = NumParam(default=0.0, info='armature resistance', tex_name='r_a')
         self.xs = NumParam(default=0.3, info='armature reactance', tex_name='x_s')
-
-
-class SlackData(PVData):
-    def __init__(self):
-        super().__init__()
-        self.a0 = NumParam(default=0.0, info="reference angle set point", tex_name=r'\theta_0')
 
 
 class PVModel(Model):
@@ -117,8 +109,8 @@ class PVModel(Model):
 
         # power injection equations g(y) = 0
         self.p.e_str = "u * (p0 - p)"
-        self.q.e_str = "u*(qlim_zi * (v0-v) + "\
-                       "qlim_zl * (qmin-q) + "\
+        self.q.e_str = "u*(qlim_zi * (v0-v) + " \
+                       "qlim_zl * (qmin-q) + " \
                        "qlim_zu * (qmax-q))"
 
         # NOTE: the line below fails at TDS
@@ -148,34 +140,3 @@ class PV(PVData, PVModel):
     def __init__(self, system=None, config=None):
         PVData.__init__(self)
         PVModel.__init__(self, system, config)
-
-
-class Slack(SlackData, PVModel):
-    """
-    Slack generator.
-    """
-
-    def __init__(self, system=None, config=None):
-        SlackData.__init__(self)
-        PVModel.__init__(self, system, config)
-
-        self.config.add(OrderedDict((('av2pv', 0),
-                                     )))
-        self.config.add_extra("_help",
-                              av2pv="convert Slack to PV in PFlow at P limits",
-                              )
-        self.config.add_extra("_alt",
-                              av2pv=(0, 1),
-                              )
-        self.config.add_extra("_tex",
-                              av2pv="z_{av2pv}",
-                              )
-        self.a.v_setter = True
-        self.a.v_str = 'a0'
-
-        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
-                                  enable=self.config.av2pv)
-
-        self.p.e_str = "u*(plim_zi * (a0-a) + "\
-                       "plim_zl * (pmin-p) + "\
-                       "plim_zu * (pmax-p))"

@@ -12,7 +12,7 @@ Base class for building ANDES models.
 
 import logging
 from collections import OrderedDict
-from typing import Iterable, Sized
+from typing import Iterable, Sized, Union, Callable
 
 import scipy as sp
 
@@ -21,17 +21,16 @@ from andes.core.common import Config, JacTriplet, ModelFlags
 from andes.core.discrete import Discrete
 from andes.core.documenter import Documenter
 from andes.core.param import (BaseParam, DataParam, ExtParam, IdxParam,
-                              NumParam, TimerParam,)
+                              NumParam, TimerParam, )
 from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
                                 DeviceFinder, ExtService, FlagValue,
                                 InitChecker, NumReduce, NumRepeat, NumSelect,
                                 ParamCalc, PostInitService, RandomService,
-                                Replace, SwBlock, VarService,)
+                                Replace, SwBlock, VarService, )
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
-from andes.shared import jac_full_names, jac_names, jac_types, np, pd
+from andes.shared import jac_full_names, jac_names, jac_types, np, pd, numba
 from andes.utils.func import list_flatten
-from andes.utils.numba import to_jit
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +120,8 @@ class ModelData:
     Models should inherit this class to define the parameters from input files.
 
     Inherit this class to create the specific class for holding input parameters for a new model.
-    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENCLS`
-    should be named `GENCLSData`.
+    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENROU`
+    should be named `GENROUData`.
 
     Parameters should be defined in the ``__init__`` function of the derived class.
 
@@ -430,8 +429,8 @@ class ModelCall:
         self.ii = OrderedDict()
         self.ij = OrderedDict()
         self.s_args = OrderedDict()
-        self.ia_args = OrderedDict()   # assignment initialization
-        self.ii_args = OrderedDict()   # iterative initialization
+        self.ia_args = OrderedDict()  # assignment initialization
+        self.ii_args = OrderedDict()  # iterative initialization
         self.ij_args = OrderedDict()
 
         self.ijac = OrderedDict()
@@ -663,13 +662,13 @@ class Model:
         self.cache.add_callback('e_adders', self._e_adders)
         self.cache.add_callback('e_setters', self._e_setters)
 
-        self._input = OrderedDict()    # cached dictionary of inputs
+        self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags, storage only.
-        self._rhs_f = OrderedDict()    # RHS of external f
-        self._rhs_g = OrderedDict()    # RHS of external g
+        self._rhs_f = OrderedDict()  # RHS of external f
+        self._rhs_g = OrderedDict()  # RHS of external g
 
         self.f_args = []
-        self.g_args = []   # argument value lists
+        self.g_args = []  # argument value lists
         self.j_args = dict()
         self.s_args = OrderedDict()
         self.ia_args = OrderedDict()
@@ -1854,15 +1853,36 @@ class Model:
 
 
 def _eval_discrete(instance):
-
     # for variables associated with limiters, limiters need to be evaluated
     # before variable initialization.
     # However, if any limit is hit, initialization is likely to fail.
 
     if instance.discrete is not None:
         if not isinstance(instance.discrete, (list, tuple, set)):
-            dlist = (instance.discrete, )
+            dlist = (instance.discrete,)
         else:
             dlist = instance.discrete
         for d in dlist:
             d.check_var()
+
+
+def to_jit(func: Union[Callable, None],
+           parallel: bool = False,
+           cache: bool = False,
+           nopython: bool = False,
+           ):
+    """
+    Helper function for converting a function to a numba jit-compiled function.
+
+    Note that this function will be compiled just-in-time when first called,
+    based on the argument types.
+    """
+
+    if func is not None:
+        return numba.jit(func,
+                         parallel=parallel,
+                         cache=cache,
+                         nopython=nopython,
+                         )
+
+    return func

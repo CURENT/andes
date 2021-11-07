@@ -4,14 +4,6 @@ andes.utils package
 Submodules
 ----------
 
-andes.utils.cached module
--------------------------
-
-.. automodule:: andes.utils.cached
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.utils.paths module
 ------------------------
 

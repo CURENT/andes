@@ -1,85 +1,16 @@
+"""
+Switched shunt model.
+"""
+
 import ast
-import logging
 from collections import OrderedDict
 
 import numpy as np
 
+from andes.core import NumParam, ConstService
 from andes.core.discrete import ShuntAdjust
-from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam
-from andes.core.service import ConstService, SwBlock
-from andes.core.var import Algeb, ExtAlgeb
-
-logger = logging.getLogger(__name__)
-
-
-class ShuntData(ModelData):
-
-    def __init__(self, system=None, name=None):
-        super().__init__(system, name)
-
-        self.bus = IdxParam(model='Bus', info="idx of connected bus", mandatory=True)
-
-        self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name='S_n')
-        self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name='V_n')
-        self.g = NumParam(default=0.0, info="shunt conductance (real part)", y=True, tex_name='g')
-        self.b = NumParam(default=0.0, info="shunt susceptance (positive as capacitive)", y=True, tex_name='b')
-        self.fn = NumParam(default=60.0, info="rated frequency", tex_name='f_n')
-
-
-class ShuntModel(Model):
-    """
-    Shunt equations.
-    """
-
-    def __init__(self, system=None, config=None):
-        Model.__init__(self, system, config)
-        self.group = 'StaticShunt'
-        self.flags.pflow = True
-        self.flags.tds = True
-
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
-                          ename='P',
-                          tex_ename='P',
-                          )
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name='V',
-                          ename='Q',
-                          tex_ename='Q',
-                          )
-
-        self.a.e_str = 'u * v**2 * g'
-        self.v.e_str = '-u * v**2 * b'
-
-
-class Shunt(ShuntData, ShuntModel):
-    """
-    Static Shunt Model.
-    """
-
-    def __init__(self, system=None, config=None):
-        ShuntData.__init__(self)
-        ShuntModel.__init__(self, system, config)
-
-
-class ShuntTD(Shunt):
-    """
-    Static shunt model with inverse transformation from phasor to time-domain.
-    """
-
-    def __init__(self, system=None, config=None):
-        Shunt.__init__(self, system, config)
-        self.vta = Algeb(e_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a) - vta',
-                         v_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a)',
-                         tex_name='V_{ta}',
-                         )
-        self.vtb = Algeb(e_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a - 2/3*pi) - vtb',
-                         v_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a - 2/3*pi)',
-                         tex_name='V_{tb}',
-                         )
-        self.vtc = Algeb(e_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a + 2/3*pi) - vtc',
-                         v_str='v / sqrt(3) * cos(2*pi * sys_f * dae_t + a + 2/3*pi)',
-                         tex_name='V_{tc}',
-                         )
+from andes.core.service import SwBlock
+from andes.models.shunt.shunt import ShuntData, ShuntModel
 
 
 class ShuntSwData(ShuntData):

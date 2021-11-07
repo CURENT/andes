@@ -1,16 +1,10 @@
 """
-Measurement device classes
+Bus frequency estimation based on high-pass filter.
 """
 
-import logging
-
-from andes.core.block import Lag, Washout
-from andes.core.model import Model, ModelData
-from andes.core.param import IdxParam, NumParam
-from andes.core.service import ConstService, ExtService
-from andes.core.var import Algeb, ExtAlgeb, State  # NOQA
-
-logger = logging.getLogger(__name__)
+from andes.core import (ModelData, Model, IdxParam, NumParam,
+                        ConstService, ExtService, Algeb, ExtAlgeb,
+                        Lag, Washout)
 
 
 class BusFreq(ModelData, Model):
@@ -20,6 +14,7 @@ class BusFreq(ModelData, Model):
     The bus frequency output variable is `f`.
     The frequency deviation variable is `WO_y`.
     """
+
     def __init__(self, system, config):
         ModelData.__init__(self)
         Model.__init__(self, system, config)
@@ -83,70 +78,3 @@ class BusFreq(ModelData, Model):
                        v_str='1',
                        e_str='1 + WO_y - f',
                        )
-
-
-class BusROCOF(BusFreq):
-    """
-    Bus frequency and ROCOF measurement.
-
-    The ROCOF output variable is ``Wf_y``.
-    """
-    def __init__(self, system, config):
-        BusFreq.__init__(self, system, config)
-        self.Tr = NumParam(default=0.1,
-                           info="frequency washout time constant",
-                           tex_name='T_r')
-
-        self.Wf = Washout(u=self.f,
-                          K=1,
-                          T=self.Tr,
-                          info='frequency washout yielding ROCOF',
-                          )
-
-
-class PMUData(ModelData):
-    """
-    Phasor measurement unit data.
-    """
-    def __init__(self):
-        ModelData.__init__(self)
-        self.bus = IdxParam(info="bus idx", mandatory=True)
-
-        self.Ta = NumParam(default=0.1, tex_name='T_a', info='angle filter time constant')
-        self.Tv = NumParam(default=0.1, tex_name='T_v', info='voltage filter time constant')
-
-
-class PMU(PMUData, Model):
-    """
-    Simple phasor measurement unit model.
-
-    This model tracks the bus voltage magnitude and phase angle, each using
-    a low-pass filter.
-    """
-    def __init__(self, system, config):
-        PMUData.__init__(self)
-        Model.__init__(self, system, config)
-
-        self.flags.tds = True
-        self.group = 'PhasorMeasurement'
-
-        self.a = ExtAlgeb(model='Bus',
-                          src='a',
-                          indexer=self.bus,
-                          tex_name=r'\theta',
-                          info='Bus voltage phase angle',
-                          )
-        self.v = ExtAlgeb(model='Bus',
-                          src='v',
-                          indexer=self.bus,
-                          tex_name=r'V',
-                          info='Bus voltage magnitude',
-                          )
-
-        self.am = State(tex_name=r'\theta_m', info='phase angle measurement',
-                        unit='rad.', e_str='a - am', t_const=self.Ta, v_str='a',
-                        )
-
-        self.vm = State(tex_name='V_m', info='voltage magnitude measurement',
-                        unit='p.u.(kV)', e_str='v - vm', t_const=self.Tv, v_str='v',
-                        )

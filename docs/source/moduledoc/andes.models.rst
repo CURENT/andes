@@ -4,6 +4,14 @@ andes.models package
 Submodules
 ----------
 
+andes.models.acdc module
+------------------------
+
+.. automodule:: andes.models.acdc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 andes.models.area module
 ------------------------
 
@@ -16,6 +24,14 @@ andes.models.bus module
 -----------------------
 
 .. automodule:: andes.models.bus
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+andes.models.dc module
+----------------------
+
+.. automodule:: andes.models.dc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,26 +60,18 @@ andes.models.line module
    :undoc-members:
    :show-inheritance:
 
-andes.models.pq module
-----------------------
-
-.. automodule:: andes.models.pq
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-andes.models.pv module
-----------------------
-
-.. automodule:: andes.models.pv
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 andes.models.shunt module
 -------------------------
 
 .. automodule:: andes.models.shunt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+andes.models.static module
+--------------------------
+
+.. automodule:: andes.models.static
    :members:
    :undoc-members:
    :show-inheritance:
