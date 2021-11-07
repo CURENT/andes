@@ -1,14 +1,14 @@
-"""Voltage-source converter models"""
+"""
+Shunt-connected voltage-source converter for power flow.
+"""
 
-from andes.core.discrete import HardLimiter, Switcher  # NOQA
-from andes.core.param import NumParam
-from andes.core.service import ConstService, ExtService  # NOQA
-from andes.core.var import Algeb, ExtAlgeb, ExtState, State  # NOQA
-from andes.models.dc.dcbase import ACDC2Term
+from andes.core import NumParam, ConstService, Switcher, Algeb
+from andes.models.acdc.acdcbase import ACDC2Term
 
 
 class VSCShunt(ACDC2Term):
     """Data for VSC Shunt in power flow"""
+
     def __init__(self, system, config):
         ACDC2Term.__init__(self, system, config)
         self.rsh = NumParam(default=0.0025, info="AC interface resistance", unit="ohm", z=True,

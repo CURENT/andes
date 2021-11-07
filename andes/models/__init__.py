@@ -32,7 +32,7 @@ file_classes = OrderedDict([
     ('motor', ['Motor3', 'Motor5']),
     ('measurement', ['BusFreq', 'BusROCOF', 'PMU']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
-    ('vsc', ['VSCShunt']),
+    ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REECA1', 'REECA1E', 'REECA1G',
                    'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCVSG', 'REGCVSG2']),
