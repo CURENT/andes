@@ -1,4 +1,4 @@
-from andes.core.solver import Solver
+from andes.solvers.solverbase import Solver
 from andes.core import Config
 from collections import OrderedDict
 
