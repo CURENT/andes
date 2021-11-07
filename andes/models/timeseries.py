@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 from andes.core.model import ModelData, Model  # noaq
 from andes.core.param import DataParam, IdxParam, NumParam  # noqa
+from andes.core.discrete import Switcher
 from andes.shared import pd, np
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,13 @@ class TimeSeriesData(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
+        self.mode = NumParam(default='1',
+                             info='Mode to apply the timeseries. '
+                                  '1: exact time, '
+                                  '2: interpolated',
+                             vrange=(1, 2),
+                             )
+
         self.path = DataParam(mandatory=True, info='Path to timeseries xlsx file')
         self.sheet = DataParam(mandatory=True, info='Sheet name to use')
         self.fields = NumParam(mandatory=True,
@@ -72,6 +80,9 @@ class TimeSeriesModel(Model):
         Model.__init__(self, system, config)
         self.flags.pflow = True
         self.flags.tds = True
+
+        self.SW = Switcher(self.mode, options=(0, 1, 2),
+                           info='mode switcher', )
 
         self._data = OrderedDict()  # keys are the idx, and values are the dataframe
 
@@ -106,6 +117,28 @@ class TimeSeriesModel(Model):
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
+
+    def get_times(self):
+        """
+        Gather simulation stop-at times for mode = 1.
+        """
+
+        Model.get_times(self)
+
+        # collect all time stamps
+        out = list()
+
+        for ii in range(self.n):
+            if self.SW.s1[ii] != 1:
+                continue
+
+            idx = self.idx.v[ii]
+            df = self._data[idx]
+            tkey = self.tkey.v[ii]
+
+            out.append(df[tkey].to_numpy())
+
+        return out
 
 
 class TimeSeries(TimeSeriesData, TimeSeriesModel):
