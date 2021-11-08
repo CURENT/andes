@@ -194,7 +194,7 @@ class TimeSeriesModel(Model):
 
                 if not self.config.silent:
                     tqdm.write("<TimeSeries %s> set %s=%g for %s.%s at t=%g" %
-                            (idx, dest, value, model, dev_idx, t))
+                               (idx, dest, value, model, dev_idx, t))
 
     def apply_interpolate(self, t):
         """
