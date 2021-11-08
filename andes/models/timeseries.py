@@ -200,6 +200,7 @@ class TimeSeriesModel(Model):
         """
         Apply timeseries data at the interpolated time.
         """
+
         raise NotImplementedError
 
 

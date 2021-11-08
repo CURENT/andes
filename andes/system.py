@@ -1854,6 +1854,7 @@ class System:
         for instance in models.values():
             instance.switch_action(self.dae.t)
 
+        # TODO: generalize below for any models with timeseries data.
         self.TimeSeries.apply_exact(self.dae.t)
 
     def _p_restore(self):
