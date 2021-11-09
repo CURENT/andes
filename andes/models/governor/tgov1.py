@@ -110,7 +110,7 @@ class TGOV1NModel(TGOV1Model):
         self.pref.v_str = 'tm0'
         self.pref.e_str = 'pref0 - pref'
 
-        self.pd.e_str = 'ue*(wd * gain + pref + paux) - pd'
+        self.pd.e_str = 'ue*(-wd * gain + pref + paux) - pd'
 
 
 class TGOV1DBModel(TGOV1Model):
@@ -124,7 +124,7 @@ class TGOV1DBModel(TGOV1Model):
                             upper=self.dbU, tex_name='DB',
                             info='deadband for speed deviation',
                             )
-        self.pd.e_str = 'ue * (DB_y + pref + paux) * gain - pd'
+        self.pd.e_str = 'ue * (-DB_y + pref + paux) * gain - pd'
         self.pout.e_str = '(LL_y - Dt * DB_y) - pout'
 
 
