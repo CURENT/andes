@@ -163,8 +163,6 @@ class TimeSeriesModel(Model):
         t = t.tolist()
 
         for ii in range(self.n):
-            idx = self.idx.v[ii]
-
             # skip offline devices
             if self.u.v[ii] == 0:
                 continue
