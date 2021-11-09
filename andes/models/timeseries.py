@@ -24,8 +24,7 @@ def str_list_iconv(x):
 
         return x
 
-    else:
-        raise NotImplementedError
+    raise NotImplementedError
 
 
 def str_list_oconv(x):
