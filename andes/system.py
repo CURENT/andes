@@ -488,6 +488,7 @@ class System:
 
         if self.is_setup:
             raise NotImplementedError("Adding devices are not allowed after setup.")
+
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
 
@@ -1852,6 +1853,9 @@ class System:
         """
         for instance in models.values():
             instance.switch_action(self.dae.t)
+
+        # TODO: generalize below for any models with timeseries data.
+        self.TimeSeries.apply_exact(self.dae.t)
 
     def _p_restore(self):
         """

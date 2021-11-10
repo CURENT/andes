@@ -177,29 +177,15 @@ Performance Packages
     Performance packages can be safely skipped and will not affect the
     functionality of ANDES.
 
-KVXOPT
-------
-
-KVXOPT is a fork of the CVXOPT with KLU by Uriel Sandoval (@sanurielf).
-KVXOPT interfaces to KLU, which is
-roughly 20% faster than UMFPACK for circuit simulations based on our testing.
-
-KVXOPT contains inplace add and set functions for sparse matrix
-contributed by CURENT.
-These inplace functions significantly speed up large-scale system simulations.
-
-To install ``KVXOPT``, run the following command in the terminal or Anaconda Prompt
-
-.. code:: bash
-
-      python -m pip install kvxopt
-
 numba
 -----
 
 .. note::
 
-    Numba is supported starting from ANDES 1.5.0.
+    Numba is supported starting from ANDES 1.5.0 and is automatically
+    installed for ANDES >=1.5.3.
+
+    Please refer to the following for turning on Numba.
 
 Numba is allows numerical functions calls to be compiled into machine code.
 It can accelerates simulations by as high as 30%.
@@ -209,13 +195,15 @@ for linear equation solvers.
 It is is less significant in large-scale systems where
 solving equations is the major time consumer.
 
+
 To install ``numba``, run the following command in the terminal or Anaconda Prompt
 
 .. code:: bash
 
     python -m pip install numba
 
-Numba needs to be turned on manually. See the tutorial for editing ANDES configuration.
+Numba needs to be turned on manually.
+Refer to the tutorial for editing ANDES configuration.
 To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
 set ``numba = 1`` and ``numba_cache = 1``.
 
@@ -224,3 +212,12 @@ based on the input types.
 When compilation is triggered, ANDES may appear frozen due to the compilation lag.
 The option ``numba_cache = 1`` will cache compiled machine code, so that
 the compilation lag only occurs once until the next code generation.
+
+Code can be compiled ahead of time with
+
+.. code:: bash
+
+    andes prep -c
+
+It may take a minute for the first time. Future compilations will be
+incremental and faster.
