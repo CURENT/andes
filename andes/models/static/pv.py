@@ -99,9 +99,9 @@ class PVModel(Model):
                                   )
 
         # variable initialization equations
-        self.v.v_str = 'v0'
-        self.p.v_str = 'p0'
-        self.q.v_str = 'q0'
+        self.v.v_str = 'u * v0'
+        self.p.v_str = 'u * p0'
+        self.q.v_str = 'u * q0'
 
         # injections into buses have negative values
         self.a.e_str = "-u * p"
