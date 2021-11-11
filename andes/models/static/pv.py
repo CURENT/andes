@@ -4,7 +4,7 @@ Steady-state PV model.
 
 from collections import OrderedDict
 
-from andes.core import (ModelData, NumParam, DataParam, IdxParam, Model,
+from andes.core import (ModelData, NumParam, ExtParam, DataParam, IdxParam, Model,
                         BackRef, ExtAlgeb, Algeb, SortedLimiter)
 
 
@@ -78,6 +78,10 @@ class PVModel(Model):
 
         self.SynGen = BackRef()
 
+        self.busv0 = ExtParam(model='Bus', src='v0', indexer=self.bus,
+                              export=False, tex_name='V_{0bus}',
+                              )
+
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
                           ename='P',
                           tex_ename='P',
@@ -87,8 +91,16 @@ class PVModel(Model):
                           tex_ename=r'\Delta V',
                           )
 
-        self.p = Algeb(info='actual active power generation', unit='p.u.', tex_name=r'p', diag_eps=True)
-        self.q = Algeb(info='actual reactive power generation', unit='p.u.', tex_name='q', diag_eps=True)
+        self.p = Algeb(info='actual active power generation',
+                       unit='p.u.',
+                       tex_name=r'p',
+                       diag_eps=True,
+                       )
+        self.q = Algeb(info='actual reactive power generation',
+                       unit='p.u.',
+                       tex_name='q',
+                       diag_eps=True,
+                       )
 
         self.qlim = SortedLimiter(u=self.q, lower=self.qmin, upper=self.qmax,
                                   enable=self.config.pv2pq,
@@ -99,7 +111,7 @@ class PVModel(Model):
                                   )
 
         # variable initialization equations
-        self.v.v_str = 'u * v0'
+        self.v.v_str = 'u * v0 + (1-u) * busv0'
         self.p.v_str = 'u * p0'
         self.q.v_str = 'u * q0'
 
