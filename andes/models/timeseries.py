@@ -2,6 +2,7 @@
 Model for metadata of timeseries.
 """
 
+import os
 import logging
 
 from collections import OrderedDict
@@ -110,22 +111,34 @@ class TimeSeriesModel(Model):
             path = self.path.v[ii]
             sheet = self.sheet.v[ii]
 
-            try:
-                df = pd.read_excel(path, sheet_name=sheet)
-            except FileNotFoundError as e:
-                logger.error('<%s idx=%s>: File not found: "%s"',
-                             self.class_name, idx, path)
-                raise e
-            except ValueError as e:
-                logger.error('<%s idx=%s>: Sheet not found: "%s" in "%s"',
-                             self.class_name, idx, sheet, path)
-                raise e
+            if not os.path.exists(path):
+                raise FileNotFoundError('<%s idx=%s>: File not found: "%s"',
+                                        self.class_name, idx, path)
+
+            # --- read supported formats ---
+            if path.endswith("xlsx") or path.endswith("xls"):
+                df = self._read_excel(path, sheet, idx)
+            elif path.endswith("csv"):
+                df = pd.read_csv(path)
 
             for field in self.fields.v[ii]:
                 if field not in df.columns:
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
+
+    def _read_excel(self, path, sheet, idx):
+        """
+        Helper function to read excel file.
+        """
+
+        try:
+            df = pd.read_excel(path, sheet_name=sheet)
+            return df
+        except ValueError as e:
+            logger.error('<%s idx=%s>: Sheet not found: "%s" in "%s"',
+                         self.class_name, idx, sheet, path)
+            raise e
 
     def get_times(self):
         """
