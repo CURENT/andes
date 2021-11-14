@@ -9,6 +9,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.5 (2021-11-13)
+```````````````````
+- Added a `Timeseries` model for reading timeseries data from xlsx.
+- Converted several models into Python packages.
+- Bug fixes to TGOV1 equations (#226)
+
 v1.5.4 (2021-11-02)
 ```````````````````
 - Fixed a bug in generated ``select`` functions that omitted the
