@@ -105,6 +105,10 @@ class TimeSeriesModel(Model):
         Open file and read data into internal storage.
         """
 
+        # TODO: timeseries file must exist for setup to pass. Consider moving
+        # the file reading to a later stage so that adding sheets to xlsx file can work
+        # without the file existing.
+
         Model.list2array(self)
 
         # read and store data
