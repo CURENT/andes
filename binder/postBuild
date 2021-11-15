@@ -1,3 +1,4 @@
 python -m pip install .
 
 python -m andes prep -c
+python -m andes misc -O System.numba=1 --save-config
