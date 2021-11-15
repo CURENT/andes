@@ -4,7 +4,7 @@ V-f playback generator model.
 
 from andes.shared import np
 
-from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam,
+from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam, ExtParam,
                         State, ExtAlgeb, ExtService, ConstService)
 
 
@@ -72,6 +72,18 @@ class PLBVFU1Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
+        self.flags.tds = True
+        self.Vn = ExtParam(model='Bus', src='Vn',
+                           indexer=self.bus,
+                           )
+
+        self.zs = ConstService('ra + 1j * xs', vtype=np.complex,
+                               info='impedance',
+                               )
+        self.zs2n = ConstService('ra * ra - xs * xs',
+                                 info='ra^2 - xs^2',
+                                 )
+
         # get power flow solutions
 
         self.p = ExtService(model='StaticGen', src='p',
@@ -80,32 +92,34 @@ class PLBVFU1Model(Model):
         self.q = ExtService(model='StaticGen', src='p',
                             indexer=self.gen,
                             )
-        self.Ec = ConstService('v * exp(1j * a) +'
+        self.Ec = ConstService('v * exp(1j * a) -'
                                'conj((p + 1j * q) / (v * exp(1j * a))) * (ra + 1j * xs)',
                                vtype=np.complex,
                                )
 
-        self.E0 = ConstService('re(Ec)')
-        self.delta0 = ConstService('im(Ec)')
+        self.E0 = ConstService('abs(Ec)')
+        self.delta0 = ConstService('arg(Ec)')
 
-        # TODO: set values for t=0 before calculating service vars
-        self.Vts = ConstService("1")
-        self.fts = ConstService('fn')
+        # Note: `Vts` and `fts` are assigned by TimeSeries before initializing this model.
+        self.Vts = ConstService()
+        self.fts = ConstService()
 
         self.ifscale = ConstService('1/fscale')
         self.iVscale = ConstService('1/Vscale')
 
         self.foffs = ConstService('fts * ifscale - 1')
-        self.voffs = ConstService('Vts * iVscale - E0')
+        self.Voffs = ConstService('Vts * iVscale - E0')
 
         self.Vflt = State(info='filtered voltage',
                           t_const=self.Tv,
-                          e_str='iVscale * Vts - Vflt',
+                          v_str='(iVscale * Vts - Voffs)',
+                          e_str='(iVscale * Vts - Voffs) - Vflt',
                           unit='pu',
                           )
 
         self.fflt = State(info='filtered frequency',
                           t_const=self.Tf,
+                          v_str='fts * ifscale - foffs',
                           e_str='(ifscale * fts - foffs) - fflt',
                           unit='pu',
                           )
@@ -121,7 +135,8 @@ class PLBVFU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='-u * 0',  # TODO
+                          e_str='Vflt*ra*(Vflt - v*cos(a - delta))/(ra**2 + xs**2) - '
+                                'Vflt*v*xs*sin(a - delta)/(ra**2 + xs**2)',
                           ename='P',
                           tex_ename='P',
                           )
@@ -130,8 +145,9 @@ class PLBVFU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-u * 0',   # TODO
                           ename='Q',
+                          e_str='Vflt*ra*v*sin(a - delta)/(ra**2 + xs**2) + '
+                                'Vflt*xs*(Vflt - v*cos(a - delta))/(ra**2 + xs**2)',
                           tex_ename='Q',
                           )
 
@@ -144,3 +160,10 @@ class PLBVFU1(PLBVFU1Model, PLBVFU1Data):
     def __init__(self, system, config):
         PLBVFU1Data.__init__(self)
         PLBVFU1Model.__init__(self, system, config)
+
+    def v_numeric(self, **kwargs):
+        """
+        Numeric initialization to disable corresponding ``StaticGen``.
+        """
+
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
