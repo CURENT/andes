@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 command_aliases = {
     'prepare': ['prep'],
     'selftest': ['st'],
-    }
+}
 
 
 def create_parser():
@@ -80,7 +80,7 @@ def create_parser():
     run.add_argument('--pool', action='store_true', help='Start multiprocess with Pool '
                                                          'and return a list of Systems')
     run.add_argument('--from-csv', help='Use data from a CSV file instead of from simulation')
-    run.add_argument('-C', '--config-set',
+    run.add_argument('-O', '--config-option',
                      help='Set configuration option specificied by '
                           'NAME.FIELD=VALUE with no space. For example, "TDS.tf=2"',
                      type=str, default='', nargs='*')
@@ -140,6 +140,10 @@ def create_parser():
     misc.add_argument('-C', '--clean', help='Clean output files', action='store_true')
     misc.add_argument('-r', '--recursive', help='Recursively clean outputs (combined useage with --clean)',
                       action='store_true')
+    misc.add_argument('-O', '--config-option',
+                      help='Set configuration option specificied by '
+                      'NAME.FIELD=VALUE with no space. For example, "TDS.tf=2"',
+                      type=str, default='', nargs='*')
 
     prep = sub_parsers.add_parser('prepare', aliases=command_aliases['prepare'])
     prep_mode = prep.add_mutually_exclusive_group()

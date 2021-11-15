@@ -159,7 +159,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
     return ret
 
 
-def save_conf(config_path=None, overwrite=None):
+def save_conf(config_path=None, overwrite=None, **kwargs):
     """
     Save the Andes config to a file at the path specified by ``save_config``.
     The save action will not run if ``save_config = ''``.
@@ -186,7 +186,7 @@ def save_conf(config_path=None, overwrite=None):
     if config_path is not None and os.path.isdir(config_path):
         config_path = os.path.join(config_path, 'andes.rc')
 
-    ps = System()
+    ps = System(**kwargs)
     ps.save_config(config_path, overwrite=overwrite)
     ret = True
 
@@ -684,7 +684,7 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
         print_license()
         return
     if save_config != '':
-        save_conf(save_config, overwrite=overwrite)
+        save_conf(save_config, overwrite=overwrite, **kwargs)
         return
     if clean is True:
         remove_output(recursive)

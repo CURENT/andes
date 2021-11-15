@@ -221,16 +221,21 @@ class System:
         Change config on the fly based on command-line options.
         """
 
-        if len(self.options.get('config_set')) > 0:
-            for item in self.options.get("config_set"):
+        config_option = self.options.get('config_option', None)
+        if config_option is None:
+            return
+
+        if len(config_option) > 0:
+            for item in config_option:
                 if item.count('=') != 1 or item.count('.') != 1:
-                    logger.error("Invalid config_set option: {}".format(item))
+                    logger.error("Invalid config_option option: {}".format(item))
                     continue
 
                 field, value = item.split("=")
                 section, key = field.split(".")
 
                 self._config_object.set(section, key, value)
+                logger.debug("Config option set: {}={}".format(field, value))
 
     def reload(self, case, **kwargs):
         """
