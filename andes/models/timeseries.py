@@ -78,7 +78,9 @@ class TimeSeriesModel(Model):
 
     def __init__(self, system, config):
         Model.__init__(self, system, config)
-        self.flags.pflow = True
+        # Notes:
+        # TimeSeries model is not used in power flow for now
+
         self.flags.tds = True
 
         self.config.add(OrderedDict((('silent', 1),
@@ -199,7 +201,10 @@ class TimeSeriesModel(Model):
 
             # apply the value change
             for field, dest in zip(fields, dests):
-                value = df.loc[df[tkey] == t, field].values[0]
+                value = df.loc[df[tkey] == t, field].values
+                if len(value) == 0:
+                    continue
+                value = value[0]
                 self.system.__dict__[model].set(dest, dev_idx, 'v', value)
 
                 if not self.config.silent:
@@ -212,6 +217,16 @@ class TimeSeriesModel(Model):
         """
 
         raise NotImplementedError
+
+    def init(self, routine):
+        """
+        Set values for the very first time step.
+        """
+
+        Model.init(self, routine)
+
+        self.apply_exact(np.array(self.system.TDS.config.t0))
+        logger.debug('<%s>: Initialization done', self.class_name)
 
 
 class TimeSeries(TimeSeriesData, TimeSeriesModel):

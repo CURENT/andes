@@ -22,7 +22,7 @@ file_classes = OrderedDict([
     ('line', ['Line', 'Jumper']),
     ('area', ['Area', 'ACE', 'ACEc']),
     ('dynload', ['ZIP', 'FLoad']),
-    ('synchronous', ['GENCLS', 'GENROU']),
+    ('synchronous', ['GENCLS', 'GENROU', 'PLBVFU1']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'TGOV1N', 'TGOV1NDB',
                   'IEEEG1', 'IEESGO', 'GAST']),
     ('vcomp', ['IEEEVC']),
