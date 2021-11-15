@@ -124,6 +124,7 @@ class System:
             self._config_path = None
 
         self._config_object = self.load_config(self._config_path)
+        self._update_config_object()
         self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
 
@@ -214,6 +215,22 @@ class System:
         np.seterr(divide=self.config.np_divide,
                   invalid=self.config.np_invalid,
                   )
+
+    def _update_config_object(self):
+        """
+        Change config on the fly based on command-line options.
+        """
+
+        if len(self.options.get('config_set')) > 0:
+            for item in self.options.get("config_set"):
+                if item.count('=') != 1 or item.count('.') != 1:
+                    logger.error("Invalid config_set option: {}".format(item))
+                    continue
+
+                field, value = item.split("=")
+                section, key = field.split(".")
+
+                self._config_object.set(section, key, value)
 
     def reload(self, case, **kwargs):
         """

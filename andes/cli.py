@@ -80,6 +80,10 @@ def create_parser():
     run.add_argument('--pool', action='store_true', help='Start multiprocess with Pool '
                                                          'and return a list of Systems')
     run.add_argument('--from-csv', help='Use data from a CSV file instead of from simulation')
+    run.add_argument('-C', '--config-set',
+                     help='Set configuration option specificied by '
+                          'NAME.FIELD=VALUE with no space. For example, "TDS.tf=2"',
+                     type=str, default='', nargs='*')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '
