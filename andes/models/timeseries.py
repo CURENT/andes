@@ -2,6 +2,7 @@
 Model for metadata of timeseries.
 """
 
+import os
 import logging
 
 from collections import OrderedDict
@@ -77,7 +78,9 @@ class TimeSeriesModel(Model):
 
     def __init__(self, system, config):
         Model.__init__(self, system, config)
-        self.flags.pflow = True
+        # Notes:
+        # TimeSeries model is not used in power flow for now
+
         self.flags.tds = True
 
         self.config.add(OrderedDict((('silent', 1),
@@ -110,22 +113,34 @@ class TimeSeriesModel(Model):
             path = self.path.v[ii]
             sheet = self.sheet.v[ii]
 
-            try:
-                df = pd.read_excel(path, sheet_name=sheet)
-            except FileNotFoundError as e:
-                logger.error('<%s idx=%s>: File not found: "%s"',
-                             self.class_name, idx, path)
-                raise e
-            except ValueError as e:
-                logger.error('<%s idx=%s>: Sheet not found: "%s" in "%s"',
-                             self.class_name, idx, sheet, path)
-                raise e
+            if not os.path.exists(path):
+                raise FileNotFoundError('<%s idx=%s>: File not found: "%s"',
+                                        self.class_name, idx, path)
+
+            # --- read supported formats ---
+            if path.endswith("xlsx") or path.endswith("xls"):
+                df = self._read_excel(path, sheet, idx)
+            elif path.endswith("csv"):
+                df = pd.read_csv(path)
 
             for field in self.fields.v[ii]:
                 if field not in df.columns:
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
+
+    def _read_excel(self, path, sheet, idx):
+        """
+        Helper function to read excel file.
+        """
+
+        try:
+            df = pd.read_excel(path, sheet_name=sheet)
+            return df
+        except ValueError as e:
+            logger.error('<%s idx=%s>: Sheet not found: "%s" in "%s"',
+                         self.class_name, idx, sheet, path)
+            raise e
 
     def get_times(self):
         """
@@ -186,7 +201,10 @@ class TimeSeriesModel(Model):
 
             # apply the value change
             for field, dest in zip(fields, dests):
-                value = df.loc[df[tkey] == t, field].values[0]
+                value = df.loc[df[tkey] == t, field].values
+                if len(value) == 0:
+                    continue
+                value = value[0]
                 self.system.__dict__[model].set(dest, dev_idx, 'v', value)
 
                 if not self.config.silent:
@@ -199,6 +217,16 @@ class TimeSeriesModel(Model):
         """
 
         raise NotImplementedError
+
+    def init(self, routine):
+        """
+        Set values for the very first time step.
+        """
+
+        Model.init(self, routine)
+
+        self.apply_exact(np.array(self.system.TDS.config.t0))
+        logger.debug('<%s>: Initialization done', self.class_name)
 
 
 class TimeSeries(TimeSeriesData, TimeSeriesModel):

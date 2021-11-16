@@ -124,6 +124,7 @@ class System:
             self._config_path = None
 
         self._config_object = self.load_config(self._config_path)
+        self._update_config_object()
         self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
 
@@ -176,6 +177,7 @@ class System:
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
+
         self.config.check()
         self._set_numpy()
 
@@ -214,6 +216,39 @@ class System:
         np.seterr(divide=self.config.np_divide,
                   invalid=self.config.np_invalid,
                   )
+
+    def _update_config_object(self):
+        """
+        Change config on the fly based on command-line options.
+        """
+
+        config_option = self.options.get('config_option', None)
+        if config_option is None:
+            return
+
+        if len(config_option) == 0:
+            return
+
+        newobj = False
+        if self._config_object is None:
+            self._config_object = configparser.ConfigParser()
+            newobj = True
+
+        for item in config_option:
+            if item.count('=') != 1 or item.count('.') != 1:
+                logger.error("Invalid config_option option: {}".format(item))
+                continue
+
+            field, value = item.split("=")
+            section, key = field.split(".")
+
+            if not newobj:
+                self._config_object.set(section, key, value)
+                logger.debug("Config option set: {}={}".format(field, value))
+            else:
+                self._config_object.add_section(section)
+                self._config_object.set(section, key, value)
+                logger.debug("Config option added: [{}] {}={}".format(section, field, value))
 
     def reload(self, case, **kwargs):
         """

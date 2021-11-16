@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.6 (2021-11-xx)
+```````````````````
+- Allow specifying config options through command-line arguments
+  ``--config-option``.
+
 v1.5.5 (2021-11-13)
 ```````````````````
 - Added a `Timeseries` model for reading timeseries data from xlsx.
