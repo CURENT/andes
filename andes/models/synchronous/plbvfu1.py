@@ -89,10 +89,10 @@ class PLBVFU1Model(Model):
         self.p = ExtService(model='StaticGen', src='p',
                             indexer=self.gen,
                             )
-        self.q = ExtService(model='StaticGen', src='p',
+        self.q = ExtService(model='StaticGen', src='q',
                             indexer=self.gen,
                             )
-        self.Ec = ConstService('v * exp(1j * a) -'
+        self.Ec = ConstService('v * exp(1j * a) +'
                                'conj((p + 1j * q) / (v * exp(1j * a))) * (ra + 1j * xs)',
                                vtype=np.complex,
                                )
@@ -135,8 +135,8 @@ class PLBVFU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='Vflt*ra*(Vflt - v*cos(a - delta))/(ra**2 + xs**2) - '
-                                'Vflt*v*xs*sin(a - delta)/(ra**2 + xs**2)',
+                          e_str='Vflt*v*xs*sin(a - delta)/(ra*ra + xs*xs) + '
+                                'ra*v*(-Vflt*cos(a - delta) + v)/(ra*ra + xs*xs)',
                           ename='P',
                           tex_ename='P',
                           )
@@ -146,8 +146,8 @@ class PLBVFU1Model(Model):
                           tex_name=r'V',
                           info='Bus voltage magnitude',
                           ename='Q',
-                          e_str='Vflt*ra*v*sin(a - delta)/(ra**2 + xs**2) + '
-                                'Vflt*xs*(Vflt - v*cos(a - delta))/(ra**2 + xs**2)',
+                          e_str='-Vflt*ra*v*sin(a - delta)/(ra*ra + xs*xs) + '
+                                'v*xs*(-Vflt*cos(a - delta) + v)/(ra*ra + xs*xs)',
                           tex_ename='Q',
                           )
 

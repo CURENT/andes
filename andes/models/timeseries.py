@@ -50,7 +50,7 @@ class TimeSeriesData(ModelData):
                              vrange=(1, 2),
                              )
 
-        self.path = DataParam(mandatory=True, info='Path to timeseries xlsx file')
+        self.path = DataParam(mandatory=True, info='Path to timeseries xlsx file.')
         self.sheet = DataParam(mandatory=True, info='Sheet name to use')
         self.fields = NumParam(mandatory=True,
                                info='comma-separated field names in timeseries data',
@@ -117,6 +117,9 @@ class TimeSeriesModel(Model):
             path = self.path.v[ii]
             sheet = self.sheet.v[ii]
 
+            if not os.path.isabs(path):
+                path = os.path.join(self.system.files.case_path, path)
+
             if not os.path.exists(path):
                 raise FileNotFoundError('<%s idx=%s>: File not found: "%s"',
                                         self.class_name, idx, path)
@@ -132,6 +135,8 @@ class TimeSeriesModel(Model):
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
+            logger.info('<%s idx=%s>: Read timeseries data from "%s"',
+                        self.class_name, idx, path)
 
     def _read_excel(self, path, sheet, idx):
         """
@@ -238,6 +243,8 @@ class TimeSeries(TimeSeriesData, TimeSeriesModel):
     Model for metadata of timeseries.
 
     TimeSeries will not overwrite values in power flow.
+
+    Relative path is assumed in the same folder as the case file.
     """
 
     def __init__(self, system, config):
