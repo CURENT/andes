@@ -23,13 +23,24 @@ class PLBVFU1Data(ModelData):
                             model='StaticGen',
                             mandatory=True,
                             )
+        self.Sn = NumParam(default=100.0,
+                           info="Power rating",
+                           tex_name='S_n',
+                           unit='MVA',
+                           )
+        self.Vn = NumParam(default=110.0,
+                           info="AC voltage rating",
+                           tex_name='V_n',
+                           )
         self.ra = NumParam(info='armature resistance',
                            default=0.0,
                            tex_name='r_a',
+                           z=True,
                            )
         self.xs = NumParam(info='generator transient reactance',
                            default=0.2,
                            tex_name='x_s',
+                           z=True,
                            )
         self.fn = NumParam(default=60.0,
                            info="rated frequency",
@@ -83,10 +94,11 @@ class PLBVFU1Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
+        self.group = 'SynGen'
+
+        self.group_param_exception = ['Sn', 'M', 'D']
+        self.group_var_exception = ['vd', 'vq', 'Id', 'Iq', 'tm', 'te', 'vf', 'XadIfd']
         self.flags.tds = True
-        self.Vn = ExtParam(model='Bus', src='Vn',
-                           indexer=self.bus,
-                           )
 
         self.zs = ConstService('ra + 1j * xs', vtype=np.complex,
                                info='impedance',
