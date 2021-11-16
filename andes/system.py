@@ -704,7 +704,7 @@ class System:
                     name='Process {0:d}'.format(idx),
                     target=_precompile_model,
                     args=(mdl,),
-                    )
+                )
                 jobs.append(job)
                 job.start()
 
@@ -1672,7 +1672,7 @@ class System:
                         if item in model.group_var_exception:
                             continue
                         raise KeyError(f'Group <{group.class_name}> common var <{item}> does not exist '
-                                        f'in model <{model.class_name}>')
+                                       f'in model <{model.class_name}>')
 
     def collect_ref(self):
         """
