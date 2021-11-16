@@ -177,6 +177,7 @@ class System:
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
+
         self.config.check()
         self._set_numpy()
 
@@ -225,17 +226,29 @@ class System:
         if config_option is None:
             return
 
-        if len(config_option) > 0:
-            for item in config_option:
-                if item.count('=') != 1 or item.count('.') != 1:
-                    logger.error("Invalid config_option option: {}".format(item))
-                    continue
+        if len(config_option) == 0:
+            return
 
-                field, value = item.split("=")
-                section, key = field.split(".")
+        newobj = False
+        if self._config_object is None:
+            self._config_object = configparser.ConfigParser()
+            newobj = True
 
+        for item in config_option:
+            if item.count('=') != 1 or item.count('.') != 1:
+                logger.error("Invalid config_option option: {}".format(item))
+                continue
+
+            field, value = item.split("=")
+            section, key = field.split(".")
+
+            if not newobj:
                 self._config_object.set(section, key, value)
                 logger.debug("Config option set: {}={}".format(field, value))
+            else:
+                self._config_object.add_section(section)
+                self._config_object.set(section, key, value)
+                logger.debug("Config option added: [{}] {}={}".format(section, field, value))
 
     def reload(self, case, **kwargs):
         """
