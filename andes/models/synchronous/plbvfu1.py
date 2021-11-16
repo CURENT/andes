@@ -25,22 +25,26 @@ class PLBVFU1Data(ModelData):
                             )
         self.ra = NumParam(info='armature resistance',
                            default=0.0,
+                           tex_name='r_a',
                            )
         self.xs = NumParam(info='generator transient reactance',
                            default=0.2,
+                           tex_name='x_s',
                            )
         self.fn = NumParam(default=60.0,
                            info="rated frequency",
-                           tex_name='f',
+                           tex_name='f_n',
                            )
         self.Vflag = NumParam(default=1.0,
                               info='playback voltage signal',
                               vrange=(0, 1),
-                              unit='bool')
+                              unit='bool',
+                              )
         self.fflag = NumParam(default=1.0,
                               info='playback frequency signal',
                               vrange=(0, 1),
-                              unit='bool')
+                              unit='bool',
+                              )
         self.filename = DataParam(default='',
                                   info='playback file name',
                                   mandatory=True,
@@ -48,19 +52,26 @@ class PLBVFU1Data(ModelData):
         self.Vscale = NumParam(default=1.0,
                                info='playback voltage scale',
                                non_negative=True,
-                               unit='pu')
+                               unit='pu',
+                               tex_name='V_{scale}',
+                               )
         self.fscale = NumParam(default=1.0,
                                info='playback frequency scale',
                                non_negative=True,
-                               unit='pu')
+                               unit='pu',
+                               tex_name='f_{scale}',
+                               )
         self.Tv = NumParam(default=0.2,
                            info='filtering time constant for voltage',
                            non_negative=True,
-                           unit='s')
+                           unit='s',
+                           tex_name='T_v',
+                           )
         self.Tf = NumParam(default=0.2,
                            info='filtering time constant for frequency',
                            non_negative=True,
                            unit='s',
+                           tex_name='T_f',
                            )
 
 
@@ -95,26 +106,28 @@ class PLBVFU1Model(Model):
         self.Ec = ConstService('v * exp(1j * a) +'
                                'conj((p + 1j * q) / (v * exp(1j * a))) * (ra + 1j * xs)',
                                vtype=np.complex,
+                               tex_name='E_c',
                                )
 
-        self.E0 = ConstService('abs(Ec)')
-        self.delta0 = ConstService('arg(Ec)')
+        self.E0 = ConstService('abs(Ec)', tex_name='E_0')
+        self.delta0 = ConstService('arg(Ec)', tex_name=r'\delta_0')
 
         # Note: `Vts` and `fts` are assigned by TimeSeries before initializing this model.
         self.Vts = ConstService()
         self.fts = ConstService()
 
-        self.ifscale = ConstService('1/fscale')
-        self.iVscale = ConstService('1/Vscale')
+        self.ifscale = ConstService('1/fscale', tex_name='1/f_{scale}')
+        self.iVscale = ConstService('1/Vscale', tex_name='1/V_{scale}')
 
-        self.foffs = ConstService('fts * ifscale - 1')
-        self.Voffs = ConstService('Vts * iVscale - E0')
+        self.foffs = ConstService('fts * ifscale - 1', tex_name='f_{offs}')
+        self.Voffs = ConstService('Vts * iVscale - E0', tex_name='V_{offs}')
 
         self.Vflt = State(info='filtered voltage',
                           t_const=self.Tv,
                           v_str='(iVscale * Vts - Voffs)',
                           e_str='(iVscale * Vts - Voffs) - Vflt',
                           unit='pu',
+                          tex_name='V_{flt}',
                           )
 
         self.fflt = State(info='filtered frequency',
@@ -122,13 +135,15 @@ class PLBVFU1Model(Model):
                           v_str='fts * ifscale - foffs',
                           e_str='(ifscale * fts - foffs) - fflt',
                           unit='pu',
+                          tex_name='f_{flt}',
                           )
 
         self.delta = State(info='rotor angle',
                            unit='rad',
                            v_str='delta0',
                            tex_name=r'\delta',
-                           e_str='u * (2 * pi * fn) * (fflt - 1)')
+                           e_str='u * (2 * pi * fn) * (fflt - 1)',
+                           )
 
         # --- Power injections are obtained by sympy ---
 
@@ -164,6 +179,14 @@ class PLBVFU1Model(Model):
 class PLBVFU1(PLBVFU1Model, PLBVFU1Data):
     """
     PLBVFU1 model: playback of voltage and frequency as a generator.
+
+    The current implementation relies on a ``TimeSeries`` device
+    to provide the voltage and frequency signals.
+    See ``ieee14_plbvfu1.xlsx`` and ``plbvf.xlsx`` in
+    ``andes/cases/ieee14`` for an example.
+
+    Voltage and frequeny data needs to be specified in per unit.
+    Nominal values are not yet supported.
     """
 
     def __init__(self, system, config):
