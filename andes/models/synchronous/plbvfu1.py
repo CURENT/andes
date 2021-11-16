@@ -39,6 +39,7 @@ class PLBVFU1Data(ModelData):
                            )
         self.xs = NumParam(info='generator transient reactance',
                            default=0.2,
+                           non_zero=True,
                            tex_name='x_s',
                            z=True,
                            )
