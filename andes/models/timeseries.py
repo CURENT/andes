@@ -135,8 +135,7 @@ class TimeSeriesModel(Model):
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
-            logger.info('<%s idx=%s>: Read timeseries data from "%s"',
-                        self.class_name, idx, path)
+            logger.info('Read timeseries data from "%s"', path)
 
     def _read_excel(self, path, sheet, idx):
         """
