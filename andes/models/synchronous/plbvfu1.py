@@ -130,19 +130,19 @@ class PLBVFU1Model(Model):
                           tex_name='V_{flt}',
                           )
 
-        self.fflt = State(info='filtered frequency',
-                          t_const=self.Tf,
-                          v_str='fts * ifscale - foffs',
-                          e_str='(ifscale * fts - foffs) - fflt',
-                          unit='pu',
-                          tex_name='f_{flt}',
-                          )
+        self.omega = State(info='filtered frequency',
+                           t_const=self.Tf,
+                           v_str='fts * ifscale - foffs',
+                           e_str='(ifscale * fts - foffs) - omega',
+                           unit='pu',
+                           tex_name='f_{flt}',
+                           )
 
         self.delta = State(info='rotor angle',
                            unit='rad',
                            v_str='delta0',
                            tex_name=r'\delta',
-                           e_str='u * (2 * pi * fn) * (fflt - 1)',
+                           e_str='u * (2 * pi * fn) * (omega - 1)',
                            )
 
         # --- Power injections are obtained by sympy ---
@@ -179,6 +179,9 @@ class PLBVFU1Model(Model):
 class PLBVFU1(PLBVFU1Model, PLBVFU1Data):
     """
     PLBVFU1 model: playback of voltage and frequency as a generator.
+
+    The internal voltage and frequency are named ``Vflt`` and ``omega``.
+    Rotor angle is named ``delta``.
 
     The current implementation relies on a ``TimeSeries`` device
     to provide the voltage and frequency signals.
