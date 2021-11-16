@@ -147,7 +147,7 @@ class PLBVFU1Model(Model):
                            v_str='fts * ifscale - foffs',
                            e_str='(ifscale * fts - foffs) - omega',
                            unit='pu',
-                           tex_name='f_{flt}',
+                           tex_name=r'\omega',
                            )
 
         self.delta = State(info='rotor angle',
