@@ -4,7 +4,7 @@ V-f playback generator model.
 
 from andes.shared import np
 
-from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam,
+from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam, ExtParam,
                         State, ExtAlgeb, ExtService, ConstService)
 
 
@@ -99,6 +99,13 @@ class PLBVFU1Model(Model):
         self.group_param_exception = ['Sn', 'M', 'D']
         self.group_var_exception = ['vd', 'vq', 'Id', 'Iq', 'tm', 'te', 'vf', 'XadIfd']
         self.flags.tds = True
+
+        self.subidx = ExtParam(model='StaticGen',
+                               src='subidx',
+                               indexer=self.gen,
+                               export=False,
+                               info='Generator idx in plant; only used by PSS/E data'
+                               )
 
         self.zs = ConstService('ra + 1j * xs', vtype=np.complex,
                                info='impedance',
