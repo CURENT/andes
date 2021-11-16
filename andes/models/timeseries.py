@@ -50,7 +50,7 @@ class TimeSeriesData(ModelData):
                              vrange=(1, 2),
                              )
 
-        self.path = DataParam(mandatory=True, info='Path to timeseries xlsx file')
+        self.path = DataParam(mandatory=True, info='Path to timeseries xlsx file.')
         self.sheet = DataParam(mandatory=True, info='Sheet name to use')
         self.fields = NumParam(mandatory=True,
                                info='comma-separated field names in timeseries data',
@@ -105,6 +105,10 @@ class TimeSeriesModel(Model):
         Open file and read data into internal storage.
         """
 
+        # TODO: timeseries file must exist for setup to pass. Consider moving
+        # the file reading to a later stage so that adding sheets to xlsx file can work
+        # without the file existing.
+
         Model.list2array(self)
 
         # read and store data
@@ -112,6 +116,9 @@ class TimeSeriesModel(Model):
             idx = self.idx.v[ii]
             path = self.path.v[ii]
             sheet = self.sheet.v[ii]
+
+            if not os.path.isabs(path):
+                path = os.path.join(self.system.files.case_path, path)
 
             if not os.path.exists(path):
                 raise FileNotFoundError('<%s idx=%s>: File not found: "%s"',
@@ -128,6 +135,7 @@ class TimeSeriesModel(Model):
                     raise ValueError('Field {} not found in timeseries data'.format(field))
 
             self._data[idx] = df
+            logger.info('Read timeseries data from "%s"', path)
 
     def _read_excel(self, path, sheet, idx):
         """
@@ -190,9 +198,10 @@ class TimeSeriesModel(Model):
             tkey = self.tkey.v[ii]
 
             # check if current time is a valid time stamp
-            if t not in df[tkey]:
+            if t not in df[tkey].values:
                 continue
 
+            print("here 2")
             fields = self.fields.v[ii]
             dests = self.dests.v[ii]
 
@@ -234,6 +243,8 @@ class TimeSeries(TimeSeriesData, TimeSeriesModel):
     Model for metadata of timeseries.
 
     TimeSeries will not overwrite values in power flow.
+
+    Relative path is assumed in the same folder as the case file.
     """
 
     def __init__(self, system, config):

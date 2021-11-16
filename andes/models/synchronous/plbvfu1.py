@@ -4,7 +4,7 @@ V-f playback generator model.
 
 from andes.shared import np
 
-from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam,
+from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam, ExtParam,
                         State, ExtAlgeb, ExtService, ConstService)
 
 
@@ -23,24 +23,39 @@ class PLBVFU1Data(ModelData):
                             model='StaticGen',
                             mandatory=True,
                             )
+        self.Sn = NumParam(default=100.0,
+                           info="Power rating",
+                           tex_name='S_n',
+                           unit='MVA',
+                           )
+        self.Vn = NumParam(default=110.0,
+                           info="AC voltage rating",
+                           tex_name='V_n',
+                           )
         self.ra = NumParam(info='armature resistance',
                            default=0.0,
+                           tex_name='r_a',
+                           z=True,
                            )
         self.xs = NumParam(info='generator transient reactance',
                            default=0.2,
+                           tex_name='x_s',
+                           z=True,
                            )
         self.fn = NumParam(default=60.0,
                            info="rated frequency",
-                           tex_name='f',
+                           tex_name='f_n',
                            )
         self.Vflag = NumParam(default=1.0,
                               info='playback voltage signal',
                               vrange=(0, 1),
-                              unit='bool')
+                              unit='bool',
+                              )
         self.fflag = NumParam(default=1.0,
                               info='playback frequency signal',
                               vrange=(0, 1),
-                              unit='bool')
+                              unit='bool',
+                              )
         self.filename = DataParam(default='',
                                   info='playback file name',
                                   mandatory=True,
@@ -48,19 +63,26 @@ class PLBVFU1Data(ModelData):
         self.Vscale = NumParam(default=1.0,
                                info='playback voltage scale',
                                non_negative=True,
-                               unit='pu')
+                               unit='pu',
+                               tex_name='V_{scale}',
+                               )
         self.fscale = NumParam(default=1.0,
                                info='playback frequency scale',
                                non_negative=True,
-                               unit='pu')
+                               unit='pu',
+                               tex_name='f_{scale}',
+                               )
         self.Tv = NumParam(default=0.2,
                            info='filtering time constant for voltage',
                            non_negative=True,
-                           unit='s')
+                           unit='s',
+                           tex_name='T_v',
+                           )
         self.Tf = NumParam(default=0.2,
                            info='filtering time constant for frequency',
                            non_negative=True,
                            unit='s',
+                           tex_name='T_f',
                            )
 
 
@@ -72,56 +94,92 @@ class PLBVFU1Model(Model):
     def __init__(self, system, config):
         Model.__init__(self, system, config)
 
+        self.group = 'SynGen'
+
+        self.group_param_exception = ['Sn', 'M', 'D']
+        self.group_var_exception = ['vd', 'vq', 'Id', 'Iq', 'tm', 'te', 'vf', 'XadIfd']
+        self.flags.tds = True
+
+        self.subidx = ExtParam(model='StaticGen',
+                               src='subidx',
+                               indexer=self.gen,
+                               export=False,
+                               info='Generator idx in plant; only used by PSS/E data'
+                               )
+
+        self.zs = ConstService('ra + 1j * xs', vtype=np.complex,
+                               info='impedance',
+                               )
+        self.zs2n = ConstService('ra * ra - xs * xs',
+                                 info='ra^2 - xs^2',
+                                 )
+
         # get power flow solutions
 
         self.p = ExtService(model='StaticGen', src='p',
                             indexer=self.gen,
                             )
-        self.q = ExtService(model='StaticGen', src='p',
+        self.q = ExtService(model='StaticGen', src='q',
                             indexer=self.gen,
                             )
         self.Ec = ConstService('v * exp(1j * a) +'
                                'conj((p + 1j * q) / (v * exp(1j * a))) * (ra + 1j * xs)',
                                vtype=np.complex,
+                               tex_name='E_c',
                                )
 
-        self.E0 = ConstService('re(Ec)')
-        self.delta0 = ConstService('im(Ec)')
+        self.E0 = ConstService('abs(Ec)', tex_name='E_0')
+        self.delta0 = ConstService('arg(Ec)', tex_name=r'\delta_0')
 
-        # TODO: set values for t=0 before calculating service vars
-        self.Vts = ConstService("1")
-        self.fts = ConstService('fn')
+        # Note: `Vts` and `fts` are assigned by TimeSeries before initializing this model.
+        self.Vts = ConstService()
+        self.fts = ConstService()
 
-        self.ifscale = ConstService('1/fscale')
-        self.iVscale = ConstService('1/Vscale')
+        self.ifscale = ConstService('1/fscale', tex_name='1/f_{scale}')
+        self.iVscale = ConstService('1/Vscale', tex_name='1/V_{scale}')
 
-        self.foffs = ConstService('fts * ifscale - 1')
-        self.voffs = ConstService('Vts * iVscale - E0')
+        self.foffs = ConstService('fts * ifscale - 1', tex_name='f_{offs}')
+        self.Voffs = ConstService('Vts * iVscale - E0', tex_name='V_{offs}')
 
         self.Vflt = State(info='filtered voltage',
                           t_const=self.Tv,
-                          e_str='iVscale * Vts - Vflt',
+                          v_str='(iVscale * Vts - Voffs)',
+                          e_str='(iVscale * Vts - Voffs) - Vflt',
                           unit='pu',
+                          tex_name='V_{flt}',
                           )
 
-        self.fflt = State(info='filtered frequency',
-                          t_const=self.Tf,
-                          e_str='(ifscale * fts - foffs) - fflt',
-                          unit='pu',
-                          )
+        self.omega = State(info='filtered frequency',
+                           t_const=self.Tf,
+                           v_str='fts * ifscale - foffs',
+                           e_str='(ifscale * fts - foffs) - omega',
+                           unit='pu',
+                           tex_name=r'\omega',
+                           )
 
         self.delta = State(info='rotor angle',
                            unit='rad',
                            v_str='delta0',
                            tex_name=r'\delta',
-                           e_str='u * (2 * pi * fn) * (fflt - 1)')
+                           e_str='u * (2 * pi * fn) * (omega - 1)',
+                           )
+
+        # --- Power injections are obtained by sympy ---
+
+        # >>> from sympy import symbols, sin, cos, conjugate
+        # >>> Vflt, delta, v, a, ra, xs = symbols('Vflt delta v a ra xs', real=True)
+
+        # >>> S = -v * (cos(a) + 1j*sin(a)) * \
+        #         conjugate((Vflt * (cos(delta)+1j*sin(delta)) - v*(cos(a)+1j*sin(a))) / (ra+1j*xs))
+        # >>> S.simplify().as_real_imag()
 
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
-                          e_str='-u * 0',  # TODO
+                          e_str='Vflt*v*xs*sin(a - delta)/(ra*ra + xs*xs) + '
+                                'ra*v*(-Vflt*cos(a - delta) + v)/(ra*ra + xs*xs)',
                           ename='P',
                           tex_ename='P',
                           )
@@ -130,8 +188,9 @@ class PLBVFU1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-u * 0',   # TODO
                           ename='Q',
+                          e_str='-Vflt*ra*v*sin(a - delta)/(ra*ra + xs*xs) + '
+                                'v*xs*(-Vflt*cos(a - delta) + v)/(ra*ra + xs*xs)',
                           tex_ename='Q',
                           )
 
@@ -139,8 +198,26 @@ class PLBVFU1Model(Model):
 class PLBVFU1(PLBVFU1Model, PLBVFU1Data):
     """
     PLBVFU1 model: playback of voltage and frequency as a generator.
+
+    The internal voltage and frequency are named ``Vflt`` and ``omega``.
+    Rotor angle is named ``delta``.
+
+    The current implementation relies on a ``TimeSeries`` device
+    to provide the voltage and frequency signals.
+    See ``ieee14_plbvfu1.xlsx`` and ``plbvf.xlsx`` in
+    ``andes/cases/ieee14`` for an example.
+
+    Voltage and frequeny data needs to be specified in per unit.
+    Nominal values are not yet supported.
     """
 
     def __init__(self, system, config):
         PLBVFU1Data.__init__(self)
         PLBVFU1Model.__init__(self, system, config)
+
+    def v_numeric(self, **kwargs):
+        """
+        Numeric initialization to disable corresponding ``StaticGen``.
+        """
+
+        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)

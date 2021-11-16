@@ -739,7 +739,7 @@ class System:
                     name='Process {0:d}'.format(idx),
                     target=_precompile_model,
                     args=(mdl,),
-                    )
+                )
                 jobs.append(job)
                 job.start()
 
@@ -1697,12 +1697,16 @@ class System:
                 for model in group.models.values():
                     # the below includes all of BaseParam (NumParam, DataParam and ExtParam)
                     if item not in model.__dict__:
+                        if item in model.group_param_exception:
+                            continue
                         raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
                                        f'in model <{model.class_name}>')
             for item in group.common_vars:
                 for model in group.models.values():
                     if item not in model.cache.all_vars:
-                        raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
+                        if item in model.group_var_exception:
+                            continue
+                        raise KeyError(f'Group <{group.class_name}> common var <{item}> does not exist '
                                        f'in model <{model.class_name}>')
 
     def collect_ref(self):
