@@ -11,6 +11,10 @@ class TestPLBVFU1(unittest.TestCase):
     """
 
     def test_PLBVFU1(self):
+        """
+        Test PLVBFU1 model.
+        """
+
         ss = andes.run(andes.get_case("ieee14/ieee14_plbvfu1.xlsx"),
                        default_config=True,
                        no_output=True,
