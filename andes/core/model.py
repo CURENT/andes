@@ -595,6 +595,12 @@ class Model:
         self.n = 0
         self.group = 'Undefined'
 
+        # params and vars that exist in the group but not in this model
+        # normally empty but can be used in special cases to bypass
+        # shared param/var checking
+        self.group_param_exception = list()
+        self.group_var_exception = list()
+
         if not hasattr(self, 'num_params'):
             self.num_params = OrderedDict()
         if not hasattr(self, 'cache'):
