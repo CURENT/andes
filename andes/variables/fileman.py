@@ -6,7 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class FileMan:
-    """Define a File Manager class for System"""
+    """
+    Define a File Manager class for System
+    """
 
     def __init__(self, case=None, **kwargs):
         """
@@ -29,6 +31,7 @@ class FileMan:
 
         self.case = None
         self.input_path = ''
+        self.case_path = ''  # absolute path containinng the case file
         self.fullname = None
         self.name = None
         self.ext = None
@@ -69,7 +72,8 @@ class FileMan:
 
         self.case = case
         if os.path.isfile(case):
-            _, self.fullname = os.path.split(self.case)
+            self.case_path, self.fullname = os.path.split(self.case)
+            self.case_path = os.path.abspath(self.case_path)
         else:
             self.fullname = ''
 
