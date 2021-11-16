@@ -130,6 +130,15 @@ class PLBVFU1Model(Model):
                            tex_name=r'\delta',
                            e_str='u * (2 * pi * fn) * (fflt - 1)')
 
+        # --- Power injections are obtained by sympy ---
+
+        # >>> from sympy import symbols, sin, cos, conjugate
+        # >>> Vflt, delta, v, a, ra, xs = symbols('Vflt delta v a ra xs', real=True)
+
+        # >>> S = -v * (cos(a) + 1j*sin(a)) * \
+        #         conjugate((Vflt * (cos(delta)+1j*sin(delta)) - v*(cos(a)+1j*sin(a))) / (ra+1j*xs))
+        # >>> S.simplify().as_real_imag()
+
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
