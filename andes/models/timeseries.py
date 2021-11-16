@@ -199,9 +199,10 @@ class TimeSeriesModel(Model):
             tkey = self.tkey.v[ii]
 
             # check if current time is a valid time stamp
-            if t not in df[tkey]:
+            if t not in df[tkey].values:
                 continue
 
+            print("here 2")
             fields = self.fields.v[ii]
             dests = self.dests.v[ii]
 
