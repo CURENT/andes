@@ -13,6 +13,7 @@ v1.5.6 (2021-11-xx)
 ```````````````````
 - Allow specifying config options through command-line arguments
   ``--config-option``.
+- Added a voltage and frequency playback model ``PLBVFU1``.
 
 v1.5.5 (2021-11-13)
 ```````````````````
