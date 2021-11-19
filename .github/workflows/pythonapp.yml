@@ -19,7 +19,7 @@ jobs:
         python -m pip install -r requirements.txt
         python -m pip install -r requirements-dev.txt
         python -m pip install .
-        python -m pip install nbmake==0.5 pytest-xdist line_profiler  # add'l packages for notebook tests.
+        python -m pip install nbmake==0.10 pytest-xdist line_profiler  # add'l packages for notebook tests.
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
