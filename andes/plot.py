@@ -531,6 +531,11 @@ class TDSData:
         if latex:
             set_latex()
 
+        if isinstance(color, (str, float, int)):
+            color = [color] * n_lines
+        elif color is None:
+            color = [None] * n_lines
+
         # set default x min based on simulation time
         if not left:
             left = xdata[0] - 1e-6
@@ -560,7 +565,7 @@ class TDSData:
                     ls=linestyles[i],
                     label=yheader[i] if yheader else None,
                     linewidth=line_width,
-                    color=color,
+                    color=color[i],
                     )
 
         if xlabel is not None:
