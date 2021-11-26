@@ -212,7 +212,7 @@ class REGCVSGModelBase(Model):
                                 )
 
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
-                           info='active power reference after adjusted by frequency',
+                           info='active power reference after adjusting by frequency',
                            e_str='u * Pref - dw * kw - Pref2',
                            v_str='u * Pref')
 

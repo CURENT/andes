@@ -272,7 +272,7 @@ class TDSData:
              fig=None, ax=None, backend=None,
              set_xlim=True, set_ylim=True, autoscale=False,
              legend_bbox=None, legend_loc=None, legend_ncol=1,
-             figsize=None,
+             figsize=None, color=None,
              **kwargs):
         """
         Entry function for plotting.
@@ -416,7 +416,7 @@ class TDSData:
                          fig=fig, ax=ax, linestyles=linestyles,
                          set_xlim=set_xlim, set_ylim=set_ylim, autoscale=autoscale,
                          legend_bbox=legend_bbox, legend_loc=legend_loc, legend_ncol=legend_ncol,
-                         figsize=figsize, hline=hline, vline=vline,
+                         figsize=figsize, hline=hline, vline=vline, color=color,
                          **kwargs)
 
     def get_call(self, backend=None):
@@ -477,7 +477,7 @@ class TDSData:
                   hline1=None, hline2=None, vline1=None, hline=None, vline=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None, legend_ncol=1,
-                  mask=True,
+                  mask=True, color=None,
                   **kwargs):
         """
         Plot lines for the supplied data and options.
@@ -531,6 +531,11 @@ class TDSData:
         if latex:
             set_latex()
 
+        if isinstance(color, (str, float, int)):
+            color = [color] * n_lines
+        elif color is None:
+            color = [None] * n_lines
+
         # set default x min based on simulation time
         if not left:
             left = xdata[0] - 1e-6
@@ -560,7 +565,7 @@ class TDSData:
                     ls=linestyles[i],
                     label=yheader[i] if yheader else None,
                     linewidth=line_width,
-                    color='0.2' if greyscale else None,
+                    color=color[i],
                     )
 
         if xlabel is not None:

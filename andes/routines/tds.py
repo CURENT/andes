@@ -46,6 +46,7 @@ class TDS(BaseRoutine):
                                      ('store_f', 0.0),
                                      ('store_h', 0.0),
                                      ('store_i', 0.0),
+                                     ('no_tqdm', 0.0),
                                      )))
         self.config.add_extra("_help",
                               method='DAE solution method',
@@ -67,6 +68,7 @@ class TDS(BaseRoutine):
                               store_f='store RHS of diff. equations',
                               store_h='store RHS of external diff. equations',
                               store_i='store RHS of external algeb. equations',
+                              no_tqdm='disable tqdm progressbar and outputs',
                               )
         self.config.add_extra("_alt",
                               method=tuple(method_map.keys()),
@@ -88,6 +90,7 @@ class TDS(BaseRoutine):
                               store_f=(0, 1),
                               store_h=(0, 1),
                               store_i=(0, 1),
+                              no_tqdm=(0, 1),
                               )
 
         # overwrite `tf` from command line
@@ -265,7 +268,7 @@ class TDS(BaseRoutine):
             logger.warning("The honest Newton method is being used. It will slow down the simulation.")
             logger.warning("For speed up, set `honest=0` in TDS.config.")
 
-    def run(self, no_pbar=False, no_summary=False, **kwargs):
+    def run(self, no_summary=False, **kwargs):
         """
         Run time-domain simulation using numerical integration.
 
@@ -273,10 +276,6 @@ class TDS(BaseRoutine):
 
         Parameters
         ----------
-        no_pbar : bool
-            True to disable progress bar
-        no_summary : bool, optional
-            True to disable the display of summary
         """
         system = self.system
         dae = self.system.dae
@@ -306,7 +305,8 @@ class TDS(BaseRoutine):
             self._calc_h_first()
             logger.debug("Initial step size for resumed simulation is h=%.4fs.", self.h)
 
-        self.pbar = tqdm(total=100, ncols=70, unit='%', file=sys.stdout, disable=no_pbar)
+        self.pbar = tqdm(total=100, ncols=70, unit='%',
+                         file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
             perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)

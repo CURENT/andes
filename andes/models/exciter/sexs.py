@@ -67,7 +67,7 @@ class SEXSModel(ExcBase):
                         unit='p.u.',
                         )
         self.vi.e_str = '(vref - v) - vi'
-        self.vi.v_str = 'vref0 - v'
+        self.vi.v_str = 'v + vf0 / K- v'
 
         self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB, zero_out=True)
 

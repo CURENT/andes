@@ -113,6 +113,9 @@ Program of the National Science Foundation and the Department of Energy
 under NSF Award Number EEC-1041877 and the CURENT Industry Partnership
 Program.
 
+This work was supported in part by the Advanced Grid Research and Development Program
+in the Office of Electricity at the U.S. Department of Energy.
+
 See [GitHub contributors][GitHub contributors] for the contributor list.
 
 # License
