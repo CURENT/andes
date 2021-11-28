@@ -639,7 +639,7 @@ class TDSData:
 
         plt.draw()
 
-        if savefig is not None:
+        if savefig:
             if save_format is None:
                 save_format = 'png'
 
