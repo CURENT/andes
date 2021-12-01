@@ -511,6 +511,7 @@ class NumParam(BaseParam):
             self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
+
         self.vin = np.array(self.v, dtype=self.vtype)
 
         self.pu_coeff = np.ones_like(self.v, dtype=float)
@@ -735,6 +736,8 @@ class ExtParam(NumParam):
         """
         Convert to array when d_type is not str
         """
+
         if self.vtype == str:
             return
+
         NumParam.to_array(self)
