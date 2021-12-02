@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.7 (2021-12-xx)
+-------------------
+- Bug fixes for ``GAST`` parameter ``AT``.
+
 v1.5.6 (2021-11-25)
 ```````````````````
 - Allow specifying config options through command-line arguments
