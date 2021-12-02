@@ -511,7 +511,6 @@ class NumParam(BaseParam):
             self.v[self.v == -np.inf] = -1e8
         # ----------------------------------------
 
-
         self.vin = np.array(self.v, dtype=self.vtype)
 
         self.pu_coeff = np.ones_like(self.v, dtype=float)
