@@ -38,7 +38,9 @@ class GASTData(TGBaseData):
 
         self.AT = NumParam(info='Ambient temperature load limit',
                            default=1,
-                           tex_name='A_T')
+                           tex_name='A_T',
+                           power=True,
+                           )
 
         self.T1 = NumParam(info='Valve time constant',
                            default=0.1,
