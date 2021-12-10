@@ -738,7 +738,7 @@ class Model:
 
     def _check_attribute(self, key, value):
         """
-        Check the attribute pair for valid names.
+        Check the attribute pair for valid names while instantiating the class.
 
         This function assigns `owner` to the model itself, assigns the name and tex_name.
         """
@@ -753,6 +753,17 @@ class Model:
                 logger.warning(f"{self.class_name}: redefinition of member <{key}>. Likely a modeling error.")
 
     def __setattr__(self, key, value):
+        """
+        Overload the setattr function to register attributes.
+
+        Parameters
+        ----------
+        key : str
+            name of the attribute
+        value : [BaseVar, BaseService, Discrete, Block]
+            value of the attribute
+        """
+
         self._check_attribute(key, value)
 
         # store the variable declaration order
