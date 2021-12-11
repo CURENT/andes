@@ -1817,7 +1817,7 @@ class Model:
                         if logger.level <= 10:
                             for key, val in arg_print.items():
                                 if isinstance(val, (int, float, np.floating, np.integer)) or \
-                                    isinstance(val, np.ndarray) and val.ndim == 0:
+                                        isinstance(val, np.ndarray) and val.ndim == 0:
 
                                     arg_print[key] = val * np.ones_like(instance.v)
                                     arg_print[key] = val * np.ones_like(instance.v)
