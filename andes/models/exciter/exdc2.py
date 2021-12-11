@@ -102,9 +102,10 @@ class EXDC2Model(ExcBase):
                               )
 
         # calculate `Se0` ahead of time in order to calculate `vr0`
+        # The term `1-ug` is to prevent division by zero when generator is off
         self.Se0 = ConstService(info='Initial saturation output',
                                 tex_name='S_{e0}',
-                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / vf0',
+                                v_str='Indicator(vf0>SAT_A) * SAT_B * (SAT_A - vf0) ** 2 / (vf0 + 1 - ug)',
                                 )
         self.vr0 = ConstService(info='Initial vr',
                                 tex_name='V_{r0}',
@@ -133,7 +134,8 @@ class EXDC2Model(ExcBase):
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',
-                        e_str='SL_z0 * (vp - SAT_A) ** 2 * SAT_B / vp - Se',
+                        e_str='SL_z0 * (vp - SAT_A) ** 2 * SAT_B - Se * vp',
+                        diag_eps=True,
                         )
 
         self.vp = State(info='Voltage after saturation feedback, before speed term',
@@ -172,7 +174,7 @@ class EXDC2Model(ExcBase):
                          K=self.KF1,
                          info='Signal conditioner'
                          )
-        self.vout.e_str = 'omega * vp - vout'
+        self.vout.e_str = 'ue * omega * vp - vout'
 
 
 class EXDC2(EXDC2Data, EXDC2Model):
