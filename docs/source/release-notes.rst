@@ -9,8 +9,8 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
-v1.5.7 (2021-12-xx)
--------------------
+v1.5.7 (2021-12-11)
+```````````````````
 This minor release highlights the improved debugging of initialization.
 
 Highly verbose initialization output can be enabled when the verbose
