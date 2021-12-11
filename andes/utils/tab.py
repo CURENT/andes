@@ -66,7 +66,7 @@ class Tab(Texttable):
             pre = 'Empty Title' + '\n' + self._descr + '\n'
         else:
             pre = ''
-        return pre + str(Texttable.draw(self)) + '\n'
+        return pre + str(Texttable.draw(self)) + '\n\n'
 
 
 def make_doc_table(title, max_width, export, plain_dict, rest_dict):
