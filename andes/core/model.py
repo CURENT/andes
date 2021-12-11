@@ -11,6 +11,7 @@ Base class for building ANDES models.
 #  File name: model.py
 
 import logging
+import pprint
 from collections import OrderedDict
 from typing import Iterable, Sized, Union, Callable
 
@@ -31,6 +32,7 @@ from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
 from andes.shared import jac_full_names, jac_names, jac_types, np, pd, numba
 from andes.utils.func import list_flatten
+from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
 
@@ -1752,7 +1754,7 @@ class Model:
 
         return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
 
-    def init(self, routine):
+    def init(self, routine, debug=False):
         """
         Numerical initialization of a model.
 
@@ -1773,42 +1775,99 @@ class Model:
         else:
             do_init = getattr(self.flags, flag_name)
 
-        logger.debug(f'{self.class_name} has {flag_name} = {do_init}')
+        logger.debug('%s has <%s> = %s', self.class_name, flag_name, do_init)
 
         if do_init:
             kwargs = self.get_inputs(refresh=True)
 
+            logger.debug('%s: initialization sequence:', self.class_name)
+            logger.debug(' -> '.join([str(i) for i in self.calls.init_seq]))
+            logger.debug("%s: assignment initialization phase begins", self.class_name)
+
             for idx, name in enumerate(self.calls.init_seq):
                 # single variable - do assignment
                 if isinstance(name, str):
+                    logger.debug("%s: entering <%s> assignment init", self.class_name, name)
                     instance = self.__dict__[name]
-                    _eval_discrete(instance, self.config.allow_adjust,
-                                   self.config.adjust_lower, self.config.adjust_upper)
+                    if instance.discrete is not None:
+                        logger.debug("%s: evaluate discrete <%s>", name, instance.discrete)
+                        _eval_discrete(instance, self.config.allow_adjust,
+                                       self.config.adjust_lower, self.config.adjust_upper)
 
                     if instance.v_str is not None:
+                        arg_print = OrderedDict()
+                        if logger.level <= 10:
+                            for a, b in zip(self.calls.ia_args[name], self.ia_args[name]):
+                                arg_print[a] = b
+
                         if not instance.v_str_add:
                             # assignment is for most variable initialization
+                            logger.debug("%s: new values will be assigned (=)", name)
                             instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+
                         else:
                             # in-place add initial values.
                             # Voltage compensators can set part of the `v` of exciters.
                             # Exciters will then set the bus voltage part.
+                            logger.debug("%s: new values will be in-place added (+=)", name)
                             instance.v[:] += self.calls.ia[name](*self.ia_args[name])
+
+                        arg_print[name] = instance.v
+
+                        if logger.level <= 10:
+                            for key, val in arg_print.items():
+                                if isinstance(val, (int, float, np.floating, np.integer)):
+                                    arg_print[key] = val * np.ones_like(instance.v)
+                                elif isinstance(val, np.ndarray) and val.ndim == 0:
+                                    arg_print[key] = val * np.ones_like(instance.v)
+
+                            tab = Tab(title="v_str of %s is '%s'" % (name, instance.v_str),
+                                      header=["idx", *self.calls.ia_args[name], name],
+                                      data=list(zip(self.idx.v, *arg_print.values())),
+                                      )
+                            logger.debug(tab.draw())
 
                     # single variable iterative solution
                     if name in self.calls.ii:
+                        logger.debug("\n%s: entering <%s> iterative init", self.class_name,
+                                     pprint.pformat(name))
+
                         self.solve_iter(name, kwargs)
+
+                        logger.debug("%s new values are %s", name, self.__dict__[name].v)
 
                 # multiple variables, iterative
                 else:
+                    logger.debug("\n%s: entering <%s> iterative init",
+                                 self.class_name, name)
+
                     for vv in name:
                         instance = self.__dict__[vv]
-                        _eval_discrete(instance, self.config.allow_adjust,
-                                       self.config.adjust_lower, self.config.adjust_upper)
+
+                        if instance.discrete is not None:
+                            logger.debug("%s: evaluate discrete <%s>",
+                                         name, instance.discrete)
+
+                            _eval_discrete(instance, self.config.allow_adjust,
+                                           self.config.adjust_lower, self.config.adjust_upper)
                         if instance.v_str is not None:
+                            logger.debug("%s: v_str = %s", vv, instance.v_str)
+
+                            arg_print = OrderedDict()
+                            if logger.level <= 10:
+                                for a, b in zip(self.calls.ia_args[vv], self.ia_args[vv]):
+                                    arg_print[a] = b
+                                logger.debug(pprint.pformat(arg_print))
+
                             instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
 
+                    logger.debug("\n%s: entering <%s> iterative init", self.class_name,
+                                 pprint.pformat(name))
                     self.solve_iter(name, kwargs)
+
+                    for vv in name:
+                        instance = self.__dict__[vv]
+                        logger.debug("%s new values are %s", vv, instance.v)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1913,15 +1972,14 @@ def _eval_discrete(instance, allow_adjust=True,
 
     """
 
-    if instance.discrete is not None:
-        if not isinstance(instance.discrete, (list, tuple, set)):
-            dlist = (instance.discrete,)
-        else:
-            dlist = instance.discrete
-        for d in dlist:
-            d.check_var(allow_adjust=allow_adjust,
-                        adjust_lower=adjust_lower,
-                        adjust_upper=adjust_upper)
+    if not isinstance(instance.discrete, (list, tuple, set)):
+        dlist = (instance.discrete,)
+    else:
+        dlist = instance.discrete
+    for d in dlist:
+        d.check_var(allow_adjust=allow_adjust,
+                    adjust_lower=adjust_lower,
+                    adjust_upper=adjust_upper)
 
 
 def to_jit(func: Union[Callable, None],
