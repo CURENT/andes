@@ -690,8 +690,7 @@ class System:
         use_parallel = bool(self.config.numba_parallel)
         nopython = bool(self.config.numba_nopython)
 
-        logger.info("Numba compilation initiated with caching. Parallel=%s.",
-                    use_parallel)
+        logger.info("Numba compilation initiated with caching.")
 
         for mdl in models.values():
             mdl.numba_jitify(parallel=use_parallel,

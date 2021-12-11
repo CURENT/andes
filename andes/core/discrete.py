@@ -6,7 +6,6 @@
 #  (at your option) any later version.
 #
 #  File name: discrete.py
-#  Last modified: 11/15/20, 3:29 PM
 
 import logging
 from typing import List, Tuple, Union
@@ -28,8 +27,7 @@ class Discrete:
     """
 
     def __init__(self, name=None, tex_name=None, info=None, no_warn=False,
-                 min_iter=2, err_tol=1e-2,
-                 ):
+                 min_iter=2, err_tol=1e-2, adjust_upper=False, adjust_lower=False,):
         self.name = name
         self.tex_name = tex_name
         self.info = info
@@ -48,8 +46,12 @@ class Discrete:
         # default minimum iteration number and error tolerance to allow checking
         # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
         # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
+
         self.min_iter = min_iter
-        self.err_tol = 1e-2
+        self.err_tol = err_tol
+
+        self.adjust_upper = adjust_upper
+        self.adjust_lower = adjust_lower
 
         self.has_check_var = False  # if subclass implements `check_var()`
         self.has_check_eq = False   # if subclass implements `check_eq()`
@@ -113,8 +115,9 @@ class Discrete:
 
     def warn_init_limit(self):
         """
-        Warn if initialized at limits.
+        Warn if associated variables are initialized at limits.
         """
+
         if self.no_warn:
             return
 
@@ -124,8 +127,9 @@ class Discrete:
                 continue
 
             pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
-            if not len(pos):
+            if len(pos) == 0:
                 continue
+
             err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
             if isinstance(self.__dict__[limit].v, np.ndarray):
                 lim_value = self.__dict__[limit].v[pos]
@@ -185,8 +189,11 @@ class LessThan(Discrete):
     """
 
     def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None,
-                 info=None, cache=False, z0=0, z1=1):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+                 info: str = None, cache: bool = False,
+                 adjust_upper: bool = False, adjust_lower: bool = False,
+                 z0=0, z1=1):
+        super().__init__(name=name, tex_name=tex_name, info=info,
+                         adjust_upper=adjust_upper, adjust_lower=adjust_lower)
         self.u = u
         self.bound = dummify(bound)
         self.equal: bool = equal
@@ -269,13 +276,16 @@ class Limiter(Discrete):
         Flags for violating the upper limit
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
+    def __init__(self, u, lower, upper, enable=True,
+                 name: str = None, tex_name: str = None, info: str = None,
                  min_iter: int = 2, err_tol: float = 0.01,
+                 adjust_upper: bool = False, adjust_lower: bool = False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
-                          min_iter=min_iter, err_tol=err_tol)
+                          min_iter=min_iter, err_tol=err_tol,
+                          adjust_upper=adjust_upper, adjust_lower=adjust_lower,)
         self.u = u
         self.lower = dummify(lower)
         self.upper = dummify(upper)
@@ -361,12 +371,14 @@ class SortedLimiter(Limiter):
     def __init__(self, u, lower, upper, n_select: int = 5,
                  name=None, tex_name=None, enable=True, abs_violation=True,
                  min_iter: int = 2, err_tol: float = 0.01,
+                 adjust_upper: bool = False, adjust_lower: bool = False,
                  zu=0.0, zl=0.0, zi=1.0, ql=0.0, qu=0.0,
                  ):
 
         super().__init__(u, lower, upper,
                          enable=enable, name=name, tex_name=tex_name,
                          min_iter=min_iter, err_tol=err_tol,
+                         adjust_upper=adjust_upper, adjust_lower=adjust_lower,
                          zu=zu, zl=zl, zi=zi,
                          )
 
@@ -512,11 +524,13 @@ class AntiWindup(Limiter):
 
     def __init__(self, u, lower, upper, enable=True, no_warn=False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
-                 name=None, tex_name=None, info=None, state=None):
+                 name=None, tex_name=None, info=None, state=None,
+                 adjust_upper: bool = False, adjust_lower: bool = False,):
         super().__init__(u, lower, upper, enable=enable, no_warn=no_warn,
                          no_lower=no_lower, no_upper=no_upper,
                          sign_lower=sign_lower, sign_upper=sign_upper,
-                         name=name, tex_name=tex_name, info=info)
+                         name=name, tex_name=tex_name, info=info,
+                         adjust_upper=adjust_upper, adjust_lower=adjust_lower)
         self.state = state if state else u
 
         self.has_check_var = False
@@ -591,8 +605,10 @@ class RateLimiter(Discrete):
 
     def __init__(self, u, lower, upper, enable=True,
                  no_lower=False, no_upper=False, lower_cond=None, upper_cond=None,
-                 name=None, tex_name=None, info=None):
-        Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
+                 name=None, tex_name=None, info=None,
+                 adjust_lower: bool = False, adjust_upper: bool = False):
+        Discrete.__init__(self, name=name, tex_name=tex_name, info=info,
+                          adjust_lower=adjust_lower, adjust_upper=adjust_upper)
         self.u = u
         self.rate_lower = dummify(lower)
         self.rate_upper = dummify(upper)
@@ -658,7 +674,9 @@ class AntiWindupRate(AntiWindup, RateLimiter):
     def __init__(self, u, lower, upper, rate_lower, rate_upper,
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
-                 enable=True, name=None, tex_name=None, info=None):
+                 enable=True, name=None, tex_name=None, info=None,
+                 adjust_lower: bool = False, adjust_upper: bool = False):
+
         RateLimiter.__init__(self, u, lower=rate_lower, upper=rate_upper, enable=enable,
                              no_lower=rate_no_lower, no_upper=rate_no_upper,
                              lower_cond=rate_lower_cond, upper_cond=rate_upper_cond,
@@ -667,6 +685,7 @@ class AntiWindupRate(AntiWindup, RateLimiter):
         AntiWindup.__init__(self, u, lower=lower, upper=upper, enable=enable,
                             no_lower=no_lower, no_upper=no_upper,
                             name=name, tex_name=tex_name, info=info,
+                            adjust_lower=adjust_lower, adjust_upper=adjust_upper
                             )
 
     def check_eq(self):
@@ -719,8 +738,10 @@ class Selector(Discrete):
     andes.core.block.LVGate
     """
 
-    def __init__(self, *args, fun, tex_name=None, info=None):
-        super().__init__(tex_name=tex_name, info=info)
+    def __init__(self, *args, fun, tex_name=None, info=None,
+                 adjust_lower=False, adjust_upper=False):
+        super().__init__(tex_name=tex_name, info=info,
+                         adjust_lower=adjust_lower, adjust_upper=adjust_upper)
         # TODO: only allow two inputs
         self.input_vars = args
         self.fun = fun
@@ -798,8 +819,10 @@ class Switcher(Discrete):
     """
 
     def __init__(self, u, options: Union[list, Tuple], info: str = None,
-                 name: str = None, tex_name: str = None, cache=True):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+                 name: str = None, tex_name: str = None, cache=True,
+                 adjust_lower=False, adjust_upper=False):
+        super().__init__(name=name, tex_name=tex_name, info=info,
+                         adjust_lower=adjust_lower, adjust_upper=adjust_upper)
         self.u = u
         self.options: Union[List, Tuple] = options
         self.cache: bool = cache
@@ -889,9 +912,11 @@ class DeadBand(Limiter):
     """
 
     def __init__(self, u, center, lower, upper, enable=True, equal=False, zu=0.0, zl=0.0, zi=0.0,
-                 name=None, tex_name=None, info=None):
-        Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
-                         name=name, tex_name=tex_name, info=info)
+                 name=None, tex_name=None, info=None, adjust_lower=False, adjust_upper=False):
+        Limiter.__init__(self, u, lower, upper,
+                         enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
+                         name=name, tex_name=tex_name,
+                         info=info, adjust_lower=adjust_lower, adjust_upper=adjust_upper)
         self.center = dummify(center)  # CURRENTLY NOT IN USE
 
     def check_var(self, *args, **kwargs):
@@ -1016,7 +1041,9 @@ class Delay(Discrete):
 
     """
 
-    def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
+    def __init__(self, u, mode='step', delay=0,
+                 name=None, tex_name=None, info=None):
+
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
 
         if mode not in ('step', 'time'):

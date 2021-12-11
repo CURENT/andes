@@ -311,8 +311,6 @@ def load(case, codegen=False, setup=True,
 
     if codegen:
         system.prepare()
-    else:
-        system.undill()
 
     if not andes.io.parse(system):
         return None

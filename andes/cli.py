@@ -84,6 +84,8 @@ def create_parser():
                      help='Set configuration option specificied by '
                           'NAME.FIELD=VALUE with no space. For example, "TDS.tf=2"',
                      type=str, default='', nargs='*')
+    run.add_argument('--init', help='Initialize variables only for time-domain simulation without running',
+                     action='store_true')
 
     plot = sub_parsers.add_parser('plot')
     plot.add_argument('filename', nargs=1, default=[], help='simulation output file name, which should end '

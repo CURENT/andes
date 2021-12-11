@@ -305,6 +305,10 @@ class TDS(BaseRoutine):
             self._calc_h_first()
             logger.debug("Initial step size for resumed simulation is h=%.4fs.", self.h)
 
+        if system.options.get("init") is True:
+            logger.debug("Initialization only is requested and done")
+            return self.initialized
+
         self.pbar = tqdm(total=100, ncols=70, unit='%',
                          file=sys.stdout, disable=self.config.no_tqdm)
 
