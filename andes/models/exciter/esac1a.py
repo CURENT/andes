@@ -1,7 +1,7 @@
 from andes.core.block import (HVGate, Lag, LagAntiWindup, LeadLag, LVGate,
                               Piecewise, Washout,)
 from andes.core.param import NumParam
-from andes.core.service import PostInitService
+from andes.core.service import PostInitService, ConstService
 from andes.core.var import Algeb
 from andes.models.exciter.excbase import (ExcACSat, ExcBase, ExcBaseData,
                                           ExcVsum,)
@@ -152,11 +152,14 @@ class ESAC1AModel(ExcBase, ExcVsum, ExcACSat):
                           zero_out=True,
                           )  # LL_y == VA
 
+        self.VAMAXu = ConstService('VAMAX * ue + (1-ue) * 999')
+        self.VAMINu = ConstService('VAMIN * ue + (1-ue) * -999')
+
         self.LA = LagAntiWindup(u=self.LL_y,
                                 T=self.TA,
                                 K=self.KA,
-                                upper=self.VAMAX,
-                                lower=self.VAMIN,
+                                upper=self.VAMAXu,
+                                lower=self.VAMINu,
                                 info='V_A, Anti-windup lag',
                                 )  # LA_y == VA
 
