@@ -91,7 +91,7 @@ class GASTModel(TGBase):
         self.v9 = Algeb(tex_name=r'V_{9}',
                         info='V_9 for LVGate input',
                         v_str='ue * (AT + KT * (AT - tm0))',
-                        e_str='ue * (AT + KT * (AT - LG3_y) - v9)',
+                        e_str='ue * (AT + KT * (AT - LG3_y)) - v9',
                         )
 
         self.LVG = LVGate(u1=self.pd,
