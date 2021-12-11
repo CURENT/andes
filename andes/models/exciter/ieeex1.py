@@ -25,4 +25,4 @@ class IEEEX1(EXDC2Data, IEEEX1Model):
         EXDC2Data.__init__(self)
         IEEEX1Model.__init__(self, system, config)
 
-        self.vout.e_str = 'vp - vout'
+        self.vout.e_str = 'ue * vp - vout'

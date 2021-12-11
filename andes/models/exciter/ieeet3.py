@@ -146,7 +146,7 @@ class IEEET3Model(ExcBase, ExcVsum):
                         tex_name='V_i',
                         unit='p.u.',
                         e_str='ue * (-LG_y + vref + UEL + OEL + Vs - vi)',
-                        v_str='-v + vref',
+                        v_str='vref - v',
                         diag_eps=True,
                         )
 
@@ -160,7 +160,7 @@ class IEEET3Model(ExcBase, ExcVsum):
 
         self.zeros = ConstService(v_str='0.0')
 
-        self.LA1 = Lag('VB_y * HL_zi + VBMAX * HL_zu',
+        self.LA1 = Lag('ue * (VB_y * HL_zi + VBMAX * HL_zu)',
                        T=self.TE, K=1, D=self.KE,
                        )
 
@@ -175,7 +175,7 @@ class IEEET3Model(ExcBase, ExcVsum):
         self.SL = LessThan(u=self.zeros, bound=self.SQE,
                            equal=False, enable=True, cache=False)
 
-        self.VB = Piecewise(self.SQE, points=(0, ), funs=('LA3_y', 'sqrt(SQE) + LA3_y'))
+        self.VB = Piecewise(self.SQE, points=(0, ), funs=('ue * LA3_y', 'ue * (sqrt(SQE) + LA3_y)'))
 
         self.HL = HardLimiter(u=self.VB_y, lower=self.zeros, upper=self.VBMAX,
                               info='Hard limiter for VB',

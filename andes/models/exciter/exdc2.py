@@ -142,7 +142,7 @@ class EXDC2Model(ExcBase):
                         tex_name='V_p',
                         unit='p.u.',
                         v_str='vf0',
-                        e_str='LA_y - KE*vp - Se*vp',
+                        e_str='ue * (LA_y - KE*vp - Se*vp)',
                         t_const=self.TE,
                         )
 
