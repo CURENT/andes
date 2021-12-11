@@ -1,4 +1,5 @@
-from andes.core.block import Lag, LagAntiWindup, LessThan, Washout
+from andes.core.block import Lag, LagAntiWindup, LessThan, Washout, Piecewise
+from andes.core.discrete import HardLimiter
 from andes.core.param import NumParam
 from andes.core.service import (ConstService, FlagValue, PostInitService,
                                 VarService,)
@@ -157,31 +158,28 @@ class IEEET3Model(ExcBase, ExcVsum):
                                  info=r'V_{R}, Lag Anti-Windup',
                                  )  # LA3_y is V_R
 
-        self.zero = ConstService(v_str='0.0')
-        self.one = ConstService(v_str='1.0')
+        self.zeros = ConstService(v_str='0.0')
 
-        self.LA1 = LagAntiWindup(u='ue * (LA3_y + V4)',
-                                 T=self.TE,
-                                 K=self.one,
-                                 D=self.KE,
-                                 upper=self.VBMAX,
-                                 lower=self.zero,
-                                 info=r'E_{FD}, vout, Lag Anti-Windup',
-                                 )  # LA1_y is final output
+        self.LA1 = Lag('VB_y * HL_zi + VBMAX * HL_zu',
+                       T=self.TE, K=1, D=self.KE,
+                       )
 
         self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
                           info='V_F, stablizing circuit feedback, washout')
 
-        self.SQE = VarService(tex_name=r'SQE', info=r'Square Error',
-                              v_str='VE ** 2 - (0.78 * XadIfd) ** 2',
-                              )
+        self.SQE = Algeb(tex_name=r'SQE', info=r'Square of error after mul',
+                         v_str='VE ** 2 - (0.78 * XadIfd) ** 2',
+                         e_str='VE ** 2 - (0.78 * XadIfd) ** 2 - SQE',
+                         )
 
-        self.SL = LessThan(u=self.zero, bound=self.SQE,
+        self.SL = LessThan(u=self.zeros, bound=self.SQE,
                            equal=False, enable=True, cache=False)
 
-        self.V4 = VarService(tex_name='V_4',
-                             v_str='SL_z1 * sqrt(SQE)',
-                             )
+        self.VB = Piecewise(self.SQE, points=(0, ), funs=('LA3_y', 'sqrt(SQE) + LA3_y'))
+
+        self.HL = HardLimiter(u=self.VB_y, lower=self.zeros, upper=self.VBMAX,
+                              info='Hard limiter for VB',
+                              )
 
         self.vout.e_str = 'ue * (LA1_y - vout)'
 
