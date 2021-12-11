@@ -289,7 +289,6 @@ class Limiter(Discrete):
                  name: str = None, tex_name: str = None, info: str = None,
                  min_iter: int = 2, err_tol: float = 0.01,
                  allow_adjust: bool = True,
-                 adjust_upper: bool = False, adjust_lower: bool = False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
@@ -303,8 +302,6 @@ class Limiter(Discrete):
         self.no_upper = no_upper
 
         self.allow_adjust = allow_adjust
-        self.adjust_upper = adjust_upper
-        self.adjust_lower = adjust_lower
 
         if sign_lower not in (1, -1):
             raise ValueError("sign_lower must be 1 or -1, got %s" % sign_lower)
@@ -334,15 +331,24 @@ class Limiter(Discrete):
             self.export_flags_tex.append('z_u')
             self.warn_flags.append(('zu', 'upper'))
 
-    def check_var(self, *args, **kwargs):
+    def check_var(self,
+                  allow_adjust=True,  # allow flag from model
+                  adjust_lower=False,
+                  adjust_upper=False,
+                  *args, **kwargs):
         """
-        Evaluate the flags.
+        Check the input variable and set flags.
         """
+
         if not self.enable:
             return
 
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+
+            if self.allow_adjust and allow_adjust and adjust_upper:
+                self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
+
             if self.equal:
                 self.zu[:] = np.greater_equal(self.u.v, upper_v)
             else:
@@ -350,6 +356,10 @@ class Limiter(Discrete):
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+
+            if self.allow_adjust and allow_adjust and adjust_lower:
+                self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
+
             if self.equal:
                 self.zl[:] = np.less_equal(self.u.v, lower_v)
             else:
@@ -357,7 +367,7 @@ class Limiter(Discrete):
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
-    def adjust_lower(self):
+    def do_adjust_lower(self, val, lower, allow_adjust=True, adjust_lower=False):
         """
         Adjust the lower limit.
 
@@ -367,11 +377,13 @@ class Limiter(Discrete):
         and `adjust_lower` is True.
         """
 
-        if self.allow_adjust and self.adjust_lower:
-            mask = (self.u.v < self.lower.v)
-            self.lower.v[mask] = self.u.v[mask]
+        if allow_adjust and adjust_lower:
+            mask = (val < lower)
+            lower[mask] = val[mask]
 
-    def adjust_upper(self):
+        # TODO: store debug info
+
+    def do_adjust_upper(self, val, upper, allow_adjust=True, adjust_upper=False):
         """
         Adjust the upper limit.
 
@@ -381,9 +393,10 @@ class Limiter(Discrete):
         and `adjust_upper` is True.
         """
 
-        if self.allow_adjust and self.adjust_upper:
-            mask = (self.u.v > self.upper.v)
-            self.upper.v[mask] = self.u.v[mask]
+        if allow_adjust and adjust_upper:
+            mask = (val > upper)
+            upper[mask] = val[mask]
+        # TODO: store debug info
 
 
 class SortedLimiter(Limiter):
@@ -413,7 +426,6 @@ class SortedLimiter(Limiter):
                  name=None, tex_name=None, enable=True, abs_violation=True,
                  min_iter: int = 2, err_tol: float = 0.01,
                  allow_adjust: bool = True,
-                 adjust_upper: bool = False, adjust_lower: bool = False,
                  zu=0.0, zl=0.0, zi=1.0, ql=0.0, qu=0.0,
                  ):
 
@@ -421,7 +433,6 @@ class SortedLimiter(Limiter):
                          enable=enable, name=name, tex_name=tex_name,
                          min_iter=min_iter, err_tol=err_tol,
                          allow_adjust=allow_adjust,
-                         adjust_upper=adjust_upper, adjust_lower=adjust_lower,
                          zu=zu, zl=zl, zi=zi,
                          )
 
@@ -568,14 +579,12 @@ class AntiWindup(Limiter):
     def __init__(self, u, lower, upper, enable=True, no_warn=False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  name=None, tex_name=None, info=None, state=None,
-                 allow_adjust: bool = True,
-                 adjust_upper: bool = False, adjust_lower: bool = False,):
+                 allow_adjust: bool = True,):
         super().__init__(u, lower, upper, enable=enable, no_warn=no_warn,
                          no_lower=no_lower, no_upper=no_upper,
                          sign_lower=sign_lower, sign_upper=sign_upper,
                          name=name, tex_name=tex_name, info=info,
-                         allow_adjust=allow_adjust,
-                         adjust_upper=adjust_upper, adjust_lower=adjust_lower)
+                         allow_adjust=allow_adjust,)
         self.state = state if state else u
 
         self.has_check_var = False
@@ -718,8 +727,7 @@ class AntiWindupRate(AntiWindup, RateLimiter):
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
                  enable=True, name=None, tex_name=None, info=None,
-                 allow_adjust: bool = True,
-                 adjust_lower: bool = False, adjust_upper: bool = False):
+                 allow_adjust: bool = True,):
 
         RateLimiter.__init__(self, u, lower=rate_lower, upper=rate_upper, enable=enable,
                              no_lower=rate_no_lower, no_upper=rate_no_upper,
@@ -730,7 +738,6 @@ class AntiWindupRate(AntiWindup, RateLimiter):
                             no_lower=no_lower, no_upper=no_upper,
                             name=name, tex_name=tex_name, info=info,
                             allow_adjust=allow_adjust,
-                            adjust_lower=adjust_lower, adjust_upper=adjust_upper
                             )
 
     def check_eq(self):
@@ -959,7 +966,8 @@ class DeadBand(Limiter):
                  ):
         Limiter.__init__(self, u, lower, upper,
                          enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
-                         name=name, tex_name=tex_name, info=info,)
+                         name=name, tex_name=tex_name, info=info,
+                         allow_adjust=False,)
 
         self.center = dummify(center)  # CURRENTLY NOT IN USE
 

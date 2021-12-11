@@ -646,6 +646,24 @@ class Model:
         if config is not None:
             self.config.load(config)
 
+        # basic configs
+        self.config.add(OrderedDict((('allow_adjust', 1),
+                                    ('adjust_lower', 0),
+                                    ('adjust_upper', 1),
+                                     )))
+
+        self.config.add_extra("_help",
+                              allow_adjust='allow adjusting upper or lower limits',
+                              adjust_lower='adjust lower limit',
+                              adjust_upper='adjust upper limit',
+                              )
+
+        self.config.add_extra("_alt",
+                              allow_adjust=(0, 1),
+                              adjust_lower=(0, 1),
+                              adjust_upper=(0, 1),
+                              )
+
         self.calls = ModelCall()  # callback and LaTeX string storage
         self.triplets = JacTriplet()  # Jacobian triplet storage
         self.syms = SymProcessor(self)  # symbolic processor instance
@@ -1764,7 +1782,9 @@ class Model:
                 # single variable - do assignment
                 if isinstance(name, str):
                     instance = self.__dict__[name]
-                    _eval_discrete(instance)
+                    _eval_discrete(instance, self.config.allow_adjust,
+                                   self.config.adjust_lower, self.config.adjust_upper)
+
                     if instance.v_str is not None:
                         if not instance.v_str_add:
                             # assignment is for most variable initialization
@@ -1783,7 +1803,8 @@ class Model:
                 else:
                     for vv in name:
                         instance = self.__dict__[vv]
-                        _eval_discrete(instance)
+                        _eval_discrete(instance, self.config.allow_adjust,
+                                       self.config.adjust_lower, self.config.adjust_upper)
                         if instance.v_str is not None:
                             instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
 
@@ -1869,7 +1890,8 @@ class Model:
         pass
 
 
-def _eval_discrete(instance, adjust_lower=False, adjust_upper=False):
+def _eval_discrete(instance, allow_adjust=True,
+                   adjust_lower=False, adjust_upper=False):
     """
     Evaluate discrete components associated with a variable instance.
     Calls ``check_var()`` on the discrete components.
@@ -1882,6 +1904,8 @@ def _eval_discrete(instance, adjust_lower=False, adjust_upper=False):
     ----------
     instance : BaseVar
         instance of a variable
+    allow_adjust : bool, optional
+        True to enable overall adjustment
     adjust_lower : bool, optional
         True to adjust lower limits to the input values
     adjust_upper : bool, optional
@@ -1895,7 +1919,9 @@ def _eval_discrete(instance, adjust_lower=False, adjust_upper=False):
         else:
             dlist = instance.discrete
         for d in dlist:
-            d.check_var(adjust_lower=adjust_lower, adjust_upper=adjust_upper)
+            d.check_var(allow_adjust=allow_adjust,
+                        adjust_lower=adjust_lower,
+                        adjust_upper=adjust_upper)
 
 
 def to_jit(func: Union[Callable, None],

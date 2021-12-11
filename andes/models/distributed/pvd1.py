@@ -481,6 +481,9 @@ class PVD1Model(Model):
                                  tex_name='I^{pcmd}',
                                  )
 
+        # disable auto limit adjustment because it is not supported for limits that are variables
+        self.Ipcmd.lim.allow_adjust = False
+
         self.Iqcmd = GainLimiter(u=self.Iqul,
                                  K=1, R='Fvl * Fvh * Ffl * Ffh * recflag + 1 * (1 - recflag)',
                                  lower=self.Iqmax, sign_lower=-1,
@@ -488,6 +491,7 @@ class PVD1Model(Model):
                                  info='Iq with limiter and coeff.',
                                  tex_name='I^{qcmd}',
                                  )
+        self.Iqcmd.lim.allow_adjust = False
 
         self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0,
                          info='Output Ip filter',
