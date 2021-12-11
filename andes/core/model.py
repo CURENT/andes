@@ -1869,10 +1869,25 @@ class Model:
         pass
 
 
-def _eval_discrete(instance):
-    # for variables associated with limiters, limiters need to be evaluated
-    # before variable initialization.
-    # However, if any limit is hit, initialization is likely to fail.
+def _eval_discrete(instance, adjust_lower=False, adjust_upper=False):
+    """
+    Evaluate discrete components associated with a variable instance.
+    Calls ``check_var()`` on the discrete components.
+
+    For variables associated with limiters, limiters need to be evaluated
+    before variable initialization.
+    However, if any limit is hit, initialization is likely to fail.
+
+    Parameters
+    ----------
+    instance : BaseVar
+        instance of a variable
+    adjust_lower : bool, optional
+        True to adjust lower limits to the input values
+    adjust_upper : bool, optional
+        True to adjust upper limits to the input values
+
+    """
 
     if instance.discrete is not None:
         if not isinstance(instance.discrete, (list, tuple, set)):
@@ -1880,7 +1895,7 @@ def _eval_discrete(instance):
         else:
             dlist = instance.discrete
         for d in dlist:
-            d.check_var()
+            d.check_var(adjust_lower=adjust_lower, adjust_upper=adjust_upper)
 
 
 def to_jit(func: Union[Callable, None],
