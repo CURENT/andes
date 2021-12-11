@@ -1820,7 +1820,6 @@ class Model:
                                         isinstance(val, np.ndarray) and val.ndim == 0:
 
                                     arg_print[key] = val * np.ones_like(instance.v)
-                                    arg_print[key] = val * np.ones_like(instance.v)
 
                             tab = Tab(title="v_str of %s is '%s'" % (name, instance.v_str),
                                       header=["idx", *self.calls.ia_args[name], name],
