@@ -185,7 +185,7 @@ class Discrete:
 
 class LessThan(Discrete):
     """
-    Less than (<) comparison function.
+    Less than (<) comparison function that tests if ``u < bound``.
 
     Exports two flags: z1 and z0.
     For elements satisfying the less-than condition, the corresponding z1 = 1.
