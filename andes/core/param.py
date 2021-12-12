@@ -735,6 +735,8 @@ class ExtParam(NumParam):
         """
         Convert to array when d_type is not str
         """
+
         if self.vtype == str:
             return
+
         NumParam.to_array(self)

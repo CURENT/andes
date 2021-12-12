@@ -133,10 +133,18 @@ class SuiteSparseSolver:
             return np.ravel(self.b)
         except ArithmeticError:
             logger.error('Jacobian matrix is singular.')
-            diag = self.A[0:self.A.size[0] ** 2:self.A.size[0]+1]
-            idx = (np.argwhere(np.array(matrix(diag)).ravel() == 0.0)).ravel()
-            logger.error('The xy indices of associated variables:')
-            logger.error(idx)
+            # diag = self.A[0:self.A.size[0] ** 2:self.A.size[0]+1]
+            # idx = (np.argwhere(np.array(matrix(diag)).ravel() == 0.0)).ravel()
+            # logger.error('The xy indices of associated variables:')
+            # logger.error(' '.join([str(item) for item in idx]))
+
+            # works around a KVXOPT bug
+            suspect_diag = []
+            for i in range(self.A.size[0]):
+                if self.A[i, i] == 0.0:
+                    suspect_diag.append(i)
+
+            logger.error('Suspect diagonal elements: {}'.format(suspect_diag))
 
             return np.ravel(matrix(np.nan, self.b.size, 'd'))
 

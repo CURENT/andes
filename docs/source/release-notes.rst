@@ -9,6 +9,56 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.7 (2021-12-11)
+```````````````````
+This minor release highlights the improved debugging of initialization.
+
+Highly verbose initialization output can be enabled when the verbose
+level is 10 or less. For example,
+
+.. code:: bash
+
+    andes -v 10 run test.xlsx -r tds --init
+
+will set the verbose level to 10 and run ``test.xlsx`` in the current
+folder, proceed to time-domain simulation but only initialize the models.
+Outputs will be printed to the shell where the command is executed.
+
+To save the output to a file, use the following in a UNIX shell:
+
+.. code:: bash
+
+    andes -v 10 run test.xlsx -r tds --init > info.txt 2>&1
+
+where the first ``>`` pipes the output to a file named ``info.txt``,
+and ``2>&1`` appends stderr (2) to stdout (1).
+
+The other main improvement is allowing automatic limit adjustment
+during initialization. Due to parameter errors, some variables
+will be initialized to values outside the given limits.
+Most commercial software does not attempt to fix the parameter
+but rather adjust the limit in run time.
+
+The same approach is followed in ANDES by automatically adjusting
+the upper limit, if exceeded, to variable initial values.
+The lower limit, however, is kept unadjusted by default.
+
+Discrete components now take an argument named ``allow_adjust``
+so that the model developer can specify if its limits can be
+adjusted or must be kept as is.
+Each model is allowed to specify three config flags to customize
+runtime behaviors: ``allow_adjust``, ``adjust_lower``,
+and ``adjust_uppwer``. By default, ``allow_adjust=True``,
+``adjust_upper=True``, and ``adjust_lower=False``.
+One can modify the config file to enable or disable the
+limit adjustments for specific models.
+
+Other fixes include:
+
+- Bug fixes for ``GAST`` parameter ``AT``.
+- Bug fixes for ``IEEET3``, ``GAST``, ``ESAC1A`` and ``ESST1A``
+  when device is off to avoid matrix singularity.
+
 v1.5.6 (2021-11-25)
 ```````````````````
 - Allow specifying config options through command-line arguments

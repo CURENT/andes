@@ -6,7 +6,6 @@
 #  (at your option) any later version.
 #
 #  File name: discrete.py
-#  Last modified: 11/15/20, 3:29 PM
 
 import logging
 from typing import List, Tuple, Union
@@ -48,8 +47,9 @@ class Discrete:
         # default minimum iteration number and error tolerance to allow checking
         # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
         # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
+
         self.min_iter = min_iter
-        self.err_tol = 1e-2
+        self.err_tol = err_tol
 
         self.has_check_var = False  # if subclass implements `check_var()`
         self.has_check_eq = False   # if subclass implements `check_eq()`
@@ -59,6 +59,16 @@ class Discrete:
         This function is called in ``l_update_var`` before evaluating equations.
 
         It should update internal flags only.
+
+        Parameters
+        ----------
+        adjust_upper : bool
+            True to adjust the upper limit to the value of the variable.
+            Supported by limiters.
+        adjust_lower : bool
+            True to adjust the lower limit to the value of the variable.
+            Supported by limiters.
+
         """
         pass
 
@@ -113,8 +123,9 @@ class Discrete:
 
     def warn_init_limit(self):
         """
-        Warn if initialized at limits.
+        Warn if associated variables are initialized at limits.
         """
+
         if self.no_warn:
             return
 
@@ -124,8 +135,9 @@ class Discrete:
                 continue
 
             pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
-            if not len(pos):
+            if len(pos) == 0:
                 continue
+
             err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
             if isinstance(self.__dict__[limit].v, np.ndarray):
                 lim_value = self.__dict__[limit].v[pos]
@@ -173,7 +185,7 @@ class Discrete:
 
 class LessThan(Discrete):
     """
-    Less than (<) comparison function.
+    Less than (<) comparison function that tests if ``u < bound``.
 
     Exports two flags: z1 and z0.
     For elements satisfying the less-than condition, the corresponding z1 = 1.
@@ -182,11 +194,14 @@ class LessThan(Discrete):
     Notes
     -----
     The default z0 and z1, if not enabled, can be set through the constructor.
+    By default, the model will not adjust the limit.
     """
 
     def __init__(self, u, bound, equal=False, enable=True, name=None, tex_name=None,
-                 info=None, cache=False, z0=0, z1=1):
+                 info: str = None, cache: bool = False,
+                 z0=0, z1=1):
         super().__init__(name=name, tex_name=tex_name, info=info)
+
         self.u = u
         self.bound = dummify(bound)
         self.equal: bool = equal
@@ -205,6 +220,7 @@ class LessThan(Discrete):
         """
         If enabled, set flags based on inputs. Use cached values if enabled.
         """
+
         if not self.enable:
             return
 
@@ -269,8 +285,10 @@ class Limiter(Discrete):
         Flags for violating the upper limit
     """
 
-    def __init__(self, u, lower, upper, enable=True, name=None, tex_name=None, info=None,
+    def __init__(self, u, lower, upper, enable=True,
+                 name: str = None, tex_name: str = None, info: str = None,
                  min_iter: int = 2, err_tol: float = 0.01,
+                 allow_adjust: bool = True,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
                  equal=True, no_warn=False,
                  zu=0.0, zl=0.0, zi=1.0):
@@ -282,6 +300,8 @@ class Limiter(Discrete):
         self.enable = enable
         self.no_lower = no_lower
         self.no_upper = no_upper
+
+        self.allow_adjust = allow_adjust
 
         if sign_lower not in (1, -1):
             raise ValueError("sign_lower must be 1 or -1, got %s" % sign_lower)
@@ -311,15 +331,24 @@ class Limiter(Discrete):
             self.export_flags_tex.append('z_u')
             self.warn_flags.append(('zu', 'upper'))
 
-    def check_var(self, *args, **kwargs):
+    def check_var(self,
+                  allow_adjust=True,  # allow flag from model
+                  adjust_lower=False,
+                  adjust_upper=False,
+                  *args, **kwargs):
         """
-        Evaluate the flags.
+        Check the input variable and set flags.
         """
+
         if not self.enable:
             return
 
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+
+            if self.allow_adjust and allow_adjust and adjust_upper:
+                self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
+
             if self.equal:
                 self.zu[:] = np.greater_equal(self.u.v, upper_v)
             else:
@@ -327,12 +356,47 @@ class Limiter(Discrete):
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+
+            if self.allow_adjust and allow_adjust and adjust_lower:
+                self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
+
             if self.equal:
                 self.zl[:] = np.less_equal(self.u.v, lower_v)
             else:
                 self.zl[:] = np.less(self.u.v, lower_v)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
+
+    def do_adjust_lower(self, val, lower, allow_adjust=True, adjust_lower=False):
+        """
+        Adjust the lower limit.
+
+        Notes
+        -----
+        This method is only available if `allow_adjust` is True
+        and `adjust_lower` is True.
+        """
+
+        if allow_adjust and adjust_lower:
+            mask = (val < lower)
+            lower[mask] = val[mask]
+
+        # TODO: store debug info
+
+    def do_adjust_upper(self, val, upper, allow_adjust=True, adjust_upper=False):
+        """
+        Adjust the upper limit.
+
+        Notes
+        -----
+        This method is only available if `allow_adjust` is True
+        and `adjust_upper` is True.
+        """
+
+        if allow_adjust and adjust_upper:
+            mask = (val > upper)
+            upper[mask] = val[mask]
+        # TODO: store debug info
 
 
 class SortedLimiter(Limiter):
@@ -361,12 +425,14 @@ class SortedLimiter(Limiter):
     def __init__(self, u, lower, upper, n_select: int = 5,
                  name=None, tex_name=None, enable=True, abs_violation=True,
                  min_iter: int = 2, err_tol: float = 0.01,
+                 allow_adjust: bool = True,
                  zu=0.0, zl=0.0, zi=1.0, ql=0.0, qu=0.0,
                  ):
 
         super().__init__(u, lower, upper,
                          enable=enable, name=name, tex_name=tex_name,
                          min_iter=min_iter, err_tol=err_tol,
+                         allow_adjust=allow_adjust,
                          zu=zu, zl=zl, zi=zi,
                          )
 
@@ -512,11 +578,13 @@ class AntiWindup(Limiter):
 
     def __init__(self, u, lower, upper, enable=True, no_warn=False,
                  no_lower=False, no_upper=False, sign_lower=1, sign_upper=1,
-                 name=None, tex_name=None, info=None, state=None):
+                 name=None, tex_name=None, info=None, state=None,
+                 allow_adjust: bool = True,):
         super().__init__(u, lower, upper, enable=enable, no_warn=no_warn,
                          no_lower=no_lower, no_upper=no_upper,
                          sign_lower=sign_lower, sign_upper=sign_upper,
-                         name=name, tex_name=tex_name, info=info)
+                         name=name, tex_name=tex_name, info=info,
+                         allow_adjust=allow_adjust,)
         self.state = state if state else u
 
         self.has_check_var = False
@@ -658,7 +726,9 @@ class AntiWindupRate(AntiWindup, RateLimiter):
     def __init__(self, u, lower, upper, rate_lower, rate_upper,
                  no_lower=False, no_upper=False, rate_no_lower=False, rate_no_upper=False,
                  rate_lower_cond=None, rate_upper_cond=None,
-                 enable=True, name=None, tex_name=None, info=None):
+                 enable=True, name=None, tex_name=None, info=None,
+                 allow_adjust: bool = True,):
+
         RateLimiter.__init__(self, u, lower=rate_lower, upper=rate_upper, enable=enable,
                              no_lower=rate_no_lower, no_upper=rate_no_upper,
                              lower_cond=rate_lower_cond, upper_cond=rate_upper_cond,
@@ -667,6 +737,7 @@ class AntiWindupRate(AntiWindup, RateLimiter):
         AntiWindup.__init__(self, u, lower=lower, upper=upper, enable=enable,
                             no_lower=no_lower, no_upper=no_upper,
                             name=name, tex_name=tex_name, info=info,
+                            allow_adjust=allow_adjust,
                             )
 
     def check_eq(self):
@@ -798,8 +869,8 @@ class Switcher(Discrete):
     """
 
     def __init__(self, u, options: Union[list, Tuple], info: str = None,
-                 name: str = None, tex_name: str = None, cache=True):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+                 name: str = None, tex_name: str = None, cache=True,):
+        super().__init__(name=name, tex_name=tex_name, info=info,)
         self.u = u
         self.options: Union[List, Tuple] = options
         self.cache: bool = cache
@@ -888,10 +959,16 @@ class DeadBand(Limiter):
 
     """
 
-    def __init__(self, u, center, lower, upper, enable=True, equal=False, zu=0.0, zl=0.0, zi=0.0,
-                 name=None, tex_name=None, info=None):
-        Limiter.__init__(self, u, lower, upper, enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
-                         name=name, tex_name=tex_name, info=info)
+    def __init__(self, u, center, lower, upper,
+                 enable=True, equal=False,
+                 zu=0.0, zl=0.0, zi=0.0,
+                 name=None, tex_name=None, info=None,
+                 ):
+        Limiter.__init__(self, u, lower, upper,
+                         enable=enable, equal=equal, zi=zi, zl=zl, zu=zu,
+                         name=name, tex_name=tex_name, info=info,
+                         allow_adjust=False,)
+
         self.center = dummify(center)  # CURRENTLY NOT IN USE
 
     def check_var(self, *args, **kwargs):
@@ -1016,7 +1093,9 @@ class Delay(Discrete):
 
     """
 
-    def __init__(self, u, mode='step', delay=0, name=None, tex_name=None, info=None):
+    def __init__(self, u, mode='step', delay=0,
+                 name=None, tex_name=None, info=None):
+
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
 
         if mode not in ('step', 'time'):

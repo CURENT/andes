@@ -203,7 +203,8 @@ class GENBase(Model):
                                src='subidx',
                                indexer=self.gen,
                                export=False,
-                               info='Generator idx in plant; only used by PSS/E data'
+                               info='Generator idx in plant; only used by PSS/E data',
+                               vtype=str,
                                )
 
         # declaring `Vn_bus` as ExtParam will fail for PSS/E parser
