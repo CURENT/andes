@@ -183,6 +183,9 @@ class ExcVsum:
 class ExcACSat:
     """
     Subclass for the saturation commonly used in AC-type exciters.
+
+    The inheriting class must define ``self.INTin`` as a string of
+    equation for the input to ``self.INT``.
     """
 
     def __init__(self):
