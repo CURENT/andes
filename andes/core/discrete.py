@@ -428,7 +428,7 @@ class Limiter(Discrete):
             if sum(mask) == 0:
                 return
 
-            self._show_adjust(val, upper, mask, self.lower.name)
+            self._show_adjust(val, upper, mask, self.upper.name)
             upper[mask] = val[mask]
             self.mask_upper = mask
 
