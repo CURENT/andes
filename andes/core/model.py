@@ -1883,6 +1883,9 @@ class Model:
         Solve iterative initialization.
         """
         for pos in range(self.n):
+            logger.debug("%s: iterative init for %s, device pos = %s",
+                         self.class_name, name, pos)
+
             self.solve_iter_single(name, kwargs, pos)
 
     def solve_iter_single(self, name, inputs, pos):
@@ -1909,26 +1912,39 @@ class Model:
         solved = False
 
         while niter < maxiter:
+            logger.debug("iteration %s:", niter)
+
             i_args = [item[pos] for item in ii_args]  # all variables of one device at a time
             j_args = [item[pos] for item in ij_args]
 
             b = np.ravel(rhs(*i_args))
             A = jac(*j_args)
-            inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
-            if np.isnan(inc).any():
-                logger.warning(f"{self.class_name}: nan detected in iterations for {self.idx.v[pos]}.")
-                break
 
-            x0 += inc
-            for idx, item in enumerate(name):
-                inputs[item][pos] = x0[idx]
+            logger.debug("A:\n%s", A)
+            logger.debug("b:\n%s", b)
 
-            mis = np.max(np.abs(inc))
-            niter += 1
-
+            mis = np.max(np.abs(b))
             if mis <= eps:
                 solved = True
                 break
+
+            inc = - sp.linalg.lu_solve(sp.linalg.lu_factor(A), b)
+            if np.isnan(inc).any():
+                if self.u.v[pos] != 0:
+                    logger.debug("%s: nan ignored in iterations for offline device pos = %s",
+                                 self.class_name, pos)
+                else:
+                    logger.error("%s: nan error detected in iterations for device pos = %s",
+                                 self.class_name, pos)
+                break
+
+            x0 += inc
+            logger.debug("solved x0:\n%s", x0)
+
+            for idx, item in enumerate(name):
+                inputs[item][pos] = x0[idx]
+
+            niter += 1
 
         if solved:
             for idx, item in enumerate(name):
