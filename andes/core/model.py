@@ -1796,7 +1796,7 @@ class Model:
 
                     if instance.v_str is not None:
                         arg_print = OrderedDict()
-                        if logger.level <= 10:
+                        if self.system.options.get("init"):
                             for a, b in zip(self.calls.ia_args[name], self.ia_args[name]):
                                 arg_print[a] = b
 
@@ -1814,12 +1814,14 @@ class Model:
 
                         arg_print[name] = instance.v
 
-                        if logger.level <= 10:
+                        if self.system.options.get("init"):
                             for key, val in arg_print.items():
                                 if isinstance(val, (int, float, np.floating, np.integer)) or \
                                         isinstance(val, np.ndarray) and val.ndim == 0:
 
                                     arg_print[key] = val * np.ones_like(instance.v)
+                                if isinstance(val, np.ndarray) and val.dtype == complex:
+                                    arg_print[key] = [str(i) for i in val]
 
                             tab = Tab(title="v_str of %s is '%s'" % (name, instance.v_str),
                                       header=["idx", *self.calls.ia_args[name], name],
@@ -1854,7 +1856,7 @@ class Model:
                             logger.debug("%s: v_str = %s", vv, instance.v_str)
 
                             arg_print = OrderedDict()
-                            if logger.level <= 10:
+                            if self.system.options.get("init"):
                                 for a, b in zip(self.calls.ia_args[vv], self.ia_args[vv]):
                                     arg_print[a] = b
                                 logger.debug(pprint.pformat(arg_print))
