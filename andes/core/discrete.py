@@ -118,6 +118,15 @@ class Discrete:
         return self.__class__.__name__
 
     def list2array(self, n):
+        """
+        Allocate memory for the discrete flags specified in `self.export_flags`.
+
+        Parameters
+        ----------
+        n : int
+            Number of elements in the array. Provided by the calling function.
+        """
+
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n, dtype=float)
 
@@ -317,6 +326,9 @@ class Limiter(Discrete):
         self.zl = np.array([zl])
         self.zi = np.array([zi])
 
+        self.mask_upper = None
+        self.mask_lower = None
+
         self.has_check_var = True
 
         self.export_flags.append('zi')
@@ -346,6 +358,7 @@ class Limiter(Discrete):
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
 
+            # FIXME: adjust will not be successful when sign is -1
             if self.allow_adjust and allow_adjust and adjust_upper:
                 self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
 
@@ -357,6 +370,7 @@ class Limiter(Discrete):
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
 
+            # FIXME: adjust will not be successful when sign is -1
             if self.allow_adjust and allow_adjust and adjust_lower:
                 self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
 
@@ -379,9 +393,25 @@ class Limiter(Discrete):
 
         if allow_adjust and adjust_lower:
             mask = (val < lower)
-            lower[mask] = val[mask]
 
-        # TODO: store debug info
+            if sum(mask) == 0:
+                return
+
+            self._show_adjust(val, lower, mask, self.lower.name)
+            lower[mask] = val[mask]
+            self.mask_lower = mask
+
+    def _show_adjust(self, val, old_limit, mask, limit_name):
+        """
+        Helper function to show a table of the adjusted limits.
+        """
+        idxes = np.array(self.owner.idx.v)[mask]
+
+        tab = Tab(title=f"{self.owner.class_name}.{self.name}: adjusted Limit <{limit_name}> to inputs",
+                  header=['Idx', 'Input', 'Old Limit'],
+                  data=[*zip(idxes, val[mask], old_limit[mask])],
+                  )
+        logger.info(tab.draw())
 
     def do_adjust_upper(self, val, upper, allow_adjust=True, adjust_upper=False):
         """
@@ -395,8 +425,12 @@ class Limiter(Discrete):
 
         if allow_adjust and adjust_upper:
             mask = (val > upper)
+            if sum(mask) == 0:
+                return
+
+            self._show_adjust(val, upper, mask, self.lower.name)
             upper[mask] = val[mask]
-        # TODO: store debug info
+            self.mask_upper = mask
 
 
 class SortedLimiter(Limiter):
