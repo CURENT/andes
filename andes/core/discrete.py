@@ -163,7 +163,7 @@ class Discrete:
                       header=err_data.keys(),
                       data=list(map(list, zip(*err_data.values()))))
 
-            logger.warning(tab.draw())
+            logger.debug(tab.draw())
 
     def check_iter_err(self, niter=None, err=None):
         """
