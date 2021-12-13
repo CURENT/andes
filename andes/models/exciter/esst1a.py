@@ -150,8 +150,8 @@ class ESST1AModel(ExcBase, ExcVsum):
                                    v_str='vf0 - SWVOS_s2 * SG + LR_y',
                                    info='VA (LA_y) initial value')
 
-        self.vref.v_str = 'v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL'
-        self.vref.v_iter = 'v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL'
+        self.vref.v_str = 'ue * (v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL)'
+        self.vref.v_iter = 'ue * (v + (vf0 - SWVOS_s2 * SG + LR_y) / KA - SWVOS_s1 * SG - SWUEL_s1 * UEL)'
 
         self.vref0 = PostInitService(info='Initial reference voltage input',
                                      tex_name='V_{ref0}',
