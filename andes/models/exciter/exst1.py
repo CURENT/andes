@@ -125,7 +125,7 @@ class EXST1Model(ExcBase):
         self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax,
                                info='Hard limiter on regulator output')
 
-        self.vout.e_str = 'LR_y*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu - vout'
+        self.vout.e_str = 'ue * (LR_y*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu) - vout'
 
 
 class EXST1(EXST1Data, EXST1Model):

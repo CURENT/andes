@@ -256,7 +256,7 @@ class ESST4BModel(ExcBase):
 
         # TODO: add back LV Gate
 
-        self.vout.e_str = 'VB_y * PI2_y - vout'
+        self.vout.e_str = 'ue * VB_y * PI2_y - vout'
 
 
 class ESST4B(ESST4BData, ESST4BModel):

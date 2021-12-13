@@ -78,7 +78,7 @@ class SEXSModel(ExcBase):
                                  upper=self.EMAX,
                                  )
 
-        self.vout.e_str = 'LAW_y - vout'
+        self.vout.e_str = 'ue * LAW_y - vout'
 
 
 class SEXS(SEXSData, SEXSModel):
