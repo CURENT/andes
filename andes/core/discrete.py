@@ -143,27 +143,68 @@ class Discrete:
                 logger.error(f'warn_flags contain unknown flag {f}')
                 continue
 
-            pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
+            mask = np.ones(self.owner.n, dtype=bool)
+            if limit == 'upper':
+                mask = self.mask_upper
+            elif limit == 'lower':
+                mask = self.mask_lower
+            else:
+                logger.debug(f'Unknown limit name <{limit}>')
+
+            # process online devices only
+            flag_vals = np.logical_and(self.__dict__[f], self.owner.u.v)
+
+            # ignore limits that has been adjusted
+            flag_vals = np.logical_and(flag_vals, np.logical_not(mask))
+
+            pos = np.argwhere(np.not_equal(flag_vals, 0)).ravel()
+
             if len(pos) == 0:
                 continue
 
-            err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
             if isinstance(self.__dict__[limit].v, np.ndarray):
-                lim_value = self.__dict__[limit].v[pos]
-            else:
                 lim_value = self.__dict__[limit].v
+            else:
+                lim_value = self.__dict__[limit].v * np.ones(self.owner.n)
 
-            err_data = {'idx': [self.owner.idx.v[i] for i in pos],
-                        'Flag': [f] * len(pos),
-                        'Input Value': self.u.v[pos],
-                        'Limit': lim_value * np.ones_like(pos),
-                        }
+            at_limit_pos = list()
+            out_limit_pos = list()
 
-            tab = Tab(title=err_msg,
-                      header=err_data.keys(),
-                      data=list(map(list, zip(*err_data.values()))))
+            for item in pos:
+                if np.isclose(lim_value[item], self.u.v[item]):
+                    at_limit_pos.append(item)
+                else:
+                    out_limit_pos.append(item)
 
-            logger.debug(tab.draw())
+            if len(out_limit_pos) > 0:
+                # warn out of limits
+                err_msg = f'{self.owner.class_name}.{self.name} out of limits <{self.__dict__[limit].name}>'
+                err_data = {'idx': [self.owner.idx.v[i] for i in out_limit_pos],
+                            'Flag': [f] * len(out_limit_pos),
+                            'Input Value': self.u.v[out_limit_pos],
+                            'Limit': lim_value[out_limit_pos]
+                            }
+
+                tab = Tab(title=err_msg,
+                          header=err_data.keys(),
+                          data=list(map(list, zip(*err_data.values()))))
+
+                logger.warning(tab.draw())
+
+            if len(at_limit_pos) > 0:
+                # warn at limits
+                err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
+                err_data = {'idx': [self.owner.idx.v[i] for i in at_limit_pos],
+                            'Flag': [f] * len(at_limit_pos),
+                            'Input Value': self.u.v[at_limit_pos],
+                            'Limit': lim_value[at_limit_pos]
+                            }
+
+                tab = Tab(title=err_msg,
+                          header=err_data.keys(),
+                          data=list(map(list, zip(*err_data.values()))))
+
+                logger.debug(tab.draw())
 
     def check_iter_err(self, niter=None, err=None):
         """
