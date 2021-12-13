@@ -9,6 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.8 (2021-12-xx)
+```````````````````
+- Full initialization debug message will be printed only when
+  ``-v 10`` and ``run --init`` are both used.
+- Improved warning of out-of-limit initialization. Variables
+  initialized at limits will be shown only at the debug level.
+
 v1.5.7 (2021-12-11)
 ```````````````````
 This minor release highlights the improved debugging of initialization.

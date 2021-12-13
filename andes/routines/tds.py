@@ -228,6 +228,9 @@ class TDS(BaseRoutine):
             logger.info("Initialization was successful.")
         elif self.test_ok is False:
             logger.error("Initialization failed!!")
+            logger.error("If you are developing a new model, check the initialization with")
+            logger.error("   andes -v 10 run -r tds --init %s", self.system.files.case)
+            logger.error("Otherwise, check the variables that are initialized out of limits.")
         else:
             logger.warning("Initialization results were not verified.")
 
