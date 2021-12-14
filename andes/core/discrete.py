@@ -775,6 +775,9 @@ class RateLimiter(Discrete):
         self.rate_lower_cond = dummify(lower_cond)
         self.rate_upper_cond = dummify(upper_cond)
 
+        self.mask_lower = None
+        self.mask_upper = None
+
         self.rate_no_lower = no_lower
         self.rate_no_upper = no_upper
         self.enable = enable
@@ -798,7 +801,7 @@ class RateLimiter(Discrete):
             self.export_flags_tex.append('z_{ur}')
             self.warn_flags.append(('zur', 'upper'))
 
-    def check_eq(self):
+    def check_eq(self, **kwargs):
         if not self.enable:
             return
 
@@ -842,9 +845,9 @@ class AntiWindupRate(AntiWindup, RateLimiter):
                             allow_adjust=allow_adjust,
                             )
 
-    def check_eq(self):
-        RateLimiter.check_eq(self)
-        AntiWindup.check_eq(self)
+    def check_eq(self, **kwargs):
+        RateLimiter.check_eq(self, **kwargs)
+        AntiWindup.check_eq(self, **kwargs)
 
 
 class Selector(Discrete):
