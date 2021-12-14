@@ -133,6 +133,8 @@ class EXST1(EXST1Data, EXST1Model):
     EXST1-type static excitation system.
     """
 
+    # TODO: disable offline EXST1 in eigenvalue analysis
+
     def __init__(self, system, config):
         EXST1Data.__init__(self)
         EXST1Model.__init__(self, system, config)
