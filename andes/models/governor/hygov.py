@@ -61,42 +61,43 @@ class HYGOVData(TGBaseData):
                            default=1,
                            tex_name='A_t')
 
-        self.GV0 = NumParam(info='Governor point 0',
-                            default=0.1,
-                            tex_name='GV_0')
-        self.PGV0 = NumParam(info='Governor power point 0',
-                             default=0,
-                             tex_name='PGV_0')
-        self.GV1 = NumParam(info='Governor point 1',
-                            default=0.15,
-                            tex_name='GV_1')
-        self.PGV1 = NumParam(info='Governor power point 1',
-                             default=0.1,
-                             tex_name='PGV_1')
-        self.GV2 = NumParam(info='Governor point 2',
-                            default=0.3,
-                            tex_name='GV_2')
-        self.PGV2 = NumParam(info='Governor power point 2',
-                             default=0.5,
-                             tex_name='PGV_2')
-        self.GV3 = NumParam(info='Governor point 3',
-                            default=0.5,
-                            tex_name='GV_3')
-        self.PGV3 = NumParam(info='Governor power point 3',
-                             default=0.7,
-                             tex_name='PGV_3')
-        self.GV4 = NumParam(info='Governor point 4',
-                            default=0.6,
-                            tex_name='GV_4')
-        self.PGV4 = NumParam(info='Governor power point 4',
-                             default=0.8,
-                             tex_name='PGV_4')
-        self.GV5 = NumParam(info='Governor point 5',
-                            default=0.7,
-                            tex_name='GV_5')
-        self.PGV5 = NumParam(info='Governor power point 5',
-                             default=0.9,
-                             tex_name='PGV_5')
+        # nonlinear points, keep for future use
+        # self.GV0 = NumParam(info='Governor point 0',
+        #                     default=0.1,
+        #                     tex_name='GV_0')
+        # self.PGV0 = NumParam(info='Governor power point 0',
+        #                      default=0,
+        #                      tex_name='PGV_0')
+        # self.GV1 = NumParam(info='Governor point 1',
+        #                     default=0.15,
+        #                     tex_name='GV_1')
+        # self.PGV1 = NumParam(info='Governor power point 1',
+        #                      default=0.1,
+        #                      tex_name='PGV_1')
+        # self.GV2 = NumParam(info='Governor point 2',
+        #                     default=0.3,
+        #                     tex_name='GV_2')
+        # self.PGV2 = NumParam(info='Governor power point 2',
+        #                      default=0.5,
+        #                      tex_name='PGV_2')
+        # self.GV3 = NumParam(info='Governor point 3',
+        #                     default=0.5,
+        #                     tex_name='GV_3')
+        # self.PGV3 = NumParam(info='Governor power point 3',
+        #                      default=0.7,
+        #                      tex_name='PGV_3')
+        # self.GV4 = NumParam(info='Governor point 4',
+        #                     default=0.6,
+        #                     tex_name='GV_4')
+        # self.PGV4 = NumParam(info='Governor power point 4',
+        #                      default=0.8,
+        #                      tex_name='PGV_4')
+        # self.GV5 = NumParam(info='Governor point 5',
+        #                     default=0.7,
+        #                     tex_name='GV_5')
+        # self.PGV5 = NumParam(info='Governor power point 5',
+        #                      default=0.9,
+        #                      tex_name='PGV_5')
 
 
 class HYGOVModel(TGBase):
