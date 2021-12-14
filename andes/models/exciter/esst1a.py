@@ -161,10 +161,9 @@ class ESST1AModel(ExcBase, ExcVsum):
         self.vi = Algeb(info='Total input voltages',
                         tex_name='V_i',
                         unit='p.u.',
-                        e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs - vi)',
+                        e_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs) - vi',
                         v_iter='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs)',
                         v_str='ue * (-LG_y + vref - WF_y + SWUEL_s1 * UEL + SWVOS_s1 * SG + Vs)',
-                        diag_eps=True,
                         )
 
         self.vil = GainLimiter(u=self.vi,
