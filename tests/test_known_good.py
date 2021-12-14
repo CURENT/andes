@@ -18,7 +18,7 @@ class TestKnownResults(unittest.TestCase):
             (('ieee14/ieee14.raw', 'ieee14/ieee14.dyr'), 'ieee14_2s.pkl', 2),
             )
 
-    def tnc(self, case_path, pkl_path, tf):
+    def tnc(self, case_path, pkl_path, tf, pkl_prefix='pkl'):
         """
         Test and compare
         """
@@ -29,7 +29,8 @@ class TestKnownResults(unittest.TestCase):
         else:
             case_path = get_case(case_path)
 
-        ss = compare_results(case_path, pkl_path, tf=tf, addfile=addfile)
+        ss = compare_results(case_path, os.path.join(pkl_prefix, pkl_path),
+                             tf=tf, addfile=addfile)
 
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 

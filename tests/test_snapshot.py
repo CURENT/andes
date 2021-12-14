@@ -40,6 +40,7 @@ class TestSnapshot(unittest.TestCase):
         ss.TDS.run()
 
         np.testing.assert_almost_equal(ss.GENROU.omega.v,
-                                       np.array([1.00549119, 1.00529052, 1.00426882, 1.0039297]))
+                                       np.array([1.005491, 1.005290, 1.004268, 1.00392]),
+                                       decimal=4)
 
         os.remove(path)
