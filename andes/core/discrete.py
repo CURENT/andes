@@ -846,8 +846,8 @@ class AntiWindupRate(AntiWindup, RateLimiter):
                             )
 
     def check_eq(self, **kwargs):
-        RateLimiter.check_eq(self, **kwargs)
-        AntiWindup.check_eq(self, **kwargs)
+        RateLimiter.check_eq(self)
+        AntiWindup.check_eq(self)
 
 
 class Selector(Discrete):
