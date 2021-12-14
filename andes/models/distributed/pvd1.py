@@ -292,10 +292,12 @@ class PVD1Model(Model):
 
         # --- frequency branch ---
         self.FL1 = Limiter(u=self.fHz, lower=self.ft0, upper=self.ft1,
-                           info='Under frequency comparer', no_warn=True,
+                           info='Under frequency comparer', no_warn=False,
+                           allow_adjust=False,
                            )
         self.FL2 = Limiter(u=self.fHz, lower=self.ft2, upper=self.ft3,
-                           info='Over frequency comparer', no_warn=True,
+                           info='Over frequency comparer', no_warn=False,
+                           allow_adjust=False,
                            )
 
         self.Kft01 = ConstService(v_str='1/(ft1 - ft0)', tex_name='K_{ft01}')
@@ -329,9 +331,11 @@ class PVD1Model(Model):
         # --- Voltage flags ---
         self.VL1 = Limiter(u=self.v, lower=self.vt0, upper=self.vt1,
                            info='Under voltage comparer', no_warn=True,
+                           allow_adjust=False,
                            )
         self.VL2 = Limiter(u=self.v, lower=self.vt2, upper=self.vt3,
                            info='Over voltage comparer', no_warn=True,
+                           allow_adjust=False,
                            )
 
         self.Kvt01 = ConstService(v_str='1/(vt1 - vt0)', tex_name='K_{vt01}')
@@ -388,6 +392,7 @@ class PVD1Model(Model):
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
                            enable=self.config.plim,
                            info='limiter for Psum in [0, pmx]',
+                           allow_adjust=False,
                            )
 
         self.Vcomp = VarService(v_str='abs(v*exp(1j*a) + (1j * xc) * (Ipout_y + 1j * Iqout_y))',
@@ -408,11 +413,13 @@ class PVD1Model(Model):
         self.VQ1 = Limiter(u=self.Vcomp, lower=self.Vql, upper=self.v0,
                            info='Under voltage comparer for Q droop',
                            no_warn=True,
+                           allow_adjust=False,
                            )
 
         self.VQ2 = Limiter(u=self.Vcomp, lower=self.v1, upper=self.Vqu,
                            info='Over voltage comparer for Q droop',
                            no_warn=True,
+                           allow_adjust=False,
                            )
 
         Qdrp = 'u * VQ1_zl * qmx + VQ2_zu * qmn + ' \
