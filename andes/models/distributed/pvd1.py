@@ -292,11 +292,11 @@ class PVD1Model(Model):
 
         # --- frequency branch ---
         self.FL1 = Limiter(u=self.fHz, lower=self.ft0, upper=self.ft1,
-                           info='Under frequency comparer', no_warn=False,
+                           info='Under frequency comparer', no_warn=True,
                            allow_adjust=False,
                            )
         self.FL2 = Limiter(u=self.fHz, lower=self.ft2, upper=self.ft3,
-                           info='Over frequency comparer', no_warn=False,
+                           info='Over frequency comparer', no_warn=True,
                            allow_adjust=False,
                            )
 
