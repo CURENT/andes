@@ -704,8 +704,8 @@ class AntiWindup(Limiter):
 
             if self.allow_adjust and allow_adjust and adjust_upper:
                 self.do_adjust_upper(self.u.v, upper_v,
-                                    allow_adjust=allow_adjust,
-                                    adjust_upper=adjust_upper)
+                                     allow_adjust=allow_adjust,
+                                     adjust_upper=adjust_upper)
             self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
 
@@ -714,8 +714,8 @@ class AntiWindup(Limiter):
 
             if self.allow_adjust and allow_adjust and adjust_lower:
                 self.do_adjust_lower(self.u.v, lower_v,
-                                    allow_adjust=allow_adjust,
-                                    adjust_lower=adjust_lower)
+                                     allow_adjust=allow_adjust,
+                                     adjust_lower=adjust_lower)
             self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
 
