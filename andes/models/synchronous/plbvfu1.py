@@ -2,8 +2,6 @@
 V-f playback generator model.
 """
 
-from andes.shared import np
-
 from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam, ExtParam,
                         State, ExtAlgeb, ExtService, ConstService)
 
