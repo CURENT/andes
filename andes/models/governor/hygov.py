@@ -1,7 +1,5 @@
 from andes.core import Algeb, ConstService, NumParam
-
 from andes.core.block import Integrator, Lag
-
 from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
@@ -101,22 +99,6 @@ class HYGOVData(TGBaseData):
                              tex_name='PGV_5')
 
 
-# TODO: later on
-# class HYGOVDBData(TGOV1Data):
-#     def __init__(self):
-#         TGOV1Data.__init__(self)
-#         self.dbL = NumParam(info='Lower bound of deadband',
-#                             tex_name='db_L',
-#                             default=0.0,
-#                             unit='p.u.',
-#                             )
-#         self.dbU = NumParam(info='Upper bound of deadband',
-#                             tex_name='db_U',
-#                             default=0.0,
-#                             unit='p.u.',
-#                             )
-
-
 class HYGOVModel(TGBase):
     """
     Implement HYGOV model.
@@ -150,7 +132,7 @@ class HYGOVModel(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='ue * tm0',
-                        e_str='ue*(-wd + pref + paux - R * dg) - pd'
+                        e_str='ue*(-wd + pref + paux - R * dg) - pd')
 
         self.LG = Lag(u=self.pd,
                       K=1,
@@ -170,7 +152,7 @@ class HYGOVModel(TGBase):
                         unit='p.u.',
                         tex_name="dg",
                         v_str='ue * tm0',
-                        e_str='INT_y + gainr * LG_y - gr0'
+                        e_str='INT_y + gainr * LG_y - dg'
                         )
 
         self.LAG = Lag(u=self.dg,
@@ -198,34 +180,6 @@ class HYGOVModel(TGBase):
         self.pout.e_str = 'ue * (At * (q_y - qNL) - Dt * wd * LAG_y) - pout'
 
 
-# class HYGOVDBModel(TGOV1Model):
-#     """
-#     Model HYGOV with deadband.
-#     """
-
-#     def __init__(self, system, config):
-#         TGOV1Model.__init__(self, system, config)
-#         self.DB = DeadBand1(u=self.wd, center=0.0, lower=self.dbL,
-#                             upper=self.dbU, tex_name='DB',
-#                             info='deadband for speed deviation',
-#                             )
-#         self.pd.e_str = 'ue * (-DB_y + pref + paux) * gain - pd'
-#         self.pout.e_str = '(LL_y - Dt * DB_y) - pout'
-
-
-# class TGOV1NDBModel(TGOV1DBModel):
-#     """
-#     Implementation of TGOV1NDB
-#     """
-
-#     def __init__(self, system, config):
-#         TGOV1DBModel.__init__(self, system, config)
-#         self.pref.v_str = 'tm0'
-#         self.pref.e_str = 'pref0 - pref'
-
-#         self.pd.e_str = 'ue*(DB_y * gain + pref + paux) - pd'
-
-
 class HYGOV(HYGOVData, HYGOVModel):
     """
     HYGOV turbine governor model.
@@ -236,13 +190,3 @@ class HYGOV(HYGOVData, HYGOVModel):
     def __init__(self, system, config):
         HYGOVData.__init__(self)
         HYGOVModel.__init__(self, system, config)
-
-
-# class TGOV1NDB(TGOV1DBData, TGOV1NDBModel):
-#     """
-#     TGOV1N turbine governor model with speed input deadband.
-#     """
-
-#     def __init__(self, system, config):
-#         TGOV1DBData.__init__(self)
-#         TGOV1NDBModel.__init__(self, system, config)
