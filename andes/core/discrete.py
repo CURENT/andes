@@ -162,6 +162,7 @@ class Discrete:
             if len(pos) == 0:
                 continue
 
+            # convert limie values to arrays
             if isinstance(self.__dict__[limit].v, np.ndarray):
                 lim_value = self.__dict__[limit].v
             else:
@@ -432,27 +433,36 @@ class Limiter(Discrete):
         and `adjust_lower` is True.
         """
 
-        if allow_adjust and adjust_lower:
+        if allow_adjust:
             mask = (val < lower)
 
             if sum(mask) == 0:
                 return
 
-            self._show_adjust(val, lower, mask, self.lower.name)
-            lower[mask] = val[mask]
-            self.mask_lower = mask
+            if adjust_lower:
+                self._show_adjust(val, lower, mask, self.lower.name, adjusted=True)
+                lower[mask] = val[mask]
+                self.mask_lower = mask  # store after adjusting
+            else:
+                self._show_adjust(val, lower, mask, self.lower.name, adjusted=False)
 
-    def _show_adjust(self, val, old_limit, mask, limit_name):
+    def _show_adjust(self, val, old_limit, mask, limit_name, adjusted=True):
         """
         Helper function to show a table of the adjusted limits.
         """
         idxes = np.array(self.owner.idx.v)[mask]
 
-        tab = Tab(title=f"{self.owner.class_name}.{self.name}: adjusted Limit <{limit_name}> to inputs",
+        adjust_or_not = 'adjusted' if adjusted else 'unadjusted'
+
+        tab = Tab(title=f"{self.owner.class_name}.{self.name}: {adjust_or_not} limit <{limit_name}>",
                   header=['Idx', 'Input', 'Old Limit'],
                   data=[*zip(idxes, val[mask], old_limit[mask])],
                   )
-        logger.info(tab.draw())
+
+        if adjusted:
+            logger.info(tab.draw())
+        else:
+            logger.warning(tab.draw())
 
     def do_adjust_upper(self, val, upper, allow_adjust=True, adjust_upper=False):
         """
@@ -464,14 +474,17 @@ class Limiter(Discrete):
         and `adjust_upper` is True.
         """
 
-        if allow_adjust and adjust_upper:
+        if allow_adjust:
             mask = (val > upper)
             if sum(mask) == 0:
                 return
 
-            self._show_adjust(val, upper, mask, self.upper.name)
-            upper[mask] = val[mask]
-            self.mask_upper = mask
+            if adjust_upper:
+                self._show_adjust(val, upper, mask, self.upper.name, adjusted=True)
+                upper[mask] = val[mask]
+                self.mask_upper = mask
+            else:
+                self._show_adjust(val, upper, mask, self.lower.name, adjusted=False)
 
 
 class SortedLimiter(Limiter):
@@ -672,7 +685,11 @@ class AntiWindup(Limiter):
         """
         pass
 
-    def check_eq(self):
+    def check_eq(self,
+                 allow_adjust=True,
+                 adjust_lower=False,
+                 adjust_upper=False,
+                 **kwargs):
         """
         Check the variables and equations and set the limiter flags.
         Reset differential equation values based on limiter flags.
@@ -684,11 +701,17 @@ class AntiWindup(Limiter):
         """
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+            self.do_adjust_upper(self.u.v, upper_v,
+                                 allow_adjust=allow_adjust,
+                                 adjust_upper=adjust_upper)
             self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+            self.do_adjust_lower(self.u.v, lower_v,
+                                 allow_adjust=allow_adjust,
+                                 adjust_lower=adjust_lower)
             self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
 
