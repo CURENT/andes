@@ -6,19 +6,17 @@ from andes.models.governor.tgbase import TGBase, TGBaseData
 class HYGOVData(TGBaseData):
     def __init__(self):
         super().__init__()
-        # Is ipower still approriate?
         self.R = NumParam(info='Speed regulation gain (mach. base default)',
                           tex_name='R',
                           default=0.05,
                           unit='p.u.',
                           ipower=True,
                           )
-        # Is power=True correct here?
         self.r = NumParam(info='Temporary droop (R<r)',
                           tex_name='r',
                           default=1,
                           unit='p.u.',
-                          power=True,
+                          ipower=True,
                           )
         self.GMAX = NumParam(info='Maximum governor response',
                              tex_name='G_{max}',
@@ -52,11 +50,9 @@ class HYGOVData(TGBaseData):
                             tex_name='q_{NL}',
                             power=True,
                             )
-        # TODO: default value
         self.Tw = NumParam(info='Water inertia time constant constant',
                            default=1,
                            tex_name='T_w')
-        # TODO: default value
         self.At = NumParam(info='Turbine gain',
                            default=1,
                            tex_name='A_t')
@@ -110,17 +106,19 @@ class HYGOVModel(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.gain = ConstService(v_str='ue/R',
-                                 tex_name='G',
-                                 )
+        self.tr = ConstService(v_str='r * Tr',
+                               tex_name='r*Tr',
+                               )
         self.gainr = ConstService(v_str='1/r',
                                   tex_name='g',
                                   )
-        # TODO: equations here can be inapproriate
+        self.q0 = ConstService(v_str='tm0 / At + qNL',
+                               tex_name='q_0',
+                               )
         self.pref = Algeb(info='Reference power input',
                           tex_name='P_{ref}',
-                          v_str='tm0 * R',
-                          e_str='pref0 * R - pref',
+                          v_str='R * q0',
+                          e_str='R * q0 - pref',
                           )
 
         self.wd = Algeb(info='Generator speed deviation',
@@ -132,27 +130,23 @@ class HYGOVModel(TGBase):
         self.pd = Algeb(info='Pref plus speed deviation times gain',
                         unit='p.u.',
                         tex_name="P_d",
-                        v_str='ue * tm0',
-                        e_str='ue*(-wd + pref + paux - R * dg) - pd')
+                        v_str='0',
+                        e_str='ue*(- wd + pref + paux - R * dg) - pd')
 
         self.LG = Lag(u=self.pd,
                       K=1,
                       T=self.Tf,
                       info='filter after speed deviation (e)',
                       )
-
-        # TODO: check y0
         self.INT = Integrator(u=self.LG_y,
-                              T="r*Tr", K=1,
-                              y0=0,
+                              T=self.tr, K=1,
+                              y0='q0',
                               check_init=False,
                               )
-
-        # TODO: check v_str
         self.dg = Algeb(info='desired gate (c)',
                         unit='p.u.',
                         tex_name="dg",
-                        v_str='ue * tm0',
+                        v_str='q0',
                         e_str='INT_y + gainr * LG_y - dg'
                         )
 
@@ -161,24 +155,20 @@ class HYGOVModel(TGBase):
                        T=self.Tg,
                        info='gate opening (g)',
                        )
-
-        # TODO: check v_str
         self.h = Algeb(info='turbine head',
                        unit='p.u.',
                        tex_name="h",
-                       v_str='ue * tm0',
-                       e_str='q_y / LAG_y * q_y / LAG_y - h'
+                       e_str='q_y**2 / LAG_y**2 - h',
+                       v_str='1',
                        )
-
-        # TODO: check y0
-        self.q = Integrator(u="1 - h",
+        self.q = Integrator(u="1 - q_y**2 / LAG_y**2",
                             T=self.Tw, K=1,
-                            y0=0,
+                            y0='q0',
                             check_init=False,
                             info="turbine flow (q)"
                             )
 
-        self.pout.e_str = 'ue * (At * (q_y - qNL) - Dt * wd * LAG_y) - pout'
+        self.pout.e_str = 'ue * (At * h * (q_y - qNL) - Dt * wd * LAG_y) - pout'
 
 
 class HYGOV(HYGOVData, HYGOVModel):
@@ -186,6 +176,10 @@ class HYGOV(HYGOVData, HYGOVModel):
     HYGOV turbine governor model.
 
     Implements the PSS/E HYGOV model without deadband.
+
+    Reference:
+
+    [1] PSSE, Model Library, HYGOV
     """
 
     def __init__(self, system, config):
