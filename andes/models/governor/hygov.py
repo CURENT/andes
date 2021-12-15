@@ -1,5 +1,5 @@
 from andes.core import Algeb, ConstService, NumParam
-from andes.core.block import Integrator, Lag
+from andes.core.block import Integrator, Lag, DeadBand1
 from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
@@ -96,6 +96,21 @@ class HYGOVData(TGBaseData):
         #                      tex_name='PGV_5')
 
 
+class HYGOVDBData(HYGOVData):
+    def __init__(self):
+        HYGOVData.__init__(self)
+        self.dbL = NumParam(info='Lower bound of deadband',
+                            tex_name='db_L',
+                            default=0.0,
+                            unit='p.u.',
+                            )
+        self.dbU = NumParam(info='Upper bound of deadband',
+                            tex_name='db_U',
+                            default=0.0,
+                            unit='p.u.',
+                            )
+
+
 class HYGOVModel(TGBase):
     """
     Implement HYGOV model.
@@ -131,7 +146,8 @@ class HYGOVModel(TGBase):
                         unit='p.u.',
                         tex_name="P_d",
                         v_str='0',
-                        e_str='ue*(- wd + pref + paux - R * dg) - pd')
+                        e_str='ue * (- wd + pref + paux - R * dg) - pd',
+                        )
 
         self.LG = Lag(u=self.pd,
                       K=1,
@@ -171,6 +187,20 @@ class HYGOVModel(TGBase):
         self.pout.e_str = 'ue * (At * h * (q_y - qNL) - Dt * wd * LAG_y) - pout'
 
 
+class HYGOVDBModel(HYGOVModel):
+    """
+    Model HYGOV with deadband.
+    """
+
+    def __init__(self, system, config):
+        HYGOVModel.__init__(self, system, config)
+        self.DB = DeadBand1(u=self.wd, center=0.0, lower=self.dbL,
+                            upper=self.dbU, tex_name='DB',
+                            info='deadband for speed deviation',
+                            )
+        self.pd.e_str = 'ue * (- DB_y + pref + paux - R * dg) - pd'
+
+
 class HYGOV(HYGOVData, HYGOVModel):
     """
     HYGOV turbine governor model.
@@ -185,3 +215,13 @@ class HYGOV(HYGOVData, HYGOVModel):
     def __init__(self, system, config):
         HYGOVData.__init__(self)
         HYGOVModel.__init__(self, system, config)
+
+
+class HYGOVDB(HYGOVDBData, HYGOVDBModel):
+    """
+    HYGOV turbine governor model with speed input deadband.
+    """
+
+    def __init__(self, system, config):
+        HYGOVDBData.__init__(self)
+        HYGOVDBModel.__init__(self, system, config)
