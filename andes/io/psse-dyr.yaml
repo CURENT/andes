@@ -805,6 +805,42 @@ TGOV1:
         T3: T3
         Dt: Dt
 
+HYGOV:
+    inputs:
+        - BUS
+        - ID
+        - R
+        - Tr
+        - Tf
+        - Tg
+        - VELM
+        - GMAX
+        - GMIN
+        - Tw
+        - At
+        - Dturb
+        - qNL
+    destination: HYGOV
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        R: R
+        r: r
+        Tr: Tr
+        Tf: Tf
+        Tg: Tg
+        VELM: VELM
+        GMAX: GMAX
+        GMIN: GMIN
+        Tw: Tw
+        At: At
+        Dt: Dturb
+        qNL: qNL
+
 IEESGO:
     inputs:
         - BUS
