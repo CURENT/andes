@@ -1,5 +1,5 @@
 from andes.core import Algeb, ConstService, NumParam
-from andes.core.block import Integrator, Lag, DeadBand1
+from andes.core.block import Integrator, Lag, DeadBand1, AntiWindup
 from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
@@ -28,6 +28,12 @@ class HYGOVData(TGBaseData):
                              tex_name='G_{min}',
                              unit='p.u.',
                              default=0.0,
+                             power=True,
+                             )
+        self.VELM = NumParam(info='Gate velocity limit',
+                             tex_name='VELM',
+                             unit='p.u.',
+                             default=0.3,
                              power=True,
                              )
 
@@ -165,6 +171,17 @@ class HYGOVModel(TGBase):
                         v_str='q0',
                         e_str='INT_y + gainr * LG_y - dg'
                         )
+        self.dg_limv = AntiWindup(u=self.dg,
+                                  lower=self.GMIN,
+                                  upper=self.GMAX,
+                                  tex_name='lim_{dgv}',
+                                  )
+        # TODO: apply v limiter
+        # self.dg_limg = AntiWindup(u=self.dg,
+        #                           lower=self.VELM,
+        #                           upper='-VELM',
+        #                           tex_name='lim_{dgg}',
+        #                           )
 
         self.LAG = Lag(u=self.dg,
                        K=1,
