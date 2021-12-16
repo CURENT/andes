@@ -182,9 +182,15 @@ class REGCA1Model(Model):
                                    tex_name='I_{qcmd0}',
                                    )
 
+        self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
+                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
+                             info='Ip gain during low voltage',
+                             tex_name='L_{VG}',
+                             )
+
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
-                           e_str='Ipcmd0 - Ipcmd', v_str='Ipcmd0')
+                           e_str='Ipcmd0 / LVG_y - Ipcmd', v_str='Ipcmd0 / LVG_y')
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
@@ -209,12 +215,6 @@ class REGCA1Model(Model):
         self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
                                  tex_name='k_{LVG}',
                                  )
-
-        self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
-                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
-                             info='Ip gain during low voltage',
-                             tex_name='L_{VG}',
-                             )
 
         # piece-wise gain for LVPL
         self.kLVPL = ConstService(v_str='Lvplsw * Lvpl1 / (Brkpt - Zerox)',
