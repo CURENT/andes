@@ -188,9 +188,13 @@ class REGCA1Model(Model):
                              tex_name='L_{VG}',
                              )
 
+        # `Ipcmd` is not defined when the initial `LVG_y` is zero
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
-                           e_str='Ipcmd0 / LVG_y - Ipcmd', v_str='Ipcmd0 / LVG_y')
+                           e_str='Ipcmd0 - Ipcmd * LVG_y',
+                           v_str='Indicator(LVG_y>0) * Ipcmd0 / LVG_y + Indicator(LVG_y<=0) * 1',
+                           diag_eps=True,
+                           )
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
