@@ -285,8 +285,9 @@ class REGCA1(REGCA1Data, REGCA1Model):
 
     Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
 
-    Volim is voltage lim for high volt. reactive current management.
-    Initialization error will occur if the deviation from bus voltage is large.
+    Volim is the voltage limit for high voltage reactive current management,
+    which should be large than static bus voltage (Volim > v),
+    or initialization error will occur.
     """
 
     def __init__(self, system, config):
