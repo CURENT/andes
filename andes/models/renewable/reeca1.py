@@ -403,10 +403,13 @@ class REECA1Model(Model):
                           unit='p.u.',
                           )
 
+        self.qref0 = ConstService(v_str='v - Vref1',
+                                  tex_name='q_{ref0}',
+                                  )
         self.Qref = Algeb(tex_name='Q_{ref}',
                           info='external Q ref',
-                          v_str='q0',
-                          e_str='q0 - Qref',
+                          v_str='qref0',
+                          e_str='qref0 - Qref',
                           unit='p.u.',
                           )
 
@@ -423,22 +426,26 @@ class REECA1Model(Model):
                           e_str='(PFsel*PFlim_zi + QMin*PFlim_zl + QMax*PFlim_zu) - Qe - Qerr',
                           )
 
-        self.PIQ = PITrackAWFreeze(u=self.Qerr,
+        self.PIQ = PITrackAWFreeze(u='SWV_s1 * Qerr + SWV_s0 * 0',
                                    kp=self.Kqp, ki=self.Kqi, ks=self.config.kqs,
                                    lower=self.VMIN, upper=self.VMAX,
                                    freeze=self.Volt_dip,
                                    )
 
         # If `VFLAG=0`, set the input as `Vref1` (see the NREL report)
-        self.Vsel = GainLimiter(u='SWV_s0 * Vref1 + SWV_s1 * PIQ_y',
+        self.Vsel = GainLimiter(u='SWV_s0 * (Vref1 + SWPF_s0 * Qref + SWPF_s1 * Qcpf) + SWV_s1 * PIQ_y',
                                 K=1, R=1,
                                 lower=self.VMIN, upper=self.VMAX,
                                 info='Selection output of VFLAG',
                                 )
 
         # --- Placeholders for `Iqmin` and `Iqmax` ---
-
-        self.s4 = LagFreeze(u='PFsel / vp', T=self.Tiq, K=1,
+        self.s4in = Algeb(info='Voltage error (Vref0)',
+                          v_str='(PFsel + SWQ_s0 * (Iqcmd0 * vp - PFsel)) / vp',
+                          e_str='(PFsel + SWQ_s0 * (Iqcmd0 * vp - PFsel)) / vp - s4in',
+                          tex_name='s_{4in}',
+                          )
+        self.s4 = LagFreeze(u=self.s4in, T=self.Tiq, K=1,
                             freeze=self.Volt_dip,
                             tex_name='s_4',
                             info='Filter for calculated voltage with freeze',
