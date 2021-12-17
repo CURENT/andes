@@ -182,9 +182,19 @@ class REGCA1Model(Model):
                                    tex_name='I_{qcmd0}',
                                    )
 
+        self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
+                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
+                             info='Ip gain during low voltage',
+                             tex_name='L_{VG}',
+                             )
+
+        # `Ipcmd` is not defined when the initial `LVG_y` is zero
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
-                           e_str='Ipcmd0 - Ipcmd', v_str='Ipcmd0')
+                           e_str='Ipcmd0 - Ipcmd * LVG_y',
+                           v_str='Indicator(LVG_y>0) * Ipcmd0 / LVG_y + Indicator(LVG_y<=0) * 1',
+                           diag_eps=True,
+                           )
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
@@ -209,12 +219,6 @@ class REGCA1Model(Model):
         self.kLVG = ConstService(v_str='1 / (Lvpnt1 - Lvpnt0)',
                                  tex_name='k_{LVG}',
                                  )
-
-        self.LVG = Piecewise(u=self.v, points=('Lvpnt0', 'Lvpnt1'),
-                             funs=('0', '(v - Lvpnt0) * kLVG', '1'),
-                             info='Ip gain during low voltage',
-                             tex_name='L_{VG}',
-                             )
 
         # piece-wise gain for LVPL
         self.kLVPL = ConstService(v_str='Lvplsw * Lvpl1 / (Brkpt - Zerox)',
@@ -280,6 +284,10 @@ class REGCA1(REGCA1Data, REGCA1Model):
     Renewable energy generator model type A.
 
     Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
+
+    Volim is the voltage limit for high voltage reactive current management,
+    which should be large than static bus voltage (Volim > v),
+    or initialization error will occur.
     """
 
     def __init__(self, system, config):
