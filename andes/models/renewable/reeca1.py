@@ -332,7 +332,7 @@ class REECA1Model(Model):
 
         self.Iqcmd = ExtAlgeb(model='RenGen', src='Iqcmd', indexer=self.reg, export=False,
                               info='Retrieved Iqcmd of RenGen',
-                              e_str='-Iqcmd0 - IqHL_y',
+                              e_str='-Iqcmd0 + IqHL_y',
                               )
 
         self.p0 = ExtService(model='RenGen',
