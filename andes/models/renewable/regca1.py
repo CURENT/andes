@@ -284,6 +284,9 @@ class REGCA1(REGCA1Data, REGCA1Model):
     Renewable energy generator model type A.
 
     Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
+
+    Volim is voltage lim for high volt. reactive current management.
+    Initialization error will occur if the deviation from bus voltage is large.
     """
 
     def __init__(self, system, config):
