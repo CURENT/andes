@@ -123,6 +123,9 @@ class HYGOVModel(TGBase):
     Implement HYGOV model.
 
     The input lead-lag filter is ignored.
+
+    The g (LAG) is initialized at q (Integrator) initial value to
+    simplify the initializaiton equations.
     """
 
     def __init__(self, system, config):
