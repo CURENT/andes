@@ -394,22 +394,21 @@ class REECA1Model(Model):
         self.S1 = Lag(u='Pe', T=self.Tp, K=1, tex_name='S_1', info='Pe filter',
                       )
 
+        self.qref0 = ConstService(tex_name='q_{ref0}')
+        self.qref0.v_str = 'SWQ_s1 * (v - Vref1) + SWQ_s0 * Iqcmd0 * (v * VLower_zi + 0.01 * VLower_zl)'
+        self.Qref = Algeb(tex_name='Q_{ref}',
+                          info='external Q ref',
+                          v_str='qref0',
+                          e_str='qref0 - Qref',
+                          unit='p.u.',
+                          )
+
         # ignore `Qcpf` if `pfaref` is pi/2 by multiplying (1-zp0)
         self.Qcpf = Algeb(tex_name='Q_{cpf}',
                           info='Q calculated from P and power factor',
                           v_str='q0',
                           e_str='(1-zp0) * (S1_y * tan(pfaref) - Qcpf)',
                           diag_eps=True,
-                          unit='p.u.',
-                          )
-
-        self.qref0 = ConstService(v_str='v - Vref1',
-                                  tex_name='q_{ref0}',
-                                  )
-        self.Qref = Algeb(tex_name='Q_{ref}',
-                          info='external Q ref',
-                          v_str='qref0',
-                          e_str='qref0 - Qref',
                           unit='p.u.',
                           )
 
@@ -445,7 +444,8 @@ class REECA1Model(Model):
                           e_str='(PFsel + SWQ_s0 * (Iqcmd0 * vp - PFsel)) / vp - s4in',
                           tex_name='s_{4in}',
                           )
-        self.s4 = LagFreeze(u=self.s4in, T=self.Tiq, K=1,
+        self.s4 = LagFreeze(u='PFsel / vp',
+                            T=self.Tiq, K=1,
                             freeze=self.Volt_dip,
                             tex_name='s_4',
                             info='Filter for calculated voltage with freeze',
@@ -648,7 +648,7 @@ class REECA1Model(Model):
                                   info='Lower limit on Ipcmd',
                                   )
 
-        self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+        self.PIV = PITrackAWFreeze(u='SWQ_s1 * (Vsel_y - s0_y * SWV_s0)',
                                    x0='-SWQ_s1 * Iqcmd0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
                                    lower=self.Iqmin, upper=self.Iqmax,
