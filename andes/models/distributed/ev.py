@@ -1,6 +1,6 @@
 """Electric vehicle model"""
 
-from andes.core.discrete import Limiter
+from andes.core.discrete import Limiter, Delay
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 from andes.models.distributed.esd1 import ESD1Data, ESD1Model
@@ -114,3 +114,36 @@ class EV2(EV2Data, EV2Model):
     def __init__(self, system, config):
         EV2Data.__init__(self)
         EV2Model.__init__(self, system, config)
+
+
+class EVTDData(EV1Data):
+    """
+    Data for electric vehicle model 2 with input time delay.
+    """
+
+    def __init__(self):
+        EV2Data.__init__(self)
+        self.td = NumParam(default=0,
+                           info='power ratio multiplied to pmx in [-1, 1]',
+                           tex_name='t_{d}',
+                           )
+
+
+class EVTDModel(EV2Model):
+    """
+    Model implementation of EVTD.
+    """
+
+    def __init__(self, system, config):
+        EV2Model.__init__(self, system, config)
+        self.fd = Delay(u=self.f, mode='time', delay=self.td.v)
+
+
+class EVTD(EVTDData, EVTDModel):
+    """
+    Electric vehicle model type 2 with input time delay.
+    """
+
+    def __init__(self, system, config):
+        EVTDData.__init__(self)
+        EVTDModel.__init__(self, system, config)

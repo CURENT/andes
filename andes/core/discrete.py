@@ -1258,6 +1258,64 @@ class Delay(Discrete):
                 self.t = np.append(self.t, dae_t)
                 self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
 
+                for nid in range(len(self.delay):
+
+                    if dae_t - self.t[0] > self.delay[nid]:
+                        t_interp = dae_t - self.delay
+                        idx = np.argmax(self.t >= t_interp) - 1
+                        v_interp = interp_n2(t_interp,
+                                                self.t[idx:idx+2],
+                                                self._v_mem[:, idx:idx + 2])
+
+                        self.t[idx] = t_interp
+                        self._v_mem[:, idx] = v_interp
+
+                        self.t = np.delete(self.t, np.arange(0, idx))
+                        self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
+
+        self.v[:] = self._v_mem[:, 0]
+
+    def __repr__(self):
+        out = ''
+        out += f'v:\n {self.v}\n'
+        out += f't:\n {self.t}\n'
+        out += f'_v_men: \n {self._v_mem}\n'
+        return out
+
+
+class DelayVec(Delay):
+    """
+    Delay with vector input.
+    """
+
+def check_var(self, dae_t, *args, **kwargs):
+        # Storage:
+        # Output values is in the first col.
+        # Latest values are stored in /appended to the last column
+        self.rewind = False
+
+        if dae_t == 0:
+            self._v_mem[:] = self.u.v[:, None]
+
+        elif dae_t < self.t[-1]:
+            self.rewind = True
+            self.t[-1] = dae_t
+            self._v_mem[:, -1] = self.u.v
+
+        elif dae_t == self.t[-1]:
+            self._v_mem[:, -1] = self.u.v
+
+        elif dae_t > self.t[-1]:
+            if self.mode == 'step':
+                self.t[:-1] = self.t[1:]
+                self.t[-1] = dae_t
+
+                self._v_mem[:, :-1] = self._v_mem[:, 1:]
+                self._v_mem[:, -1] = self.u.v
+            else:
+                self.t = np.append(self.t, dae_t)
+                self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
+
                 if dae_t - self.t[0] > self.delay:
                     t_interp = dae_t - self.delay
                     idx = np.argmax(self.t >= t_interp) - 1
@@ -1272,13 +1330,6 @@ class Delay(Discrete):
                     self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
 
         self.v[:] = self._v_mem[:, 0]
-
-    def __repr__(self):
-        out = ''
-        out += f'v:\n {self.v}\n'
-        out += f't:\n {self.t}\n'
-        out += f'_v_men: \n {self._v_mem}\n'
-        return out
 
 
 class Average(Delay):
