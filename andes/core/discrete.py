@@ -1191,11 +1191,9 @@ class DeadBandRT(DeadBand):
 class Delay(Discrete):
     """
     Delay class to memorize past variable values.
-
     Delay allows to impose a predefined "delay" (in either steps or seconds)
     for an input variable. The amount of delay is a scalar and has to be fixed
     at model definition in the current implementation.
-
     """
 
     def __init__(self, u, mode='step', delay=0,
@@ -1258,20 +1256,18 @@ class Delay(Discrete):
                 self.t = np.append(self.t, dae_t)
                 self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
 
-                for nid in range(len(self.delay):
+                if dae_t - self.t[0] > self.delay:
+                    t_interp = dae_t - self.delay
+                    idx = np.argmax(self.t >= t_interp) - 1
+                    v_interp = interp_n2(t_interp,
+                                         self.t[idx:idx+2],
+                                         self._v_mem[:, idx:idx + 2])
 
-                    if dae_t - self.t[0] > self.delay[nid]:
-                        t_interp = dae_t - self.delay
-                        idx = np.argmax(self.t >= t_interp) - 1
-                        v_interp = interp_n2(t_interp,
-                                                self.t[idx:idx+2],
-                                                self._v_mem[:, idx:idx + 2])
+                    self.t[idx] = t_interp
+                    self._v_mem[:, idx] = v_interp
 
-                        self.t[idx] = t_interp
-                        self._v_mem[:, idx] = v_interp
-
-                        self.t = np.delete(self.t, np.arange(0, idx))
-                        self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
+                    self.t = np.delete(self.t, np.arange(0, idx))
+                    self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
 
         self.v[:] = self._v_mem[:, 0]
 
@@ -1288,48 +1284,77 @@ class DelayVec(Delay):
     Delay with vector input.
     """
 
-def check_var(self, dae_t, *args, **kwargs):
+    def __init__(self, u, name=None, tex_name=None, info=None, delay=0):
+        Delay.__init__(self, u=u, mode='time', delay=delay,
+                       name=name, tex_name=tex_name, info=info)
+        self.shp = len(self.delay)
+
+    def list2array(self, n):
+        """
+        Allocate memory for storage arrays.
+        """
+        super().list2array(n)
+        self.t = {nl: [] for nl in range(self.n)}  # time to store the value
+        self.v = np.zeros((n, 1))  # output value
+        self._v_mem = {nl: [] for nl in range(self.n)}  # memory value
+
+    def check_var(self, dae_t, *args, **kwargs):
         # Storage:
         # Output values is in the first col.
         # Latest values are stored in /appended to the last column
         self.rewind = False
 
-        if dae_t == 0:
-            self._v_mem[:] = self.u.v[:, None]
+        for nid in range(self.shp):
+            if dae_t == 0:
+                # self._v_mem[:] = self.u.v[:, None]
+                self._v_mem[nid] = self.u.v[nid]
 
-        elif dae_t < self.t[-1]:
-            self.rewind = True
-            self.t[-1] = dae_t
-            self._v_mem[:, -1] = self.u.v
+            elif dae_t < self.t[nid][-1]:
+                self.rewind = True
+                self.t[nid][-1] = dae_t
+                # self._v_mem[:, -1] = self.u.v
+                self._v_mem[nid][-1] = self.u.v[nid]
 
-        elif dae_t == self.t[-1]:
-            self._v_mem[:, -1] = self.u.v
+            elif dae_t == self.t[nid][-1]:
+                # self._v_mem[:, -1] = self.u.v
+                self._v_mem[nid][-1] = self.u.v[nid]
 
-        elif dae_t > self.t[-1]:
-            if self.mode == 'step':
-                self.t[:-1] = self.t[1:]
-                self.t[-1] = dae_t
+            elif dae_t > self.t[nid][-1]:
+                self.t[nid] = np.append(self.t[nid], dae_t)
+                self._v_mem[nid] = np.hstack((self._v_mem[nid], self.u.v[nid]))
 
-                self._v_mem[:, :-1] = self._v_mem[:, 1:]
-                self._v_mem[:, -1] = self.u.v
-            else:
-                self.t = np.append(self.t, dae_t)
-                self._v_mem = np.hstack((self._v_mem, self.u.v[:, None]))
-
-                if dae_t - self.t[0] > self.delay:
-                    t_interp = dae_t - self.delay
+                if dae_t - self.t[nid][0] > self.delay[nid]:
+                    t_interp = dae_t - self.delay[nid]
                     idx = np.argmax(self.t >= t_interp) - 1
                     v_interp = interp_n2(t_interp,
-                                         self.t[idx:idx+2],
-                                         self._v_mem[:, idx:idx + 2])
+                                        self.t[nid][idx:idx+2],
+                                        self._v_mem[nid][:, idx:idx + 2])
 
                     self.t[idx] = t_interp
-                    self._v_mem[:, idx] = v_interp
+                    self._v_mem[nid][:, idx] = v_interp
 
-                    self.t = np.delete(self.t, np.arange(0, idx))
-                    self._v_mem = np.delete(self._v_mem, np.arange(0, idx), axis=1)
+                    self.t[nid] = np.delete(self.t[nid], np.arange(0, idx))
+                    self._v_mem[nid] = np.delete(self._v_mem[nid], np.arange(0, idx), axis=1)
 
-        self.v[:] = self._v_mem[:, 0]
+            self.v[nid] = self._v_mem[nid][0]
+
+
+class Average(Delay):
+    """
+    Compute the average of a BaseVar over a period of time or a number of samples.
+    """
+
+    def check_var(self, dae_t, *args, **kwargs):
+        Delay.check_var(self, dae_t, *args, **kwargs)
+
+        if dae_t == 0:
+            self.v[:] = self._v_mem[:, -1]
+            self._v_mem[:, :-1] = 0
+            return
+        else:
+            nt = len(self.t)
+            self.v[:] = 0.5 * np.sum((self._v_mem[:, 1-nt:] + self._v_mem[:, -nt:-1]) *
+                                     (self.t[1:] - self.t[:-1]), axis=1) / (self.t[-1] - self.t[0])
 
 
 class Average(Delay):
