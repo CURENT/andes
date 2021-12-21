@@ -439,11 +439,6 @@ class REECA1Model(Model):
                                 )
 
         # --- Placeholders for `Iqmin` and `Iqmax` ---
-        self.s4in = Algeb(info='Voltage error (Vref0)',
-                          v_str='(PFsel + SWQ_s0 * (Iqcmd0 * vp - PFsel)) / vp',
-                          e_str='(PFsel + SWQ_s0 * (Iqcmd0 * vp - PFsel)) / vp - s4in',
-                          tex_name='s_{4in}',
-                          )
         self.s4 = LagFreeze(u='PFsel / vp',
                             T=self.Tiq, K=1,
                             freeze=self.Volt_dip,
