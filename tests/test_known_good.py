@@ -10,6 +10,7 @@ from andes.utils import get_case
 
 logger = logging.getLogger(__name__)
 
+
 class TestKnownResults(unittest.TestCase):
 
     sets = (('kundur/kundur_aw.json', 'kundur_aw_10s.pkl', 10),
