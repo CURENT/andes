@@ -74,5 +74,8 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
     np.testing.assert_almost_equal(ss.dae.xy[indices],
                                    results,
                                    err_msg=f"{case} test error",
-                                   )
+                                   decimal=2,)
+    # actual algeb. errors will be `tstep` times greater.
+    # combined with a tol of 1e-4, accuracy is to the 2nd decimal place.
+
     return ss
