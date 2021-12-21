@@ -72,7 +72,7 @@ class Discrete:
         """
         pass
 
-    def check_eq(self):
+    def check_eq(self, **kwargs):
         """
         This function is called in ``l_check_eq`` after updating equations.
 
