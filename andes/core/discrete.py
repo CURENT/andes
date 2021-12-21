@@ -140,7 +140,7 @@ class Discrete:
 
         for f, limit in self.warn_flags:
             if f not in self.export_flags:
-                logger.error(f'warn_flags contain unknown flag {f}')
+                logger.error('warn_flags contain unknown flag %s', f)
                 continue
 
             mask = np.ones(self.owner.n, dtype=bool)
@@ -149,7 +149,7 @@ class Discrete:
             elif limit == 'lower':
                 mask = self.mask_lower
             else:
-                logger.debug(f'Unknown limit name <{limit}>')
+                logger.debug('Unknown limit name <%s>', limit)
 
             # process online devices only
             flag_vals = np.logical_and(self.__dict__[f], self.owner.u.v)
