@@ -31,12 +31,12 @@ class AC8BData(ExcBaseData):
                            default=10,
                            vrange=(10, 500),
                            )
-        self.kD = NumParam(info='PID direvative coeff.',
+        self.kD = NumParam(info='PID derivative coeff.',
                            tex_name='k_D',
                            default=10,
                            vrange=(10, 500),
                            )
-        self.Td = NumParam(info='PID direvative time constant.',
+        self.Td = NumParam(info='PID derivative time constant.',
                            tex_name='T_d',
                            default=0.2,
                            vrange=(0, 0.5),
