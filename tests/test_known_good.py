@@ -1,4 +1,5 @@
 import os
+import logging
 import unittest
 
 import dill
@@ -7,6 +8,7 @@ import numpy as np
 import andes
 from andes.utils import get_case
 
+logger = logging.getLogger(__name__)
 
 class TestKnownResults(unittest.TestCase):
 
@@ -64,6 +66,9 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
     indices = np.hstack((ss.GENROU.omega.a,
                          ss.dae.n + ss.GENROU.tm.a,
                          ss.dae.n + ss.GENROU.vf.a))
+    logger.info(case)
+    logger.info("This results: %s", ss.dae.xy[indices])
+    logger.info("Known results: %s", results)
 
     np.testing.assert_almost_equal(ss.dae.xy[indices],
                                    results,
