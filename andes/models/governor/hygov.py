@@ -1,3 +1,7 @@
+"""
+HYGOV hydro governor model.
+"""
+
 from andes.core import Algeb, ConstService, NumParam, State
 from andes.core.block import Integrator, Lag, DeadBand1, AntiWindupRate
 from andes.core.service import VarService
@@ -123,6 +127,9 @@ class HYGOVModel(TGBase):
     Implement HYGOV model.
 
     The input lead-lag filter is ignored.
+
+    The ``g`` signal (LAG) is initialized to the initial value of
+    ``q`` (Integrator) to simplify the initializaiton equations.
     """
 
     def __init__(self, system, config):
