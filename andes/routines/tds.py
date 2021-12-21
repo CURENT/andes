@@ -28,7 +28,7 @@ class TDS(BaseRoutine):
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('method', 'trapezoid'),
-                                     ('tol', 1e-6),
+                                     ('tol', 1e-4),
                                      ('t0', 0.0),
                                      ('tf', 20.0),
                                      ('fixt', 1),
@@ -183,6 +183,12 @@ class TDS(BaseRoutine):
 
         system.init(system.exist.tds, routine='tds')
 
+        self.fg_update(system.exist.tds, init=True)
+
+        for item in system.antiwindups:
+            for key, _, eqval in item.x_set:
+                np.put(system.dae.x, key, eqval)
+
         # only store switch times when not replaying CSV data
         if self.data_csv is None:
             system.store_switch_times(system.exist.tds)
@@ -228,6 +234,9 @@ class TDS(BaseRoutine):
             logger.info("Initialization was successful.")
         elif self.test_ok is False:
             logger.error("Initialization failed!!")
+            logger.error("If you are developing a new model, check the initialization with")
+            logger.error("   andes -v 10 run -r tds --init %s", self.system.files.case)
+            logger.error("Otherwise, check the variables that are initialized out of limits.")
         else:
             logger.warning("Initialization results were not verified.")
 
@@ -568,7 +577,7 @@ class TDS(BaseRoutine):
         Update f and g to see if initialization is successful.
         """
         system = self.system
-        self.fg_update(system.exist.pflow_tds)
+        # fg_update is called in TDS.init()
         system.j_update(models=system.exist.pflow_tds)
 
         # reset diff. RHS where `check_init == False`
@@ -691,7 +700,7 @@ class TDS(BaseRoutine):
 
         return ret
 
-    def fg_update(self, models):
+    def fg_update(self, models, init=False):
         """
         Perform one round of evaluation for one iteration step.
         The following operations are performed in order:
@@ -719,7 +728,7 @@ class TDS(BaseRoutine):
         # 12/08/2020: Moved `l_update_eq` to before `g_update`
         #   because some algebraic variables depend on pegged states.
         system.f_update(models=models)
-        system.l_update_eq(models=models)
+        system.l_update_eq(models=models, init=init)
 
         system.g_update(models=models)
         system.fg_to_dae()

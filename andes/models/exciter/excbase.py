@@ -138,7 +138,7 @@ class ExcBase(Model):
         # output excitation voltage
         self.vout = Algeb(info='Exciter final output voltage',
                           tex_name='v_{out}',
-                          v_str='vf0',
+                          v_str='ue * vf0',
                           diag_eps=True,
                           )
 
@@ -183,6 +183,9 @@ class ExcVsum:
 class ExcACSat:
     """
     Subclass for the saturation commonly used in AC-type exciters.
+
+    The inheriting class must define ``self.INTin`` as a string of
+    equation for the input to ``self.INT``.
     """
 
     def __init__(self):

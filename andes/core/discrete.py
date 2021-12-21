@@ -72,7 +72,7 @@ class Discrete:
         """
         pass
 
-    def check_eq(self):
+    def check_eq(self, **kwargs):
         """
         This function is called in ``l_check_eq`` after updating equations.
 
@@ -118,6 +118,15 @@ class Discrete:
         return self.__class__.__name__
 
     def list2array(self, n):
+        """
+        Allocate memory for the discrete flags specified in `self.export_flags`.
+
+        Parameters
+        ----------
+        n : int
+            Number of elements in the array. Provided by the calling function.
+        """
+
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n, dtype=float)
 
@@ -131,30 +140,72 @@ class Discrete:
 
         for f, limit in self.warn_flags:
             if f not in self.export_flags:
-                logger.error(f'warn_flags contain unknown flag {f}')
+                logger.error('warn_flags contain unknown flag %s', f)
                 continue
 
-            pos = np.argwhere(np.not_equal(self.__dict__[f], 0)).ravel()
+            mask = np.ones(self.owner.n, dtype=bool)
+            if limit == 'upper':
+                mask = self.mask_upper
+            elif limit == 'lower':
+                mask = self.mask_lower
+            else:
+                logger.debug('Unknown limit name <%s>', limit)
+
+            # process online devices only
+            flag_vals = np.logical_and(self.__dict__[f], self.owner.u.v)
+
+            # ignore limits that has been adjusted
+            flag_vals = np.logical_and(flag_vals, np.logical_not(mask))
+
+            pos = np.argwhere(np.not_equal(flag_vals, 0)).ravel()
+
             if len(pos) == 0:
                 continue
 
-            err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
+            # convert limie values to arrays
             if isinstance(self.__dict__[limit].v, np.ndarray):
-                lim_value = self.__dict__[limit].v[pos]
-            else:
                 lim_value = self.__dict__[limit].v
+            else:
+                lim_value = self.__dict__[limit].v * np.ones(self.owner.n)
 
-            err_data = {'idx': [self.owner.idx.v[i] for i in pos],
-                        'Flag': [f] * len(pos),
-                        'Input Value': self.u.v[pos],
-                        'Limit': lim_value * np.ones_like(pos),
-                        }
+            at_limit_pos = list()
+            out_limit_pos = list()
 
-            tab = Tab(title=err_msg,
-                      header=err_data.keys(),
-                      data=list(map(list, zip(*err_data.values()))))
+            for item in pos:
+                if np.isclose(lim_value[item], self.u.v[item]):
+                    at_limit_pos.append(item)
+                else:
+                    out_limit_pos.append(item)
 
-            logger.warning(tab.draw())
+            if len(out_limit_pos) > 0:
+                # warn out of limits
+                err_msg = f'{self.owner.class_name}.{self.name} out of limits <{self.__dict__[limit].name}>'
+                err_data = {'idx': [self.owner.idx.v[i] for i in out_limit_pos],
+                            'Flag': [f] * len(out_limit_pos),
+                            'Input Value': self.u.v[out_limit_pos],
+                            'Limit': lim_value[out_limit_pos]
+                            }
+
+                tab = Tab(title=err_msg,
+                          header=err_data.keys(),
+                          data=list(map(list, zip(*err_data.values()))))
+
+                logger.warning(tab.draw())
+
+            if len(at_limit_pos) > 0:
+                # warn at limits
+                err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
+                err_data = {'idx': [self.owner.idx.v[i] for i in at_limit_pos],
+                            'Flag': [f] * len(at_limit_pos),
+                            'Input Value': self.u.v[at_limit_pos],
+                            'Limit': lim_value[at_limit_pos]
+                            }
+
+                tab = Tab(title=err_msg,
+                          header=err_data.keys(),
+                          data=list(map(list, zip(*err_data.values()))))
+
+                logger.debug(tab.draw())
 
     def check_iter_err(self, niter=None, err=None):
         """
@@ -317,6 +368,9 @@ class Limiter(Discrete):
         self.zl = np.array([zl])
         self.zi = np.array([zi])
 
+        self.mask_upper = None
+        self.mask_lower = None
+
         self.has_check_var = True
 
         self.export_flags.append('zi')
@@ -346,6 +400,7 @@ class Limiter(Discrete):
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
 
+            # FIXME: adjust will not be successful when sign is -1
             if self.allow_adjust and allow_adjust and adjust_upper:
                 self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
 
@@ -357,6 +412,7 @@ class Limiter(Discrete):
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
 
+            # FIXME: adjust will not be successful when sign is -1
             if self.allow_adjust and allow_adjust and adjust_lower:
                 self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
 
@@ -377,11 +433,36 @@ class Limiter(Discrete):
         and `adjust_lower` is True.
         """
 
-        if allow_adjust and adjust_lower:
+        if allow_adjust:
             mask = (val < lower)
-            lower[mask] = val[mask]
 
-        # TODO: store debug info
+            if sum(mask) == 0:
+                return
+
+            if adjust_lower:
+                self._show_adjust(val, lower, mask, self.lower.name, adjusted=True)
+                lower[mask] = val[mask]
+                self.mask_lower = mask  # store after adjusting
+            else:
+                self._show_adjust(val, lower, mask, self.lower.name, adjusted=False)
+
+    def _show_adjust(self, val, old_limit, mask, limit_name, adjusted=True):
+        """
+        Helper function to show a table of the adjusted limits.
+        """
+        idxes = np.array(self.owner.idx.v)[mask]
+
+        adjust_or_not = 'adjusted' if adjusted else 'unadjusted'
+
+        tab = Tab(title=f"{self.owner.class_name}.{self.name}: {adjust_or_not} limit <{limit_name}>",
+                  header=['Idx', 'Input', 'Old Limit'],
+                  data=[*zip(idxes, val[mask], old_limit[mask])],
+                  )
+
+        if adjusted:
+            logger.info(tab.draw())
+        else:
+            logger.warning(tab.draw())
 
     def do_adjust_upper(self, val, upper, allow_adjust=True, adjust_upper=False):
         """
@@ -393,10 +474,17 @@ class Limiter(Discrete):
         and `adjust_upper` is True.
         """
 
-        if allow_adjust and adjust_upper:
+        if allow_adjust:
             mask = (val > upper)
-            upper[mask] = val[mask]
-        # TODO: store debug info
+            if sum(mask) == 0:
+                return
+
+            if adjust_upper:
+                self._show_adjust(val, upper, mask, self.upper.name, adjusted=True)
+                upper[mask] = val[mask]
+                self.mask_upper = mask
+            else:
+                self._show_adjust(val, upper, mask, self.lower.name, adjusted=False)
 
 
 class SortedLimiter(Limiter):
@@ -597,7 +685,11 @@ class AntiWindup(Limiter):
         """
         pass
 
-    def check_eq(self):
+    def check_eq(self,
+                 allow_adjust=True,
+                 adjust_lower=False,
+                 adjust_upper=False,
+                 **kwargs):
         """
         Check the variables and equations and set the limiter flags.
         Reset differential equation values based on limiter flags.
@@ -609,11 +701,21 @@ class AntiWindup(Limiter):
         """
         if not self.no_upper:
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
+
+            if self.allow_adjust and allow_adjust and adjust_upper:
+                self.do_adjust_upper(self.u.v, upper_v,
+                                     allow_adjust=allow_adjust,
+                                     adjust_upper=adjust_upper)
             self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
+
+            if self.allow_adjust and allow_adjust and adjust_lower:
+                self.do_adjust_lower(self.u.v, lower_v,
+                                     allow_adjust=allow_adjust,
+                                     adjust_lower=adjust_lower)
             self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
 
@@ -673,6 +775,9 @@ class RateLimiter(Discrete):
         self.rate_lower_cond = dummify(lower_cond)
         self.rate_upper_cond = dummify(upper_cond)
 
+        self.mask_lower = None
+        self.mask_upper = None
+
         self.rate_no_lower = no_lower
         self.rate_no_upper = no_upper
         self.enable = enable
@@ -696,7 +801,7 @@ class RateLimiter(Discrete):
             self.export_flags_tex.append('z_{ur}')
             self.warn_flags.append(('zur', 'upper'))
 
-    def check_eq(self):
+    def check_eq(self, **kwargs):
         if not self.enable:
             return
 
@@ -740,9 +845,9 @@ class AntiWindupRate(AntiWindup, RateLimiter):
                             allow_adjust=allow_adjust,
                             )
 
-    def check_eq(self):
-        RateLimiter.check_eq(self)
-        AntiWindup.check_eq(self)
+    def check_eq(self, **kwargs):
+        RateLimiter.check_eq(self, **kwargs)
+        AntiWindup.check_eq(self, **kwargs)
 
 
 class Selector(Discrete):

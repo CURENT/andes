@@ -158,6 +158,8 @@ class IEEET3Model(ExcBase, ExcVsum):
                                  info=r'V_{R}, Lag Anti-Windup',
                                  )  # LA3_y is V_R
 
+        # FIXME: antiwindup out of limit is not warned of in initialization
+
         self.zeros = ConstService(v_str='0.0')
 
         self.LA1 = Lag('ue * (VB_y * HL_zi + VBMAX * HL_zu)',

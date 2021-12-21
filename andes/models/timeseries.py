@@ -56,7 +56,7 @@ class TimeSeriesData(ModelData):
                                info='comma-separated field names in timeseries data',
                                iconvert=str_list_iconv,
                                oconvert=str_list_oconv,
-                               vtype=np.object,
+                               vtype=object,
                                )
 
         self.tkey = DataParam(default='t', info='Key for timestamps')
@@ -67,7 +67,7 @@ class TimeSeriesData(ModelData):
                               info='comma-separated device fields as destinations',
                               iconvert=str_list_iconv,
                               oconvert=str_list_oconv,
-                              vtype=np.object,
+                              vtype=object,
                               )
 
 

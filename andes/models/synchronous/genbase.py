@@ -249,8 +249,12 @@ class GENBase(Model):
                         v_str='u * (vq0 * Id0 - vd0 * Iq0)')
 
     def v_numeric(self, **kwargs):
-        # disable corresponding `StaticGen`
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+        """
+        Disable static generators with a linked synchronous machine.
+        """
+
+        mask_idx = [self.gen.v[i] for i in range(self.n) if self.u.v[i] == 1]
+        self.system.groups['StaticGen'].set(src='u', idx=mask_idx, attr='v', value=0)
 
 
 class Flux0:

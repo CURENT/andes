@@ -628,6 +628,7 @@ class DG(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus', 'fn'))
 
 
 class DGProtection(GroupBase):

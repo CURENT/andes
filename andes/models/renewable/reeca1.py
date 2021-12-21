@@ -332,7 +332,7 @@ class REECA1Model(Model):
 
         self.Iqcmd = ExtAlgeb(model='RenGen', src='Iqcmd', indexer=self.reg, export=False,
                               info='Retrieved Iqcmd of RenGen',
-                              e_str='-Iqcmd0 - IqHL_y',
+                              e_str='-Iqcmd0 + IqHL_y',
                               )
 
         self.p0 = ExtService(model='RenGen',
@@ -394,19 +394,21 @@ class REECA1Model(Model):
         self.S1 = Lag(u='Pe', T=self.Tp, K=1, tex_name='S_1', info='Pe filter',
                       )
 
+        self.qref0 = ConstService(tex_name='q_{ref0}')
+        self.qref0.v_str = 'SWQ_s1 * (v - Vref1) + SWQ_s0 * Iqcmd0 * (v * VLower_zi + 0.01 * VLower_zl)'
+        self.Qref = Algeb(tex_name='Q_{ref}',
+                          info='external Q ref',
+                          v_str='qref0',
+                          e_str='qref0 - Qref',
+                          unit='p.u.',
+                          )
+
         # ignore `Qcpf` if `pfaref` is pi/2 by multiplying (1-zp0)
         self.Qcpf = Algeb(tex_name='Q_{cpf}',
                           info='Q calculated from P and power factor',
                           v_str='q0',
                           e_str='(1-zp0) * (S1_y * tan(pfaref) - Qcpf)',
                           diag_eps=True,
-                          unit='p.u.',
-                          )
-
-        self.Qref = Algeb(tex_name='Q_{ref}',
-                          info='external Q ref',
-                          v_str='q0',
-                          e_str='q0 - Qref',
                           unit='p.u.',
                           )
 
@@ -423,22 +425,22 @@ class REECA1Model(Model):
                           e_str='(PFsel*PFlim_zi + QMin*PFlim_zl + QMax*PFlim_zu) - Qe - Qerr',
                           )
 
-        self.PIQ = PITrackAWFreeze(u=self.Qerr,
+        self.PIQ = PITrackAWFreeze(u='SWV_s1 * Qerr + SWV_s0 * 0',
                                    kp=self.Kqp, ki=self.Kqi, ks=self.config.kqs,
                                    lower=self.VMIN, upper=self.VMAX,
                                    freeze=self.Volt_dip,
                                    )
 
         # If `VFLAG=0`, set the input as `Vref1` (see the NREL report)
-        self.Vsel = GainLimiter(u='SWV_s0 * Vref1 + SWV_s1 * PIQ_y',
+        self.Vsel = GainLimiter(u='SWV_s0 * (Vref1 + SWPF_s0 * Qref + SWPF_s1 * Qcpf) + SWV_s1 * PIQ_y',
                                 K=1, R=1,
                                 lower=self.VMIN, upper=self.VMAX,
                                 info='Selection output of VFLAG',
                                 )
 
         # --- Placeholders for `Iqmin` and `Iqmax` ---
-
-        self.s4 = LagFreeze(u='PFsel / vp', T=self.Tiq, K=1,
+        self.s4 = LagFreeze(u='PFsel / vp',
+                            T=self.Tiq, K=1,
                             freeze=self.Volt_dip,
                             tex_name='s_4',
                             info='Filter for calculated voltage with freeze',
@@ -641,7 +643,7 @@ class REECA1Model(Model):
                                   info='Lower limit on Ipcmd',
                                   )
 
-        self.PIV = PITrackAWFreeze(u='Vsel_y - s0_y * SWV_s0',
+        self.PIV = PITrackAWFreeze(u='SWQ_s1 * (Vsel_y - s0_y * SWV_s0)',
                                    x0='-SWQ_s1 * Iqcmd0',
                                    kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
                                    lower=self.Iqmin, upper=self.Iqmax,

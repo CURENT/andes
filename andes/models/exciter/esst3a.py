@@ -287,7 +287,7 @@ class ESST3AModel(ExcBase):
                                   info='Lag AW on VM',
                                   )  # LAW2_y == VM
 
-        self.vout.e_str = 'VB_y * LAW2_y - vout'
+        self.vout.e_str = 'ue * VB_y * LAW2_y - vout'
 
 
 class ESST3A(ESST3AData, ESST3AModel):

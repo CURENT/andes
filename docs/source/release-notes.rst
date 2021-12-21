@@ -9,6 +9,17 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
+v1.5.8 (2021-12-xx)
+```````````````````
+- Full initialization debug message will be printed only when
+  ``-v 10`` and ``run --init`` are both used.
+- Improved warning of out-of-limit initialization. Variables
+  initialized at limits will be shown only at the debug level.
+- Initialization improvements for models ``REGCA1`` and ``REECA1``.
+- Added model ``HYGOV``.
+- Changed the default ``vout`` of offline exciters to zeros.
+  All ``vout`` equations need to be multipled by ``ue``.
+
 v1.5.7 (2021-12-11)
 ```````````````````
 This minor release highlights the improved debugging of initialization.

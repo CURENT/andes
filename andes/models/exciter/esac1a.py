@@ -19,11 +19,13 @@ class ESAC1AData(ExcBaseData):
                            tex_name='T_B',
                            default=1,
                            unit='p.u.',
+                           non_negative=True,
                            )
         self.TC = NumParam(info='Lead time constant in lead-lag',
                            tex_name='T_C',
                            default=1,
                            unit='p.u.',
+                           non_negative=True,
                            )
         self.VAMAX = NumParam(info='V_A upper limit',
                               tex_name=r'V_{AMAX}',
@@ -41,6 +43,7 @@ class ESAC1AData(ExcBaseData):
                            tex_name='T_A',
                            default=0.04,
                            unit='p.u.',
+                           non_negative=True,
                            )
         self.VRMAX = NumParam(info='Max. exc. limit (0-unlimited)',
                               tex_name=r'V_{RMAX}',
@@ -54,6 +57,7 @@ class ESAC1AData(ExcBaseData):
                            tex_name='T_E',
                            default=0.8,
                            unit='p.u.',
+                           non_negative=True,
                            )
         self.E1 = NumParam(info='First saturation point',
                            tex_name='E_1',
@@ -190,7 +194,7 @@ class ESAC1AModel(ExcBase, ExcVsum, ExcACSat):
                           info='Stablizing circuit feedback',
                           )
 
-        self.vout.e_str = 'FEX_y * INT_y - vout'
+        self.vout.e_str = 'ue * FEX_y * INT_y - vout'
 
 
 class ESAC1A(ESAC1AData, ESAC1AModel):

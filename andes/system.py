@@ -943,14 +943,14 @@ class System:
         self.call_models('l_update_var', models,
                          dae_t=self.dae.t, niter=niter, err=err)
 
-    def l_update_eq(self, models:  OrderedDict):
+    def l_update_eq(self, models:  OrderedDict, init=False):
         """
         Update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Force set equations after evaluating equations.
 
         This function is must be called after differential equation updates.
         """
-        self.call_models('l_check_eq', models)
+        self.call_models('l_check_eq', models, init=init)
 
     def s_update_var(self, models: OrderedDict):
         """

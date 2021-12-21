@@ -53,7 +53,7 @@ class REPCA1Data(ModelData):
                               )
 
         self.PLflag = NumParam(info='Pline ctrl. flag; 0-disable, 1-enable',
-                               mandatory=True,
+                               default=True,
                                unit='bool',
                                )
 

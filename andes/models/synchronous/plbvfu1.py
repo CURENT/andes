@@ -2,8 +2,6 @@
 V-f playback generator model.
 """
 
-from andes.shared import np
-
 from andes.core import (Model, ModelData, IdxParam, NumParam, DataParam, ExtParam,
                         State, ExtAlgeb, ExtService, ConstService)
 
@@ -108,7 +106,7 @@ class PLBVFU1Model(Model):
                                info='Generator idx in plant; only used by PSS/E data'
                                )
 
-        self.zs = ConstService('ra + 1j * xs', vtype=np.complex,
+        self.zs = ConstService('ra + 1j * xs', vtype=complex,
                                info='impedance',
                                )
         self.zs2n = ConstService('ra * ra - xs * xs',
@@ -125,7 +123,7 @@ class PLBVFU1Model(Model):
                             )
         self.Ec = ConstService('v * exp(1j * a) +'
                                'conj((p + 1j * q) / (v * exp(1j * a))) * (ra + 1j * xs)',
-                               vtype=np.complex,
+                               vtype=complex,
                                tex_name='E_c',
                                )
 

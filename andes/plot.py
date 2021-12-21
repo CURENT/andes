@@ -586,7 +586,7 @@ class TDSData:
             ax.autoscale(axis='y')
 
         if grid:
-            ax.grid(b=True, linestyle='--')
+            ax.grid(True, linestyle='--')
 
         if yheader is None:
             legend = False
