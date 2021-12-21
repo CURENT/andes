@@ -29,8 +29,10 @@ class TestKnownResults(unittest.TestCase):
         else:
             case_path = get_case(case_path)
 
-        ss = compare_results(case_path, os.path.join(pkl_prefix, pkl_path),
-                             tf=tf, addfile=addfile)
+        ss = compare_results(case_path,
+                             os.path.join(pkl_prefix, pkl_path),
+                             tf=tf,
+                             addfile=addfile)
 
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
@@ -67,5 +69,5 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
     np.testing.assert_almost_equal(ss.dae.xy[indices],
                                    results,
                                    err_msg=f"{case} test error",
-                                   decimal=3)
+                                   )
     return ss
