@@ -1293,7 +1293,7 @@ class DelayVec(Delay):
         Allocate memory for storage arrays.
         """
         super().list2array(n)
-        self.t = {nl: [0] for nl in range(n)}  # time to store the value
+        self.t = {nl: [] for nl in range(n)}  # time to store the value
         self.v = np.zeros(n)  # output value
         self._v_mem = {nl: [] for nl in range(n)}  # memory value
 
@@ -1306,16 +1306,17 @@ class DelayVec(Delay):
         for nid in range(len(self.delay)):
             if dae_t == 0:
                 # self._v_mem[:] = self.u.v[:, None]
-                self._v_mem[nid].append(self.u.v[nid])
+                self.t[nid] = np.append(self.t[nid], dae_t)
+                self._v_mem[nid] = np.append(self._v_mem[nid], self.u.v[nid])
 
             elif dae_t < self.t[nid][-1]:
                 self.rewind = True
                 # self._v_mem[:, -1] = self.u.v
-                self._v_mem[nid] = np.append(self._v_mem[nid], dae_t)
+                self._v_mem[nid][-1] = self.u.v[nid]
 
             elif dae_t == self.t[nid][-1]:
                 # self._v_mem[:, -1] = self.u.v
-                self._v_mem[nid] = np.append(self._v_mem[nid], dae_t)
+                self._v_mem[nid][-1] = self.u.v[nid]
 
             elif dae_t > self.t[nid][-1]:
                 self.t[nid] = np.append(self.t[nid], dae_t)
