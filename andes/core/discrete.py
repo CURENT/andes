@@ -1287,16 +1287,15 @@ class DelayVec(Delay):
     def __init__(self, u, name=None, tex_name=None, info=None, delay=0):
         Delay.__init__(self, u=u, mode='time', delay=delay,
                        name=name, tex_name=tex_name, info=info)
-        self.shp = len(self.delay)
 
     def list2array(self, n):
         """
         Allocate memory for storage arrays.
         """
         super().list2array(n)
-        self.t = {nl: [] for nl in range(self.n)}  # time to store the value
-        self.v = np.zeros((n, 1))  # output value
-        self._v_mem = {nl: [] for nl in range(self.n)}  # memory value
+        self.t = {nl: [0] for nl in range(n)}  # time to store the value
+        self.v = np.zeros(n)  # output value
+        self._v_mem = {nl: [] for nl in range(n)}  # memory value
 
     def check_var(self, dae_t, *args, **kwargs):
         # Storage:
@@ -1304,20 +1303,19 @@ class DelayVec(Delay):
         # Latest values are stored in /appended to the last column
         self.rewind = False
 
-        for nid in range(self.shp):
+        for nid in range(len(self.delay)):
             if dae_t == 0:
                 # self._v_mem[:] = self.u.v[:, None]
-                self._v_mem[nid] = self.u.v[nid]
+                self._v_mem[nid].append(self.u.v[nid])
 
             elif dae_t < self.t[nid][-1]:
                 self.rewind = True
-                self.t[nid][-1] = dae_t
                 # self._v_mem[:, -1] = self.u.v
-                self._v_mem[nid][-1] = self.u.v[nid]
+                self._v_mem[nid] = np.append(self._v_mem[nid], dae_t)
 
             elif dae_t == self.t[nid][-1]:
                 # self._v_mem[:, -1] = self.u.v
-                self._v_mem[nid][-1] = self.u.v[nid]
+                self._v_mem[nid] = np.append(self._v_mem[nid], dae_t)
 
             elif dae_t > self.t[nid][-1]:
                 self.t[nid] = np.append(self.t[nid], dae_t)
@@ -1325,16 +1323,16 @@ class DelayVec(Delay):
 
                 if dae_t - self.t[nid][0] > self.delay[nid]:
                     t_interp = dae_t - self.delay[nid]
-                    idx = np.argmax(self.t >= t_interp) - 1
+                    idx = np.argmax(self.t[nid] >= t_interp) - 1
                     v_interp = interp_n2(t_interp,
-                                        self.t[nid][idx:idx+2],
-                                        self._v_mem[nid][:, idx:idx + 2])
+                                         self.t[nid][idx:idx+2],
+                                         self._v_mem[nid][idx:idx + 2].copy().reshape((1,2)))
 
-                    self.t[idx] = t_interp
-                    self._v_mem[nid][:, idx] = v_interp
+                    self.t[nid][idx] = t_interp
+                    self._v_mem[nid][idx] = v_interp
 
                     self.t[nid] = np.delete(self.t[nid], np.arange(0, idx))
-                    self._v_mem[nid] = np.delete(self._v_mem[nid], np.arange(0, idx), axis=1)
+                    self._v_mem[nid] = np.delete(self._v_mem[nid], np.arange(0, idx))
 
             self.v[nid] = self._v_mem[nid][0]
 

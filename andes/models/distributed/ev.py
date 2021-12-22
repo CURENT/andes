@@ -1,6 +1,6 @@
 """Electric vehicle model"""
 
-from andes.core.discrete import Limiter, Delay
+from andes.core.discrete import Limiter, Delay, DelayVec
 from andes.core.param import NumParam
 from andes.core.var import Algeb
 from andes.models.distributed.esd1 import ESD1Data, ESD1Model
@@ -136,7 +136,12 @@ class EVTDModel(EV2Model):
 
     def __init__(self, system, config):
         EV2Model.__init__(self, system, config)
-        self.fd = Delay(u=self.f, mode='time', delay=self.td.v)
+        self.fd = DelayVec(u=self.fHz, delay=self.td.v)
+        self.fdv = Algeb(tex_name=r'f_{d}',
+                          info='delayed frequency',
+                          e_str='fd_v - fdv',
+                          v_str='fn * f',
+                          )
 
 
 class EVTD(EVTDData, EVTDModel):
