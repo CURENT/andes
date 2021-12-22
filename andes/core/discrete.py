@@ -1327,7 +1327,7 @@ class DelayVec(Delay):
                     idx = np.argmax(self.t[nid] >= t_interp) - 1
                     v_interp = interp_n2(t_interp,
                                          self.t[nid][idx:idx+2],
-                                         self._v_mem[nid][idx:idx + 2].copy().reshape((1,2)))
+                                         self._v_mem[nid][idx:idx + 2].copy().reshape((1, 2)))
 
                     self.t[nid][idx] = t_interp
                     self._v_mem[nid][idx] = v_interp
@@ -1336,24 +1336,6 @@ class DelayVec(Delay):
                     self._v_mem[nid] = np.delete(self._v_mem[nid], np.arange(0, idx))
 
             self.v[nid] = self._v_mem[nid][0]
-
-
-class Average(Delay):
-    """
-    Compute the average of a BaseVar over a period of time or a number of samples.
-    """
-
-    def check_var(self, dae_t, *args, **kwargs):
-        Delay.check_var(self, dae_t, *args, **kwargs)
-
-        if dae_t == 0:
-            self.v[:] = self._v_mem[:, -1]
-            self._v_mem[:, :-1] = 0
-            return
-        else:
-            nt = len(self.t)
-            self.v[:] = 0.5 * np.sum((self._v_mem[:, 1-nt:] + self._v_mem[:, -nt:-1]) *
-                                     (self.t[1:] - self.t[:-1]), axis=1) / (self.t[-1] - self.t[0])
 
 
 class Average(Delay):
