@@ -9,6 +9,10 @@ from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class HYGOVData(TGBaseData):
+    """
+    HYGOV data
+    """
+
     def __init__(self):
         super().__init__()
         self.R = NumParam(info='Speed regulation gain (mach. base default)',
@@ -108,6 +112,10 @@ class HYGOVData(TGBaseData):
 
 
 class HYGOVDBData(HYGOVData):
+    """
+    HYGOVDB data.
+    """
+
     def __init__(self):
         HYGOVData.__init__(self)
         self.dbL = NumParam(info='Lower bound of deadband',

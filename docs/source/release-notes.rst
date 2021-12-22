@@ -15,6 +15,10 @@ v1.5.8 (2021-12-xx)
   ``-v 10`` and ``run --init`` are both used.
 - Improved warning of out-of-limit initialization. Variables
   initialized at limits will be shown only at the debug level.
+- Initialization improvements for models ``REGCA1`` and ``REECA1``.
+- Added model ``HYGOV``.
+- Changed the default ``vout`` of offline exciters to zeros.
+  All ``vout`` equations need to be multipled by ``ue``.
 
 v1.5.7 (2021-12-11)
 ```````````````````
