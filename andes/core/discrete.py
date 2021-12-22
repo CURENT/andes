@@ -1282,6 +1282,10 @@ class Delay(Discrete):
 class DelayVec(Delay):
     """
     Delay with vector input.
+    DelayVec class to memorize past variable values.
+    DelayVec allows to impose a predefined "delay" (in time)
+    for an input variable. The amount of delay can be a vector and has to be fixed
+    at model definition in the current implementation.
     """
 
     def __init__(self, u, name=None, tex_name=None, info=None, delay=0):
@@ -1299,23 +1303,21 @@ class DelayVec(Delay):
 
     def check_var(self, dae_t, *args, **kwargs):
         # Storage:
-        # Output values is in the first col.
-        # Latest values are stored in /appended to the last column
+        # Dicts are used to store values and times.
+        # Output values are in the first.
+        # Latest values are stored in /appended to the last.
         self.rewind = False
 
         for nid in range(len(self.delay)):
             if dae_t == 0:
-                # self._v_mem[:] = self.u.v[:, None]
                 self.t[nid] = np.append(self.t[nid], dae_t)
                 self._v_mem[nid] = np.append(self._v_mem[nid], self.u.v[nid])
 
             elif dae_t < self.t[nid][-1]:
                 self.rewind = True
-                # self._v_mem[:, -1] = self.u.v
                 self._v_mem[nid][-1] = self.u.v[nid]
 
             elif dae_t == self.t[nid][-1]:
-                # self._v_mem[:, -1] = self.u.v
                 self._v_mem[nid][-1] = self.u.v[nid]
 
             elif dae_t > self.t[nid][-1]:
