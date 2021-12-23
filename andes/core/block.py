@@ -1807,6 +1807,8 @@ class Piecewise(Block):
     The first range (-inf, x0) applies `fun_0`, and
     the last range (x_{n-1}, +inf) applies the last function `fun_n`.
 
+    The function returns zero if no condition is met.
+
     Parameters
     ----------
     points : list, tuple
@@ -1837,7 +1839,7 @@ class Piecewise(Block):
             args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
         args.append(f'({self.funs[i + 1]}, {self.u.name} > {self.points[-1]})')
 
-        args_comma = ', '.join(args)
+        args_comma = ', '.join(args) + ', (0, True)'
         pw_fun = f'Piecewise({args_comma}, evaluate=False)'
 
         self.y.v_str = pw_fun
