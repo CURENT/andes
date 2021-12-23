@@ -64,6 +64,9 @@ class FixPiecewise(sympy.Piecewise):
             printer._print(sympy.S.NaN))
 
 
+# the line below caches Piecewise instances
+sympy.OldPiecewise = sympy.Piecewise
+
 sympy.Piecewise = FixPiecewise
 
 
