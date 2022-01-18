@@ -5,7 +5,6 @@ ANDES command-line interface and argument parsers.
 import argparse
 import importlib
 import logging
-import os
 import platform
 import sys
 from time import strftime
