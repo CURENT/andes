@@ -15,6 +15,7 @@ from ._version import get_versions
 from andes.main import config_logger, find_log_path
 from andes.routines import routine_cli
 from andes.utils.paths import get_log_dir
+from andes.shared import NCPUS_PHYSICAL
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def create_parser():
     run.add_argument('-P', '--pert', help='Perturbation file path', default='')
     run.add_argument('-o', '--output-path', help='Output path prefix', type=str, default='')
     run.add_argument('-n', '--no-output', help='Force no output of any kind', action='store_true')
-    run.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
+    run.add_argument('--ncpu', help='Number of parallel processes', type=int, default=NCPUS_PHYSICAL)
     run.add_argument('--dime-address', help='DiME streaming server protocol, address and port,'
                                             'e.g., tcp://127.0.0.1:5000 or ipc:///tmp/dime2', type=str)
     run.add_argument('--tf', help='End time of time-domain simulation', type=float)
@@ -159,7 +160,7 @@ def create_parser():
     prep.add_argument('--pycode-path', help='Save path for generated pycode')
     prep.add_argument('-m', '--models', nargs='*', help='model names to be individually prepared',
                       )
-    prep.add_argument('--ncpu', help='Number of parallel processes', type=int, default=os.cpu_count())
+    prep.add_argument('--ncpu', help='Number of parallel processes', type=int, default=NCPUS_PHYSICAL)
     prep.add_argument('--nomp', help='Disable multiprocessing', action='store_true',)
     prep.add_argument('--incubate', help='Save generated pycode under the ANDES code directory to avoid codegen',
                       action='store_true')

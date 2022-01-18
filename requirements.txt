@@ -13,3 +13,4 @@ pyyaml
 coloredlogs
 chardet
 numba
+psutil

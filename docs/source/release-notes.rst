@@ -9,7 +9,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
-v1.5.8 (2021-12-xx)
+v1.5.9 (2022-01-xx)
+```````````````````
+- Multiprocessing now executes on all CPUs that are physical, instead
+  of logical. A new package ``psutil`` needs to be installed.
+
+v1.5.8 (2021-12-21)
 ```````````````````
 - Full initialization debug message will be printed only when
   ``-v 10`` and ``run --init`` are both used.

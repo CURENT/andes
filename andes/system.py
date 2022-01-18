@@ -29,7 +29,7 @@ from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.routines import all_routines
-from andes.shared import (Pool, Process, dilled_vars, jac_names, matrix, np,
+from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars, jac_names, matrix, np,
                           sparse, spmatrix,)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
@@ -269,7 +269,7 @@ class System:
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
 
-    def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=os.cpu_count()):
+    def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=NCPUS_PHYSICAL):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -700,7 +700,7 @@ class System:
     def precompile(self,
                    models: Union[OrderedDict, None] = None,
                    nomp: bool = False,
-                   ncpu: int = os.cpu_count()):
+                   ncpu: int = NCPUS_PHYSICAL):
         """
         Trigger precompilation for the given models.
 
