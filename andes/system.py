@@ -533,7 +533,7 @@ class System:
             param_dict.update(kwargs)
 
         idx = param_dict.pop('idx', None)
-        if idx is np.nan:
+        if idx is not None and (not isinstance(idx, str) and np.isnan(idx)):
             idx = None
 
         idx = group.get_next_idx(idx=idx, model_name=model)
@@ -1076,7 +1076,10 @@ class System:
 
         if self.config.ipadd:
             self.dae.gy.ipset(self.config.diag_eps, aidx, aidx)
+            self.dae.gy.ipset(0.0, aidx, vidx)
+
             self.dae.gy.ipset(self.config.diag_eps, vidx, vidx)
+            self.dae.gy.ipset(0.0, vidx, aidx)
         else:
             avals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in aidx]
             vvals = [-self.dae.gy[int(idx), int(idx)] + self.config.diag_eps for idx in vidx]
