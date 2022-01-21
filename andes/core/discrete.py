@@ -38,6 +38,9 @@ class Discrete:
         if not hasattr(self, 'export_flags_tex'):
             self.export_flags_tex = []
 
+        self.input_list = []   # references to input variables
+        self.param_list = []  # references to parameters
+
         self.x_set = list()
         self.y_set = list()   # NOT being used
 
@@ -265,6 +268,9 @@ class LessThan(Discrete):
         self.export_flags = ['z0', 'z1']
         self.export_flags_tex = ['z_0', 'z_1']
 
+        self.input_list.extend([self.u])
+        self.param_list.extend([self.bound])
+
         self.has_check_var = True
 
     def check_var(self, *args, **kwargs):
@@ -375,6 +381,9 @@ class Limiter(Discrete):
 
         self.export_flags.append('zi')
         self.export_flags_tex.append('z_i')
+
+        self.input_list.extend([self.u])
+        self.param_list.extend([self.lower, self.upper])
 
         if not self.no_lower:
             self.export_flags.append('zl')
@@ -760,7 +769,7 @@ class RateLimiter(Discrete):
     """
 
     def __init__(self, u, lower, upper, enable=True,
-                 no_lower=False, no_upper=False, lower_cond=None, upper_cond=None,
+                 no_lower=False, no_upper=False, lower_cond=1, upper_cond=1,
                  name=None, tex_name=None, info=None):
         Discrete.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = u
@@ -801,6 +810,9 @@ class RateLimiter(Discrete):
             self.export_flags_tex.append('z_{ur}')
             self.warn_flags.append(('zur', 'upper'))
 
+        self.param_list.extend([self.rate_lower, self.rate_upper,
+                                self.rate_lower_cond, self.rate_upper_cond])
+
     def check_eq(self, **kwargs):
         if not self.enable:
             return
@@ -808,8 +820,7 @@ class RateLimiter(Discrete):
         if not self.rate_no_lower:
             self.zlr[:] = np.less(self.u.e, self.rate_lower.v)  # 1 if at the lower rate limit
 
-            if self.rate_lower_cond is not None:
-                self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
+            self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
 
             # for where `zlr == 1`, set the equation value to the lower limit
             self.u.e[np.where(self.zlr)] = self.rate_lower.v[np.where(self.zlr)]
@@ -817,8 +828,7 @@ class RateLimiter(Discrete):
         if not self.rate_no_upper:
             self.zur[:] = np.greater(self.u.e, self.rate_upper.v)
 
-            if self.rate_upper_cond is not None:
-                self.zur[:] = self.zur * self.rate_upper_cond.v
+            self.zur[:] = self.zur * self.rate_upper_cond.v
 
             self.u.e[np.where(self.zur)] = self.rate_upper.v[np.where(self.zur)]
 
@@ -911,6 +921,8 @@ class Selector(Discrete):
         self.export_flags = [f's{i}' for i in range(len(self.input_vars))]
         self.export_flags_tex = [f's_{i}' for i in range(len(self.input_vars))]
 
+        self.input_list = args
+
         self.has_check_var = True
 
     def check_var(self, *args, **kwargs):
@@ -986,6 +998,7 @@ class Switcher(Discrete):
 
         self.export_flags = [f's{i}' for i in range(len(options))]
         self.export_flags_tex = [f's_{i}' for i in range(len(options))]
+        self.input_list.extend([self.u])
 
         self.has_check_var = True
 
@@ -1075,6 +1088,8 @@ class DeadBand(Limiter):
                          allow_adjust=False,)
 
         self.center = dummify(center)  # CURRENTLY NOT IN USE
+
+        self.param_list.extend([self.center])
 
     def check_var(self, *args, **kwargs):
         """
@@ -1211,6 +1226,8 @@ class Delay(Discrete):
         self.delay = delay
         self.export_flags = ['v']
         self.export_flags_tex = ['v']
+        self.input_list.extend([u])
+
         self.has_check_var = True
 
         self.t = np.array([0])
@@ -1335,6 +1352,8 @@ class Sampling(Discrete):
 
         self.export_flags = ['v']
         self.export_flags_tex = ['v']
+        self.input_list.extend([self.u])
+
         self.has_check_var = True
 
         self.v = np.array([0])
@@ -1439,6 +1458,8 @@ class ShuntAdjust(Discrete):
         self.err_tol = err_tol
 
         self.has_check_var = True
+        self.input_list.extend([self.v])
+        self.param_list.extend([self.lower, self.upper, self.u])
 
         self.t_last = None
         self.t_enable = None
