@@ -900,9 +900,12 @@ class Selector(Discrete):
     --------
     numpy.ufunc.reduce : NumPy reduce function
 
-    andes.core.block.HVGate
+    Warnings
+    --------
+    Use of this class for comparison-based output is discouraged.
+    Instead, use `LessThan` and `Limiter` to construct piesewise equations.
 
-    andes.core.block.LVGate
+    See the new implementation of ``HVGate`` and ``LVGate``.
     """
 
     def __init__(self, *args, fun, tex_name=None, info=None):
