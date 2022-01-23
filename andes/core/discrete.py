@@ -746,9 +746,9 @@ class AntiWindup(Limiter):
             # logger.debug(f'AntiWindup for states {self.state.a[idx]}')
 
         # Very important note:
-        # `System.fg_to_dae` is called after `System.l_update_eq`, which calls this function.
-        # Equation values set in `self.state.e` is collected by `System._e_to_dae`, while
-        # variable values are collected by the separate loop in `System.fg_to_dae`.
+        # The set equation values and variable values are collected by `System.fg_to_dae`:
+        # - Equation values is collected by `System._e_to_dae`,
+        # - Variable values are collected at the end of `System.fg_to_dae`.
         # Also, equation values are processed in `TDS` for resetting the `q`.
 
 
