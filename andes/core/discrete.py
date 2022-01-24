@@ -820,7 +820,8 @@ class RateLimiter(Discrete):
         if not self.rate_no_lower:
             self.zlr[:] = np.less(self.u.e, self.rate_lower.v)  # 1 if at the lower rate limit
 
-            self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
+            if self.rate_lower_cond is not None:
+                self.zlr[:] = self.zlr * self.rate_lower_cond.v  # 1 if both at the lower rate limit and enabled
 
             # for where `zlr == 1`, set the equation value to the lower limit
             self.u.e[np.where(self.zlr)] = self.rate_lower.v[np.where(self.zlr)]
@@ -828,7 +829,8 @@ class RateLimiter(Discrete):
         if not self.rate_no_upper:
             self.zur[:] = np.greater(self.u.e, self.rate_upper.v)
 
-            self.zur[:] = self.zur * self.rate_upper_cond.v
+            if self.rate_upper_cond is not None:
+                self.zur[:] = self.zur * self.rate_upper_cond.v
 
             self.u.e[np.where(self.zur)] = self.rate_upper.v[np.where(self.zur)]
 
