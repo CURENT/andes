@@ -22,10 +22,10 @@ class TestGates(unittest.TestCase):
         Test `andes.core.discrete.HVGate`
         """
         self.hv = HVGate(self.u1, self.u2)
-        self.hv.sl.list2array(self.n)
-        self.hv.sl.check_var()
-        np.testing.assert_almost_equal(self.hv.sl.s0, np.array([1, 1, 1, 0, 0]))
-        np.testing.assert_almost_equal(self.hv.sl.s1, np.array([0, 0, 1, 1, 1]))
+        self.hv.lt.list2array(self.n)
+        self.hv.lt.check_var()
+        np.testing.assert_almost_equal(self.hv.lt.z0, np.array([1, 1, 1, 0, 0]))
+        np.testing.assert_almost_equal(self.hv.lt.z1, np.array([0, 0, 0, 1, 1]))
 
     def test_lvgate(self):
         """
@@ -33,7 +33,7 @@ class TestGates(unittest.TestCase):
         """
 
         self.lv = LVGate(self.u1, self.u2)
-        self.lv.sl.list2array(self.n)
-        self.lv.sl.check_var()
-        np.testing.assert_almost_equal(self.lv.sl.s0, np.array([0, 0, 1, 1, 1]))
-        np.testing.assert_almost_equal(self.lv.sl.s1, np.array([1, 1, 1, 0, 0]))
+        self.lv.lt.list2array(self.n)
+        self.lv.lt.check_var()
+        np.testing.assert_almost_equal(self.lv.lt.z1, np.array([0, 0, 0, 1, 1]))
+        np.testing.assert_almost_equal(self.lv.lt.z0, np.array([1, 1, 1, 0, 0]))
