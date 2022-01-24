@@ -874,6 +874,13 @@ class Selector(Discrete):
     A potential bug when more than two inputs are provided, and values in different inputs are equal.
     Only two inputs are allowed.
 
+    .. deprecated:: 1.5.9
+
+        Use of this class for comparison-based output is discouraged.
+        Instead, use `LessThan` and `Limiter` to construct piesewise equations.
+
+        See the new implementation of ``HVGate`` and ``LVGate``.
+
     Examples
     --------
     Example 1: select the largest value between `v0` and `v1` and put it into vmax.
@@ -900,12 +907,6 @@ class Selector(Discrete):
     --------
     numpy.ufunc.reduce : NumPy reduce function
 
-    Warnings
-    --------
-    Use of this class for comparison-based output is discouraged.
-    Instead, use `LessThan` and `Limiter` to construct piesewise equations.
-
-    See the new implementation of ``HVGate`` and ``LVGate``.
     """
 
     def __init__(self, *args, fun, tex_name=None, info=None):
