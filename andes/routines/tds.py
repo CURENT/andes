@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 class TDS(BaseRoutine):
     """
     Time-domain simulation routine.
+
+    Some cases may be sensitive to large convergence tolerance ``config.tol``.
+    If numerical oscillation happens, try reducing ``config.tol`` to ``1e-6``.
     """
 
     def __init__(self, system=None, config=None):
@@ -56,7 +59,7 @@ class TDS(BaseRoutine):
                               fixt="use fixed step size (1) or variable (0)",
                               shrinkt='shrink step size for fixed method if not converged',
                               honest='honest Newton method that updates Jac at each step',
-                              tstep='the initial step step size',
+                              tstep='integration step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
                               test_init='test if initialization passes',
