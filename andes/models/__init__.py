@@ -41,3 +41,6 @@ file_classes = OrderedDict([
     ('coi', ['COI']),
     # ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),
 ])
+
+
+model_aliases = {"REGCVSG": "REGCV1", "REGCVSG2": "REGCV2"}
