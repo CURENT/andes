@@ -319,9 +319,9 @@ class TestCaseInit(unittest.TestCase):
         Test if EXAC1 model initialization. One TGOV1 is at the lower limit.
         """
         ss = andes.load(get_case('ieee14/ieee14_exac1.json'),
-                       no_output=True,
-                       default_config=True,
-                       )
+                        no_output=True,
+                        default_config=True,
+                        )
         ss.PV.config.pv2pq = 1
         ss.PFlow.run()
 
