@@ -106,15 +106,16 @@ class System:
             self.options.update(options)
         if kwargs:
             self.options.update(kwargs)
-        self.calls = OrderedDict()         # a dictionary with model names (keys) and their ``calls`` instance
-        self.models = OrderedDict()        # model names and instances
-        self.groups = OrderedDict()        # group names and instances
-        self.routines = OrderedDict()      # routine names and instances
-        self.switch_times = np.array([])   # an array of ordered event switching times
-        self.switch_dict = OrderedDict()   # time: OrderedDict of associated models
-        self.with_calls = False            # if generated function calls have been loaded
-        self.n_switches = 0                # number of elements in `self.switch_times`
-        self.exit_code = 0                 # command-line exit code, 0 - normal, others - error.
+        self.calls = OrderedDict()           # a dictionary with model names (keys) and their ``calls`` instance
+        self.models = OrderedDict()          # model names and instances
+        self.model_aliases = OrderedDict()   # alias: model instance
+        self.groups = OrderedDict()          # group names and instances
+        self.routines = OrderedDict()        # routine names and instances
+        self.switch_times = np.array([])     # an array of ordered event switching times
+        self.switch_dict = OrderedDict()     # time: OrderedDict of associated models
+        self.with_calls = False              # if generated function calls have been loaded
+        self.n_switches = 0                  # number of elements in `self.switch_times`
+        self.exit_code = 0                   # command-line exit code, 0 - normal, others - error.
 
         # get and load default config file
         self._config_path = get_config_path()
@@ -517,7 +518,7 @@ class System:
 
         This methods calls the ``add`` method of `model` and registers the device `idx` to group.
         """
-        if model not in self.models:
+        if model not in self.models and (model not in self.model_aliases):
             logger.warning("<%s> is not an existing model.", model)
             return
 
@@ -1807,6 +1808,9 @@ class System:
                 # link to the group
                 group_name = self.__dict__[model_name].group
                 self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
+        for key, val in andes.models.model_aliases.items():
+            self.model_aliases[key] = self.models[val]
+            self.__dict__[key] = self.models[val]
 
     def import_routines(self):
         """

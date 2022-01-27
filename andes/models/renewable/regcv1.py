@@ -1,6 +1,7 @@
 """
-REGCVSG model.
-Voltage-controlled VSC with virtual synchronous generator control.
+REGCV1 model.
+
+Voltage-controlled converter model (virtual synchronous generator) with inertia emulation.
 """
 
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtService, IdxParam,
@@ -9,9 +10,9 @@ from andes.core.block import PIController
 from andes.core.var import AliasAlgeb, AliasState
 
 
-class REGCVSGData(ModelData):
+class REGCV1Data(ModelData):
     """
-    REGC_VSG model data.
+    REGCV1 model data.
     """
 
     def __init__(self):
@@ -140,7 +141,7 @@ class VSGInnerPIData:
                              )
 
 
-class REGCVSGModelBase(Model):
+class REGCV1ModelBase(Model):
     """
     Common variables and services for VSG models.
     """
@@ -179,11 +180,11 @@ class REGCVSGModelBase(Model):
                               )
         self.Pref = ConstService(v_str='gammap * p0s',
                                  tex_name='P_{ref}',
-                                 info='Initial P for the REGCVSG device',
+                                 info='Initial P for the REGCV1 device',
                                  )
         self.Qref = ConstService(v_str='gammaq * q0s',
                                  tex_name='Q_{ref}',
-                                 info='Initial Q for the REGCVSG device',
+                                 info='Initial Q for the REGCV1 device',
                                  )
 
         self.vref = ExtService(model='StaticGen',
@@ -278,7 +279,7 @@ class REGCVSGModelBase(Model):
 
 class VSGOuterPIModel:
     """
-    Outer PI controllers for REGCVSG
+    Outer PI controllers for REGCV1
     """
 
     def __init__(self):
@@ -299,7 +300,7 @@ class VSGOuterPIModel:
 
 class VSGInnerPIModel:
     """
-    Inner current PI controllers for REGCVSG
+    Inner current PI controllers for REGCV1
     """
 
     def __init__(self):
@@ -348,8 +349,8 @@ class VSGInnerPIModel:
         self.uq = AliasState(self.uqLag_y)
 
 
-class REGCVSG(REGCVSGData, VSGOuterPIData, VSGInnerPIData,
-              REGCVSGModelBase, VSGOuterPIModel, VSGInnerPIModel):
+class REGCV1(REGCV1Data, VSGOuterPIData, VSGInnerPIData,
+             REGCV1ModelBase, VSGOuterPIModel, VSGInnerPIModel):
     """
     Voltage-controlled VSC with VSG control.
 
@@ -358,10 +359,10 @@ class REGCVSG(REGCVSGData, VSGOuterPIData, VSGInnerPIData,
     """
 
     def __init__(self, system, config):
-        REGCVSGData.__init__(self)
+        REGCV1Data.__init__(self)
         VSGOuterPIData.__init__(self)
         VSGInnerPIData.__init__(self)
 
-        REGCVSGModelBase.__init__(self, system, config)
+        REGCV1ModelBase.__init__(self, system, config)
         VSGOuterPIModel.__init__(self)
         VSGInnerPIModel.__init__(self)
