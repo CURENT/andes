@@ -188,9 +188,10 @@ class TDS(BaseRoutine):
 
         self.fg_update(system.exist.tds, init=True)
 
+        # reset diff. equation RHS for binding antiwindups
         for item in system.antiwindups:
             for key, _, eqval in item.x_set:
-                np.put(system.dae.x, key, eqval)
+                np.put(system.dae.f, key, eqval)
 
         # only store switch times when not replaying CSV data
         if self.data_csv is None:
