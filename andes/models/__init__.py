@@ -36,7 +36,7 @@ file_classes = OrderedDict([
     ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REECA1', 'REECA1E', 'REECA1G',
                    'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
-                   'REGCVSG', 'REGCVSG2']),
+                   'REGCV1', 'REGCV2']),
     ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt']),
     ('coi', ['COI']),
     # ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),

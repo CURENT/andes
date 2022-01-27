@@ -5,8 +5,8 @@ Top-level package for renewable models.
 from andes.models.renewable.reeca1 import REECA1  # NOQA
 from andes.models.renewable.reeca1e import REECA1E, REECA1G  # NOQA
 from andes.models.renewable.regca1 import REGCA1  # NOQA
-from andes.models.renewable.regcvsg import REGCVSG  # NOQA
-from andes.models.renewable.regcvsg2 import REGCVSG2  # NOQA
+from andes.models.renewable.regcv1 import REGCV1  # NOQA
+from andes.models.renewable.regcv2 import REGCV2  # NOQA
 from andes.models.renewable.repca1 import REPCA1  # NOQA
 from andes.models.renewable.wtara1 import WTARA1  # NOQA
 from andes.models.renewable.wtarv1 import WTARV1  # NOQA
