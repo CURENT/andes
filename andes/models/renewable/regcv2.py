@@ -1,6 +1,6 @@
 from andes.core.block import Lag
 from andes.core.param import NumParam
-from andes.models.renewable.regcv1 import (REGCVData, REGCVModelBase,
+from andes.models.renewable.regcv1 import (REGCV1Data, REGCV1ModelBase,
                                            VSGOuterPIData, VSGOuterPIModel,)
 
 
@@ -23,8 +23,8 @@ class VSGInnerLagModel:
         self.Iq.e_str = 'LGIq_y - Iq'
 
 
-class REGCV2(REGCVData, VSGOuterPIData, VSGInnerLagData,
-             REGCVModelBase, VSGOuterPIModel, VSGInnerLagModel):
+class REGCV2(REGCV1Data, VSGOuterPIData, VSGInnerLagData,
+             REGCV1ModelBase, VSGOuterPIModel, VSGInnerLagModel):
     """
     Voltage-controlled VSC with VSG control.
 
@@ -32,10 +32,10 @@ class REGCV2(REGCVData, VSGOuterPIData, VSGInnerLagData,
     """
 
     def __init__(self, system, config):
-        REGCVData.__init__(self)
+        REGCV1Data.__init__(self)
         VSGOuterPIData.__init__(self)
         VSGInnerLagData.__init__(self)
 
-        REGCVModelBase.__init__(self, system, config)
+        REGCV1ModelBase.__init__(self, system, config)
         VSGOuterPIModel.__init__(self)
         VSGInnerLagModel.__init__(self)
