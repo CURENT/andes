@@ -297,15 +297,34 @@ class TestIslands(unittest.TestCase):
         self.assertEqual(len(ss.Bus.islands), 2)
 
 
-class TestPVD1Init(unittest.TestCase):
-    """
-    Test if PVD1 model initialization works.
-    """
+class TestCaseInit(unittest.TestCase):
+
     def test_pvd1_init(self):
+        """
+        Test if PVD1 model initialization works.
+        """
         ss = andes.run(get_case('ieee14/ieee14_pvd1.json'),
                        no_output=True,
                        default_config=True,
                        )
+        ss.config.warn_limits = 0
+        ss.config.warn_abnormal = 0
+
+        ss.TDS.init()
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+    def test_exac1_init(self):
+        """
+        Test if EXAC1 model initialization. One TGOV1 is at the lower limit.
+        """
+        ss = andes.load(get_case('ieee14/ieee14_exac1.json'),
+                       no_output=True,
+                       default_config=True,
+                       )
+        ss.PV.config.pv2pq = 1
+        ss.PFlow.run()
+
         ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0
 
