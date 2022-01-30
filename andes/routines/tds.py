@@ -286,10 +286,8 @@ class TDS(BaseRoutine):
         Run time-domain simulation using numerical integration.
 
         The default method is the Implicit Trapezoidal Method (ITM).
-
-        Parameters
-        ----------
         """
+
         system = self.system
         dae = self.system.dae
         config = self.config
