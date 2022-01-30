@@ -322,7 +322,7 @@ class TDS(BaseRoutine):
             logger.debug("Initialization only is requested and done")
             return self.initialized
 
-        self.pbar = tqdm(total=100, unit='%', ascii=True,
+        self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
                          file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
