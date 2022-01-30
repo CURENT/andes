@@ -31,7 +31,7 @@ file_classes = OrderedDict([
                  'ESAC1A', 'ESST1A']),
     ('pss', ['IEEEST', 'ST2CUT']),
     ('motor', ['Motor3', 'Motor5']),
-    ('measurement', ['BusFreq', 'BusROCOF', 'PMU']),
+    ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REECA1', 'REECA1E', 'REECA1G',
