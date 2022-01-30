@@ -11,6 +11,7 @@ v1.5 Notes
 
 v1.5.9 (2022-01-xx)
 ```````````````````
+- Added PLL1, a simple PLL model.
 - Renamed ``REGCVSG`` to ``REGCV1`` and ``REGCVSG2`` to ``REGCV2``.
 - Added an alias list for model names. See ``models/__init__.py``.
 - Multiprocessing now executes on all CPUs that are physical, instead
