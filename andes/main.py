@@ -26,7 +26,7 @@ from typing import Optional, Union
 
 import andes
 from andes.routines import routine_cli
-from andes.shared import Pool, Process, coloredlogs, unittest
+from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
 from andes.system import System
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
@@ -490,7 +490,7 @@ def find_log_path(lg):
     return out
 
 
-def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
+def _run_multiprocess_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     """
     Run multiprocessing with `Process`.
 
@@ -515,7 +515,7 @@ def _run_multiprocess_proc(cases, ncpu=os.cpu_count(), **kwargs):
     return True
 
 
-def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **kwargs):
+def _run_multiprocess_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     """
     Run multiprocessing jobs using Pool.
 
@@ -539,7 +539,7 @@ def _run_multiprocess_pool(cases, ncpu=os.cpu_count(), verbose=logging.INFO, **k
     return ret
 
 
-def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=os.cpu_count(), pool=False,
+def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL, pool=False,
         cli=False, codegen=False, shell=False, **kwargs):
     """
     Entry point to run ANDES routines.
@@ -724,7 +724,7 @@ def prepare(quick=False, incremental=False, models=None,
 
     cli = kwargs.get("cli", False)
     full = kwargs.get("full", False)
-    ncpu = kwargs.get("ncpu", os.cpu_count())
+    ncpu = kwargs.get("ncpu", NCPUS_PHYSICAL)
 
     if cli is True:
         if not full:

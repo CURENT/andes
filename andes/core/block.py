@@ -11,11 +11,9 @@
 from collections import OrderedDict
 from typing import Iterable, List, Optional, Tuple, Union
 
-import numpy as np
-
 from andes.core.common import JacTriplet, ModelFlags, dummify
 from andes.core.discrete import (AntiWindup, AntiWindupRate, DeadBand,
-                                 HardLimiter, LessThan, RateLimiter, Selector,)
+                                 HardLimiter, LessThan, RateLimiter,)
 from andes.core.service import EventFlag
 from andes.core.var import Algeb, State
 
@@ -1593,12 +1591,9 @@ class HVGate(Block):
         self.u2 = dummify(u2)
         self.enforce_tex_name((u1, u2))
 
-        self.sl = Selector(self.u1, self.u2, fun=np.maximum.reduce,
-                           info='HVGate Selector',
-                           )
-
-        self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.sl)
-        self.vars = {'y': self.y, 'sl': self.sl}
+        self.lt = LessThan(self.u1, self.u2)
+        self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.lt)
+        self.vars = {'y': self.y, 'lt': self.lt}
 
     def define(self):
         """
@@ -1619,8 +1614,8 @@ class HVGate(Block):
         Not sure if this is a bug or intended.
 
         """
-        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
-        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
+        self.y.v_str = f'{self.name}_lt_z0*{self.u1.name} + {self.name}_lt_z1*{self.u2.name}'
+        self.y.e_str = f'{self.name}_lt_z0*{self.u1.name} + {self.name}_lt_z1*{self.u2.name} - ' \
                        f'{self.name}_y'
 
 
@@ -1642,13 +1637,10 @@ class LVGate(Block):
         self.u2 = dummify(u2)
         self.enforce_tex_name((u1, u2))
 
-        self.sl = Selector(self.u1, self.u2, fun=np.minimum.reduce,
-                           info='LVGate Selector',
-                           )
+        self.lt = LessThan(self.u1, self.u2)
+        self.y = Algeb(info='LVGate output', tex_name='y', discrete=self.lt)
 
-        self.y = Algeb(info='LVGate output', tex_name='y', discrete=self.sl)
-
-        self.vars = {'y': self.y, 'sl': self.sl}
+        self.vars = {'y': self.y, 'lt': self.lt}
 
     def define(self):
         """
@@ -1664,8 +1656,8 @@ class LVGate(Block):
         Same problem as `HVGate` as `minimum` does not sympify correctly.
 
         """
-        self.y.v_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name}'
-        self.y.e_str = f'{self.name}_sl_s0*{self.u1.name} + {self.name}_sl_s1*{self.u2.name} - ' \
+        self.y.v_str = f'{self.name}_lt_z1*{self.u1.name} + {self.name}_lt_z0*{self.u2.name}'
+        self.y.e_str = f'{self.name}_lt_z1*{self.u1.name} + {self.name}_lt_z0*{self.u2.name} - ' \
                        f'{self.name}_y'
 
 
@@ -1807,6 +1799,8 @@ class Piecewise(Block):
     The first range (-inf, x0) applies `fun_0`, and
     the last range (x_{n-1}, +inf) applies the last function `fun_n`.
 
+    The function returns zero if no condition is met.
+
     Parameters
     ----------
     points : list, tuple
@@ -1837,7 +1831,7 @@ class Piecewise(Block):
             args.append(f'({self.funs[i]}, {self.u.name} <= {self.points[i]})')
         args.append(f'({self.funs[i + 1]}, {self.u.name} > {self.points[-1]})')
 
-        args_comma = ', '.join(args)
+        args_comma = ', '.join(args) + ', (0, True)'
         pw_fun = f'Piecewise({args_comma}, evaluate=False)'
 
         self.y.v_str = pw_fun

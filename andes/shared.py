@@ -12,6 +12,8 @@ This module imports shared libraries either directly or with `LazyImport`.
 
 import math
 import os
+import psutil
+
 from distutils.spawn import find_executable
 
 import coloredlogs  # NOQA
@@ -29,13 +31,16 @@ printing.options['width'] = -1
 from andes.utils.paths import get_dot_andes_path  # NOQA
 from andes.utils.texttable import Texttable  # NOQA
 
-# --- constants ---
+# --- SYSTEM INFO ---
+NCPUS_PHYSICAL = psutil.cpu_count(logical=False)
 
+# --- MATH CONSTANTS ---
 deg2rad = math.pi/180
 pi2o3 = math.pi * 2 / 3
 sqrt3 = math.sqrt(3)
 isqrt3 = math.sqrt(1/3)
 
+# --- NAME CONSTANTS ---
 jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 

@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 class TDS(BaseRoutine):
     """
     Time-domain simulation routine.
+
+    Some cases may be sensitive to large convergence tolerance ``config.tol``.
+    If numerical oscillation happens, try reducing ``config.tol`` to ``1e-6``.
     """
 
     def __init__(self, system=None, config=None):
@@ -56,7 +59,7 @@ class TDS(BaseRoutine):
                               fixt="use fixed step size (1) or variable (0)",
                               shrinkt='shrink step size for fixed method if not converged',
                               honest='honest Newton method that updates Jac at each step',
-                              tstep='the initial step step size',
+                              tstep='integration step size',
                               max_iter='maximum number of iterations',
                               refresh_event='refresh events at each step',
                               test_init='test if initialization passes',
@@ -185,9 +188,10 @@ class TDS(BaseRoutine):
 
         self.fg_update(system.exist.tds, init=True)
 
+        # reset diff. equation RHS for binding antiwindups
         for item in system.antiwindups:
             for key, _, eqval in item.x_set:
-                np.put(system.dae.x, key, eqval)
+                np.put(system.dae.f, key, eqval)
 
         # only store switch times when not replaying CSV data
         if self.data_csv is None:
@@ -282,10 +286,8 @@ class TDS(BaseRoutine):
         Run time-domain simulation using numerical integration.
 
         The default method is the Implicit Trapezoidal Method (ITM).
-
-        Parameters
-        ----------
         """
+
         system = self.system
         dae = self.system.dae
         config = self.config
@@ -318,7 +320,7 @@ class TDS(BaseRoutine):
             logger.debug("Initialization only is requested and done")
             return self.initialized
 
-        self.pbar = tqdm(total=100, ncols=70, unit='%',
+        self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
                          file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:

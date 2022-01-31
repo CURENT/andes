@@ -116,13 +116,16 @@ class Fault(ModelData, Model):
         self.group = 'TimedEvent'
 
         self.config.add(OrderedDict((('restore', 1),
-                                     ('scale', 1.0)
+                                     ('mode', 1),
+                                     ('scale', 1.0),
                                      )))
         self.config.add_extra('_alt',
                               restore=(0, 1),
+                              mode=(1, 2),
                               )
         self.config.add_extra('_help',
                               restore='restore algebraic variables to pre-fault values',
+                              mode='1 - restore voltages on all buses, 2 - fault bus only',
                               scale='scaling factor of restored algebraic values',
                               )
 
@@ -183,10 +186,20 @@ class Fault(ModelData, Model):
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
+                v_addr = self.system.Bus.get(src='v', idx=self.bus.v[i], attr='a')
+                bus_uid = self.system.Bus.idx2uid(self.bus.v[i])
 
                 if self.config.restore:
-                    self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
-                    logger.debug(f"Voltage restored after fault clearance at t={self.system.dae.t:.6f}")
+                    if self.config.mode == 1:
+                        self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
+                        logger.debug("All voltage restored after clearance at t=%.6f",
+                                     self.system.dae.t)
+                    elif self.config.mode == 2:
+                        self.system.dae.y[v_addr] = self._vstore[bus_uid] * self.config.scale
+                        logger.debug("Voltage on bus %s restored after clearance at t=%.6f",
+                                     self.bus.v[i], self.system.dae.t)
+                    else:
+                        logger.error("Unsupport fault voltage restoration mode")
 
                 tqdm.write(f'<Fault {self.idx.v[i]}>: '
                            f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]} sec.')

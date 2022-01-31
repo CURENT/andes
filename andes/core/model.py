@@ -244,8 +244,10 @@ class ModelData:
         idx = kwargs['idx']
         self.uid[idx] = self.n
         self.n += 1
-        if "name" in self.params and kwargs.get("name") is None:
-            kwargs["name"] = idx
+        if "name" in self.params:
+            name = kwargs.get("name")
+            if (name is None) or (not isinstance(name, str) and np.isnan(name)):
+                kwargs["name"] = idx
 
         if "idx" not in self.params:
             kwargs.pop("idx")
