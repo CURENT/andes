@@ -43,6 +43,10 @@ class PLL1Data(ModelData):
 
 
 class PLL1Model(Model):
+    """
+    Simple PLL1 implementation.
+    """
+    
     def __init__(self, system, config):
         super().__init__(system, config)
 

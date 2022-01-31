@@ -9,12 +9,12 @@ import platform
 import sys
 from time import strftime
 
+from andes.shared import NCPUS_PHYSICAL
 from ._version import get_versions
 
 from andes.main import config_logger, find_log_path
 from andes.routines import routine_cli
 from andes.utils.paths import get_log_dir
-from andes.shared import NCPUS_PHYSICAL
 
 logger = logging.getLogger(__name__)
 

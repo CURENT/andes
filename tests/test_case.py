@@ -298,6 +298,9 @@ class TestIslands(unittest.TestCase):
 
 
 class TestCaseInit(unittest.TestCase):
+    """
+    Test if initializations pass.
+    """
 
     def test_pvd1_init(self):
         """
