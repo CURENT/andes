@@ -9,7 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.5 Notes
 ----------
 
-v1.5.9 (2022-01-xx)
+v1.5.10 (2022-02-01)
+````````````````````
+- Fixed one equation in `REGC_A`.
+
+v1.5.9 (2022-01-31)
 ```````````````````
 - Added PLL1, a simple PLL model.
 - Renamed ``REGCVSG`` to ``REGCV1`` and ``REGCVSG2`` to ``REGCV2``.
