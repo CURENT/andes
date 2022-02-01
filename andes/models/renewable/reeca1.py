@@ -398,8 +398,8 @@ class REECA1Model(Model):
         self.qref0.v_str = 'SWQ_s1 * (v - Vref1) + SWQ_s0 * Iqcmd0 * (v * VLower_zi + 0.01 * VLower_zl)'
         self.Qref = Algeb(tex_name='Q_{ref}',
                           info='external Q ref',
-                          v_str='qref0',
-                          e_str='qref0 - Qref',
+                          v_str='-qref0',  # negative sign to be consistent with the direction of Qcpf
+                          e_str='-qref0 - Qref',
                           unit='p.u.',
                           )
 
