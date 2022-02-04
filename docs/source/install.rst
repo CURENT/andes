@@ -184,7 +184,6 @@ numba
 
     Numba is supported starting from ANDES 1.5.0 and is automatically
     installed for ANDES >=1.5.3.
-
     Please refer to the following for turning on Numba.
 
 Numba is allows numerical functions calls to be compiled into machine code.
