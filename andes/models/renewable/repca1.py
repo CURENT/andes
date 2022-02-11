@@ -26,6 +26,11 @@ class REPCA1Data(ModelData):
                              mandatory=True,
                              )
 
+        self.busn = IdxParam(info='Bus number for voltage control; local control if 0',
+                             model='Bus',
+                             default=0,
+                             )
+
         self.busr = IdxParam(info='Optional remote bus for voltage and freq. measurement',
                              model='Bus',
                              default=None,

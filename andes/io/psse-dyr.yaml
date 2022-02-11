@@ -1224,6 +1224,7 @@ REPCA1:
     inputs:
         - BUS
         - ID
+        - BUSN
         - BUS1
         - BUS2
         - CKTID
