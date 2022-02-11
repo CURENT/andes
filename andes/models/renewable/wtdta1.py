@@ -57,7 +57,7 @@ class WTDTA1Model(Model):
         self.flags.tds = True
         self.group = 'RenGovernor'
 
-        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
+        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, vtype=str,
                             export=False,
                             )
         self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
