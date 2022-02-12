@@ -493,6 +493,16 @@ class REPCA1Model(Model):
 class REPCA1(REPCA1Data, REPCA1Model):
     """
     REPCA1 plat control model.
+
+    <PSS/E parser notice>
+
+    In PSS/E dyr file:
+    1) ICONs M+1 and M+2 are set to 0 when using generator power,
+    it will result in error message ( <REPCA1> cannot retrieve <bus1> from <ACLine> using <line>:
+    KeyError('Group <ACLine> does not contain device with idx=False') in the file converter.
+    However, this error can be ignored because it will not affect the file conversion.
+    2) ICONs M+3 is entered in single quotes, it is suggested to remove the single quotes
+    or it will fail the file conversion.
     """
 
     def __init__(self, system, config):
