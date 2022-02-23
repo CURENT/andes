@@ -8,6 +8,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.5 Notes
 ----------
+v1.5.11 (2022-02-23)
+````````````````````
+- Reduced the tolerance for tiny variable increments to be
+  treated as zero.
+- Fixed PSS/E parsers for renewable models.
+- Minor renewable model fixes.
 
 v1.5.10 (2022-02-01)
 ````````````````````
