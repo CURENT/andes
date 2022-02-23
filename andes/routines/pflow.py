@@ -291,7 +291,7 @@ class PFlow(BaseRoutine):
             Solutions `dae.xy`.
         """
         system = self.system
-        self.init(jac=False)
+        self.init()
 
         v0 = system.dae.xy
         try:
