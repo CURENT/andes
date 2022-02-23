@@ -467,6 +467,7 @@ class PVD1Model(Model):
         self.Ipmax = Algeb(v_str='(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))',
                            e_str='(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq)) - Ipmax',
                            tex_name='I_{pmax}',
+                           info='Upper limit of Ip',
                            )
 
         Iqmaxsq = "(Piecewise((0, Le(ialim**2 - Ipcmd_y**2, 0)), ((ialim**2 - Ipcmd_y ** 2), True)))"
@@ -477,6 +478,7 @@ class PVD1Model(Model):
         self.Iqmax = Algeb(v_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq0)',
                            e_str='SWPQ_s0 * ialim + SWPQ_s1 * sqrt(Iqmaxsq) - Iqmax',
                            tex_name='I_{qmax}',
+                           info='Upper limit of Iq',
                            )
 
         # TODO: set option whether to use degrading gain
