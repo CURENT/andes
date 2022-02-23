@@ -90,7 +90,7 @@ class PLBVFU1Model(Model):
     Model implementation of PLBVFU1.
 
     The test case of this model require that ``TDS.config.reset_tiny = 1``.
-    The cause needs investigating. 
+    The cause needs investigating.
     """
 
     def __init__(self, system, config):

@@ -502,7 +502,7 @@ class REPCA1(REPCA1Data, REPCA1Model):
        an error will be thrown by the parser, saying
        "<REPCA1> cannot retrieve <bus1> from <ACLine> using <line>:
        KeyError('Group <ACLine> does not contain device with idx=False')".
-    
+
     2. PSS/E enters ICONs M+3 as a string in single quotes. The pair of single quotes
        need to be removed, or the conversion will fail.
     """
