@@ -43,7 +43,7 @@ class TDS(BaseRoutine):
                                      ('test_init', 1),
                                      ('check_conn', 1),
                                      ('g_scale', 1),
-                                     ('reset_tiny', 0),
+                                     ('reset_tiny', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
                                      ('store_z', 0),
