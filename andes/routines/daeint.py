@@ -119,8 +119,9 @@ class ImplicitIter:
                 tds.busted = True
                 break
 
-            # reset small values to reduce chattering
-            inc[np.where(np.abs(inc) < tds.tol_zero)] = 0
+            # reset tiny values to reduce chattering
+            if tds.config.reset_tiny:
+                inc[np.where(np.abs(inc) < tds.tol_zero)] = 0
 
             # set new values
             dae.x -= inc[:dae.n].ravel()
