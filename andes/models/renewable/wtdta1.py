@@ -57,7 +57,7 @@ class WTDTA1Model(Model):
         self.flags.tds = True
         self.group = 'RenGovernor'
 
-        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
+        self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, vtype=str,
                             export=False,
                             )
         self.Sn = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
@@ -131,6 +131,12 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
 
     User-provided reference speed should be specified in parameter `w0`.
     Internally, `w0` is set to the algebraic variable `wr0`.
+
+    <PSS/E parser notice>
+
+    In the file conversion, the computation of coefficient `Kshaft` involves system frequency.
+    It is coded as constant `60` rather than a variable read from the system model.
+    If your system frequency is not set at 60 Hz, be careful of this.
     """
 
     def __init__(self, system, config):

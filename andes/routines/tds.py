@@ -43,6 +43,7 @@ class TDS(BaseRoutine):
                                      ('test_init', 1),
                                      ('check_conn', 1),
                                      ('g_scale', 1),
+                                     ('reset_tiny', 1),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
                                      ('store_z', 0),
@@ -65,6 +66,7 @@ class TDS(BaseRoutine):
                               test_init='test if initialization passes',
                               check_conn='re-check connectivity after event',
                               g_scale='scale algebraic residuals with time step size',
+                              reset_tiny='reset tiny residuals to zero to avoid chattering',
                               qrt='quasi-real-time stepping',
                               kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
                               store_z='store limiter status in TDS output',
@@ -87,7 +89,8 @@ class TDS(BaseRoutine):
                               test_init=(0, 1),
                               check_conn=(0, 1),
                               g_scale='positive',
-                              qrt='bool',
+                              reset_tiny=(0, 1),
+                              qrt=(0, 1),
                               kqrt='positive',
                               store_z=(0, 1),
                               store_f=(0, 1),
@@ -117,7 +120,7 @@ class TDS(BaseRoutine):
         self.next_pc = 0
         self.Teye = None
         self.qg = np.array([])
-        self.tol_zero = self.config.tol / 1000
+        self.tol_zero = self.config.tol / 1e6
 
         # internal status
         self.converged = False
@@ -550,6 +553,9 @@ class TDS(BaseRoutine):
             self.deltat = config.tstep
             if config.tstep < self.deltatmin:
                 logger.warning('Fixed time step is smaller than the estimated minimum.')
+            if config.tstep > self.deltatmax:
+                logger.debug('Increased deltatmax to tstep.')
+                self.deltatmax = config.tstep
 
         self.h = self.deltat
 

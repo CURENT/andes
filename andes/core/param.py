@@ -635,6 +635,9 @@ class ExtParam(NumParam):
         A parameter defined in the model defining this ExtParam instance. `indexer.v` should contain indices into
         `model.src.v`. If is None, the source parameter values will be fully copied. If `model` is a group
         name, the indexer cannot be None.
+    vtype : type, optional, default to float
+        Type of each element to be retrieved. Can be ``str`` if the ExtParam is used
+        to access an ``IdxParam``.
 
     Attributes
     ----------

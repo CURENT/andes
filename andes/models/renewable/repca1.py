@@ -493,6 +493,18 @@ class REPCA1Model(Model):
 class REPCA1(REPCA1Data, REPCA1Model):
     """
     REPCA1 plat control model.
+
+    <PSS/E parser notice>
+
+    In PSS/E dyr file:
+
+    1. If ICONs M+1 and M+2 are set to 0 when using generator power,
+       an error will be thrown by the parser, saying
+       "<REPCA1> cannot retrieve <bus1> from <ACLine> using <line>:
+       KeyError('Group <ACLine> does not contain device with idx=False')".
+
+    2. PSS/E enters ICONs M+3 as a string in single quotes. The pair of single quotes
+       need to be removed, or the conversion will fail.
     """
 
     def __init__(self, system, config):

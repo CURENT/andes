@@ -60,6 +60,10 @@ class PFlow(BaseRoutine):
         self.y_sol = None
 
     def init(self):
+        """
+        Initialize variables for power flow.
+        """
+
         system = self.system
 
         t0, _ = elapsed()
@@ -260,6 +264,7 @@ class PFlow(BaseRoutine):
 
         system.dae.clear_fg()
         system.l_update_var(self.models, niter=self.niter, err=self.mis[-1])
+        system.s_update_var(self.models)
         system.f_update(self.models)
         system.g_update(self.models)
         system.l_update_eq(self.models)
@@ -286,7 +291,8 @@ class PFlow(BaseRoutine):
             Solutions `dae.xy`.
         """
         system = self.system
-        system.init(system.exist.pflow)
+        self.init()
+
         v0 = system.dae.xy
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)

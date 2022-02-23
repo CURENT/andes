@@ -319,7 +319,7 @@ class TestCaseInit(unittest.TestCase):
 
     def test_exac1_init(self):
         """
-        Test if EXAC1 model initialization. One TGOV1 is at the lower limit.
+        Test EXAC1 initialization with one TGOV1 at lower limit.
         """
         ss = andes.load(get_case('ieee14/ieee14_exac1.json'),
                         no_output=True,
@@ -327,6 +327,9 @@ class TestCaseInit(unittest.TestCase):
                         )
         ss.PV.config.pv2pq = 1
         ss.PFlow.run()
+
+        # suppress EXAC1 warning from select
+        np.seterr(invalid='ignore')
 
         ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0

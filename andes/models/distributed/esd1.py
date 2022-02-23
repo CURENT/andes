@@ -3,7 +3,7 @@
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter, LessThan
 from andes.core.param import NumParam
-from andes.core.var import Algeb
+from andes.core.var import Algeb, AliasState
 from andes.models.distributed.pvd1 import PVD1Data, PVD1Model
 
 
@@ -61,6 +61,10 @@ class ESD1Model(PVD1Model):
                               T=self.Tf, K='sys_mva / 3600 / En', y0=self.SOCinit,
                               check_init=False,
                               )
+        self.pIG.info = 'State of charge'
+
+        self.SOC = AliasState(self.pIG_y)
+        self.SOC.info = 'Alias for state of charge'
 
         # --- Add hard limiter for SOC ---
         self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
@@ -84,6 +88,8 @@ class ESD1(ESD1Data, ESD1Model):
 
     A state-of-charge limit is added to the PVD1 model.
     This limit is applied to Ipmax and Ipmin.
+    The state of charge is in state variable ``SOC``,
+    which is an alias of ``pIG_y``.
 
     Reference:
     [1] Powerworld, Renewable Energy Electrical Control Model REEC_C
