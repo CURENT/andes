@@ -1316,7 +1316,7 @@ WTDTA1:
         - ID
         - H
         - DAMP
-        - Htfract
+        - Htfrac
         - Freq1
         - Dshaft
     find:
@@ -1325,10 +1325,10 @@ WTDTA1:
                 bus: BUS
     outputs:
         ree: ree
-        Ht: "WTDTA1.H,WTDTA1.Htfract; lambda x, y: x * y"
-        Hg: "WTDTA1.H,WTDTA1.Htfract; lambda x, y: x * (1-y)"
+        Ht: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * y"
+        Hg: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * (1-y)"
         Dshaft: Dshaft
-        Kshaft: "WTDTA1.H,WTDTA1.Htfract,WTDTA1.Freq1; lambda H, Htfract, Freq1: 2 * (H*Htfract) * (H*(1-Htfract)) * 2 * 3.141592653 * Freq1*Freq1 / H / 60"
+        Kshaft: "WTDTA1.H,WTDTA1.Htfrac,WTDTA1.Freq1; lambda H, Htfrac, Freq1: 2 * (H*Htfrac) * (H*(1-Htfrac)) * 4 * 3.141592653 * 3.141592653 * Freq1*Freq1 / H"
 
 WTARA1:
     destination: WTARA1
