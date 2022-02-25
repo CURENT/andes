@@ -20,6 +20,7 @@ class WTDSData(ModelData):
                           info='Total inertia', unit='MWs/MVA',
                           power=True,
                           non_zero=True,
+                          non_negative=True,
                           )
 
         self.D = NumParam(default=1.0, tex_name='D_{shaft}',

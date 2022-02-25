@@ -20,12 +20,14 @@ class WTDTA1Data(ModelData):
                            info='Turbine inertia', unit='MWs/MVA',
                            power=True,
                            non_zero=True,
+                           non_negative=True,
                            )
 
         self.Hg = NumParam(default=3.0, tex_name='H_g',
                            info='Generator inertia', unit='MWs/MVA',
                            power=True,
                            non_zero=True,
+                           non_negative=True,
                            )
 
         self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
@@ -38,6 +40,7 @@ class WTDTA1Data(ModelData):
                                info='Spring constant',
                                unit='p.u. (gen base)',
                                power=True,
+                               non_negative=True,
                                )
 
         self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
