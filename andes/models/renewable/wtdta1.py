@@ -20,12 +20,14 @@ class WTDTA1Data(ModelData):
                            info='Turbine inertia', unit='MWs/MVA',
                            power=True,
                            non_zero=True,
+                           non_negative=True,
                            )
 
         self.Hg = NumParam(default=3.0, tex_name='H_g',
                            info='Generator inertia', unit='MWs/MVA',
                            power=True,
                            non_zero=True,
+                           non_negative=True,
                            )
 
         self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
@@ -34,10 +36,17 @@ class WTDTA1Data(ModelData):
                                power=True,
                                )
 
+        self.DAMP = NumParam(default=0.0, tex_name='Damp',
+                             info='Damp coefficient',
+                             unit='p.u. (gen base)',
+                             power=True,
+                             )
+
         self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
                                info='Spring constant',
                                unit='p.u. (gen base)',
                                power=True,
+                               non_negative=True,
                                )
 
         self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
@@ -95,7 +104,7 @@ class WTDTA1Model(Model):
                         )
 
         # `s1_y` is `wt`
-        self.s1 = Integrator(u='(Pm / s1_y) - (Kshaft * s3_y ) - pd',
+        self.s1 = Integrator(u='(Pm / s1_y) - s3_y - pd',
                              T=self.Ht2,
                              K=1.0,
                              y0='wr0',
@@ -104,7 +113,7 @@ class WTDTA1Model(Model):
         self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
 
         # `s2_y` is `wg`
-        self.s2 = Integrator(u='-(Pe / s2_y) + (Kshaft * s3_y ) + pd',
+        self.s2 = Integrator(u='-(Pe / s2_y) + s3_y - DAMP * (s2_y - w0) + pd',
                              T=self.Hg2,
                              K=1.0,
                              y0='wr0',
@@ -115,13 +124,13 @@ class WTDTA1Model(Model):
         # TODO: `s3_y` needs to be properly reinitialized with the new `wr0`
         self.s3 = Integrator(u='s1_y - s2_y',
                              T=1.0,
-                             K=1.0,
-                             y0='Pe0 / wr0 / Kshaft',
+                             K=self.Kshaft,
+                             y0='Pe0 / wr0',
                              )
 
         self.pd = Algeb(tex_name='P_d', info='Output after damping',
-                        v_str='0.0',
                         e_str='Dshaft * (s1_y - s2_y) - pd',
+                        v_str='0',
                         )
 
 
@@ -134,11 +143,15 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
 
     <PSS/E parser notice>
 
+    In PSSE doc, `Freq1` is said to be Hz, but per unit makes more sense.
+    If the value of `Freq1` is given in Hz, it is suggested to convert it to per unit.
+
     In the file conversion, the computation of coefficient `Kshaft` involves system frequency.
-    It is coded as constant `60` rather than a variable read from the system model.
+    It is coded as constant 60 rather than a variable read from the system model.
     If your system frequency is not set at 60 Hz, be careful of this.
     """
 
     def __init__(self, system, config):
         WTDTA1Data.__init__(self)
         WTDTA1Model.__init__(self, system, config)
+
