@@ -36,6 +36,12 @@ class WTDTA1Data(ModelData):
                                power=True,
                                )
 
+        self.Damp = NumParam(default=0.0, tex_name='Damp',
+                             info='Damp coefficient',
+                             unit='p.u. (gen base)',
+                             power=True,
+                             )
+
         self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
                                info='Spring constant',
                                unit='p.u. (gen base)',
@@ -107,7 +113,7 @@ class WTDTA1Model(Model):
         self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
 
         # `s2_y` is `wg`
-        self.s2 = Integrator(u='-(Pe / s2_y) + (Kshaft * s3_y ) + pd',
+        self.s2 = Integrator(u='-(Pe / s2_y) + (Kshaft * s3_y ) - Damp * (wr0 - w0) + pd',
                              T=self.Hg2,
                              K=1.0,
                              y0='wr0',
