@@ -37,11 +37,11 @@ class WTDTA1Data(ModelData):
 
         self.Freq1 = NumParam(default=1, tex_name='Freq1',
                               unit='p.u. (Hz)',
-                              info='',
+                              info='First shaft torsional resonant frequency, p.u. (Hz)',
                               )
 
         self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
-                               info='Damping coefficient',
+                               info='Shaft damping factor',
                                unit='p.u. (gen base)',
                                power=True,
                                )
