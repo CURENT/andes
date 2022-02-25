@@ -66,6 +66,9 @@ class WTDTA1Model(Model):
         self.flags.tds = True
         self.group = 'RenGovernor'
 
+        self.Ks_s1 = ConstService(v_str='safe_div(Kshaft, Kshaft)') # Indicator of non-zero Kshaft
+        self.Ks_s0 = ConstService(v_str='1 - safe_div(Kshaft, Kshaft)') # Indicator of zero Kshaft
+
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, vtype=str,
                             export=False,
                             )
@@ -107,7 +110,7 @@ class WTDTA1Model(Model):
         self.s1 = Integrator(u='(Pm / s1_y) - (Kshaft * s3_y ) - pd',
                              T=self.Ht2,
                              K=1.0,
-                             y0='wr0',
+                             y0='Ks_s1 * wr0 + Ks_s0 * (Pe / wr0 / Dshaft + wr0)',
                              )
 
         self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
@@ -122,14 +125,14 @@ class WTDTA1Model(Model):
         self.wg = AliasState(self.s2_y, tex_name=r'\omega_g')
 
         # TODO: `s3_y` needs to be properly reinitialized with the new `wr0`
-        self.s3 = Integrator(u='s1_y - s2_y',
+        self.s3 = Integrator(u='Ks_s1 * (s1_y - s2_y) + Ks_s0 * 0',
                              T=1.0,
                              K=1.0,
-                             y0='safe_div(Pe0 / wr0, Kshaft)',
+                             y0='safe_div(Ks_s1 * Pe0 / wr0, Kshaft) + Ks_s0 * 0',
                              )
 
         self.pd = Algeb(tex_name='P_d', info='Output after damping',
-                        v_str='0.0',
+                        v_str='Ks_s1 * 0 + Ks_s0 * Pe / wr0',
                         e_str='Dshaft * (s1_y - s2_y) - pd',
                         )
 
