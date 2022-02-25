@@ -46,6 +46,7 @@ class GENBaseData(ModelData):
         self.M = NumParam(default=6,
                           info="machine start up time (2H)",
                           non_zero=True,
+                          non_negative=True,
                           power=True,
                           tex_name='M'
                           )
