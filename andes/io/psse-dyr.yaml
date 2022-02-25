@@ -1325,11 +1325,11 @@ WTDTA1:
                 bus: BUS
     outputs:
         ree: ree
+        H: H
         DAMP: DAMP
-        Ht: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * y"
-        Hg: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * (1-y)"
+        Htfrac: Htfrac
+        Freq1: Freq1
         Dshaft: Dshaft
-        Kshaft: "WTDTA1.H,WTDTA1.Htfrac,WTDTA1.Freq1; lambda H, Htfrac, Freq1: 2 * (H*Htfrac) * (H*(1-Htfrac)) * (2 * 3.141592653 * Freq1 / 60 ) ** 2 / H"
 
 WTARA1:
     destination: WTARA1

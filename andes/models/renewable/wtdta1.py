@@ -16,25 +16,12 @@ class WTDTA1Data(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Ht = NumParam(default=3.0, tex_name='H_t',
-                           info='Turbine inertia', unit='MWs/MVA',
-                           power=True,
-                           non_zero=True,
-                           non_negative=True,
-                           )
-
-        self.Hg = NumParam(default=3.0, tex_name='H_g',
-                           info='Generator inertia', unit='MWs/MVA',
-                           power=True,
-                           non_zero=True,
-                           non_negative=True,
-                           )
-
-        self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
-                               info='Damping coefficient',
-                               unit='p.u. (gen base)',
-                               power=True,
-                               )
+        self.H = NumParam(default=3.0, tex_name='H_t',
+                          info='Total inertia constant', unit='MWs/MVA',
+                          power=True,
+                          non_zero=True,
+                          non_negative=True,
+                          )
 
         self.DAMP = NumParam(default=0.0, tex_name='Damp',
                              info='Damp coefficient',
@@ -42,11 +29,21 @@ class WTDTA1Data(ModelData):
                              power=True,
                              )
 
-        self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
-                               info='Spring constant',
+        self.Htfrac = NumParam(default=0.5, tex_name='D_{shaft}',
+                               info='Turbine inertia fraction (Hturb/H)',
+                               power=True,
+                               vrange='[0, 1]',
+                               )
+
+        self.Freq1 = NumParam(default=1, tex_name='Freq1',
+                              unit='p.u. (Hz)',
+                              info='',
+                              )
+
+        self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
+                               info='Damping coefficient',
                                unit='p.u. (gen base)',
                                power=True,
-                               non_negative=True,
                                )
 
         self.w0 = NumParam(default=1.0, tex_name=r'\omega_0',
@@ -86,9 +83,12 @@ class WTDTA1Model(Model):
         self.Pe0 = ExtService(model='RenGen', src='Pe', indexer=self.reg, tex_name='P_{e0}',
                               )
 
-        self.Ht2 = ConstService(v_str='2 * Ht', tex_name='2H_t')
+        self.Ht2 = ConstService(v_str='2 * (Htfrac * H)', tex_name='2H_t')
 
-        self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_g')
+        self.Hg2 = ConstService(v_str='2 * H * (1 - Htfrac)', tex_name='2H_g')
+
+        # (2*pi*Freq1)**2 is considered in p.u., which is Freq1**2 here
+        self.Kshaft = ConstService(v_str='Ht2 * Hg2 * 0.5 * Freq1 * Freq1 / H', tex_name='K_{shaft}')
 
         self.wr0 = Algeb(tex_name=r'\omega_{r0}',
                          unit='p.u.',
@@ -143,15 +143,11 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
 
     <PSS/E parser notice>
 
-    In PSSE doc, `Freq1` is said to be Hz, but per unit makes more sense.
-    If the value of `Freq1` is given in Hz, it is suggested to convert it to per unit.
-
-    In the file conversion, the computation of coefficient `Kshaft` involves system frequency.
-    It is coded as constant 60 rather than a variable read from the system model.
-    If your system frequency is not set at 60 Hz, be careful of this.
+    In PSSE doc, `Freq1` is said to be Hz, but ANDES apply per unit here.
+    If the value of `Freq1` is given in Hz, it is suggested to convert it to
+    per unit in the dyr file.
     """
 
     def __init__(self, system, config):
         WTDTA1Data.__init__(self)
         WTDTA1Model.__init__(self, system, config)
-
