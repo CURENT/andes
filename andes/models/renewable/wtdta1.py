@@ -143,8 +143,11 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
 
     <PSS/E parser notice>
 
+    In PSSE doc, `Freq1` is said to be Hz, but per unit makes more sense.
+    If the value of `Freq1` is given in Hz, it is suggested to convert it to per unit.
+
     In the file conversion, the computation of coefficient `Kshaft` involves system frequency.
-    It is coded as constant `60` rather than a variable read from the system model.
+    It is coded as constant 60 rather than a variable read from the system model.
     If your system frequency is not set at 60 Hz, be careful of this.
     """
 
