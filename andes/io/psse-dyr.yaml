@@ -1325,6 +1325,7 @@ WTDTA1:
                 bus: BUS
     outputs:
         ree: ree
+        DAMP: DAMP
         Ht: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * y"
         Hg: "WTDTA1.H,WTDTA1.Htfrac; lambda x, y: x * (1-y)"
         Dshaft: Dshaft
