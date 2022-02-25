@@ -66,8 +66,8 @@ class WTDTA1Model(Model):
         self.flags.tds = True
         self.group = 'RenGovernor'
 
-        self.Ks_s1 = ConstService(v_str='safe_div(Kshaft, Kshaft)') # Indicator of non-zero Kshaft
-        self.Ks_s0 = ConstService(v_str='1 - safe_div(Kshaft, Kshaft)') # Indicator of zero Kshaft
+        self.Ks_s1 = ConstService(v_str='safe_div(Kshaft, Kshaft)')  # Indicator of non-zero Kshaft
+        self.Ks_s0 = ConstService(v_str='1 - safe_div(Kshaft, Kshaft)')  # Indicator of zero Kshaft
 
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, vtype=str,
                             export=False,
