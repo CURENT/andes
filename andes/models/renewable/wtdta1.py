@@ -138,14 +138,17 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
     """
     WTDTA wind turbine drive-train model.
 
+    One can set ``Htfrac`` to ``0`` to simulate a single-mass
+    drive train. ``Htfrac`` has to be within ``[0, 1]``
+
     User-provided reference speed should be specified in parameter `w0`.
     Internally, `w0` is set to the algebraic variable `wr0`.
 
-    <PSS/E parser notice>
+    Note for PSS/E dyr parser:
 
-    In PSSE doc, `Freq1` is said to be Hz, but ANDES apply per unit here.
-    If the value of `Freq1` is given in Hz, it is suggested to convert it to
-    per unit in the dyr file.
+    In PSS/E doc, `Freq1` is said to be Hz,
+    but exported data from PSS/E 34 uses per unit.
+    ANDES requires ``Freq1`` in per unit frequency.
     """
 
     def __init__(self, system, config):
