@@ -597,7 +597,9 @@ class TDSData:
         if legend:
             ax.legend(bbox_to_anchor=legend_bbox,
                       loc=legend_loc,
-                      ncol=legend_ncol)
+                      ncol=legend_ncol,
+                      frameon=False,
+                      )
 
         if title:
             ax.set_title(title)
