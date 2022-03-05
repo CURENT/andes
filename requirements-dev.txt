@@ -11,4 +11,5 @@ numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
 myst-parser
+myst-nb
 pre-commit
