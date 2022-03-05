@@ -1,7 +1,11 @@
 # Scripting Examples
 
 A collection of examples are presented to supplement the tutorial.
-
+The examples below are identical to the Jupyter Notebook
+in the `examples` folder of the repository
+[here](https://github.com/cuihantao/andes/tree/master/examples).
+You can run the examples in a live Jupyter Notebook online using
+[Binder](https://mybinder.org/v2/gh/cuihantao/andes/master).
 
 ```{toctree}
 ---
