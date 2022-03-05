@@ -42,6 +42,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
     'sphinx_copybutton',
+    'myst_parser',
 ]
 
 # Configuration options for plot_directive. See:
@@ -207,4 +208,4 @@ html_favicon = 'images/curent.ico'
 smartquotes = False
 
 # import and execute model reference generation script
-exec(open("modelref.py").read())
+exec(open("genmodelref.py").read())
