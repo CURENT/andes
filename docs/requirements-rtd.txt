@@ -15,6 +15,6 @@ psutil
 ipython
 numpydoc
 sphinx-copybutton
-sphinx_rtd_theme==1.0.0
+sphinx_rtd_theme==0.5.2
 docutils<0.18
 myst-parser==0.16.1
