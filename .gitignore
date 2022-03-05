@@ -63,6 +63,7 @@ coverage.xml
 docs/source/modelref.rst
 docs/source/configref.rst
 docs/source/groupdoc
+docs/source/examples
 docs/build/
 docs/source/_build/
 docs/source/generated/

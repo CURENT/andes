@@ -30,6 +30,10 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+import sphinx_rtd_theme
+import andes
+import shutil
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -42,7 +46,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
     'sphinx_copybutton',
-    'myst_parser',
+    'myst_nb',
 ]
 
 # Configuration options for plot_directive. See:
@@ -75,7 +79,6 @@ author = 'Hantao Cui'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import andes
 # The short X.Y version.
 version = andes.__version__
 # The full version, including alpha/beta/rc tags.
@@ -106,7 +109,6 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-import sphinx_rtd_theme
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -209,3 +211,10 @@ smartquotes = False
 
 # import and execute model reference generation script
 exec(open("genmodelref.py").read())
+
+shutil.rmtree("examples", ignore_errors=True)
+shutil.copytree("../../examples", "examples", )
+shutil.rmtree("examples/demonstration")
+shutil.rmtree("examples/verification")
+
+jupyter_execute_notebooks = "off"
