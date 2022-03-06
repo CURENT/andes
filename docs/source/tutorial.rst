@@ -616,29 +616,57 @@ To work with PSS/E inputs, refer to notebook `Example 2`_.
 
 .. _`Example 2`: https://github.com/cuihantao/andes/blob/master/examples/2.%20inspect_data.ipynb
 
-Output path
-...........
+Passing options
+...............
+``andes.run()`` can accept options that are available to the command-line ``andes run``.
+Options need to be passed as keyword arguments to ``andes.run()`` in addition to the positional
+argument for the test case.
+For example, setting ``no_output`` to ``True`` will disable all file outputs.
+When scripting, one can do
+
+.. code:: python
+
+    >>> ss = andes.run('kundur_full.xlsx', no_output=True)
+
+which is equivalent to the following shell command:
+
+.. code:: bash
+
+    andes run kundur_full.xlsx --no-output
+
+Please note that the dash between ``no`` and ``output`` needs to be
+replaced with an underscore for scripting. This is the convention in
+Python's argument parser.
+
+Another example is to specify a folder for output files.
 By default, outputs will be saved to the folder where Python is run (or where the notebook is run).
 In case you need to organize outputs, a path prefix can be passed to ``andes.run()`` through
-``output_path``.
-For example,
+``output_path``:
 
 .. code:: python
 
     >>> ss = andes.run('kundur_full.xlsx', output_path='outputs/')
 
-will put outputs into folder ``outputs`` relative to the current path.
+which will put outputs into folder ``outputs`` relative to the current path.
 You can also supply an absolute path to ``output_path``.
 
-No output
-.........
-Outputs can be disabled by passing ``output_path=True`` to ``andes.run()``.
-This is useful when one wants to test code without looking at results.
-For example, do
+The next example is to specify the simulation time for a time-domain simulation.
+There are multiple ways to implement it (see :ref:`scripting_examples`),
+and one way is to pass the end time (in sec) through argument ``tf``
+and set the ``routine`` to ``tds``:
 
 .. code:: python
 
-    >>> ss = andes.run('kundur_full.xlsx', no_output=True)
+    >>> ss = andes.run('kundur_full.xlsx', routine='tds', tf=5)
+
+which will set the simulation time to 5 seconds.
+
+.. note::
+
+    While ``andes run`` accepts single-letter alias for the option,
+    such as ``andes run -n`` for ``andes run --no-output``,
+    ``andes.run()`` can only work with the full option name
+    (with hyphen replaced by underscore)
 
 Inspecting Parameter
 --------------------
@@ -919,12 +947,6 @@ For example, to check the docs of ``GENCLS``, do
 
 It is the same as calling ``andes doc GENCLS`` from the command line.
 
-Notebook Examples
-=================
-Check out more examples in Jupyter Notebook in the `examples` folder of the repository at
-`here <https://github.com/cuihantao/andes/tree/master/examples>`_.
-You can run the examples in a live Jupyter Notebook online using
-`Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_.
 
 .. _formats:
 

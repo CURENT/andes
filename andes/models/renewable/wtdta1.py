@@ -16,26 +16,32 @@ class WTDTA1Data(ModelData):
                             info='Renewable exciter idx',
                             )
 
-        self.Ht = NumParam(default=3.0, tex_name='H_t',
-                           info='Turbine inertia', unit='MWs/MVA',
-                           power=True,
-                           non_zero=True,
-                           )
+        self.H = NumParam(default=3.0, tex_name='H_t',
+                          info='Total inertia constant', unit='MWs/MVA',
+                          power=True,
+                          non_zero=True,
+                          non_negative=True,
+                          )
 
-        self.Hg = NumParam(default=3.0, tex_name='H_g',
-                           info='Generator inertia', unit='MWs/MVA',
-                           power=True,
-                           non_zero=True,
-                           )
+        self.DAMP = NumParam(default=0.0, tex_name='Damp',
+                             info='Damp coefficient',
+                             unit='p.u. (gen base)',
+                             power=True,
+                             )
 
-        self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
-                               info='Damping coefficient',
-                               unit='p.u. (gen base)',
+        self.Htfrac = NumParam(default=0.5, tex_name='D_{shaft}',
+                               info='Turbine inertia fraction (Hturb/H)',
                                power=True,
+                               vrange='[0, 1]',
                                )
 
-        self.Kshaft = NumParam(default=1.0, tex_name='K_{shaft}',
-                               info='Spring constant',
+        self.Freq1 = NumParam(default=1, tex_name='Freq1',
+                              unit='p.u. (Hz)',
+                              info='First shaft torsional resonant frequency, p.u. (Hz)',
+                              )
+
+        self.Dshaft = NumParam(default=1.0, tex_name='D_{shaft}',
+                               info='Shaft damping factor',
                                unit='p.u. (gen base)',
                                power=True,
                                )
@@ -77,9 +83,12 @@ class WTDTA1Model(Model):
         self.Pe0 = ExtService(model='RenGen', src='Pe', indexer=self.reg, tex_name='P_{e0}',
                               )
 
-        self.Ht2 = ConstService(v_str='2 * Ht', tex_name='2H_t')
+        self.Ht2 = ConstService(v_str='2 * (Htfrac * H)', tex_name='2H_t')
 
-        self.Hg2 = ConstService(v_str='2 * Hg', tex_name='2H_g')
+        self.Hg2 = ConstService(v_str='2 * H * (1 - Htfrac)', tex_name='2H_g')
+
+        # (2*pi*Freq1)**2 is considered in p.u., which is Freq1**2 here
+        self.Kshaft = ConstService(v_str='Ht2 * Hg2 * 0.5 * Freq1 * Freq1 / H', tex_name='K_{shaft}')
 
         self.wr0 = Algeb(tex_name=r'\omega_{r0}',
                          unit='p.u.',
@@ -95,7 +104,7 @@ class WTDTA1Model(Model):
                         )
 
         # `s1_y` is `wt`
-        self.s1 = Integrator(u='(Pm / s1_y) - (Kshaft * s3_y ) - pd',
+        self.s1 = Integrator(u='(Pm / s1_y) - s3_y - pd',
                              T=self.Ht2,
                              K=1.0,
                              y0='wr0',
@@ -104,7 +113,7 @@ class WTDTA1Model(Model):
         self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
 
         # `s2_y` is `wg`
-        self.s2 = Integrator(u='-(Pe / s2_y) + (Kshaft * s3_y ) + pd',
+        self.s2 = Integrator(u='-(Pe / s2_y) + s3_y - DAMP * (s2_y - w0) + pd',
                              T=self.Hg2,
                              K=1.0,
                              y0='wr0',
@@ -115,13 +124,13 @@ class WTDTA1Model(Model):
         # TODO: `s3_y` needs to be properly reinitialized with the new `wr0`
         self.s3 = Integrator(u='s1_y - s2_y',
                              T=1.0,
-                             K=1.0,
-                             y0='Pe0 / wr0 / Kshaft',
+                             K=self.Kshaft,
+                             y0='Pe0 / wr0',
                              )
 
         self.pd = Algeb(tex_name='P_d', info='Output after damping',
-                        v_str='0.0',
                         e_str='Dshaft * (s1_y - s2_y) - pd',
+                        v_str='0',
                         )
 
 
@@ -129,14 +138,17 @@ class WTDTA1(WTDTA1Data, WTDTA1Model):
     """
     WTDTA wind turbine drive-train model.
 
+    One can set ``Htfrac`` to ``0`` to simulate a single-mass
+    drive train. ``Htfrac`` has to be within ``[0, 1]``
+
     User-provided reference speed should be specified in parameter `w0`.
     Internally, `w0` is set to the algebraic variable `wr0`.
 
-    <PSS/E parser notice>
+    Note for PSS/E dyr parser:
 
-    In the file conversion, the computation of coefficient `Kshaft` involves system frequency.
-    It is coded as constant `60` rather than a variable read from the system model.
-    If your system frequency is not set at 60 Hz, be careful of this.
+    In PSS/E doc, `Freq1` is said to be Hz,
+    but exported data from PSS/E 34 uses per unit.
+    ANDES requires ``Freq1`` in per unit frequency.
     """
 
     def __init__(self, system, config):

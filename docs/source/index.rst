@@ -72,6 +72,7 @@ See the GitHub repository for a full list of contributors.
 
    install.rst
    tutorial.rst
+   examples.md
    modeling.rst
    cases.rst
    release-notes.rst

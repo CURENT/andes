@@ -61,6 +61,29 @@ class PQ(PQData, Model):
     constant current and constant impedance. p2p, p2i and p2z must be in
     decimal numbers and sum up exactly to 1. The same rule applies to
     (q2q, q2i, q2z).
+
+    To alter the PQ load in terms of power during simulation,
+    one needs to set the conversion weights to preserve the constant
+    power portion. For example, the PQ can remain as constant power
+    load by setting
+
+    .. code-block :: python
+
+        ss.PQ.config.p2p = 1.0
+        ss.PQ.config.p2i = 0
+        ss.PQ.config.p2z = 0
+
+        ss.PQ.config.q2q = 1.0
+        ss.PQ.config.q2i = 0
+        ss.PQ.config.q2z = 0
+
+    Then, the constant power portion can be altered by
+    changing the ``Ppf`` and ``Qpf`` constants for active power
+    and reactive power.
+
+    The equivalent constant current components are in
+    constants ``Ipeq`` and ``Iqeq`` for active and reactive current,
+    and the equivalent impedances are in ``Req`` and ``Xeq``.
     """
 
     def __init__(self, system=None, config=None):
