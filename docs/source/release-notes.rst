@@ -12,6 +12,7 @@ v1.5.12 (2022-03-xx)
 ````````````````````
 - Improved PSS/E parsers for WTDTA1 model to follow PSS/E
   parameter definition.
+- Included the Jupyter notebook examples in the documentation.
 - Tweaks to the plot utility.
 
 v1.5.11 (2022-02-23)
