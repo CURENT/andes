@@ -130,7 +130,7 @@ def to_pandapower(ssa):
     ssa_pq['p_mw'] = ssa_pq["p0"] * ssa_mva
     ssa_pq['q_mvar'] = ssa_pq["q0"] * ssa_mva
 
-    for uid in ssa.PQ.as_df().index:
+    for uid in ssa_pq.index:
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_pq["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_load(net=ssp,
@@ -150,7 +150,7 @@ def to_pandapower(ssa):
     ssa_shunt['p_mw'] = ssa_shunt["g"] * ssa_mva
     ssa_shunt['q_mvar'] = ssa_shunt["b"] * (-1) * ssa_mva
 
-    for uid in ssa.Shunt.as_df().index:
+    for uid in ssa_shunt.index:
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_shunt["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_shunt(net=ssp,
