@@ -1033,6 +1033,22 @@ The following parameter checks are applied after converting input values to arra
 - Any ``inf`` will be replaced with :math:`10^{8}`, and ``-inf`` will be replaced with :math:`-10^{8}`.
 
 
+pandapower interface
+--------------------
+
+The interface is developed for pandapower 2.7.0, which is not pre-installed in the andes environment.
+
+to_pandapower
+.............
+This function is used to convert ADNES system (ssa) to pandapower network (ssp). The power flow results
+are consistent.
+
+Note: 
+Line limts are set as 99999.0 in `ssp`.
+Generator cost is not included in the conversion.
+`SynGen` equipped with `Exciter` in `ssa` is considered as `controllable=True` in `ssp.gen`.
+
+
 Per Unit System
 ===============
 
