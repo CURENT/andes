@@ -15,9 +15,9 @@ def to_pandapower(ssa):
 
     Line limts are set as 99999.0 in `ssp`.
 
-    Generator cost is not included in the conversion.
+    `SynGen` equipped with `TurbineGov` in `ssa` is set as `controllable=True` in `ssp.gen`.
 
-    `SynGen` equipped with `Exciter` in `ssa` is considered as `controllable=True` in `ssp.gen`.
+    Generator cost is not included in the conversion.
     """
     # create PP net
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,
@@ -189,15 +189,15 @@ def to_pandapower(ssa):
         syg = getattr(ssa, key)
         ssa_syg = pd.concat([ssa_syg, syg.as_df()[syg_cols]], axis=0)
 
-    # build Exciter df
-    exc_cols = ['idx', 'u', 'name', 'syn']
-    ssa_exc = pd.DataFrame(columns=exc_cols)
-    for key in ssa.Exciter.models:
-        exc = getattr(ssa, key)
-        ssa_exc = pd.concat([ssa_exc, exc.as_df()[exc_cols]], axis=0)
+    # build TurbineGov df
+    gov_cols = ['idx', 'u', 'name', 'syn']
+    ssa_gov = pd.DataFrame(columns=gov_cols)
+    for key in ssa.TurbineGov.models:
+        gov = getattr(ssa, key)
+        ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
 
-    # Consider the SynGen equipped with Exciter as controllable
-    ssa_sg_ctr = pd.merge(ssa_syg.rename(columns={"idx": "syn"}), ssa_exc[["syn", "idx"]], how="left", on="syn")
+    # Consider the SynGen equipped with TurbineGov as controllable
+    ssa_sg_ctr = pd.merge(ssa_syg.rename(columns={"idx": "syn"}), ssa_gov[["syn", "idx"]], how="left", on="syn")
     ssa_sg_out = ssa_sg_ctr.rename(columns={"bus": "bus_idx"})
     ssa_sg_out["ctrl"] = bool(str(ssa_sg_ctr[["idx"]]))
     ssa_sg = ssa_sg.merge(ssa_sg_out[["bus_idx", "ctrl"]], on="bus_idx", how="left")
