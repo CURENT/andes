@@ -213,7 +213,7 @@ def to_pandapower(ssa):
 
     # conversion
     # a) `PV` with negative `p0` -> load
-    # b) `Slack` -> ext_grid
+    # b) `Slack` -> gen
     # c) `PV` with non-negative `p0`-> gen
     for uid in ssa_sg.index:
         if ssa_sg["p0"].iloc[uid] < 0:
@@ -228,35 +228,19 @@ def to_pandapower(ssa):
                            #    index=uid,
                            )
         else:
-            # Slack -> ext_grid
-            if ssa_sg["slack"].iloc[uid]:
-                pp.create_ext_grid(net=ssp,
-                                   bus=ssa_sg["pp_id"].iloc[uid],
-                                   vm_pu=ssa_sg["v0"].iloc[uid],
-                                   name='Slack'+str(ssa_sg.index[uid]),
-                                   in_service=ssa_sg["u"].iloc[uid],
-                                   #    controllable=ssa_sg["ctrl"].iloc[uid],
-                                   max_p_mw=ssa_sg["pmax"].iloc[uid],
-                                   min_p_mw=ssa_sg["pmin"].iloc[uid],
-                                   max_q_mvar=ssa_sg["qmax"].iloc[uid],
-                                   min_q_mvar=ssa_sg["qmin"].iloc[uid],
-                                   index=0,
-                                   )
-            # PV -> gen
-            else:
-                pp.create_gen(net=ssp,
-                              slack=ssa_sg["slack"].iloc[uid],
-                              bus=ssa_sg["pp_id"].iloc[uid],
-                              p_mw=ssa_sg["p0"].iloc[uid],
-                              vm_pu=ssa_sg["v0"].iloc[uid],
-                              sn_mva=ssa_sg["Sn"].iloc[uid],
-                              name='PV'+str(ssa_sg.index[uid]),
-                              controllable=ssa_sg["ctrl"].iloc[uid],
-                              in_service=ssa_sg["u"].iloc[uid],
-                              max_p_mw=ssa_sg["pmax"].iloc[uid],
-                              min_p_mw=ssa_sg["pmin"].iloc[uid],
-                              max_q_mvar=ssa_sg["qmax"].iloc[uid],
-                              min_q_mvar=ssa_sg["qmin"].iloc[uid],
-                              index=uid,
-                              )
+            pp.create_gen(net=ssp,
+                          slack=ssa_sg["slack"].iloc[uid],
+                          bus=ssa_sg["pp_id"].iloc[uid],
+                          p_mw=ssa_sg["p0"].iloc[uid],
+                          vm_pu=ssa_sg["v0"].iloc[uid],
+                          sn_mva=ssa_sg["Sn"].iloc[uid],
+                          name=ssa_sg['name'].iloc[uid],
+                          controllable=ssa_sg["ctrl"].iloc[uid],
+                          in_service=ssa_sg["u"].iloc[uid],
+                          max_p_mw=ssa_sg["pmax"].iloc[uid],
+                          min_p_mw=ssa_sg["pmin"].iloc[uid],
+                          max_q_mvar=ssa_sg["qmax"].iloc[uid],
+                          min_q_mvar=ssa_sg["qmin"].iloc[uid],
+                          index=uid,
+                          )
     return ssp
