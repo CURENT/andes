@@ -1322,7 +1322,7 @@ class Lag2ndOrd(Block):
         r"""
 
         Notes
-        -------
+        -----
         Implemented equations and initial values are
 
         .. math ::
