@@ -12,7 +12,7 @@ def ssa_alter(ssp_res, ssa, mode=0, no_msg=False):
     """
     Alter the setpoints of ADNES system by pandapower resutls.
 
-    Target: TurbineGov.paux0 or StaticGen.p0, Exciter.vref0
+    Target: AGC -> TurbineGov.paux0, Dispatch -> TurbineGov.pref0, Initial Dispatch -> StaticGen.p0
 
     Parameters
     ----------
