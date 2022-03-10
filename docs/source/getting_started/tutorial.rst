@@ -980,7 +980,7 @@ The first row in a worksheet is used for the names of parameters available to th
 Starting from the second row, each row corresponds to an instance with the parameters in the corresponding columns.
 An example of the ``Bus`` workbook is shown in the following.
 
-.. image:: images/tutorial/xlsx-bus.png
+.. image:: tutorial/xlsx-bus.png
    :width: 600
    :alt: Example workbook for Bus
 
@@ -998,7 +998,7 @@ As mentioned above, ``idx`` is the unique index for an instance to be referenced
 For example, a PQ instance can reference a Bus instance so that the PQ is connected to the Bus.
 This is done through providing the ``idx`` of the desired bus as the ``bus`` parameter of the PQ.
 
-.. image:: images/tutorial/xlsx-pq.png
+.. image:: tutorial/xlsx-pq.png
    :width: 600
    :alt: Example workbook for PQ
 

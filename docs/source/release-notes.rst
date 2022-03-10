@@ -1,7 +1,7 @@
 .. _ReleaseNotes:
 
 =============
-Release Notes
+Release notes
 =============
 
 The APIs before v3.0.0 are in beta and may change without prior notice.

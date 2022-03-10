@@ -70,17 +70,10 @@ See the GitHub repository for a full list of contributors.
    :maxdepth: 3
    :hidden:
 
-   install.rst
-   tutorial.rst
-   examples.md
-   modeling.rst
-   cases.rst
-   release-notes.rst
-   faq.rst
-   misc.rst
+   getting_started/index
    modelref.rst
-   configref.rst
-   copyright.rst
+   modeling/index
+   release-notes.rst
 
 
 .. toctree::
