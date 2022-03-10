@@ -6,10 +6,11 @@ Getting started
     :maxdepth: 2
 
     install
-    tutorial
+    tutorial/index
     ../examples
+    cases/index
+    parsers/index
     ../configref
-    cases
     misc
     faq
     copyright

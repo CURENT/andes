@@ -10,7 +10,7 @@ if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
 
     # write the top-level index file
 
-    out = """.. modelref:
+    out = """.. _modelref:
 
 ****************
 Model references
