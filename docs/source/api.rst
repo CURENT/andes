@@ -3,20 +3,80 @@ API References
 ==============
 
 
+Core
+====
+
 .. autosummary::
    :maxdepth:4
-   :caption: API References
-   :toctree: _autosummary
+   :toctree: generated
    :recursive:
 
-   andes.main
-   andes.plot
+   andes.core.var
+   andes.core.param
+   andes.core.model
+   andes.core.discrete
+   andes.core.service
+
+
+System
+======
+
+.. autosummary::
+   :maxdepth:4
+   :toctree: generated
+   :recursive:
+
    andes.system
-   andes.cli
-   andes.core
+   andes.variables.dae
+   andes.variables.fileman
+   andes.variables.report
+
+
+Routines
+========
+
+.. autosummary::
+   :maxdepth:4
+   :toctree: generated
+   :recursive:
+
+   andes.routines.base
+   andes.routines.daeint
+   andes.routines.pflow
+   andes.routines.tds
+   andes.routines.eig
+
+Plot
+====
+.. autosummary::
+   :maxdepth:4
+   :toctree: generated
+   :recursive:
+
+   andes.plot
+
+I/O
+===
+
+.. autosummary::
+   :maxdepth:4
+   :toctree: generated
+   :recursive:
+
    andes.io
-   andes.linsolvers
-   andes.routines
-   andes.utils
-   andes.variables
-   andes
+
+Others
+======
+
+.. autosummary::
+   :maxdepth:4
+   :toctree: generated
+   :recursive:
+
+   andes.cli
+   andes.main
+
+   andes.utils.misc
+   andes.utils.paths
+   andes.utils.snapshot
+   andes.utils.widgets

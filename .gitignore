@@ -65,6 +65,7 @@ docs/source/configref.rst
 docs/source/groupdoc
 docs/source/examples
 docs/build/
+docs/jupyter_execute/
 docs/source/_build/
 docs/source/generated/
 docs/source/_autosummary/
