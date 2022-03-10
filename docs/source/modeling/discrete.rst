@@ -10,7 +10,15 @@ devices. Such continuities can be device-level physical constraints or algorithm
 The base class for discrete components is :py:mod:`andes.core.discrete.Discrete`.
 
 .. autoclass:: andes.core.discrete.Discrete
-    :noindex:
+
+   .. automethod:: __init__
+
+   .. rubric:: Methods
+
+   .. autosummary::
+      :recursive:
+      :toctree: _generated
+
 
 The uniqueness of discrete components is the way it works.
 Discrete components take inputs, criteria, and exports a set of flags with the component-defined meanings.
@@ -42,7 +50,13 @@ Limiters
 .. autoclass:: andes.core.discrete.HardLimiter
     :noindex:
 
+.. autoclass:: andes.core.discrete.RateLimiter
+    :noindex:
+
 .. autoclass:: andes.core.discrete.AntiWindup
+    :noindex:
+
+.. autoclass:: andes.core.discrete.AntiWindupRate
     :noindex:
 
 Comparers
@@ -59,4 +73,25 @@ Comparers
 Deadband
 --------
 .. autoclass:: andes.core.discrete.DeadBand
+    :noindex:
+
+.. autoclass:: andes.core.discrete.DeadBandRT
+    :noindex:
+
+
+Others
+------
+.. autoclass:: andes.core.discrete.Average
+    :noindex:
+
+.. autoclass:: andes.core.discrete.Delay
+    :noindex:
+
+.. autoclass:: andes.core.discrete.Derivative
+    :noindex:
+
+.. autoclass:: andes.core.discrete.Sampling
+    :noindex:
+
+.. autoclass:: andes.core.discrete.ShuntAdjust
     :noindex:

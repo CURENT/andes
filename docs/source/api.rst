@@ -8,13 +8,12 @@ Core
 
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.core.var
    andes.core.param
    andes.core.model
-   andes.core.discrete
    andes.core.service
 
 
@@ -23,7 +22,7 @@ System
 
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.system
@@ -37,7 +36,7 @@ Routines
 
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.routines.base
@@ -50,7 +49,7 @@ Plot
 ====
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.plot
@@ -60,7 +59,7 @@ I/O
 
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.io
@@ -70,7 +69,7 @@ Others
 
 .. autosummary::
    :maxdepth:4
-   :toctree: generated
+   :toctree: _generated
    :recursive:
 
    andes.cli
