@@ -71,16 +71,7 @@ See the GitHub repository for a full list of contributors.
    :hidden:
 
    getting_started/index
+   modelref.rst
    modeling/index
    api
    release-notes.rst
-
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
