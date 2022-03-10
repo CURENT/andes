@@ -67,6 +67,7 @@ docs/source/examples
 docs/build/
 docs/source/_build/
 docs/source/generated/
+docs/source/_autosummary/
 
 # pytest
 .pytest_cache/
