@@ -73,15 +73,11 @@ See the GitHub repository for a full list of contributors.
    getting_started/index
    modelref.rst
    modeling/index
+   api
    release-notes.rst
 
 
-.. toctree::
-   :hidden:
-   :caption: API References
-   :maxdepth: 3
 
-   andes.rst
 
 Indices and tables
 ==================
