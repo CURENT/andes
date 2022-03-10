@@ -10,3 +10,11 @@ Group `RenExciter` for further calculation.
 
 In such a way, the same variable interface is realized so that all model in the same group could carry out similar
 function.
+
+
+.. currentmodule:: andes.models.group
+.. autosummary::
+      :recursive:
+      :toctree: _generated
+
+      GroupBase

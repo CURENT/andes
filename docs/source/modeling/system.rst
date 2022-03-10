@@ -4,12 +4,7 @@ System
 Overview
 --------
 System is the top-level class for organizing power system models and orchestrating calculations.
-
-.. autoclass:: andes.system.System
-    :noindex:
-
-.. note::
-    `andes.System` is an alias of `andes.system.System`.
+The full API reference of System is found at :py:mod:`andes.system.System`.
 
 Dynamic Imports
 ```````````````

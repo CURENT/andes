@@ -5,7 +5,7 @@ Services
 Services are helper variables outside the DAE variable list. Services are most often used for storing intermediate
 constants but can be used for special operations to work around restrictions in the symbolic framework.
 Services are value providers, meaning each service has an attribute ``v`` for storing service values. The
-base class of services is ``BaseService``, and the supported services are listed as follows.
+base class of services is :py:mod`BaseService`, and the supported services are listed as follows.
 
 .. currentmodule:: andes.core.service
 .. autosummary::

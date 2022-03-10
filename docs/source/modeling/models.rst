@@ -11,10 +11,19 @@ Class ``Model`` is used for defining other non-input parameters, service
 variables, and DAE variables. It provides API for converting symbolic equations, storing Jacobian patterns, and
 updating equations.
 
-Model Data
-----------
-.. autoclass:: andes.core.model.ModelData
-    :noindex:
+The following classes are related to models:
+
+
+.. currentmodule:: andes.core.model
+.. autosummary::
+      :recursive:
+      :toctree: _generated
+
+      ModelData
+      Model
+      ModelCache
+      ModelCall
+
 
 Cache
 `````

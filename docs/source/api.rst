@@ -3,17 +3,6 @@ API references
 ==============
 
 
-Core
-====
-
-.. autosummary::
-   :maxdepth:4
-   :toctree: _generated
-   :recursive:
-
-   andes.core.model
-
-
 System
 ======
 
@@ -21,11 +10,10 @@ System
    :maxdepth:4
    :toctree: _generated
    :recursive:
+   :caption: System
 
    andes.system
-   andes.variables.dae
-   andes.variables.fileman
-   andes.variables.report
+   andes.variables
 
 
 Routines
@@ -33,14 +21,13 @@ Routines
 
 .. autosummary::
    :maxdepth:4
-   :toctree: _generated
    :recursive:
+   :toctree: _generated
+   :caption: Routines
+   :template: autosummary/module_toctree.rst
 
-   andes.routines.base
-   andes.routines.daeint
-   andes.routines.pflow
-   andes.routines.tds
-   andes.routines.eig
+   andes.routines
+
 
 Plot
 ====
@@ -48,6 +35,7 @@ Plot
    :maxdepth:4
    :toctree: _generated
    :recursive:
+   :caption: Plot
 
    andes.plot
 
@@ -58,6 +46,8 @@ I/O
    :maxdepth:4
    :toctree: _generated
    :recursive:
+   :caption: I/O
+   :template: autosummary/module_toctree.rst
 
    andes.io
 
@@ -68,11 +58,9 @@ Others
    :maxdepth:4
    :toctree: _generated
    :recursive:
+   :caption: Others
+   :template: autosummary/module_toctree.rst
 
    andes.cli
    andes.main
-
-   andes.utils.misc
-   andes.utils.paths
-   andes.utils.snapshot
-   andes.utils.widgets
+   andes.utils
