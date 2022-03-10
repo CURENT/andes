@@ -6,17 +6,30 @@ A variable stores values, equation values, and addresses in the DAE array. The b
 `BaseVar`.
 In this subsection, `BaseVar` is used to represent any subclass of `VarBase` list in the table below.
 
-+-----------+---------------------------------------------------------------------------------------+
-|   Class   |                                      Description                                      |
-+===========+=======================================================================================+
-|  State    | A state variable and associated diff. equation :math:`\textbf{T} \dot{x} = \textbf{f}`|
-+-----------+---------------------------------------------------------------------------------------+
-|  Algeb    | An algebraic variable and an associated algebraic equation :math:`0 = \textbf{g}`     |
-+-----------+---------------------------------------------------------------------------------------+
-|  ExtState | An external state variable and part of the differential equation (uncommon)           |
-+-----------+---------------------------------------------------------------------------------------+
-|  ExtAlgeb | An external algebraic variable and part of the algebraic equation                     |
-+-----------+---------------------------------------------------------------------------------------+
+.. currentmodule:: andes.core.var
+.. autosummary::
+      :recursive:
+      :toctree: _generated
+
+      BaseVar
+      ExtVar
+      State
+      Algeb
+      ExtState
+      ExtAlgeb
+      AliasState
+      AliasAlgeb
+
+Note that equations associated with state variables are in the form of
+:math:`\mathbf{M} \dot{x} = \mathbf{f(x, y)}`,
+where :math:`\mathbf{x}` are the differential variables,
+:math:`\mathbf{y}` are the algebraic variables,
+and :math:`\mathbf{M}` is the mass matrix, and :math:`\mathbf{f}` are the right-hand
+side of differential equations.
+Equations associated with algebraic variables take the form of
+:math:`0 = \mathbf{g}`, where :math:`\mathbf{g}` are the equation right-hand side
+
+
 
 `BaseVar` has two types: the differential variable type `State` and the algebraic variable type `Algeb`.
 State variables are described by differential equations, whereas algebraic variables are described by
@@ -114,27 +127,3 @@ initial value to `v0`. In the variable initialization phase for `PV`, `PV.v.v` i
 
 During the value collection into `DAE.y` by the `System` class, `PV.v`, as a final `v_setter`, will
 overwrite the voltage magnitude for Bus devices with the indices provided in `PV.bus`.
-
-.. autoclass:: andes.core.var.BaseVar
-    :noindex:
-
-.. autoclass:: andes.core.var.ExtVar
-    :noindex:
-
-.. autoclass:: andes.core.var.State
-    :noindex:
-
-.. autoclass:: andes.core.var.Algeb
-    :noindex:
-
-.. autoclass:: andes.core.var.ExtState
-    :noindex:
-
-.. autoclass:: andes.core.var.ExtAlgeb
-    :noindex:
-
-.. autoclass:: andes.core.var.AliasState
-    :noindex:
-
-.. autoclass:: andes.core.var.AliasAlgeb
-    :noindex:

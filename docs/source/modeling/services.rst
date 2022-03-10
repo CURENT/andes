@@ -7,6 +7,14 @@ constants but can be used for special operations to work around restrictions in 
 Services are value providers, meaning each service has an attribute ``v`` for storing service values. The
 base class of services is ``BaseService``, and the supported services are listed as follows.
 
+.. currentmodule:: andes.core.service
+.. autosummary::
+      :recursive:
+      :toctree: _generated
+
+      BaseService
+      OperationService
+
 +------------------+-----------------------------------------------------------------+
 |      Class       |                           Description                           |
 +==================+=================================================================+
@@ -127,7 +135,7 @@ Value Manipulation
 .. autoclass:: andes.core.service.Replace
     :noindex:
 
-.. autoclass:: andes.core.service.FlagValue
+.. autoclass:: andes.core.service.ParamCalc
     :noindex:
 
 
@@ -151,6 +159,25 @@ Events
 .. autoclass:: andes.core.service.ExtendedEvent
     :noindex:
 
+.. autoclass:: andes.core.service.VarHold
+    :noindex:
+
+
+Flags
+------------
+.. autoclass:: andes.core.service.FlagCondition
+    :noindex:
+
+.. autoclass:: andes.core.service.FlagGreaterThan
+    :noindex:
+
+.. autoclass:: andes.core.service.FlagLessThan
+    :noindex:
+
+.. autoclass:: andes.core.service.FlagValue
+    :noindex:
+
+
 
 Data Select
 -----------
@@ -166,4 +193,14 @@ Miscellaneous
 .. autoclass:: andes.core.service.InitChecker
     :noindex:
 
+.. autoclass:: andes.core.service.ApplyFunc
+    :noindex:
 
+.. autoclass:: andes.core.service.CurrentSign
+    :noindex:
+
+.. autoclass:: andes.core.service.RandomService
+    :noindex:
+
+.. autoclass:: andes.core.service.SwBlock
+    :noindex:

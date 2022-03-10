@@ -67,7 +67,7 @@ docs/source/examples
 docs/build/
 docs/jupyter_execute/
 docs/source/_build/
-docs/source/_generated/
+_generated
 
 # pytest
 .pytest_cache/

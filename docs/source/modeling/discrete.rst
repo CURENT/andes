@@ -9,15 +9,12 @@ devices. Such continuities can be device-level physical constraints or algorithm
 
 The base class for discrete components is :py:mod:`andes.core.discrete.Discrete`.
 
-.. autoclass:: andes.core.discrete.Discrete
-
-   .. automethod:: __init__
-
-   .. rubric:: Methods
-
-   .. autosummary::
+.. currentmodule:: andes.core.discrete
+.. autosummary::
       :recursive:
       :toctree: _generated
+
+      Discrete
 
 
 The uniqueness of discrete components is the way it works.

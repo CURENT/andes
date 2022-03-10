@@ -15,42 +15,14 @@ Subclasses such as `NumParam` stores values using a NumPy ndarray.
 
 An overview of supported parameters is given below.
 
-+---------------+----------------------------------------------------------------------------+
-|  Subclasses   |     Description                                                            |
-+===============+============================================================================+
-|  DataParam    | An alias of `BaseParam`. Can be used for any non-numerical parameters.     |
-+---------------+----------------------------------------------------------------------------+
-|  NumParam     | The numerical parameter type. Used for all parameters in equations         |
-+---------------+----------------------------------------------------------------------------+
-|  IdxParam     | The parameter type for storing `idx` into other models                     |
-+---------------+----------------------------------------------------------------------------+
-|  ExtParam     | Externally defined parameter                                               |
-+---------------+----------------------------------------------------------------------------+
-|  TimerParam   | Parameter for storing the action time of events                            |
-+---------------+----------------------------------------------------------------------------+
+.. currentmodule:: andes.core.param
+.. autosummary::
+      :recursive:
+      :toctree: _generated
 
-Data Parameters
----------------
-.. autoclass:: andes.core.param.BaseParam
-    :noindex:
-
-.. autoclass:: andes.core.param.DataParam
-    :noindex:
-
-.. autoclass:: andes.core.param.IdxParam
-    :noindex:
-
-Numeric Parameters
-------------------
-.. autoclass:: andes.core.param.NumParam
-    :noindex:
-
-External Parameters
--------------------
-.. autoclass:: andes.core.param.ExtParam
-    :noindex:
-
-Timer Parameter
----------------
-.. autoclass:: andes.core.param.TimerParam
-    :noindex:
+      BaseParam
+      DataParam
+      IdxParam
+      NumParam
+      ExtParam
+      TimerParam

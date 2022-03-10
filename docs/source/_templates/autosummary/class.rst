@@ -11,7 +11,7 @@
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
-      :toctree: generated/
+      :toctree: _generated/
 
    {% for item in methods %}
        {% if item != "__init__" %}
@@ -26,7 +26,7 @@
    .. rubric:: {{ _('Attributes') }}
 
    .. autosummary::
-      :toctree: generated/
+      :toctree: _generated/
 
    {% for item in attributes %}
       ~{{ name }}.{{ item }}

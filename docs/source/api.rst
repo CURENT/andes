@@ -11,10 +11,7 @@ Core
    :toctree: _generated
    :recursive:
 
-   andes.core.var
-   andes.core.param
    andes.core.model
-   andes.core.service
 
 
 System
