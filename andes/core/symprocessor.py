@@ -283,6 +283,8 @@ class SymProcessor:
         """
         logger.debug('- Generating Jacobians for %s', self.class_name)
 
+        from sympy import Tuple
+
         # clear storage
         self.df_syms, self.dg_syms = Matrix([]), Matrix([])
         self.calls.clear_ijv()
@@ -333,9 +335,9 @@ class SymProcessor:
             j_args[jname].sort(key=lambda s: s.name)
 
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
-            # TODO: SymPy 1.10 does not respect tuples with one element. See
+            # workaround for SymPy 1.10 to generate tuples with one element. See
             # https://github.com/sympy/sympy/issues/23224
-            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
+            self.calls.j[jname] = lambdify(j_args[jname], Tuple(*j_calls[jname]), modules=self.lambdify_func)
 
             # manually append additional arguments for select
             if 'select' in inspect.getsource(self.calls.j[jname]):
