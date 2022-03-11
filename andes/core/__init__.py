@@ -7,7 +7,7 @@ from andes.core.block import (Block, Lag, LagAntiWindup, LeadLag,  # NOQA
 from andes.core.common import Config, JacTriplet  # NOQA
 from andes.core.discrete import (AntiWindup, DeadBand, DeadBandRT,  # NOQA
                                  Discrete, HardLimiter, LessThan, Limiter,
-                                 Selector, SortedLimiter, Switcher,)
+                                 Selector, SortedLimiter, Switcher, IsEqual)
 from andes.core.model import Model, ModelCall, ModelData  # NOQA
 from andes.core.param import (BaseParam, DataParam, ExtParam, IdxParam,  # NOQA
                               NumParam, TimerParam,)
