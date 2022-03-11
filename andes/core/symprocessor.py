@@ -168,6 +168,14 @@ class SymProcessor:
         return fs
 
     def generate_equations(self):
+        """
+        Generate equations.
+
+        The pretty-print equations in matrices can be accessed in
+        ``self.f_matrix`` and ``self.g_matrix``.
+
+        """
+
         logger.debug('- Generating equations for %s', self.class_name)
 
         self.f_list, self.g_list = list(), list()
@@ -225,8 +233,13 @@ class SymProcessor:
         """
         Generate calls for services, including ``ConstService`` and
         ``VarService`` among others.
+        Sequence is preserved due to possible dependency.
 
-        Sequence is preserved due to possible dependency
+        Since SymPy 1.9, ``Matrix`` no longer supports non-Expr
+        objects. Due to the use of logical conditions in services,
+        service expressions will not be converted to SymPy Matrix.
+        The dictionary to look up service name and expression
+        is in ``self.s_syms``.
         """
 
         s_args = OrderedDict()
@@ -249,9 +262,8 @@ class SymProcessor:
             if 'select' in inspect.getsource(s_calls[name]):
                 s_args[name].extend(select_args_add)
 
-        # TODO: below triggers DeprecationWarning with SymPy 1.9
-        self.s_matrix = Matrix(list(s_syms.values()))
-
+        self.s_syms = s_syms
+        # self.s_matrix = Matrix(list(self.s_syms.values()))
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
@@ -321,6 +333,8 @@ class SymProcessor:
             j_args[jname].sort(key=lambda s: s.name)
 
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
+            # TODO: SymPy 1.10 does not respect tuples with one element. See
+            # https://github.com/sympy/sympy/issues/23224
             self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
 
             # manually append additional arguments for select
