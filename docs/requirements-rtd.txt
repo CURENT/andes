@@ -16,6 +16,7 @@ ipython
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme==0.5.2
+pydata-sphinx-theme
 docutils<0.18
 myst-parser
 myst-nb
