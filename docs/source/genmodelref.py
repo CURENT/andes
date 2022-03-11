@@ -50,7 +50,7 @@ and view details.
     out = ''
     out += '.. _configref:\n\n'
     out += '*****************\n'
-    out += 'Config References\n'
+    out += 'Config references\n'
     out += '*****************\n'
     out += '\n'
 
