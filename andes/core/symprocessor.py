@@ -263,7 +263,6 @@ class SymProcessor:
                 s_args[name].extend(select_args_add)
 
         self.s_syms = s_syms
-        # self.s_matrix = Matrix(list(self.s_syms.values()))
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
@@ -389,7 +388,7 @@ class SymProcessor:
         # get pretty printing equations by substituting symbols
         self.f = self.f_matrix.subs(self.tex_names)
         self.g = self.g_matrix.subs(self.tex_names)
-        self.s = self.s_matrix.subs(self.tex_names)
+        self.s = [item.subs(self.tex_names) for item in self.s_syms.values()]
 
         # store latex strings
         nx = len(self.f)
