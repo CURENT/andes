@@ -6,12 +6,12 @@
 jobs:
 - job: win
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
   timeoutInMinutes: 360
   strategy:
     matrix:
-      win_python3.7:
-        python.version: '3.7'
+      win_python3.8:
+        python.version: '3.8'
 
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
