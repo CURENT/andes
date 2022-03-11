@@ -9,7 +9,7 @@ sphinx
 ipython
 numpydoc
 sphinx-copybutton
-sphinx_rtd_theme
+sphinx_rtd_theme==0.5.2
 pydata-sphinx-theme
 myst-parser
 myst-nb
