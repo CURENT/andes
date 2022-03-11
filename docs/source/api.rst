@@ -63,4 +63,6 @@ Others
 
    andes.cli
    andes.main
-   andes.utils
+   andes.utils.paths
+   andes.utils.snapshot
+   andes.utils.widgets
