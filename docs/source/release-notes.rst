@@ -12,6 +12,7 @@ v1.6 Notes
 v1.6.0 (2022-03-11)
 ```````````````````
 - Migrated documentation to the pydata template.
+- Added compatibility with SymPy 1.9.
 
 v1.5 Notes
 ----------
