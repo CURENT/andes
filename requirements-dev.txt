@@ -10,6 +10,7 @@ ipython
 numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
+pydata-sphinx-theme
 myst-parser
 myst-nb
 pre-commit

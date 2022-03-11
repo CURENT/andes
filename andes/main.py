@@ -291,7 +291,7 @@ def load(case, codegen=False, setup=True,
         the same as ``andes.main.run``.
 
     Warnings
-    -------
+    --------
     If one need to add devices in addition to these from the case
     file, do ``setup=False`` and call ``System.add()`` to add devices.
     When done, manually invoke ``setup()`` to set up the system.

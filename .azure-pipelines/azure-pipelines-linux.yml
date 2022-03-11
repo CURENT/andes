@@ -10,8 +10,8 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      linux_python3.7:
-        python.version: '3.7'
+      linux_python3.8:
+        python.version: '3.8'
 
   steps:
   - task: UsePythonVersion@0

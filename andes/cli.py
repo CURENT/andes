@@ -203,7 +203,7 @@ def main():
     args = parser.parse_args()
 
     if args.version is True:
-        print(get_versions()['version'])
+        versioninfo()
         return
 
     # Set up logging
@@ -235,3 +235,28 @@ def main():
 
         func = getattr(module, cmd)
         return func(cli=True, **vars(args))
+
+
+def versioninfo():
+    """
+    Print version info for ANDES and dependencies.
+    """
+
+    import numpy as np
+    import sympy
+    import scipy
+    import pandas
+    import matplotlib
+    import numba
+    versions = {'Python': platform.python_version(),
+                'andes': get_versions()['version'],
+                'numpy': np.__version__,
+                'sympy': sympy.__version__,
+                'scipy': scipy.__version__,
+                'pandas': pandas.__version__,
+                'numba': numba.__version__,
+                'matplotlib': matplotlib.__version__,
+                }
+
+    for key, val in versions.items():
+        print("{:12s}  {:s}".format(key, val))

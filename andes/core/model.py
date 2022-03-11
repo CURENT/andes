@@ -1699,8 +1699,8 @@ class Model:
 
     def numba_jitify(self, parallel=False, cache=True, nopython=False):
         """
-        Optionally convert `self.calls.f` and `self.calls.g` to
-        JIT compiled functions.
+        Convert equation residual calls, Jacobian calls,
+        and variable service calls into JIT compiled functions.
 
         This function can be turned on by setting
         ``System.config.numba`` to ``1``.
