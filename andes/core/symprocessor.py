@@ -72,6 +72,7 @@ class SymProcessor:
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
+        self.s_syms = list()
 
         # pretty print of variables
         self.xy = list()  # variables in the order of states, algebs
