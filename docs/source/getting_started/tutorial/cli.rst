@@ -106,7 +106,7 @@ andes prepare
 -----------------
 
 The symbolically defined models in ANDES need to be generated into numerical
-code for simulation. The code generation process is automatic the first time you
+code for simulation. The code generation process is *automatic* the first time you
 use ANDES to run any case study. It takes 10 seconds to one minute to generate
 the code depending on your platform. When done, no code generation is needed in
 your future use untill you modify the models.
@@ -140,57 +140,147 @@ models that are detected with changes since the last code generation.
 
 andes run
 -------------
-``andes run`` is the entry point for power system analysis routines. ``andes
-run`` takes one positional argument, ``filename`` , along with other optional
-keyword arguments. ``filename`` is the test case path, either relative or
+``andes run`` is the entry point for power system analysis routines. The
+full list of options can be printed with ``andes run -h``. ``andes run``
+takes one positional argument, ``filename``, along with other optional
+keyword arguments. ``filename`` is the path to cases, either relative or
 absolute.
 
-For example, the command ``andes run kundur_full.xlsx`` uses a relative path. If
-will work only if ``kundur_full.xlsx`` exists in the current directory of the
-command line. The commands ``andes run /Users/hcui7/kundur_full.xlsx`` (on
-macOS) or ``andes run C:/Users/hcui7/kundur_full.xlsx`` (on Windows) use
-absolute paths to the case files and do not depend on the command-line current
-directory.
+- **Relative path**: ``andes run kundur_full.xlsx``, e.g., uses a relative path.
+  It works only if ``kundur_full.xlsx`` exists in the *working directory* of
+  the command line.
+
+- **Absolute path**: ``andes run /Users/hcui7/kundur_full.xlsx`` (on macOS) or
+  ``andes run C:/Users/hcui7/kundur_full.xlsx`` (on Windows) use absolute
+  paths to the case files. They do not depend on the command-line current
+  directory.
 
 .. note ::
-    When working with the command line, use ``cd`` to change directory to the folder
-    containing your test case.
-    Spaces in folder and file names need to be escaped properly.
+
+    When working with the command line, use ``cd`` to change directory to the
+    folder containing your test case. Spaces in folder and file names need to be
+    escaped properly, so it's generally advised to *avoid spaces in file and
+    folder names*.
+
+To find out your current working directory, look for the line below the ANDES
+preamble that reads like
+
+::
+
+    Working directory: "/home/hacui/repos/andes/andes/cases/kundur"
+
+Input path
+..........
+ANDES allows one to specify the path to look for the case file instead of the
+working directory. This is done by using the ``-p`` or ``--input-path`` option.
+For example, if ``kundur_full.xlsx`` is in folder ``/home/hacui/cases``, one can
+do
+
+.. code-block:: console
+
+    andes run kundur_full.xlsx -p /home/hacui/cases
+
+The argument passed to ``-p`` or ``--input-path`` can also be a relative path.
+If you need further help understanding paths, please consult other online
+articles.
+
+Multiprocessing
+...............
+
+ANDES takes multiple files inputs or wildcard. Multiprocessing will be
+triggered if more than one valid input files are passed to ``filename``.
+
+
+- Multiple files: to run the power flow for ``kundur_full.xlsx`` and
+  ``kundur_motor.xlsx`` simultaneously, one can do
+
+.. code-block:: console
+
+    andes run kundur_full.xlsx kundur_motor.xlsx
+
+The output will look like ::
+
+    Working directory: "/home/hacui/repos/andes/andes/cases/kundur"
+    -> Processing 2 jobs on 12 CPUs.
+    Process 0 for "kundur_full.xlsx" started.
+    Process 1 for "kundur_motor.xlsx" started.
+    Log saved to "/tmp/andes/andes-uopdutii/andes.log".
+    -> Multiprocessing finished in 2.4680 seconds.
+
+- Wildcard: to run power flow for files with a prefix of ``kundur_`` and a suffix
+  (file extension) of ``.xlsx``, run
+
+.. code-block:: console
+
+    andes run kundur_*.xlsx
+
+Case files with such name pattern, including ``kundur_full.xlsx`` and
+``kundur_motor.xlsx``, among others, will be processed.
+
+Option ``--ncpu NCPU`` can be used to specify the maximum number of parallel
+processes. By default, all cores will be used. A small number can be
+specified to increase operating system responsiveness.
 
 Routine
 .......
 Option ``-r`` or ``-routine`` is used for specifying the analysis routine,
-followed by the routine name.
-Available routine names include ``pflow, tds, eig``:
-- ``pflow`` for power flow
+followed by the routine name. Available routine names include
+
+- ``pflow`` for power flow calculation
 - ``tds`` for time domain simulation
 - ``eig`` for eigenvalue analysis
 
-``pflow`` is the default if ``-r`` is not given.
+If ``-r`` is not given, the power flow calculation routine will be called.
+There are routine specific options that can be passed to ``andes run`` and are
+discussed next.
+
+Each routine has a list of configuration options (called "config") to
+control their behaviors. Config needs to be distinguished from command-line
+options as not all config options are available in the command-line.
+Refer to the Config section below for more details.
 
 Power flow
 ..........
-Locate the ``kundur_full.xlsx`` file at ``andes/cases/kundur/kundur_full.xlsx``
-under the source code folder, or download it from `the repository
-<https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx>`_.
 
-Change to the directory containing ``kundur_full.xlsx``.
-To run power flow, execute the following in the command line:
+.. note::
+
+    Examples in the following will utilize the ``kundur_full.xlsx`` test case.
+    If you have cloned the ANDES repository, it can be found in
+    ``andes/cases/kundur`` in  the source code folder. You can also download it
+    from
+    `here <https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx>`_.
+
+To run power flow, change to the directory containing ``kundur_full.xlsx``, and
+execute the following in the command line:
 
 .. code:: bash
 
     andes run kundur_full.xlsx
 
-The full path to the case file is also recognizable, for example,
+Alternatively, the full path to the case file is also recognizable, such as
 
 .. code:: bash
 
     andes run /home/user/andes/cases/kundur/kundur_full.xlsx
 
-The power flow report will be saved to the current directory where ANDES is run.
-The report contains four sections: a) system statistics, b) ac bus and dc node
-data, c) ac line data, and d) the initialized values of other algebraic
-variables and state variables.
+The power flow report will be saved to the current directory where ANDES is
+invoked. The report contains four sections:
+
+1) system statistics,
+2) ac bus and dc node data
+3) ac line data, and
+4) results of other algebraic variables and state variables.
+
+By default, the power flow routine is configured to use full Newton Raphson
+method, and reactive power limits are not checked. To change these config, edit
+the config file by referring to ``andes doc PFlow`` and ``andes doc PV``.
+
+Following power flow, ANDES does not initialize dynamic models to save time.
+When developing dynamic models, one can enable the initialization by setting in
+the config file ::
+
+    [PFlow]
+    init_tds = 1
 
 Time-domain simulation
 ......................
@@ -253,20 +343,6 @@ If the output is disabled, profiling results will be printed to stdio.
 
 Multiprocessing
 ...............
-ANDES takes multiple files inputs or wildcard. Multiprocessing will be triggered
-if more than one valid input files are found. For example, to run power flow for
-files with a prefix of ``case5`` and a suffix (file extension) of ``.m``, run
-
-.. code:: bash
-
-    andes run case5*.m
-
-Test cases that match the pattern, including ``case5.m`` and ``case57.m``, will
-be processed.
-
-Option ``--ncpu NCPU`` can be used to specify the maximum number of parallel
-processes. By default, all cores will be used. A small number can be specified
-to increase operation system responsiveness.
 
 Format converter
 ................
