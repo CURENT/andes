@@ -5,150 +5,44 @@ import pandapower as pp
 from math import pi
 from numpy import sign
 import pandas as pd
-import numpy as np
-
-
-def ssa_alter(ssp_res, ssa, mode=0, no_msg=False):
-    """
-    Alter the setpoints of ADNES system by pandapower resutls.
-
-    Target: AGC -> TurbineGov.paux0, Dispatch -> TurbineGov.pref0, Initial Dispatch -> StaticGen.p0
-
-    Parameters
-    ----------
-    ssp_res : the pandapower resutls DataFrame from function `opp_res`
-
-    ssa : The ADNES system to alter
-
-    mode : 0 to alter TurbineGov.paux0 by ssp_res['dp'], 1 to alter StaticGen.p0 by ssp_res['p']
-
-    no_msg: disable alter info
-    """
-    decimal = 6
-    if mode == 0:
-        # alter TurbineGov paux0``
-        for uid in ssp_res.index:
-            for key in ssa.TurbineGov.models:
-                gov = getattr(ssa, key)
-                if ssp_res['gov_idx'].iloc[uid] in list(gov.as_df()['idx']):
-                    idx = ssp_res['gov_idx'].iloc[uid]
-                    src = 'paux0'
-                    val0 = gov.get(src=src, idx=idx)
-                    val1 = ssp_res['dp'].iloc[uid]
-                    gov.alter(src=src, idx=idx, value=val1)
-                    if not no_msg:
-                        print(f'ssa_alter: TurbineGov {idx}.{src}',
-                              f'from {val0.round(decimal)} to {val1.round(decimal)}')
-    elif mode == 1:
-        # alter StaticGen p0
-        for uid in ssp_res.index:
-            for key in ssa.StaticGen.models:
-                stgen = getattr(ssa, key)
-                if ssp_res['stg_idx'].iloc[uid] in list(stgen.as_df()['idx']):
-                    idx = ssp_res['stg_idx'].iloc[uid]
-                    src = 'p0'
-                    val0 = stgen.get(src=src, idx=idx)
-                    val1 = ssp_res['p'].iloc[uid]
-                    stgen.alter(src=src, idx=idx, value=val1)
-                    if not no_msg:
-                        print(f'ssa_alter: StaticGen {idx}.{src}',
-                              f'from {val0.round(decimal)} to {val1.round(decimal)}')
-
-    for uid in ssp_res.index:
-        for key in ssa.Exciter.models:
-            exc = getattr(ssa, key)
-            if ssp_res['exc_idx'].iloc[uid] in list(exc.as_df()['idx']):
-                idx = ssp_res['exc_idx'].iloc[uid]
-                src = 'vref0'
-                val0 = exc.get(src=src, idx=idx)
-                val1 = ssp_res['vm_pu'].iloc[uid]
-                exc.alter(src=src, idx=idx, value=val1)
-                if not no_msg:
-                    print(f'ssa_alter: StaticGen {idx}.{src} from {val0.round(decimal)} to {val1.round(decimal)}')
-    # TODO: summary info
-    return True
-
-
-def opp_res(ssp, ssa_key):
-    """
-    Build the pandapower resutls DataFrame `ssp_res` of a pandapower network.
-
-    `ssp_res` contains the OPF resutls [`p_mw`, `q_mvar`, `vm_pu` `dp`] in p.u., and
-    corresponding `idx` of `StaticGen`, `Exciter`, and `TurbineGov` in ANDES.
-
-    `dp` is the change of active power from last OPF result.
-
-    NOTE: The pandapower net and the ssp should have same base_mva.
-
-    Parameters
-    ----------
-    ssp : The pandapower network
-
-    ssa_key : The link table of ADNES system
-    """
-    p_old = ssp.res_gen['p_mw'].copy()/ssp.sn_mva
-    pp.runopp(ssp)
-    ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
-    ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.gen[['name', 'bus']],
-                       how='left', on='name')
-    ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.bus[['name']].reset_index().rename(columns={'index': 'bus',
-                                                                             'name': 'bus_name'}),
-                       how='left', on='bus')
-    ssp_res = pd.merge(left=ssp_res,
-                       right=ssa_key[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
-                       how='left', on='bus_name')
-    ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
-    ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
-    if len(p_old) == 0:  # initial run
-        ssp_res['dp'] = 0
-    else:
-        ssp_res['dp'] = np.array(ssp_res['p']) - np.array(p_old)
-    if ssp_res.isnull().values.any():
-        print('opp_res: ERROR, NA encountered in OPF results!')
-    # power balance check
-    total_load = ssp.load['p_mw'].sum() / ssp.sn_mva
-    total_gen = ssp_res['p'].sum()
-    imbalance = (total_load - total_gen) / total_gen
-    print(f'opp_res:  power imbalance={imbalance.round(4)*100}%')
-
-    return ssp_res[['name', 'p', 'dp', 'q', 'vm_pu', 'bus', 'bus_name', 'gov_idx', 'stg_idx', 'exc_idx']]
 
 
 def ssa_link(ssa):
     """
-    Build the link DataFrame `ssa_key` of an ADNES system.
+    Build the link table `ssa_key` of an ADNES system.
 
     `ssa_key` contains the `idx` of linked `StaticGen`, `Bus`,
     `SynGen`, `Exciter`, and `TurbineGov`.
 
     Parameters
     ----------
-    ssa : The ADNES system to link
+    ssa :
+        The ADNES system to link
     """
-    cols1 = ['idx', 'bus']
-    cols2 = ['idx', 'syn']
     # build StaticGen df
-    ssa_sg = pd.DataFrame(columns=cols1)
+    sg_cols = ['idx', 'bus']
+    ssa_sg = pd.DataFrame(columns=sg_cols)
     for key in ssa.StaticGen.models:
         sg = getattr(ssa, key)
-        ssa_sg = pd.concat([ssa_sg, sg.as_df()[cols1]], axis=0)
+        ssa_sg = pd.concat([ssa_sg, sg.as_df()[sg_cols]], axis=0)
     # build TurbineGov df
-    ssa_gov = pd.DataFrame(columns=cols2)
+    gov_cols = ['idx', 'syn']
+    ssa_gov = pd.DataFrame(columns=gov_cols)
     for key in ssa.TurbineGov.models:
         gov = getattr(ssa, key)
-        ssa_gov = pd.concat([ssa_gov, gov.as_df()[cols2]], axis=0)
+        ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
     # build Exciter df
-    ssa_exc = pd.DataFrame(columns=cols2)
+    exc_cols = ['idx', 'syn']
+    ssa_exc = pd.DataFrame(columns=exc_cols)
     for key in ssa.Exciter.models:
         exc = getattr(ssa, key)
-        ssa_exc = pd.concat([ssa_exc, exc.as_df()[cols2]], axis=0)
+        ssa_exc = pd.concat([ssa_exc, exc.as_df()[exc_cols]], axis=0)
     # build SynGen df
-    ssa_syn = pd.DataFrame(columns=cols1)
+    syn_cols = ['idx', 'bus']
+    ssa_syn = pd.DataFrame(columns=syn_cols)
     for key in ssa.SynGen.models:
         syn = getattr(ssa, key)
-        ssa_syn = pd.concat([ssa_syn, syn.as_df()[cols1]], axis=0)
+        ssa_syn = pd.concat([ssa_syn, syn.as_df()[syn_cols]], axis=0)
 
     # output
     ssa_bus = ssa.Bus.as_df().copy()[['name', 'idx']]
@@ -171,7 +65,79 @@ def ssa_link(ssa):
     return ssa_key
 
 
-def to_pandapower(ssa):
+def opp_res(ssp, ssa_key):
+    """
+    Build the pandapower resutls DataFrame `ssp_res` of a pandapower network.
+
+    `ssp_res` contains the OPF resutls `p_mw`, `q_mvar`, `vm_pu` in p.u., and
+    corresponding `idx` of `StaticGen`, `Exciter`, `TurbineGov` in ANDES.
+
+    NOTE: The pandapower net and the ssa should have same bsae mva.
+
+    Parameters
+    ----------
+    ssp :
+        The pandapower network
+
+    ssa_key : DataFrame
+        The link table of ADNES system
+    """
+    pp.runopp(ssp)
+    ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
+    ssp_res = pd.merge(left=ssp_res,
+                       right=ssp.gen[['name', 'bus']],
+                       how='left', on='name')
+    ssp_res = pd.merge(left=ssp_res,
+                       right=ssp.bus[['name']].reset_index().rename(columns={'index': 'bus',
+                                                                             'name': 'bus_name'}),
+                       how='left', on='bus')
+    ssp_res = pd.merge(left=ssp_res,
+                       right=ssa_key[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
+                       how='left', on='bus_name')
+    ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
+    ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
+
+    return ssp_res[['name', 'p', 'q', 'vm_pu', 'bus', 'bus_name', 'gov_idx', 'stg_idx', 'exc_idx']]
+
+
+def ssp_cost(ssp, gen_cost):
+    """
+    Add cost function to converted pandapower net `ssp`.
+
+    The cost data follows the same format of pypower and matpower.
+
+    Now only poly_cost is supported.
+
+    Parameters
+    ----------
+    ssp :
+        The pandapower net
+
+    gen_cost : array
+        generator cost data
+    """
+    # check dim
+    if gen_cost.shape[0] != ssp.gen[ssp.gen['controllable']].shape[0]:
+        print('Input cost function size does not match controllable gen size.')
+
+    for num, uid in enumerate(ssp.gen[ssp.gen['controllable']].index):
+        if gen_cost[num, 0] == 2:  # poly_cost
+            pp.create_poly_cost(net=ssp,
+                                element=uid,
+                                et='gen',
+                                cp2_eur_per_mw2=gen_cost[num, 4],
+                                cp1_eur_per_mw=gen_cost[num, 5],
+                                cp0_eur=gen_cost[num, 6])
+        else:  # TODO: piecewise linear
+            pass
+            pp.create_pwl_cost(net=ssp,
+                               element=uid,
+                               et='gen',
+                               )
+    return True
+
+
+def to_pandapower(ssa, validate=True):
     """
     Convert ADNES system (ssa) to pandapower network (ssp).
 
@@ -179,9 +145,9 @@ def to_pandapower(ssa):
 
     Line limts are set as 99999.0 in `ssp`.
 
-    `SynGen` equipped with `TurbineGov` in `ssa` is set as `controllable=True` in `ssp.gen`.
-
     Generator cost is not included in the conversion.
+
+    `SynGen` equipped with `TurbineGov` in `ssa` is considered as `controllable=True` in `ssp.gen`.
     """
     # create PP net
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,
@@ -360,7 +326,7 @@ def to_pandapower(ssa):
         gov = getattr(ssa, key)
         ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
 
-    # Consider the SynGen equipped with TurbineGov as controllable
+    # Consider the SynGen equipped with Exciter as controllable
     ssa_sg_ctr = pd.merge(ssa_syg.rename(columns={"idx": "syn"}), ssa_gov[["syn", "idx"]], how="left", on="syn")
     ssa_sg_out = ssa_sg_ctr.rename(columns={"bus": "bus_idx"})
     ssa_sg_out["ctrl"] = bool(str(ssa_sg_ctr[["idx"]]))
@@ -375,36 +341,46 @@ def to_pandapower(ssa):
     for col in calc_cols:
         ssa_sg[col] = ssa_sg[col] * ssa_sg["Sn"]
 
+    # fill the ctrl with False
+    ssa_sg.fillna(value=False, inplace=True)
     # conversion
-    # a) `PV` with negative `p0` -> load
-    # b) `Slack` -> gen
-    # c) `PV` with non-negative `p0`-> gen
+    # a) `PV` with negative `p0` -> uncontrollable gen
+    # b) `PV` with non-negative `p0`-> gen
     for uid in ssa_sg.index:
-        if ssa_sg["p0"].iloc[uid] < 0:
-            pp.create_load(net=ssp,
-                           name="PV"+str(ssa_sg["name"].iloc[uid]),
-                           bus=ssa_sg["pp_id"].iloc[uid],
-                           sn_mva=ssa_sg["Sn"].iloc[uid],
-                           p_mw=-1*ssa_sg["p0"].iloc[uid],
-                           q_mvar=-1*ssa_sg["q0"].iloc[uid],
-                           in_service=ssa_sg["u"].iloc[uid],
-                           controllable=False,
-                           #    index=uid,
-                           )
+        pp.create_gen(net=ssp,
+                      slack=ssa_sg["slack"].iloc[uid],
+                      bus=ssa_sg["pp_id"].iloc[uid],
+                      p_mw=ssa_sg["p0"].iloc[uid],
+                      vm_pu=ssa_sg["v0"].iloc[uid],
+                      sn_mva=ssa_sg["Sn"].iloc[uid],
+                      name=ssa_sg['name'].iloc[uid],
+                      controllable=ssa_sg["ctrl"].iloc[uid],
+                      in_service=ssa_sg["u"].iloc[uid],
+                      max_p_mw=ssa_sg["pmax"].iloc[uid],
+                      min_p_mw=ssa_sg["pmin"].iloc[uid],
+                      max_q_mvar=ssa_sg["qmax"].iloc[uid],
+                      min_q_mvar=ssa_sg["qmin"].iloc[uid],
+                      index=uid,
+                      )
+
+    # validation of power flow
+    if validate:
+        ssa.setup()
+        ssa.PFlow.run()
+        pp.runpp(ssp)
+        pf_bus = ssa.Bus.as_df()[["name"]].copy()
+        # ssa
+        pf_bus['v_ad'] = ssa.Bus.v.v
+        pf_bus['a_ad'] = ssa.Bus.a.v
+        # ssp
+        pf_bus['v_pp'] = ssp.res_bus['vm_pu']
+        pf_bus['a_pp'] = ssp.res_bus['va_degree'] * pi / 180
+        pf_bus['v_diff'] = pf_bus['v_ad'] - pf_bus['v_pp']
+        pf_bus['a_diff'] = pf_bus['a_ad'] - pf_bus['a_pp']
+        tol = 1e-6
+        if abs(pf_bus['v_diff'].max()) < tol:
+            if abs(pf_bus['a_diff'].max()) < tol:
+                print("Power flow are consistent, conversion is successful.")
         else:
-            pp.create_gen(net=ssp,
-                          slack=ssa_sg["slack"].iloc[uid],
-                          bus=ssa_sg["pp_id"].iloc[uid],
-                          p_mw=ssa_sg["p0"].iloc[uid],
-                          vm_pu=ssa_sg["v0"].iloc[uid],
-                          sn_mva=ssa_sg["Sn"].iloc[uid],
-                          name=ssa_sg['name'].iloc[uid],
-                          controllable=ssa_sg["ctrl"].iloc[uid],
-                          in_service=ssa_sg["u"].iloc[uid],
-                          max_p_mw=ssa_sg["pmax"].iloc[uid],
-                          min_p_mw=ssa_sg["pmin"].iloc[uid],
-                          max_q_mvar=ssa_sg["qmax"].iloc[uid],
-                          min_q_mvar=ssa_sg["qmin"].iloc[uid],
-                          index=uid,
-                          )
+            print("Warning: Power flow are inconsistent, pleaes check!")
     return ssp

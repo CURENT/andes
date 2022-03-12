@@ -1036,7 +1036,6 @@ are consistent.
 Note: 
 Line limts are set as 99999.0 in `ssp`.
 `SynGen` equipped with `TurbineGov` in `ssa` is set as `controllable=True` in `ssp.gen`.
-Generator cost is not included in the conversion.
 
 
 Per Unit System
