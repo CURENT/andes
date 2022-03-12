@@ -80,30 +80,88 @@ and ``8``.
 Creating cases
 ..............
 
-TODO
+It is often easier to modify from existing cases than creating from scratch. We
+recommend that you get familiar with the cases available with ANDES, see
+:ref:`test-cases`.
+
+Adding devices
+..............
+
+Adding devices to an existing workbook is straightforward. Navigate to the sheet
+corresponding to the model and add a new line below the existing lines.
+
+Almost all models have so-called mandatory parameters. They are essential to
+describe a complete and consistent test case. For example, the ``PQ`` model has
+the ``bus`` parameter as mandatory to indicate the connected bus. To look up
+mandatory parameters, see :ref:`modelref` or use ``andes doc MODEL_NAME``.
+Check for "mandatory" in the last column called "Properties". This column also
+contains other data consistency requirements discussed in the following.
+
+Non-mandatory parameters are optional, meaning that if not provided, ANDES will
+use the default parameters. The default values can also be found in
+:ref:`modelref`. This does not mean that such parameters should always be left
+blank. For example, the ``p0`` (active power load) of ``PQ`` is optional, but
+likely one wants to set it to a non-zero value.
+
+There are consistency requirements for parameters, such as ``non_zero``,
+``non_negative`` or ``non_positive``. If unmet, the default values will be used.
+See the class reference in :py:mod:`andes.core.param.NumParam`.
+
+Autofill data
+.............
+When you finished adding devices but left some optional parameters empty, you
+can use ANDES to autofill them. This is useful when you want to populate a large
+number of devices with the same parameters that can be modified later.
+
+The autofill is done through the data converter, namely, ``--convert`` or
+``-c``. ANDES will read in the Excel file, fill the optional parameters with
+default values, fix the inconsistent values, and then export the data back to
+Excel.
+
+.. warning::
+
+    Please backup the spreadsheet if it contains customized edits. Inconsistent
+    data will be replaced during the conversion. Formatting in the spreadsheet
+    will be lost. Unrecognized sheets will also be discarded.
+
+To autofill ``kundur_full.xlsx``, do
+
+.. code:: bash
+
+    andes run kundur_full.xlsx -c
+
+You will be prompted to confirm the overwrite.
+
+Since this autofill feature utilizes the converter, the autofilled data can be
+exported to other formats, such as ``.json``. To do so, use ``-c json``.
 
 Adding workbooks
 ................
 
-If one wants to add workbooks to an existing xlsx file, one can combine option
-``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``), where ``ADD_BOOK`` can be a single
-model name or comma-separated model names (without any space). For example,
+If one wants to add workbooks for models that does not exist in an xlsx file,
+one can use ``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``), where ``ADD_BOOK`` can
+be a single model name or comma-separated model names (*without space*). For
+example,
 
 .. code:: bash
 
-    andes run kundur.raw -c -b Toggler
+    andes run kundur_full.xlsx -b Fault
 
-will convert file ``kundur.raw`` into an ANDES xlsx file (kundur.xlsx) and add
-a template workbook for `Toggler`.
+will add an empty ``Fault`` sheet to ``kundur_full.xlsx``.
 
 .. Warning::
-    With ``--add-book``, the xlsx file will be overwritten.
-    Any **empty or non-existent models** will be REMOVED.
 
-Autofill data
-.............
+    With ``--add-book``, the xlsx file will be overwritten with the same
+    parameter corrections as in the autofill. Please make backups as needed.
 
-TODO
+Format conversion and workbook addition can be performed together. To convert a
+PSS/E raw file and a dyr file into an xlsx file and add a workbook for ``Fault``, do
+
+.. code:: bash
+
+    andes run kundur.raw -addfile kundur_full.dyr -c -b Fault
+
+The output will have the same name as the raw file.
 
 Data Consistency
 ................
@@ -127,3 +185,18 @@ array:
 - Any ``NaN`` values will raise a ``ValueError``
 - Any ``inf`` will be replaced with :math:`10^{8}`, and ``-inf`` will be
   replaced with :math:`-10^{8}`.
+
+
+ANDES JSON
+==========
+
+JSON is a portable format for storing data. It has been used in several other
+power system tools, including `PowerModels
+<https://lanl-ansi.github.io/PowerModels.jl/stable/>`_, `Pandapower
+<https://www.pandapower.org/>`_, and
+`NREL-SIIP <https://github.com/nrel-siip>`_.
+It must be noted that JSON files from these tools are not interoperable because
+JSON only defines the data structure, not the data itself.
+
+Compared with the `xlsx` file which is a zipped package, the ANDES JSON file is
+much faster to parse.
