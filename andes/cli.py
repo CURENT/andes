@@ -248,9 +248,11 @@ def versioninfo():
     import pandas
     import matplotlib
     import numba
+    import kvxopt
     versions = {'Python': platform.python_version(),
                 'andes': get_versions()['version'],
                 'numpy': np.__version__,
+                'kvxopt': kvxopt.__version__,
                 'sympy': sympy.__version__,
                 'scipy': scipy.__version__,
                 'pandas': pandas.__version__,

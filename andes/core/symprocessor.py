@@ -13,6 +13,7 @@ import sympy
 from sympy import (Matrix, SparseMatrix, Symbol, SympifyError, lambdify, latex,
                    sympify,)
 
+from andes.thirdparty.sympymod import FixPiecewise
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
 from andes.utils.paths import get_pycode_path
@@ -20,48 +21,6 @@ from andes.utils.paths import get_pycode_path
 logger = logging.getLogger(__name__)
 
 select_args_add = ["__zeros", "__ones", "__falses", "__trues"]
-
-
-class FixPiecewise(sympy.Piecewise):
-    """
-    A derived Piecewise that fixes the printing of ``select`` to allow compilation with numba.
-
-    See: https://github.com/sympy/sympy/issues/15014
-    """
-
-    def _numpycode(self, printer):
-        """
-        Updated numpy code printer.
-        """
-
-        def broadcastarg(arg):
-            if arg.has(sympy.Symbol):
-                return printer._print(arg)
-            if arg == 0:
-                return '__zeros'
-
-            return printer._print(arg * sympy.Symbol('__ones'))
-
-        def broadcastcond(cond):
-            if cond.has(sympy.Symbol):
-                return printer._print(cond)
-
-            if bool(cond):
-                return '__trues'
-            else:
-                return '__falses'
-
-        # Piecewise function printer
-
-        exprs = '[{}]'.format(','.join(broadcastarg(arg.expr) for arg in self.args))
-        conds = '[{}]'.format(','.join(broadcastcond(arg.cond) for arg in self.args))
-        # If [default_value, True] is a (expr, cond) sequence in a Piecewise object
-        #     it will behave the same as passing the 'default' kwarg to select()
-        #     *as long as* it is the last element in self.args.
-        # If this is not the case, it may be triggered prematurely.
-        return '{}({}, {}, default={})'.format(
-            printer._module_format('select'), conds, exprs,
-            printer._print(sympy.S.NaN))
 
 
 # the line below caches Piecewise instances
@@ -113,6 +72,7 @@ class SymProcessor:
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
+        self.s_syms = list()
 
         # pretty print of variables
         self.xy = list()  # variables in the order of states, algebs
@@ -209,6 +169,14 @@ class SymProcessor:
         return fs
 
     def generate_equations(self):
+        """
+        Generate equations.
+
+        The pretty-print equations in matrices can be accessed in
+        ``self.f_matrix`` and ``self.g_matrix``.
+
+        """
+
         logger.debug('- Generating equations for %s', self.class_name)
 
         self.f_list, self.g_list = list(), list()
@@ -266,8 +234,13 @@ class SymProcessor:
         """
         Generate calls for services, including ``ConstService`` and
         ``VarService`` among others.
+        Sequence is preserved due to possible dependency.
 
-        Sequence is preserved due to possible dependency
+        Since SymPy 1.9, ``Matrix`` no longer supports non-Expr
+        objects. Due to the use of logical conditions in services,
+        service expressions will not be converted to SymPy Matrix.
+        The dictionary to look up service name and expression
+        is in ``self.s_syms``.
         """
 
         s_args = OrderedDict()
@@ -290,9 +263,7 @@ class SymProcessor:
             if 'select' in inspect.getsource(s_calls[name]):
                 s_args[name].extend(select_args_add)
 
-        # TODO: below triggers DeprecationWarning with SymPy 1.9
-        self.s_matrix = Matrix(list(s_syms.values()))
-
+        self.s_syms = s_syms
         self.calls.s = s_calls
         self.calls.s_args = s_args
 
@@ -311,6 +282,8 @@ class SymProcessor:
 
         """
         logger.debug('- Generating Jacobians for %s', self.class_name)
+
+        from sympy import Tuple
 
         # clear storage
         self.df_syms, self.dg_syms = Matrix([]), Matrix([])
@@ -362,7 +335,9 @@ class SymProcessor:
             j_args[jname].sort(key=lambda s: s.name)
 
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
-            self.calls.j[jname] = lambdify(j_args[jname], tuple(j_calls[jname]), modules=self.lambdify_func)
+            # workaround for SymPy 1.10 to generate tuples with one element. See
+            # https://github.com/sympy/sympy/issues/23224
+            self.calls.j[jname] = lambdify(j_args[jname], Tuple(*j_calls[jname]), modules=self.lambdify_func)
 
             # manually append additional arguments for select
             if 'select' in inspect.getsource(self.calls.j[jname]):
@@ -416,7 +391,7 @@ class SymProcessor:
         # get pretty printing equations by substituting symbols
         self.f = self.f_matrix.subs(self.tex_names)
         self.g = self.g_matrix.subs(self.tex_names)
-        self.s = self.s_matrix.subs(self.tex_names)
+        self.s = [item.subs(self.tex_names) for item in self.s_syms.values()]
 
         # store latex strings
         nx = len(self.f)

@@ -10,18 +10,23 @@ if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
 
     # write the top-level index file
 
-    out = ''
-    out += '.. _modelref:\n\n'
-    out += '****************\n'
-    out += 'Model References\n'
-    out += '****************\n'
-    out += '\n'
+    out = """.. _modelref:
+
+****************
+Model references
+****************
+
+Use the left navigation pane to locate the group and model
+and view details.
+
+"""
 
     out += ss.supported_models(export='rest')
 
     out += '\n'
     out += '.. toctree ::\n'
     out += '    :maxdepth: 2\n'
+    out += '    :hidden:\n'
     out += '\n'
 
     file_tpl = '    groupdoc/{}\n'
@@ -45,7 +50,7 @@ if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
     out = ''
     out += '.. _configref:\n\n'
     out += '*****************\n'
-    out += 'Config References\n'
+    out += 'Config references\n'
     out += '*****************\n'
     out += '\n'
 

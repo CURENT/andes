@@ -1,7 +1,7 @@
 .. _scripting_examples:
 
-Scripting Examples
-==================
+Examples
+========
 
 A collection of examples are presented to supplement the tutorial. The
 examples below are identical to the Jupyter Notebook in the ``examples``

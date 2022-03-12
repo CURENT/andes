@@ -1,14 +1,22 @@
 .. _ReleaseNotes:
 
 =============
-Release Notes
+Release notes
 =============
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.6 Notes
+----------
+
+v1.6.0 (2022-03-11)
+```````````````````
+- Migrated documentation to the pydata template.
+- Added compatibility with SymPy 1.9 and 1.10.
+
 v1.5 Notes
 ----------
-v1.5.12 (2022-03-xx)
+v1.5.12 (2022-03-05)
 ````````````````````
 - Improved PSS/E parsers for WTDTA1 model to follow PSS/E
   parameter definition.

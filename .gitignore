@@ -65,8 +65,9 @@ docs/source/configref.rst
 docs/source/groupdoc
 docs/source/examples
 docs/build/
+docs/jupyter_execute/
 docs/source/_build/
-docs/source/generated/
+_generated
 
 # pytest
 .pytest_cache/

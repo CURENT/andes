@@ -1,9 +1,9 @@
 import logging
 import pprint
+
 from collections import OrderedDict, defaultdict
 from typing import Iterable
 
-from sympy import Expr
 
 from andes.shared import jac_full_names, jac_names, jac_types
 from andes.utils.tab import make_doc_table, math_wrap
@@ -85,6 +85,7 @@ class DummyValue:
     -----
     Pass a numerical value to the constructor for most use cases, especially when passing as a v-provider.
     """
+
     def __init__(self, value):
         if isinstance(value, str):
             self.name = f'({value})'
@@ -118,6 +119,7 @@ class JacTriplet:
     """
     Storage class for Jacobian triplet lists.
     """
+
     def __init__(self):
         self.ijac = defaultdict(list)
         self.jjac = defaultdict(list)
@@ -341,19 +343,3 @@ class Config:
     @property
     def tex_names(self):
         return self._tex
-
-
-class Indicator(Expr):
-    """
-    Indicator class for printing SymPy Relational.
-
-    Relational expressions in SymPy need to be wrapped by `Indicator`.
-
-    Examples
-    --------
-    To compare ``dae_t`` with ``0``, one need to use
-    ``Indicator(dae_t < 0)```.
-    """
-
-    def _numpycode(self, printer):
-        return printer._print(self.args[0])

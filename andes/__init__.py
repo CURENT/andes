@@ -8,14 +8,15 @@ from andes import models     # NOQA
 from andes import routines   # NOQA
 from andes import utils      # NOQA
 from andes import variables  # NOQA
+from andes import thirdparty  # NOQA
 
 from andes.main import config_logger, run, load, prepare  # NOQA
 from andes.system import System                    # NOQA
-from andes.utils.paths import get_case, list_cases # NOQA
+from andes.utils.paths import get_case, list_cases  # NOQA
 
 
 __author__ = 'Hantao Cui'
 
 __all__ = ['main', 'plot', 'system', 'cli',
-           'utils', 'core', 'models', 'io', 'routines', 'variables',
+           'utils', 'core', 'models', 'io', 'routines', 'variables', 'thirdparty',
            '__version__']

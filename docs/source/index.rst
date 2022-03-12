@@ -70,29 +70,9 @@ See the GitHub repository for a full list of contributors.
    :maxdepth: 3
    :hidden:
 
-   install.rst
-   tutorial.rst
-   examples.md
-   modeling.rst
-   cases.rst
-   release-notes.rst
-   faq.rst
-   misc.rst
-   modelref.rst
-   configref.rst
-   copyright.rst
-
-
-.. toctree::
-   :hidden:
-   :caption: API References
-   :maxdepth: 3
-
-   andes.rst
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   getting_started/index
+   examples
+   modelref
+   modeling/index
+   api
+   release-notes

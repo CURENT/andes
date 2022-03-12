@@ -294,6 +294,54 @@ class LessThan(Discrete):
         self._eval = True
 
 
+class IsEqual(Discrete):
+    """
+    Is equal (==) comparison function to test if ``u == bound``.
+
+    Exports one flag: z1.
+    For elements satisfying the equality condition, the corresponding z1 = 1.
+
+    Notes
+    -----
+    The default z1 when not enabled can be set through the constructor.
+    By default, the model will not adjust the limit.
+    """
+
+    def __init__(self, u, bound, enable=True, name=None, tex_name=None,
+                 info: str = None, cache: bool = False, z1=1):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+
+        self.u = u
+        self.bound = dummify(bound)
+        self.enable: bool = enable
+        self.cache: bool = cache
+        self._eval: bool = False
+
+        self.z1 = np.array([z1])
+        self.export_flags = ['z1']
+        self.export_flags_tex = ['z_1']
+
+        self.input_list.extend([self.u])
+        self.param_list.extend([self.bound])
+
+        self.has_check_var = True
+
+    def check_var(self, *args, **kwargs):
+        """
+        If enabled, set flags based on inputs. Use cached values if enabled.
+        """
+
+        if not self.enable:
+            return
+
+        if self.cache and self._eval:
+            return
+
+        self.z1[:] = np.equal(self.u.v, self.bound.v)
+
+        self._eval = True
+
+
 class Limiter(Discrete):
     """
     Base limiter class.

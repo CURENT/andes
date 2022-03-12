@@ -1,14 +1,3 @@
-.. _tutorial:
-
-********
-Tutorial
-********
-ANDES can be used as a command-line tool or a library.
-The command-line interface (CLI) comes handy to run studies.
-As a library, it can be used interactively in the IPython shell or the Jupyter Notebook.
-This chapter describes the most common usages.
-
-Please see the cheat sheet if you are looking for quick help.
 
 .. _sec-command:
 
@@ -522,6 +511,7 @@ Cleanup
 Option to remove any generated files. Removes files with any of the following
 suffix: ``_out.txt`` (power flow report), ``_out.npy`` (time domain data),
 ``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
+<<<<<<< HEAD:docs/source/tutorial.rst
 
 Interactive Usage
 =================
@@ -1136,3 +1126,5 @@ A list of supported formats is as follows. Note that some format require additio
     linkcheck   to check all external links for integrity
     doctest     to run all doctests embedded in the documentation (if enabled)
     coverage    to run coverage check of the documentation (if enabled)
+=======
+>>>>>>> devcui:docs/source/getting_started/tutorial/cli.rst

@@ -6,12 +6,12 @@
 jobs:
 - job: macos
   pool:
-    vmImage: macOS-10.15
+    vmImage: macOS-latest
   timeoutInMinutes: 360
   strategy:
     matrix:
-      macos_python3.7:
-        python.version: '3.7'
+      macos_python3.8:
+        python.version: '3.8'
 
   steps:
   - task: UsePythonVersion@0

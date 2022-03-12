@@ -1,7 +1,7 @@
 kvxopt>=1.2.7.4
 numpy
 scipy
-sympy>=1.6,<1.9
+sympy>=1.6,<=1.10
 pandas
 matplotlib
 openpyxl
