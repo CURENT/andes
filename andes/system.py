@@ -1510,9 +1510,9 @@ class System:
 
                 try:
                     loaded_calls = dill.load(f)
-                    logger.info('Loaded generated code from pkl file "%s"', self.config.pickle_path)
+                    logger.info('> Loaded generated code from pkl file "%s"', self.config.pickle_path)
                 except (IOError, EOFError, AttributeError):
-                    logger.debug('Cannot open pkl file at "%s"', self.config.pickle_path)
+                    logger.debug('> Cannot open pkl file at "%s"', self.config.pickle_path)
 
         return loaded_calls
 
@@ -1997,7 +1997,7 @@ class System:
 
         conf = configparser.ConfigParser()
         conf.read(conf_path)
-        logger.info('Loaded config from file "%s"', conf_path)
+        logger.info('> Loaded config from file "%s"', conf_path)
         return conf
 
     def save_config(self, file_path=None, overwrite=False):
@@ -2112,9 +2112,9 @@ def load_pycode_from_path(pycode_path):
             pycode = importlib.util.module_from_spec(spec)  # NOQA
             sys.modules[spec.name] = pycode
             spec.loader.exec_module(pycode)
-            logger.info('Loaded generated Python code in "%s".', pycode_path)
+            logger.info('> Loaded generated Python code in "%s".', pycode_path)
         except ImportError:
-            logger.debug('Failed loading generated Python code in "%s".', pycode_path)
+            logger.debug('> Failed loading generated Python code in "%s".', pycode_path)
 
     return pycode
 
@@ -2131,7 +2131,7 @@ def reload_submodules(module_name):
         for _, m in inspect.getmembers(pycode, inspect.ismodule):
             importlib.reload(m)
 
-        logger.info('Reloaded generated Python code of module "%s".', module_name)
+        logger.info('> Reloaded generated Python code of module "%s".', module_name)
         return pycode
 
     return None
