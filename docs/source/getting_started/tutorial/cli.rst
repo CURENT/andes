@@ -8,107 +8,135 @@ Basics
 
 ANDES is invoked from the command line using the command ``andes``. Running
 ``andes`` without any input is equal to  ``andes -h`` or ``andes --help``. It
-prints out a preamble with version and environment information and help
-commands ::
+prints out a preamble with version and environment information, followed by
+and help commands ::
 
-        _           _         | Version 1.3.4
-       /_\  _ _  __| |___ ___ | Python 3.8.6 on Linux, 03/17/2021 11:28:55 AM
+        _           _         | Version 1.6.0
+       /_\  _ _  __| |___ ___ | Python 3.9.10 on Linux, 03/12/2022 10:30:44 AM
       / _ \| ' \/ _` / -_|_-< |
      /_/ \_\_||_\__,_\___/__/ | This program comes with ABSOLUTELY NO WARRANTY.
 
     usage: andes [-h] [-v {1,10,20,30,40}]
-            {run,plot,doc,misc,prepare,selftest} ...
+                {run,plot,doc,misc,prepare,prep,selftest,st,demo} ...
 
     positional arguments:
-    {run,plot,doc,misc,prepare,selftest}
-                        [run] run simulation routine; [plot] plot results;
-                        [doc] quick documentation; [misc] misc. functions;
-                        [prepare] prepare the numerical code; [selftest] run
-                        self test.
+    {run,plot,doc,misc,prepare,prep,selftest,st,demo}
+                            [run] run simulation routine; [plot] plot
+                            results; [doc] quick documentation; [misc] misc.
+                            functions; [prepare] prepare the numerical code;
+                            [selftest] run self test;
 
     optional arguments:
     -h, --help            show this help message and exit
     -v {1,10,20,30,40}, --verbose {1,10,20,30,40}
-                        Verbosity level in 10-DEBUG, 20-INFO, 30-WARNING, or
-                        40-ERROR.
+                            Verbosity level in 10-DEBUG, 20-INFO, 30-WARNING,
+                            or 40-ERROR.
 
 .. note::
 
-    If the ``andes`` command is not found, check if (1) the installation was successful, and
-    (2) you have activated the environment where ANDES is installed.
+    If the ``andes`` command is not found, it could be due to
 
-The first-level commands are chosen from
-``{run,plot,doc,misc,prepare,selftest}``. Each command contains a group of
-sub-commands, which can be looked up with ``-h``. For example, use ``andes run
--h`` to look up the sub-commands for ``run``. The most frequently used commands
-are explained in the following.
+    (1) missed steps in your installation process
+    (2) errors during installation
+    (3) forgot to activated the environment with ANDES
 
-``andes`` has an option for the program verbosity level, controlled by ``-v
-LEVEL`` or ``--verbose LEVEL``, where level is a number chosen from the
-following: 1 (DEBUG with code location info), 10 (DEBUG), 20 (INFO), 30
-(WARNING), 40 (ERROR), or 50 (CRITICAL). For example, to show debugging outputs,
-use ``andes -v 10``, followed by the first-level commands. The default logging
-level is 20 (INFO).
+``andes`` accepts an optional arugment to control verbosity level. It is done
+through ``-v LEVEL`` or ``--verbose LEVEL``, where ``level`` is a number.
+Logging level by default is 20 (INFO) and can be chosen from:
+
+- 1 (DEBUG with code location info)
+- 10 (DEBUG)
+- 20 (INFO)
+- 30 (WARNING)
+- 40 (ERROR)
+- 50 (CRITICAL)
+
+To show debugging outputs, use ``andes -v 10``, followed by top-level commands.
+To only show warnings and errors, use ``andes -v 30``.
+
+The top-level commands are ``{run,plot,doc,misc,prepare,selftest}``. Each
+command contains a group of subcommands, which can be looked up with ``-h``. For
+example, use ``andes run -h`` to look up the subcommands for ``andes run``.
+Frequently used commands are explained below.
+
+.. note::
+
+    Some subcommands have shorthand names:
+
+    - ``andes st`` is equivalent to ``andes selftest``
+    - ``andes prep`` is equivalent to ``andes prepare``
 
 andes selftest
 --------------
 After the installation, please run ``andes selftest`` from the command line to
 test ANDES functionality. It might take a minute to run the full self-test
-suite. An example output looks like ::
+suite. An example output looks like
+
+.. code-block:: console
 
     test_docs (test_1st_system.TestCodegen) ... ok
-    test_alter_param (test_case.Test5Bus) ... ok
     ...
     ... (outputs are truncated)
     ...
     test_pflow_mpc (test_pflow_matpower.TestMATPOWER) ... ok
-
     ----------------------------------------------------------------------
-    Ran 23 tests in 13.834s
+    Ran 60 tests in 10.109s
 
     OK
 
 There may be more test than what is shown above. Make sure that all tests have
 passed.
 
-.. warning ::
-    ANDES is getting updates frequently. After every update, please run
-    ``andes selftest`` to confirm the functionality.
-    The command also makes sure the generated code is up to date.
-    See `andes prepare`_ for more details on automatic code generation.
+ANDES receives frequent updates. After each update, please run ``andes
+st`` to confirm the functionality. The command also makes sure the
+generated code is up to date. See `andes prepare`_ for more details on
+automatic code generation.
+
+.. note::
+
+    There is a quick mode to test ANDES by skipping code generation. This should
+    only be used when you are certain that there is no modification to models
+    between the last code generation and now.
+
+    The quick mode is invoked by ``andes st -q``.
+
+.. _`andes prepare`:
 
 andes prepare
 -----------------
-.. _`andes prepare`:
 
 The symbolically defined models in ANDES need to be generated into numerical
-code for simulation. The code generation can be manually called with ``andes
-prepare``. Generated code are serialized to ``~/.andes/calls.pkl`` and dumped as
-Python code to ``~/.andes/pycode``. In addition, ``andes selftest`` implicitly
-calls the code generation. If you are using ANDES as a package in the user mode
-(namely, you have not modified or updated ANDES code), you will not need to call
-it again.
+code for simulation. The code generation process is automatic the first time you
+use ANDES to run any case study. It takes 10 seconds to one minute to generate
+the code depending on your platform. When done, no code generation is needed in
+your future use untill you modify the models.
 
-.. note ::
+It is also possible to generate the code manually with ``andes prepare`` or
+``andes prep``.  In addition, ``andes selftest`` automatically calls the
+code generation.
+
+.. note::
+
+    Generated code files are stored in Python code in ``$HOME/.andes/pycode``.
+    While being human-readable, they are not human-friendly and should only be
+    consulted during low-level debugging.
+
+The default code generation mode is known as the "quick mode". It skips the
+generation of :math:`\LaTeX`-formatted equations, which are only useful in
+documentation and the interactive mode.
+
+Option ``-i`` or ``--incremental`` can be used to speed up code generation
+during model development. ``andes prepare -i`` only generates code for
+models that are detected with changes since the last code generation.
+
+.. warning::
+
     To developers:
-    As of version 1.3.0, ANDES stores all generated Python code explicitly
-    in ``.py`` files under the folder ``~/.andes/pycode``.
-    Priority is given to Python code when reloading for simulation.
 
-Option ``-q`` or ``--quick`` (enabled by default) can be used to speed up the
-code generation. It skips the generation of :math:`\LaTeX`-formatted equations,
-which are only used in documentation and the interactive mode.
-
-Option ``-i`` or ``--incremental``, instead of ``-q``, can be used to further
-speed up the code generation during model development. ``andes prepare -i`` only
-generates code for models that have been modified since the last code
-generation.
-
-.. note ::
-
-    To developers:
-    ``andes prepare -i`` needs to be called immediately following any model equation modification.
-    Otherwise, simulation results will not reflect the new equations and will likely lead to an error.
+    ``andes prepare -i`` needs to be called immediately following any model
+    modification, such as equation modification and adding variables. Otherwise,
+    simulation results will not reflect the new equations, at best, or lead to
+    unexpected errors due to mismatches in model and code.
 
 andes run
 -------------
