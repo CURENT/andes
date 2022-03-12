@@ -34,9 +34,9 @@ from andes.utils.paths import get_config_path, get_log_dir, tests_root
 logger = logging.getLogger(__name__)
 
 
-def config_logger(stream=True,
+def config_logger(stream_level=logging.INFO, *,
+                  stream=True,
                   file=True,
-                  stream_level=logging.INFO,
                   log_file='andes.log',
                   log_path=None,
                   file_level=logging.DEBUG,
