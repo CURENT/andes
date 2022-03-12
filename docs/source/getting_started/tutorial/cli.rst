@@ -409,9 +409,10 @@ Python commands can be executed thereafter. To exit, type ``exit`` and press
 enter.
 
 
+.. _format-converter:
+
 Format converter
 ................
-.. _`format converter`:
 
 ANDES uses the Excel format to store power system data in the ANDES semantics.
 In addition, multiple input formats are recognized and can be converted to the
@@ -432,12 +433,12 @@ ANDES ``xlsx`` format. Converting data into the ANDES has pros and cons:
 Format conversion is done through ``--convert FORMAT`` or ``-c FORMAT``, where
 ``FORMAT`` is the output format. For now, the following formats are supported:
 
-- ``xlsx``: an Excel spread sheet format with ANDES-specific semantics. It is
-  not compatible with ``xlsx`` with semantics from other tools such as
+- ``xlsx``: an Excel spread sheet format with ANDES-specific data. It is
+  not compatible with ``xlsx`` with datafrom other tools such as
   `Pandapower <https://www.pandapower.org>`_.
-- ``json``: a JSON plain-text file with ANDES-specific semantics. Likewise,
-  the semantics are unlikely to be compatible with JSON from other power system
-  tools. JSON is much faster to parse than ``xlsx`` but not as friendly to edit.
+- ``json``: a JSON plain-text file with ANDES-specific data. Likewise, it is
+  unlikely to be compatible with JSON from other power system tools. JSON is
+  much faster to parse than ``xlsx`` but not as friendly to edit.
 
 To convert ``kundur_full.xlsx``, for example, to the ``json`` format, run
 
@@ -461,8 +462,8 @@ include:
 
 - ``.m``: MATPOWER case file
 - ``.raw`` and ``.dyr``: PSS/E raw and dyr files
-- ``.xlsx``: Excel spread sheet file with ANDES semantics
-- ``.json``: JSON plain-text file with ANDES semantics
+- ``.xlsx``: Excel spreadsheet file with ANDES data
+- ``.json``: JSON plain-text file with ANDES data
 
 PSS/E inputs
 ............
@@ -490,24 +491,6 @@ To create add a disturbance, there are two options. The recommended option is to
 convert the PSS/E data into an ANDES xlsx file, edit it and run (see the
 previous subsection). The alternative approach is documented in
 :ref:`creating disturbances`.
-
-Add book
-........
-
-If one wants to add workbooks to an existing xlsx file, one can combine option
-``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``), where ``ADD_BOOK`` can be a single
-model name or comma-separated model names (without any space). For example,
-
-.. code:: bash
-
-    andes run kundur.raw -c -b Toggler
-
-will convert file ``kundur.raw`` into an ANDES xlsx file (kundur.xlsx) and add
-a template workbook for `Toggler`.
-
-.. Warning::
-    With ``--add-book``, the xlsx file will be overwritten.
-    Any **empty or non-existent models** will be REMOVED.
 
 Profiling
 .........
@@ -564,10 +547,13 @@ The y-axis variable indices can also be specified as a Python range. For
 example, ``andes plot kundur_full_out.npz 0 2:21:6`` will plot the variables
 with indices 2, 8, 14 and 20.
 
-It can be tedious to look up the indices of variables in the ``.lst`` file.
-``andes plot`` supports ``--xargs`` or ``-a`` for searching for variable
-indices and passing them as arguments to ``andes plot``. See Examples -
-"Using CLI from Notebook".
+It can become tedious to look up the indices of variables in the ``.lst`` file.
+``andes plot`` supports ``--xargs`` or ``-a`` for searching for variable indices
+and passing them as arguments to ``andes plot``. See Examples - "Using CLI from
+Notebook".
+
+LaTeX rendering
+...............
 
 ``andes plot`` will attempt to render with :math:`\LaTeX` if ``dvipng`` program
 is in the search path. Figures rendered by :math:`\LaTeX` has
@@ -587,8 +573,11 @@ variables, and configs. A pretty-print version is available online in
 The basic usage of ``andes doc`` is to provide a model name or a routine name as
 the positional argument. For a model, it will print out model parameters,
 variables, and equations to the stdio. For a routine, it will print out fields
-in the Config file. If you are looking for full documentation, visit
-`andes.readthedocs.io <https://andes.readthedocs.io>`_.
+in the Config file.
+
+.. note::
+
+    For full model documentation, visit :ref:`modelref`.
 
 For example, to check the parameters for model ``Toggler``, run
 
