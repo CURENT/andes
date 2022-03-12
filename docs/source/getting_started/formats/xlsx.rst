@@ -1,10 +1,10 @@
-.. _input_excel:
+.. _input-xlsx:
 
 ANDES xlsx
 ----------
 
-The ANDES xlsx format uses Microsoft Excel for conveniently viewing and editing
-model parameters. If you don't have access to Excel, you can use the free and
+The ANDES xlsx format allows one to use Excel for convenient viewing and
+editing. If you don't have Excel, there are alternatives such as the free and
 open-source `LibreOffice <https://www.libreoffice.org>`_ or the non-paid `WPS
 Office <https://www.wps.com/>`_.
 

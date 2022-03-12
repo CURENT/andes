@@ -14,3 +14,4 @@ ANDES currently supports the following input formats:
 
    xlsx
    json
+   matpower
