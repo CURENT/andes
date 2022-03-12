@@ -689,3 +689,13 @@ Cleanup
 Option to remove any generated files. Removes files with any of the following
 suffix: ``_out.txt`` (power flow report), ``_out.npy`` (time domain data),
 ``_out.lst`` (time domain variable list), and ``_eig.txt`` (eigenvalue report).
+
+Version
+.......
+Check the version of ANDES and the core packages it uses, use
+
+.. code:: bash
+
+    andes misc --version
+
+Please include the output in your bug report.
