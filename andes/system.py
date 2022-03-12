@@ -1307,8 +1307,11 @@ class System:
 
         if len(island_sets) == 0:
             logger.info("  No island detected.")
+        elif len(island_sets) == 1:
+            logger.info("  System is interconnected.")
+            logger.debug("  Bus indices in interconnected system (0-based): %s", island_sets)
         else:
-            logger.info("  A total of %d island(s) detected.", len(island_sets))
+            logger.info("  System contains %d island(s).", len(island_sets))
             logger.debug("  Bus indices in islanded areas (0-based): %s", island_sets)
 
         if len(nosw_island) > 0:
