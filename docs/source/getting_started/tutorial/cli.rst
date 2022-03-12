@@ -413,46 +413,56 @@ Format converter
 ................
 .. _`format converter`:
 
-ANDES recognizes a few input formats and can convert input systems into the
-``xlsx`` format. This function is useful when one wants to use models that are
-unique in ANDES.
+ANDES uses the Excel format to store power system data in the ANDES semantics.
+In addition, multiple input formats are recognized and can be converted to the
+ANDES ``xlsx`` format. Converting data into the ANDES has pros and cons:
 
-The command for converting is ``--convert`` (or ``-c``), following the output
-format (only ``xlsx`` is currently supported). For example, to convert
-``case5.m`` into the ``xlsx`` format, run
+- Pros:
+  - The data can be readily edited with an Excel-like tool
+  - Data for models unique to ANDES can be readily added to the ``xlsx`` file
+
+- Cons:
+  - Conversion from ANDES ``xlsx`` back to the original format is not supported
+
+.. note::
+
+    It is recommended to stay with the original data format to maximize
+    compatibility when no ANDES-specific models are used.
+
+Format conversion is done through ``--convert FORMAT`` or ``-c FORMAT``, where
+``FORMAT`` is the output format. For now, the following formats are supported:
+
+- ``xlsx``: an Excel spread sheet format with ANDES-specific semantics. It is
+  not compatible with ``xlsx`` with semantics from other tools such as
+  `Pandapower <https://www.pandapower.org>`_.
+- ``json``: a JSON plain-text file with ANDES-specific semantics. Likewise,
+  the semantics are unlikely to be compatible with JSON from other power system
+  tools. JSON is much faster to parse than ``xlsx`` but not as friendly to edit.
+
+To convert ``kundur_full.xlsx``, for example, to the ``json`` format, run
 
 .. code:: bash
 
-    andes run case5.m --convert xlsx
+    andes run kundur_full.xlsx --convert json
 
 The output messages will look like ::
 
-    Parsing input file </Users/user/repos/andes/cases/matpower/case5.m>
-    CASE5  Power flow data for modified 5 bus, 5 gen case based on PJM 5-bus system
-    Input file case5.m parsed in 0.0033 second.
-    xlsx file written to </Users/user/repos/andes/cases/matpower/case5.xlsx>
-    Converted file /Users/user/repos/andes/cases/matpower/case5.xlsx written in 0.5079 second.
-    -> Single process finished in 0.8765 second.
+    Parsing input file "kundur_full.xlsx"...
+    Input file parsed in 0.1576 seconds.
+    System internal structure set up in 0.0175 seconds.
+    JSON file written to "kundur_full.json"
+    Format conversion completed in 0.0053 seconds.
+    -> Single process finished in 0.2582 seconds.
 
 Note that ``--convert`` will only create sheets for existing models.
 
-In case one wants to create template sheets to add models later,
-``--convert-all`` can be used instead.
+The converter works with any input formats that are currently supported. These
+include:
 
-If one wants to add workbooks to an existing xlsx file, one can combine option
-``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``), where ``ADD_BOOK`` can be a single
-model name or comma-separated model names (without any space). For example,
-
-.. code:: bash
-
-    andes run kundur.raw -c -b Toggler
-
-will convert file ``kundur.raw`` into an ANDES xlsx file (kundur.xlsx) and add
-a template workbook for `Toggler`.
-
-.. Warning::
-    With ``--add-book``, the xlsx file will be overwritten.
-    Any **empty or non-existent models** will be REMOVED.
+- ``.m``: MATPOWER case file
+- ``.raw`` and ``.dyr``: PSS/E raw and dyr files
+- ``.xlsx``: Excel spread sheet file with ANDES semantics
+- ``.json``: JSON plain-text file with ANDES semantics
 
 PSS/E inputs
 ............
@@ -478,30 +488,26 @@ and run a no-disturbance time-domain simulation using
 
 To create add a disturbance, there are two options. The recommended option is to
 convert the PSS/E data into an ANDES xlsx file, edit it and run (see the
-previous subsection).
+previous subsection). The alternative approach is documented in
+:ref:`creating disturbances`.
 
-An alternative is to edit the ``.dyr`` file with a planin-text editor (such as
-Notepad) and append lines customized for ANDES models. This is for advanced
-users after referring to ``andes/io/psse-dyr.yaml``, at the end of which one can
-find the format of ``Toggler``: ::
+Add book
+........
 
-    # === Custom Models ===
-    Toggler:
-        inputs:
-            - model
-            - dev
-            - t
+If one wants to add workbooks to an existing xlsx file, one can combine option
+``--add-book ADD_BOOK`` (or ``-b ADD_BOOK``), where ``ADD_BOOK`` can be a single
+model name or comma-separated model names (without any space). For example,
 
-To define two Togglers in the ``.dyr`` file, one can append lines to the end of
-the file using, for example, ::
+.. code:: bash
 
-    Line   'Toggler'  Line_2  1 /
-    Line   'Toggler'  Line_2  1.1 /
+    andes run kundur.raw -c -b Toggler
 
-which is separated by spaces and ended with a slash. The second parameter is
-fixed to the model name quoted by a pair of single quotation marks, and the
-others correspond to the fields defined in the above``inputs``. Each entry is
-properly terminated with a forward slash.
+will convert file ``kundur.raw`` into an ANDES xlsx file (kundur.xlsx) and add
+a template workbook for `Toggler`.
+
+.. Warning::
+    With ``--add-book``, the xlsx file will be overwritten.
+    Any **empty or non-existent models** will be REMOVED.
 
 Profiling
 .........

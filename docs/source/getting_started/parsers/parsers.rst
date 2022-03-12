@@ -1,6 +1,38 @@
 ================
 PSS/E Dyr Parser
 ================
+
+.. _`creating disturbances`:
+
+Creating disturbances
+=====================
+Instead of converting ``raw`` and ``dyr`` to ``xlsx`` before adding
+disturbances, one can edit the ``.dyr`` file with a planin-text editor (such as
+Notepad) and append lines customized for ANDES models. This is for advanced
+users after referring to ``andes/io/psse-dyr.yaml``, at the end of which one can
+find the format of ``Toggler``: ::
+
+    # === Custom Models ===
+    Toggler:
+        inputs:
+            - model
+            - dev
+            - t
+
+To define two Togglers in the ``.dyr`` file, one can append lines to the end of
+the file using, for example, ::
+
+    Line   'Toggler'  Line_2  1 /
+    Line   'Toggler'  Line_2  1.1 /
+
+which is separated by spaces and ended with a slash. The second parameter is
+fixed to the model name quoted by a pair of single quotation marks, and the
+others correspond to the fields defined in the above ``inputs``. Each entry is
+properly terminated with a forward slash.
+
+Mapping dyr to ANDES models
+===========================
+
 ANDES supporting parsing PSS/E dynamic files in the format of ``.dyr``.
 Support new dynamic models can be added by editing the input and output
 conversion definition file in ``andes/io/psse-dyr.yaml``,
