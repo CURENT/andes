@@ -544,31 +544,36 @@ positional arguments:
     |                |    colon-separated range is accepted                                 |
     +----------------+----------------------------------------------------------------------+
 
-For example, to plot the generator speed variable of synchronous generator 1
-``omega GENROU 0`` versus time, read the indices of the variable (2) and time
-(0), run
+For the list of optional arguments, see the output of ``andes plot -h``.
+
+To plot the generator speed variable ``omega`` of GENROU_1 ``omega GENROU 1``
+versus time, one way is to supply the variable indices found in the ``.lst``
+output file. The index of the variable ``omega GENROU 1`` is found to be ``5``,
+and Time is found to be ``0``, so the plot command should be
 
 .. code:: bash
 
-    andes plot kundur_full_out.lst 0 2
+    andes plot kundur_full_out.lst 0 5
 
-In this command, ``andes plot`` is the plotting command for TDS output files.
-``kundur_full_out.lst`` is list file name. ``0`` is the index of ``Time`` for
-the x-axis. ``2`` is the index of ``omega GENROU 0``. Note that for the the file
-name, either ``kundur_full_out.lst`` or ``kundur_full_out.npy`` works, as the
-program will automatically extract the file name.
+where ``kundur_full_out.lst`` is list file name, ``0`` is the index of ``Time``
+for the x-axis, and ``5`` is the index of ``omega GENROU 1``. Note that for the
+the file name, either ``kundur_full_out.lst`` or ``kundur_full_out.npz`` works
+as the program will automatically extract the file name.
 
-The y-axis variabla indices can also be specified in the Python range fashion .
-For example, ``andes plot kundur_full_out.npy 0 2:21:6`` will plot the variables
-at indices 2, 8, 14 and 20.
+The y-axis variable indices can also be specified as a Python range. For
+example, ``andes plot kundur_full_out.npz 0 2:21:6`` will plot the variables
+with indices 2, 8, 14 and 20.
+
+It can be tedious to look up the indices of variables in the ``.lst`` file.
+``andes plot`` supports ``--xargs`` or ``-a`` for searching for variable
+indices and passing them as arguments to ``andes plot``. See Examples -
+"Using CLI from Notebook".
 
 ``andes plot`` will attempt to render with :math:`\LaTeX` if ``dvipng`` program
-is in the search path. Figures rendered by :math:`\LaTeX` is considerably better
-in symbols quality but takes much longer time. In case :math:`\LaTeX` is
-available but fails (frequently happens on Windows), the option ``-d`` can be
-used to disable :math:`\LaTeX` rendering.
-
-Other optional arguments can be retrieved with command ``andes plot -h``.
+is in the search path. Figures rendered by :math:`\LaTeX` has
+publication-quality aesthetics for symbols but takes considerably longer time.
+In case :math:`\LaTeX` is available but fails (frequently happens on Windows),
+the option ``-d`` can be used to disable :math:`\LaTeX` rendering.
 
 .. _andes_doc:
 
