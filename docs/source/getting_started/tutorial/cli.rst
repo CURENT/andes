@@ -293,56 +293,121 @@ To run the time domain simulation (TDS) for ``kundur_full.xlsx``, run
 
 The output looks like::
 
-    Parsing input file </Users/user/repos/andes/tests/kundur_full.xlsx>
-    Input file kundur_full.xlsx parsed in 0.5425 second.
-    -> Power flow calculation with Newton Raphson method:
-    0: |F(x)| = 14.9283
-    1: |F(x)| = 3.60859
-    2: |F(x)| = 0.170093
-    3: |F(x)| = 0.00203827
-    4: |F(x)| = 3.76414e-07
-    Converged in 5 iterations in 0.0080 second.
-    Report saved to </Users/user/repos/andes/tests/kundur_full_out.txt> in 0.0036 second.
-    -> Time Domain Simulation:
-    Initialization tests passed.
-    Initialization successful in 0.0152 second.
-      0%|                                                    | 0/100 [00:00<?, ?%/s]
-      <Toggle 0>: Applying status toggle on Line idx=Line_8
-    100%|██████████████████████████████████████████| 100/100 [00:03<00:00, 28.99%/s]
-    Simulation completed in 3.4500 seconds.
-    TDS outputs saved in 0.0377 second.
-    -> Single process finished in 4.4310 seconds.
+    Parsing input file "kundur_full.xlsx"...
+    Input file parsed in 0.1533 seconds.
+    System internal structure set up in 0.0174 seconds.
+    -> System connectivity check results:
+    No islanded bus detected.
+    System is interconnected.
+    Each island has a slack bus correctly defined and enabled.
 
-This execution first solves the power flow as a starting point. Next, the
-numerical integration simulates 20 seconds, during which a predefined breaker
-opens at 2 seconds.
+    -> Power flow calculation
+    Sparse solver: KLU
+    Solution method: NR method
+    Numba compilation initiated with caching.
+    Power flow initialized in 0.1428 seconds.
+    0: |F(x)| = 14.9282832
+    1: |F(x)| = 3.608627841
+    2: |F(x)| = 0.1701107882
+    3: |F(x)| = 0.002038626956
+    4: |F(x)| = 3.745103977e-07
+    Converged in 5 iterations in 0.0014 seconds.
+    Report saved to "kundur_full_out.txt" in 0.0004 seconds.
 
-TDS produces two output files by default: a compressed NumPy data file
-``kundur_full_out.npz`` and a variable name list file ``kundur_full_out.lst``.
-The list file contains three columns: variable indices, variable name in plain
-text, and variable name in the :math:`\LaTeX` format. The variable indices are
-needed to plot the needed variable.
+    -> Time Domain Simulation Summary:
+    Sparse Solver: KLU
+    Simulation time: 0.0-20.0 s.
+    Fixed step size: h=33.33 ms. Shrink if not converged.
+    Numba compilation initiated with caching.
+    Initialization for dynamics completed in 0.0626 seconds.
+    Initialization was successful.
+    <Toggler 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
+    100%|########################################| 100/100 [00:00<00:00, 241.53%/s]
+    Simulation completed in 0.4141 seconds.
+    Outputs to "kundur_full_out.lst" and "kundur_full_out.npz".
+    Outputs written in 0.0171 seconds.
+    -> Single process finished in 0.8890 seconds.
+
+The output contains the key information for the simulation, such as solver
+name and step size. It prints out the disturbance information, the trip of
+Line ``Line_8`` at time ``t=2.0 sec``.
+
+There are a few places needing to be noted:
+
+1. Make sure the power flow calculation is successful. Otherwise, there is no
+   good starting point for dynamic simulation.
+2. Make sure no suspect initialization error is found. Otherwise, the system
+   will not be at steady state even before disturbances.
+
+TDS writes two output files: a variable list file ``kundur_full_out.lst``,
+and a compressed NumPy data file ``kundur_full_out.npz``:
+
+- List file: it is a plain-text file with three columns: variable indices,
+  variable name in plain text, and variable name in the :math:`\LaTeX`
+  format. The variable indices are needed to plot the needed variable.
+
+- Data file: it is a zipped NumPy binary file. Although not directly editable,
+  it can be used for plotting or can be converted to a CSV file. See the
+  subsection on `andes plot`_.
+
+There are TDS-specific options that can be passed to ``andes run``:
+
+- ``--tf TF``: the final time of the simulation. ``TF`` should be a number in
+  seconds. By default, it is set to 20.0.
+- ``--addfile ADDFILE``: specify an additional data file. This is currently used
+  to supply PSS/E dyr file in addition to a raw file.
+- ``--flat``: turn on "flat run" mode to ignore all disturbances. The simulation
+  will be performed up to the end time.
+- ``--no-pbar``: turn off progress bar.
+- ``--from-csv FROM_CSV``: use data from a CSV file to perform mock simulation.
+  The CSV file should be in the format of ``andes plot --to-csv``.
 
 Disable output
 ..............
-The output files can be disabled with option ``--no-output`` or ``-n``. It is
-useful when only computation is needed without saving the results.
+Output to files can be disabled with ``--no-output`` or ``-n``. It is useful
+when computation is needed but results can be discarded. It is also useful when
+results are processed in memory, combined with the ``--shell`` option discussed
+next.
 
-Profiling
-.........
-Profiling is useful for analyzing the computation time and code efficiency.
-Option ``--profile`` enables the profiling of ANDES execution. The profiling
-output will be written in two files in the current folder, one ending with
-``_prof.txt`` and the other one with ``_prof.prof``.
+IPython shell
+.............
+The ANDES CLI will exit to the system shell when finished running. It is
+sometimes useful to script in Python to quickly process the simulation results
+in memory, such as plotting. ANDES can exit to the IPython shell with
+``--shell`` or ``-s``. For example:
 
-The text file can be opened with a text editor, and the ``.prof`` file can be
-visualized with ``snakeviz``, which can be installed with ``pip install
-snakeviz``.
+.. code:: bash
 
-If the output is disabled, profiling results will be printed to stdio.
+    andes run kundur_full.xlsx -r tds -s -n
 
-Multiprocessing
-...............
+Note the ``-n`` is optional to disable file output. The terminal output will
+look like ::
+
+    <Toggler 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
+    100%|#########################################| 100/100 [00:00<00:00, 246.07%/s]
+    Simulation completed in 0.4064 seconds.
+    Outputs to "kundur_full_out.lst" and "kundur_full_out.npz".
+    Outputs written in 0.0171 seconds.
+    -> Single process finished in 0.8796 seconds.
+    IPython: Access System object in variable `system`.
+    Python 3.9.10 | packaged by conda-forge | (main, Feb  1 2022, 21:24:11)
+    Type 'copyright', 'credits' or 'license' for more information
+    IPython 8.1.1 -- An enhanced Interactive Python. Type '?' for help.
+
+    In [1]:
+
+A prompt will appear following ``In [1]:`` to indicate an IPython shell.
+If the test case file is parsed without error, the system object will be stored
+in variable ``system``, i.e.
+
+::
+
+    In [1]: system
+    Out[1]: <andes.system.System at 0x7fc1cd992790>
+
+Python commands can be executed thereafter. To exit, type ``exit`` and press
+enter.
+
 
 Format converter
 ................
@@ -438,8 +503,23 @@ fixed to the model name quoted by a pair of single quotation marks, and the
 others correspond to the fields defined in the above``inputs``. Each entry is
 properly terminated with a forward slash.
 
+Profiling
+.........
+Profiling is useful for analyzing the computation time and code efficiency.
+Option ``--profile`` enables the profiling of ANDES execution. The profiling
+output will be written in two files in the current folder, one ending with
+``_prof.txt`` and the other one with ``_prof.prof``.
+
+The text file can be opened with a text editor, and the ``.prof`` file can be
+visualized with ``snakeviz``, which can be installed with ``pip install
+snakeviz``.
+
+If the output is disabled, profiling results will be printed to stdio.
+
 andes plot
---------------
+----------
+.. _`andes plot`:
+
 ``andes plot`` is the command-line tool for plotting. It currently supports
 time-domain simulation data. Three positional arguments are required, and a
 dozen of optional arguments are supported.
