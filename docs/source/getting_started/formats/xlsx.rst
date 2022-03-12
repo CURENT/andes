@@ -1,13 +1,4 @@
-=============
-Input formats
-=============
-
-ANDES currently supports the following input formats:
-
-- ``.xlsx``: Excel spreadsheet file with ANDES data
-- ``.json``: JSON plain-text file with ANDES semantics
-- ``.raw`` and ``.dyr``: PSS/E raw and dyr files
-- ``.m``: MATPOWER case file
+.. _input_excel:
 
 ANDES xlsx
 ----------
@@ -29,7 +20,7 @@ Starting from the second row, each row corresponds to a *device instance* with
 the parameters in the corresponding columns. An example of the ``Bus`` sheet
 is shown in the following screenshot.
 
-.. image:: tutorial/xlsx-bus.png
+.. image:: xlsx-bus.png
    :width: 600
    :alt: Example workbook for Bus
 
@@ -69,7 +60,7 @@ That is, the PQ device needs to indicate the Bus device to which it is
 connected. Such connection is done in the ``PQ`` sheet by setting the ``bus``
 parameter to the ``idx`` of the connected bus.
 
-.. image:: tutorial/xlsx-pq.png
+.. image:: xlsx-pq.png
    :width: 600
    :alt: Example workbook for PQ
 
@@ -186,89 +177,4 @@ array:
 - Any ``NaN`` values will raise a ``ValueError``
 - Any ``inf`` will be replaced with :math:`10^{8}`, and ``-inf`` will be
   replaced with :math:`-10^{8}`.
-
-
-ANDES JSON
-----------
-
-Overview
-........
-
-JSON is a portable format for storing data. It has been used in several other
-power system tools, including `PowerModels
-<https://lanl-ansi.github.io/PowerModels.jl/stable/>`_, `Pandapower
-<https://www.pandapower.org/>`_, and
-`NREL-SIIP <https://github.com/nrel-siip>`_.
-It must be noted that JSON files from these tools are not interoperable because
-JSON only defines the data structure, not the data itself.
-
-Compared with the `xlsx` file which is a zipped package, the ANDES JSON file is
-much faster to parse. We recommend that you use JSON in the following scenarios:
-
-- Your test case is stable and require no manual editing, or
-- You will read/write a large number of cases
-
-To convert ``kundur_full.xlsx`` to the ANDES JSON format, do
-
-.. code:: bash
-
-    andes run kundur_full.xlsx -c json
-
-The output file will be named ``kundur_full.json``.
-
-Data storage
-............
-
-The ANDES JSON format uses one large dictionary for all devices in the system.
-The keys of the dictionary are the model names, and the values are lists of
-dictionaries. In each dictionary, the keys are the parameter names and the
-values are the parameter values.
-
-The following shows the structure of a JSON file:
-
-.. code:: javascript
-
-    {
-    "Toggler": [
-        {
-        "idx": 1,
-        "u": 1.0,
-        "name": "Toggler_1",
-        "model": "Line",
-        "dev": "Line_8",
-        "t": 2.0
-        }  //      <- Toggler ends
-    ],
-    "Bus": [
-        {
-        "idx": 1,
-        "u": 1.0,
-        "name": 1,
-        "Vn": 20.0,
-        "vmax": 1.1,
-        "vmin": 0.9,
-        ...  //    <- other parameters are omitted
-        },
-        {
-        "idx": 2,
-        "u": 1.0,
-        "name": 2,
-        "Vn": 20.0,
-        "vmax": 1.1,
-        "vmin": 0.9,
-        ...  //    <- other parameters are omitted
-        },
-        ...  //    <- other buses
-
-    ],   //        <-Bus ends
-    ...  //        <- other models
-    }    //        <- whole system ends
-
-There are thirdparty tools for editing JSON files, but we still recommend to
-convert files to ``xlsx`` for editing. The conversion can be readily done with
-
-.. code:: bash
-
-    andes run kundur_full.json -c xlsx
-
 

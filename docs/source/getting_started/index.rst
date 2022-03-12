@@ -7,7 +7,7 @@ Getting started
 
     install
     tutorial/index
-    formats
+    formats/index
     cases/index
     parsers/index
     ../configref
