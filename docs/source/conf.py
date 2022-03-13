@@ -120,7 +120,7 @@ html_theme = "pydata_sphinx_theme"
 # documentation.
 #
 html_theme_options = {
-    "use_edit_page_button": True,
+    # "use_edit_page_button": True,
 }
 
 html_context = {
