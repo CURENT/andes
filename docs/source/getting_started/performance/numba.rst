@@ -49,11 +49,10 @@ further compiles the generated Python code to machine code. Whenever the ANDES
 code generation produces new Python code, the cached Numba binary code will be
 invalidated.
 
-When not to use Numba
----------------------
+When not to precompile
+----------------------
 
-We recommend disabling Numba when developing models to avoid spending
-time on
+when developing models, we recommend disabling numba to avoid spending time on
 compilation.
 
 Ahead-of-time compilation
