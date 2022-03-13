@@ -8,8 +8,8 @@ Getting started
     install
     tutorial/index
     formats/index
-    cases/index
     config/index
+    cases/index
     misc
     faq
     copyright
