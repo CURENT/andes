@@ -96,7 +96,7 @@ attributes for models, routines, and numerical DAE.
 Naming convention for the ``System`` attributes are as follows
 
 - Model attributes share the same name as class names. For example, ``ss.Bus``
-  is the ``Bus`` instance.
+  is the ``Bus`` instance, and ``ss.GENROU`` is the ``GENROU`` instance.
 - Routine attributes share the same name as class names. For example,
   ``ss.PFlow`` and ``ss.TDS`` are the routine instances.
 - The numerical DAE instance is in lower case ``ss.dae``.
