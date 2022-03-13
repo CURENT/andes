@@ -5,13 +5,14 @@ Input formats
 ANDES currently supports the following input formats:
 
 - ``.xlsx``: Excel spreadsheet file with ANDES data
-- ``.json``: JSON plain-text file with ANDES semantics
-- ``.raw`` and ``.dyr``: PSS/E raw and dyr files
-- ``.m``: MATPOWER case file
+- ``.raw`` and ``.dyr``: PSS/E RAW and DYR formats
+- ``.m``: MATPOWER format
+- ``.json``: JSON plain-text format with ANDES data
 
 .. toctree::
    :maxdepth: 3
 
    xlsx
-   json
+   psse
    matpower
+   json
