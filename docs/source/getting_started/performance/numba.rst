@@ -1,3 +1,5 @@
+.. _numba-compilation:
+
 Numba compilation
 =================
 
