@@ -9,7 +9,6 @@ Getting started
     tutorial/index
     formats/index
     cases/index
-    parsers/index
     ../configref
     misc
     faq

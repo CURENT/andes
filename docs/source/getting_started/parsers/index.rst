@@ -1,7 +1,0 @@
-============
-Parsers
-============
-
-.. toctree::
-
-    parsers
