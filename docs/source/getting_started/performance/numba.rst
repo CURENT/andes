@@ -1,4 +1,4 @@
-numba compilation
+Numba compilation
 =================
 
 .. _Numba: https://numba.pydata.org/
@@ -20,8 +20,7 @@ solving equations is the major time consumer.
     Numba is supported since ANDES 1.5.0 and is automatically installed for
     ANDES>=1.5.3.
 
-
-Enabling numba JIT
+Enabling Numba JIT
 ------------------
 
 Numba needs to be enabled *manually*. In the ANDES config file: in section
@@ -35,7 +34,7 @@ Numba needs to be enabled *manually*. In the ANDES config file: in section
 where the ``...`` are other options that are omitted here.
 
 Just-in-time compilation will compile the code upon the *first execution* based
-on the input types. This is the default mode of numba. When compilation is
+on the input types. This is the default mode of Numba. When compilation is
 triggered, ANDES may appear frozen due to the compilation lag. To reuse the
 compiled code and save compilation time for future runs, the compiled binary
 code will be automatically cached. The default cache folder is in
@@ -43,22 +42,24 @@ code will be automatically cached. The default cache folder is in
 
 Numba compilation needs to be distinguished from the ANDES code generation by
 :ref:`andes prepare`. The ANDES code generation is to generate Python code from
-symbolically defined models and is relatively fast. The numba compilation
+symbolically defined models and is relatively fast. The Numba compilation
 further compiles the generated Python code to machine code. Whenever the ANDES
-code generation produces new Python code, the cached numba binary code will be
+code generation produces new Python code, the cached Numba binary code will be
 invalidated.
 
-.. note::
+When not to use Numba
+---------------------
 
-    We recommend you to disable numba when developing models to avoid spending
-    time on compilation.
+We recommend disabling Numba when developing models to avoid spending
+time on
+compilation.
 
 Ahead-of-time compilation
 -------------------------
 
-Just-in-time compilation can feel laggy. When you use ANDES for simulation and are
-unlikely to modify the models, you can compile the generated Python code ahead
-of time to avoid just-in-time delays. We call it "precompilation".
+Just-in-time compilation can feel laggy. When ANDES is not being developed, one
+can compile the generated Python code ahead of time to avoid just-in-time
+delays. We call it "precompilation".
 
 Precompilation is invoked by
 
