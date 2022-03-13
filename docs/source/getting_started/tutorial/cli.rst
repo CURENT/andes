@@ -1,6 +1,6 @@
 .. _sec-command:
 
-Command Line
+Command line
 ============
 
 Basics
@@ -646,6 +646,8 @@ To view the Config fields for a routine, run
      max_iter  | 15    | maximum number of iterations           | >=10
 
 
+.. _andes-misc:
+
 andes misc
 ----------
 ``andes misc`` contains miscellaneous functions, such as configuration and
@@ -655,8 +657,8 @@ Configuration
 .............
 ANDES uses a configuration file to set runtime configs for the system routines,
 and models. ``andes misc --save-config`` saves all configs to a file. By
-default, it saves to ``~/.andes/andes.conf`` file, where ``~`` is the path to
-your home directory.
+default, it saves to ``$HOME/.andes/andes.conf`` file, where ``$HOME`` is the
+path to your home directory.
 
 With ``andes misc --edit-config``, you can edit ANDES configuration handy. The
 command will automatically save the configuration to the default location if not

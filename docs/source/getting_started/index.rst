@@ -9,7 +9,7 @@ Getting started
     tutorial/index
     formats/index
     cases/index
-    ../configref
+    config/index
     misc
     faq
     copyright

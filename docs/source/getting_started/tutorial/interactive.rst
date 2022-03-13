@@ -1,9 +1,10 @@
 
-Interactive
-===========
-This section is a tutorial for using ANDES in an interactive environment. All
-interactive shells are supported, including Python shell, IPython, Jupyter
-Notebook and Jupyter Lab. The examples below uses Jupyter Notebook.
+Scripting
+=========
+This section is a tutorial for using ANDES in an interactive/scripting
+environment. All scripting shells are supported, including Python shell,
+IPython, Jupyter Notebook and Jupyter Lab. The examples below uses Jupyter
+Notebook.
 
 Jupyter Notebook
 ----------------
@@ -33,7 +34,7 @@ create a new notebook, use the "New" button near the upper-right corner.
 Import
 ------
 Like other Python libraries, ANDES needs to be imported into an interactive
-Python environment.
+scripting Python environment.
 
 .. code:: python
 
@@ -234,7 +235,7 @@ diagnose, split the simulation steps and check the outputs from each one.
 
 Plotting TDS Results
 --------------------
-TDS comes with a plotting utility for interactive usage. After running the
+TDS comes with a plotting utility for scripting usage. After running the
 simulation, a ``plotter`` attributed will be created for ``TDS``. To use the
 plotter, provide the attribute instance of the variable to plot. For example, to
 plot all the generator speed, use

@@ -1,6 +1,6 @@
 
-Make Documentation
-==================
+Documentation
+=============
 
 The documentation you are viewing can be made locally in a variety of formats.
 To make HTML documentation, change directory to ``docs``, and do
@@ -9,9 +9,16 @@ To make HTML documentation, change directory to ``docs``, and do
 
     make html
 
-After a minute, HTML documentation will be saved to ``docs/build/html`` with the index page being ``index.html``.
+After a few minutes, HTML documentation will be saved to ``docs/build/html``
+with the index page being ``index.html``. You can use Python to serve it
+locally. In the folder ``docs/build/html``, run
 
-A list of supported formats is as follows. Note that some format require additional compiler or library ::
+.. code:: bash
+
+    python -m http.server
+
+A list of supported formats is as follows. Note that some format require
+additional compiler or library ::
 
     html        to make standalone HTML files
     dirhtml     to make HTML files named index.html in directories
