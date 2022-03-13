@@ -237,7 +237,7 @@ discussed next.
 Each routine has a list of configuration options (called "config") to
 control their behaviors. Config needs to be distinguished from command-line
 options as not all config options are available in the command-line.
-Refer to the Config section below for more details.
+Refer to :ref:`configuration` for details.
 
 Power flow
 ..........
