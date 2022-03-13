@@ -7,9 +7,9 @@ Getting started
 
     install
     tutorial/index
+    formats/index
+    config/index
     cases/index
-    parsers/index
-    ../configref
     misc
     faq
     copyright

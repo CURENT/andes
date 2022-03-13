@@ -14,17 +14,18 @@ class Solver:
     """
 
     def __init__(self, sparselib='umfpack'):
-        self.sparselib = sparselib
-
-        # check if `sparselib` library has been successfully imported
-        if (sparselib not in globals()) or globals()[sparselib] is None:
-            self.sparselib = 'klu'
 
         # solvers
         self.umfpack = UMFPACKSolver()
         self.klu = KLUSolver()
         self.spsolve = SpSolve()
         self.cupy = CuPySolver()
+
+        # KLU as failsafe
+        if sparselib not in self.__dict__:
+            self.sparselib = 'klu'
+        else:
+            self.sparselib = sparselib
 
         self.worker = self.__dict__[self.sparselib]
 

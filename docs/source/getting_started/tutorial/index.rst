@@ -14,7 +14,5 @@ Please see the cheat sheet if you are looking for quick help.
 
    cli
    interactive
-   formats
-   pu
    cheatsheet
    makedocs
