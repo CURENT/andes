@@ -128,7 +128,7 @@ html_context = {
     "github_user": "cuihantao",
     "github_repo": "andes",
     "github_version": "master",
-    "doc_path": "docs",
+    "doc_path": "doc/source",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
