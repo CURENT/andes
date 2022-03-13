@@ -5,12 +5,6 @@
 Test Cases
 ============
 
-.. toctree::
-    :hidden:
-
-    folder
-    benchmark
-
 ANDES ships with with test cases in the ``andes/cases`` folder.
 The cases can be found in the `online repository`_.
 
@@ -55,6 +49,79 @@ rendered in the folder for quick reference.
 Currently, the Kundur's 2-area system, IEEE 14-bus system,
 NPCC 140-bus system, and the WECC 179-bus system has been verified
 against DSATools TSAT.
+
+Example data
+============
+
+When developing models, we manually create cases with example data to verify the
+models. The Kundur's system and the IEEE 14-bus system are used as the bases for
+adding specific models. One can find many cases in the folder
+``andes/cases/kundur``. The case file names typically indicate the specific
+model added to the file. These example cases with specific models are useful
+when one needs to find example parameters for the model. For example:
+
+- ``kundur_ieeeg1`` indicates the use of ``IEEEG1`` model in a Kundur's sytem
+- ``ieee14_solar.xlsx`` contains the solar PV models (REGCA1, REECA1, and
+  REPCA1)
+- ``ieee14_plbvfu1.xlsx`` is the case for ``PLBVFU1`` (playback of voltage and
+  frequency). The case provides an example of specifying ``plbvf.xlsx``
+- ``ieee14_timeseries.xlsx`` is an example for specifying timeseries for load
+  data, which is provided in ``pqts.xlsx``
+
+MATPOWER cases
+==============
+
+MATPOWER cases has been tested in ANDES for power flow calculation.
+All following cases are calculated with the provided initial values
+using the full Newton-Raphson iterative approach.
+
+Benchmark
+---------
+
+See :ref:`matpower-benchmark` for the benchmark of MATPOWER cases.
+
+Synthetic systems
+-----------------
+
+The 70K and the USA synthetic systems have difficulties to converge using the
+provided initial values. One can solve the case in MATPOWER and save it as a new
+case for ANDES. For example, the SyntheticUSA case can be converted in MATLAB
+with
+
+.. code:: matlab
+
+    mpc = runpf(case_SyntheticUSA)
+    savecase('USA.m', mpc)
+
+And then solve it with ANDES from command line:
+
+.. code:: bash
+
+    andes run USA.m
+
+The output should look like
+
+.. code:: console
+
+    -> Power flow calculation
+    Sparse solver: KLU
+    Solution method: NR method
+    Power flow initialized.
+    0: |F(x)| = 140.5782767
+    1: |F(x)| = 29.61673314
+    2: |F(x)| = 4.161452394
+    3: |F(x)| = 0.2337870537
+    4: |F(x)| = 0.001149488448
+    5: |F(x)| = 3.646516689e-08
+    Converged in 6 iterations in 1.6082 seconds.
+
+How to contribute
+=================
+
+We welcome the contribution of test cases! You can make a pull request to
+contribute new test cases. Please follow the structure in the ``cases`` folder
+and provide an example Jupyter notebook (see ``examples/demonstration``) to
+showcase the results of your system.
 
 ..
     todo: verification

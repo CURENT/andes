@@ -1,18 +1,25 @@
+.. _matpower-benchmark:
 
-Performance
-===========
-The numerical library used for sparse matrix factorization is KLU.
-In addition, Jacobians are updated in place ``kvxopt.spmatrix.ipadd``.
-Computations are performed on WSL2 Ubunbu 20.04 with AMD Ryzen 9 5950X,
-64 GB 3200 MHz DDR4, running ANDES 1.5.3, KVXOPT 1.2.7.1, NumPy 1.20.3,
-and numba 0.54.1. NumPy and KVXOPT use OpenBLAS 0.3.18.
-Numba is enabled, and the generated code are precompiled.
-Network connectivity checking is turned off.
-Time to read numba cache (~0.3s) is not counted.
 
-The computation time may vary depending on operating system and hardware.
-All the cases are original in MATPOWER 7.0.
-Cases not listed below will not solve with ANDES 1.5.3.
+MATPOWER cases
+==============
+
+The hardware platform is an AMD Ryzen 9 5950X with 64GB of 3200 MHz DDR4 RAM.
+The operating system is WSL2 Ubunbu 20.04 on Windows 10. Software packages are:
+
+- ANDES 1.5.3
+- KVXOPT 1.2.7.1
+- NumPy 1.20.3
+- numba 0.54.1
+- OpenBLAS 0.3.18.
+
+Numba is enabled, and all generated code are precompiled. Network connectivity
+checking is turned off (``[PFlow] check_conn=0``). Time to read numba cache
+(~0.3s) is not included.
+
+The table below shows the power flow time in ANDES. All the cases are original
+in MATPOWER 7.0, and cases not listed below will not solve with ANDES 1.5.3. The
+computation time may vary depending on hardware, operating system, and software.
 
 +----------------------+------------+-----------------+----------------+
 |      File Name       | Converged? | # of Iterations | ANDES Time [s] |
@@ -115,4 +122,3 @@ Cases not listed below will not solve with ANDES 1.5.3.
 +----------------------+------------+-----------------+----------------+
 |  case_ieee30.m       | 1          | 2               | 0.008          |
 +----------------------+------------+-----------------+----------------+
-
