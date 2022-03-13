@@ -230,6 +230,5 @@ exec(open("genmodelref.py").read())
 shutil.rmtree("examples", ignore_errors=True)
 shutil.copytree("../../examples", "examples", )
 shutil.rmtree("examples/demonstration")
-shutil.rmtree("examples/verification")
 
 jupyter_execute_notebooks = "off"

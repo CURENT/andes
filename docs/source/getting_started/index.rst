@@ -4,6 +4,21 @@
 Getting started
 ===============
 
+.. toctree::
+    :maxdepth: 3
+    :hidden:
+
+    install
+    tutorial/index
+    config/index
+    formats/index
+    testcases/index
+    performance/index
+    verification
+    misc
+    faq
+    copyright
+
 Quick install
 =============
 
@@ -51,17 +66,3 @@ Quick install
 
     Installing from source? Looking to develop models? Check the
     guide in :ref:`Develop Install`.
-
-.. toctree::
-    :maxdepth: 3
-    :hidden:
-
-    install
-    tutorial/index
-    config/index
-    formats/index
-    testcases/index
-    performance/index
-    misc
-    faq
-    copyright

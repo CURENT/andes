@@ -155,3 +155,14 @@ If you install it from PyPI (namely, through ``pip``), run
 
     python3 -m pip install --yes andes
 
+
+Troubleshooting
+===============
+
+If you get an error message on Windows, reading ::
+
+    ImportError: DLL load failed: The specified module could not be found.
+
+It is a path issue of your Python. In fact, Python on Windows is so broken that
+many people are resorting to WSL2 just for Python. Fixes can be convoluted, but
+the easiest one is to install ANDES in a Conda/Mambaforge environment.
