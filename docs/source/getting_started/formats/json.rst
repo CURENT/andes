@@ -8,12 +8,14 @@ Overview
 ........
 
 JSON is a portable format for storing data. It has been used in several other
-power system tools, including `PowerModels
-<https://lanl-ansi.github.io/PowerModels.jl/stable/>`_, `Pandapower
-<https://www.pandapower.org/>`_, and
-`NREL-SIIP <https://github.com/nrel-siip>`_.
+power system tools, including PowerModels_, Pandapower_, NREL-SIIP_, and GridCal_.
 It must be noted that JSON files from these tools are not interoperable because
-JSON only defines the data structure, not the data itself.
+JSON only defines the data structure, not the meaning of data.
+
+.. _PowerModels: https://lanl-ansi.github.io/PowerModels.jl/stable/
+.. _Pandapower: https://www.pandapower.org/
+.. _NREL-SIIP: https://github.com/nrel-siip
+.. _GridCal: https://gridcal.readthedocs.io
 
 Compared with the `xlsx` file which is a zipped package, the ANDES JSON file is
 much faster to parse. We recommend that you use JSON in the following scenarios:

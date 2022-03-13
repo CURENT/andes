@@ -2,10 +2,6 @@
 Directory
 =========
 
-ANDES comes with several test cases in the ``andes/cases/`` folder.
-Currently, the Kundur's 2-area system, IEEE 14-bus system,
-NPCC 140-bus system, and the WECC 179-bus system has been verified
-against DSATools TSAT.
 
 The test case library will continue to build as more models get implemented.
 
