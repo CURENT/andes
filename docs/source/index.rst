@@ -72,7 +72,7 @@ See the GitHub repository for a full list of contributors.
 
    getting_started/index
    examples
-   modelref
    modeling/index
-   api
    release-notes
+   modelref
+   api
