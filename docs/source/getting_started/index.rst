@@ -58,6 +58,7 @@ Getting started
     config/index
     formats/index
     testcases/index
+    performance/index
     misc
     faq
     copyright
