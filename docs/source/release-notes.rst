@@ -7,35 +7,40 @@ Release notes
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.6 Notes
-----------
+==========
+
+v1.6.1 (2022-03-13)
+-------------------
+- Revamped documentation with a much improved "Getting started" section.
 
 v1.6.0 (2022-03-11)
-```````````````````
+-------------------
 - Migrated documentation to the pydata template.
 - Added compatibility with SymPy 1.9 and 1.10.
 
 v1.5 Notes
-----------
+==========
+
 v1.5.12 (2022-03-05)
-````````````````````
+--------------------
 - Improved PSS/E parsers for WTDTA1 model to follow PSS/E
   parameter definition.
 - Included the Jupyter notebook examples in the documentation.
 - Tweaks to the plot utility.
 
 v1.5.11 (2022-02-23)
-````````````````````
+--------------------
 - Reduced the tolerance for tiny variable increments to be
   treated as zero.
 - Fixed PSS/E parsers for renewable models.
 - Minor renewable model fixes.
 
 v1.5.10 (2022-02-01)
-````````````````````
+--------------------
 - Fixed one equation in `REGC_A`.
 
 v1.5.9 (2022-01-31)
-```````````````````
+--------------------
 - Added PLL1, a simple PLL model.
 - Renamed ``REGCVSG`` to ``REGCV1`` and ``REGCVSG2`` to ``REGCV2``.
 - Added an alias list for model names. See ``models/__init__.py``.
@@ -44,7 +49,7 @@ v1.5.9 (2022-01-31)
 - Use of ``Selector`` is deprecated.
 
 v1.5.8 (2021-12-21)
-```````````````````
+--------------------
 - Full initialization debug message will be printed only when
   ``-v 10`` and ``run --init`` are both used.
 - Improved warning of out-of-limit initialization. Variables
@@ -55,7 +60,7 @@ v1.5.8 (2021-12-21)
   All ``vout`` equations need to be multipled by ``ue``.
 
 v1.5.7 (2021-12-11)
-```````````````````
+--------------------
 This minor release highlights the improved debugging of initialization.
 
 Highly verbose initialization output can be enabled when the verbose
@@ -105,25 +110,25 @@ Other fixes include:
   when device is off to avoid matrix singularity.
 
 v1.5.6 (2021-11-25)
-```````````````````
+--------------------
 - Allow specifying config options through command-line arguments
   ``--config-option``.
 - Added a voltage and frequency playback model ``PLBVFU1``.
 - Bug fixes to an SEXS equation.
 
 v1.5.5 (2021-11-13)
-```````````````````
+--------------------
 - Added a `Timeseries` model for reading timeseries data from xlsx.
 - Converted several models into Python packages.
 - Bug fixes to TGOV1 equations (#226)
 
 v1.5.4 (2021-11-02)
-```````````````````
+--------------------
 - Fixed a bug in generated ``select`` functions that omitted the
   coefficients of ``__ones``.
 
 v1.5.3 (2021-10-31)
-```````````````````
+--------------------
 - Revered special arguments for the generated ``select`` function.
 - Stabilized the argument list of pycode. If the pycode is identical
   to existing ones, the existing file will not be overwritten.
@@ -131,7 +136,7 @@ v1.5.3 (2021-10-31)
 - Partially seperated time-domain integration method into ``daeint.py``.
 
 v1.5.2 (2021-10-27)
-```````````````````
+--------------------
 - Removed ``CVXOPT`` dependency.
 - Removed ``__zeros`` and ``__ones`` as they are no longer needed.
 
@@ -143,13 +148,13 @@ v1.5.2 (2021-10-27)
 - Bug fixes.
 
 v1.5.1 (2021-10-23)
-```````````````````
+--------------------
 - Restored compatibility with SymPy 1.6.
 - Added a group for voltage compensators.
 - New models: ``IEEEVC`` and ``GAST``.
 
 v1.5.0 (2021-10-13)
-```````````````````
+--------------------
 - Support numba just-in-time compilation of all equation and Jacobian calls.
 
 This option accelerates simulations by up to 30%.
@@ -194,14 +199,14 @@ If no compensator exists, exciter will use bus voltages and function as expected
 in ``Piecewise`` functions.
 
 v1.4 Notes
-----------
+==========
 
 v1.4.4 (2021-10-05)
-````````````````````
+--------------------
 - Bug fixes for refreshing generated code.
 
 v1.4.3 (2021-09-25)
-```````````````````
+--------------------
 This release features parallel processing that cuts the time for
 ``andes prepare`` by more than half.
 
@@ -218,19 +223,19 @@ New exciter models are contributed by Jinning Wang.
 Other changes include disallowing numba's ``nopython`` mode.
 
 v1.4.2 (2021-09-12)
-```````````````````
+--------------------
 - Bug fixes
 - Dropped support for ``cvxoptklu``.
 
 v1.4.1 (2021-09-12)
-```````````````````
+--------------------
 - Bug fixes.
 - Overhaul of the ``prepare`` and ``undill`` methods.
 - ``andes prepare`` can be called for specific models through
   ``-m``, which takes one or many model names as arguments.
 
 v1.4.0 (2021-09-08)
-```````````````````
+--------------------
 This release highlights the distributed energy resource protection model.
 
 - Added ``DGPRCT1`` model to provide DG models with voltage-
@@ -239,9 +244,10 @@ This release highlights the distributed energy resource protection model.
 - Throws TypeError if type mismatches when using ExtAlgeb and ExtState.
 
 v1.3 Notes
-----------
+==========
+
 v1.3.12 (2021-08-22)
-````````````````````
+--------------------
 Plot enhancements:
 
 - ``plot()`` takes an argument ``mark`` for masking y-axis data based on
@@ -258,52 +264,52 @@ Test case:
 - Added a number of IEEE 14 bus test systems for specific models.
 
 v1.3.11 (2021-07-27)
-````````````````````
+--------------------
 - Added ``REECA1E`` model with inertia emulation.
 - Fixed an issue where the ``vtype`` of services was ignored.
 - Changed default DPI for plotting to 100.
 
 v1.3.10 (2021-06-08)
-````````````````````
+--------------------
 - Bug fixes for controllers when generators are off.
 
 v1.3.9 (2021-06-02)
-```````````````````
+--------------------
 - Bug fixes in exciters when generators are offline.
 - Added `safe_div` function for initialization equations.
 
 v1.3.8 (2021-06-02)
-```````````````````
+--------------------
 - Added ``REGCVSG`` model for voltage-source controlled renewables.
 - Turbine governors are now aware of the generator connection status.
 
 v1.3.7 (2021-05-03)
-```````````````````
+--------------------
 - Allow manually specifying variables needing initialization
   preceding a variable. Specify a list of variable names through
   ``BaseVar.deps``.
 
 v1.3.6 (2021-04-23)
-```````````````````
+--------------------
 - Patched ESD1 model. Converted `distributed.py` into a package.
 - Bug fixes.
 
 v1.3.5 (2021-03-20)
-```````````````````
+--------------------
 - Fixed a bug in connectivity check when bus 0 is islanded.
 - Updated notebook examples.
 - Updated tutorials.
 
 v1.3.4 (2021-03-13)
-```````````````````
+--------------------
 - Fixed a bug for the generated renewable energy code.
 
 v1.3.2 (2021-03-08)
-```````````````````
+--------------------
 - Relaxed the version requirements for NumPy and SymPy.
 
 v1.3.1 (2021-03-07)
-```````````````````
+--------------------
 - Writes all generated Python code to ``~/.andes/pycode`` by default.
 - Uses generated Python code by default instead of `calls.pkl`.
 - Works with NumPy 1.20; works on Apple Silicon (use `miniforge`) to
@@ -316,7 +322,7 @@ v1.3.1 (2021-03-07)
 
 
 v1.3.0 (2021-02-20)
-```````````````````
+--------------------
 - Allow `State` variable set `check_init=False` to skip
   initialization test. One use case is for integrators
   with non-zero inputs (such as state-of-charge integration).
@@ -331,15 +337,16 @@ v1.3.0 (2021-02-20)
 
 
 v1.2 Notes
-----------
+==========
+
 v1.2.9 (2021-01-16)
-```````````````````
+--------------------
 - Added system connectivity check for islanded buses.
 - Depend on `openpyxl` for reading excel files since `xlrd` dropped
   support for any format but `xlsx` since v2.0.0.
 
 v1.2.7 (2020-12-08)
-```````````````````
+--------------------
 - Time-domain integration now evaluates anti-windup limiter before
   algebraic residuals. It assures that algebraic residuals are
   calculated with the new state values if pegged at limits.
@@ -352,7 +359,7 @@ v1.2.7 (2020-12-08)
   functions the same as before.
 
 v1.2.6 (2020-12-01)
-```````````````````
+--------------------
 - Added `TGOV1N` model which sums `pref` and `paux` after
   the 1/droop block.
 - Added `ZIP` and `FLoad` for dynamic analysis. Need to be initialized
@@ -362,7 +369,7 @@ v1.2.6 (2020-12-01)
   Generic Type 3 wind (ieee14_wt3.xlsx).
 
 v1.2.5 (2020-11-19)
-```````````````````
+--------------------
 - Added `Summary` model to allow arbitrary information for
   a test case. Works in `xlsx` and `json` formats.
 - PV reactive power limit works. Automatically determines
@@ -373,18 +380,18 @@ v1.2.5 (2020-11-19)
 - `DAETimeSeries` functions refactored.
 
 v1.2.4 (2020-11-13)
-```````````````````
+--------------------
 - Added switched shunt class `ShuntSw`.
 - BaseParam takes `inconvert` and `oconvert` for converting parameter
   elements from and to files.
 
 v1.2.3 (2020-11-02)
-```````````````````
+--------------------
 - Support variable `sys_mva` (system base mva) in equation strings.
 - Default support for KVXOPT through ``pip`` installation.
 
 v1.2.2 (2020-11-01)
-```````````````````
+--------------------
 New Models:
 
 - ``PVD1`` model, WECC distributed PV model.
@@ -402,14 +409,14 @@ Changes and fixes:
 - Added ``kvxopt`` as a dependency for PyPI installation.
 
 v1.2.1 (2020-10-11)
-```````````````````
+--------------------
 - Renamed `models.non_jit` to `models.file_classes`.
 - Removed `models/jit.py` as models have to be loaded and instantiated
   anyway before undill.
 - Skip generating empty equation calls.
 
 v1.2.0 (2020-10-10)
-```````````````````
+--------------------
 This version contains major refactor for speed improvement.
 
 - Refactored Jacobian calls generation so that for each model, one call
@@ -428,9 +435,10 @@ Also contains an experimental Python code dump function.
   the config option ``use_pycode``.
 
 v1.1 Notes
-----------
+==========
+
 v1.1.5 (2020-10-08)
-```````````````````
+--------------------
 - Allow plotting to existing axes with the same plot API.
 - Added TGOV1DB model (TGOV1 with an input dead-band).
 - Added an experimental numba support.
@@ -438,7 +446,7 @@ v1.1.5 (2020-10-08)
 - ``andes selftest -q`` now skips code generation.
 
 v1.1.4 (2020-09-22)
-```````````````````
+--------------------
 - Support `BackRef` for groups.
 - Added CLI ``--pool`` to use ``multiprocess.Pool`` for multiple cases.
   When combined with ``--shell``, ``--pool`` returns ``System`` Objects
@@ -446,22 +454,22 @@ v1.1.4 (2020-09-22)
 - Fixed bugs and improved manual.
 
 v1.1.3 (2020-09-05)
-```````````````````
+--------------------
 - Improved documentation.
 - Minor bug fixes.
 
 v1.1.2 (2020-09-03)
-```````````````````
+--------------------
 - Patched time-domain for continuing simulation.
 
 v1.1.1 (2020-09-02)
-```````````````````
+--------------------
 - Added back quasi-real-time speed control through `--qrt`
   and `--kqrt KQRT`.
 - Patched the time-domain routine for the final step.
 
 v1.1.0 (2020-09-01)
-```````````````````
+--------------------
 - Defaulted `BaseVar.diag_eps` to `System.Config.diag_eps`.
 - Added option `TDS.config.g_scale` to allow for scaling the
   algebraic mismatch with step size.
@@ -482,10 +490,10 @@ Added Generic Type 3 wind turbine component models:
 
 
 v1.0 Notes
-----------
+==========
 
 v1.0.8 (2020-07-29)
-```````````````````
+--------------------
 New features and models:
 
 - Added renewable energy models `REECA1` and `REPCA1`.
@@ -510,7 +518,7 @@ Default behavior changes include:
 - Renamed model `REGCAU1` to `REGCA1`.
 
 v1.0.7 (2020-07-18)
-```````````````````
+--------------------
 - Use in-place assignment when updating Jacobian values in Triplets.
 - Patched a major but simple bug where the Jacobian refactorization
   flag is set to the wrong place.
@@ -526,19 +534,19 @@ v1.0.7 (2020-07-18)
 - Other tweaks.
 
 v1.0.6 (2020-07-08)
-```````````````````
+--------------------
 - Patched step size adjustment algorithm.
 - Added Area Control Error (ACE) model.
 
 v1.0.5 (2020-07-02)
-```````````````````
+--------------------
 - Minor bug fixes for service initialization.
 - Added a wrapper to call TDS.fg_update to
   allow passing variables from caller.
 - Added pre-event time to the switch_times.
 
 v1.0.4 (2020-06-26)
-```````````````````
+--------------------
 - Implemented compressed NumPy format (npz) for time-domain
   simulation output data file.
 - Implemented optional attribute `vtype` for specifying data type
@@ -548,26 +556,26 @@ v1.0.4 (2020-06-26)
   impedance modes.
 
 v1.0.3 (2020-06-02)
-```````````````````
+--------------------
 - Patches `PQ` model equations where the "or" logic "|" is ignored in
   equation strings. To adjust PQ load in time domain simulation, refer
   to the note in `pq.py`.
 - Allow `Model.alter` to update service values.
 
 v1.0.2 (2020-06-01)
-```````````````````
+--------------------
 - Patches the conda-forge script to use SymPy < 1.6. After SymPy version
   1.5.1, comparison operations cannot be sympified. Pip installations are
   not affected.
 
 v1.0.1 (2020-05-27)
-```````````````````
+--------------------
 - Generate one lambda function for each of f and g, instead of generating
   one for each single f/g equation. Requires to run `andes prepare` after
   updating.
 
 v1.0.0 (2020-05-25)
-```````````````````
+--------------------
 This release is going to be tagged as v0.9.5 and later tagged as v1.0.0.
 
 - Added verification results using IEEE 14-bus, NPCC, and WECC systems
@@ -578,10 +586,10 @@ This release is going to be tagged as v0.9.5 and later tagged as v1.0.0.
 - Various tweaks.
 
 Pre-v1.0.0
-----------
+==========
 
 v0.9.4 (2020-05-20)
-```````````````````
+-------------------
 
 - Added exciter models EXST1, ESST3A, ESDC2A, SEXS, and IEEEX1,
   turbine governor model IEEEG1 (dual-machine support), and stabilizer
@@ -604,7 +612,7 @@ v0.9.4 (2020-05-20)
 - Various patches to allow zeroing out time constants in transfer functions.
 
 v0.9.3 (2020-05-05)
-```````````````````
+--------------------
 This version contains bug fixes and performance tweaks.
 
 - Fixed an `AntiWindup` issue that causes variables to stuck at limits.
@@ -616,7 +624,7 @@ This version contains bug fixes and performance tweaks.
 - Other bug fixes.
 
 v0.9.1 (2020-05-02)
-```````````````````
+--------------------
 This version accelerates computations by about 35%.
 
 - Models with flag ``collate=False``, which is the new default,
@@ -637,7 +645,7 @@ This version accelerates computations by about 35%.
 - Patched a bug in v0.9.0 related to `dae.Tf`.
 
 v0.8.8 (2020-04-28)
-```````````````````
+--------------------
 This update contains a quick but significant fix to boost the simulation speed by avoiding
 calls to empty user-defined numerical calls.
 
@@ -648,7 +656,7 @@ calls to empty user-defined numerical calls.
 - For the `kundur_ieeest.xlsx` case, simulation time was reduced from 3.5s to 2.7s.
 
 v0.8.7 (2020-04-28)
-```````````````````
+--------------------
 - Changed `RefParam` to a service type called `BackRef`.
 - Added `DeviceFinder`, a service type to find device idx when not provided.
   `DeviceFinder` will also automatically add devices if not found.
@@ -659,7 +667,7 @@ v0.8.7 (2020-04-28)
 - Implemented COI for generator speed and angle measurement.
 
 v0.8.6 (2020-04-21)
-```````````````````
+--------------------
 This release contains important documentation fixes and two new blocks.
 
 - Fixed documentations in `andes doc` to address a misplacement of symbols and equations.
@@ -669,7 +677,7 @@ This release contains important documentation fixes and two new blocks.
 - Added a prototype for IEEEST stabilizer with some fixes needed.
 
 v0.8.5 (2020-04-17)
-```````````````````
+--------------------
 - Converted the differential equations to the form of ``T \dot{x} = f(x, y)``, where T is supplied to
   ``t_const`` of ``State/ExtState``.
 - Added the support for Config fields in documentation (in ``andes doc`` and on readthedocs).
@@ -681,14 +689,14 @@ v0.8.5 (2020-04-17)
 - Minor features: `andes -v 1` for debug output with levels and line numbers.
 
 v0.8.4 (2020-04-07)
-```````````````````
+--------------------
 - Added support for JSON case files. Convert existing case file to JSON with ``--convert json``.
 - Added support for PSS/E dyr files, loadable with ``-addfile ADDFILE``.
 - Added ``andes plot --xargs`` for searching variable name and plotting. See example 6.
 - Various bug fixes: Fault power injection fix;
 
 v0.8.3 (2020-03-25)
-```````````````````
+--------------------
 - Improved storage for Jacobian triplets (see ``andes.core.triplet.JacTriplet``).
 - On-the-fly parameter alteration for power flow calculations (``Model.alter`` method).
 - Exported frequently used functions to the root package
@@ -698,7 +706,7 @@ v0.8.3 (2020-03-25)
 - Various bug fixes and documentation improvements.
 
 v0.8.0 (2020-02-12)
-```````````````````
+--------------------
 - First release of the hybrid symbolic-numeric framework in ANDES.
 - A new framework is used to describe DAE models, generate equation documentation, and generate code for
   numerical simulation.
@@ -707,7 +715,8 @@ v0.8.0 (2020-02-12)
 - Newton-Raphson power flow, trapezoidal rule for numerical integration, and full eigenvalue analysis.
 
 v0.6.9 (2020-02-12)
-```````````````````
+--------------------
+
 - Version 0.6.9 is the last version for the numeric-only modeling framework.
 - This version will not be updated any more.
   But, models, routines and functions will be ported to the new version.
