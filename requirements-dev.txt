@@ -2,7 +2,7 @@
 # the documentation) but not necessarily required for _using_ it.
 codecov
 coverage
-pytest
+pytest==7.0.1
 flake8
 sphinx
 # These are dependencies of various sphinx extensions for documentation.
