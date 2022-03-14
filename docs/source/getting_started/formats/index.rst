@@ -1,3 +1,5 @@
+.. _input-formats:
+
 =============
 Input formats
 =============

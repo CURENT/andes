@@ -8,6 +8,7 @@ Getting started
     :maxdepth: 3
     :hidden:
 
+    overview
     install
     tutorial/index
     config/index

@@ -1,6 +1,8 @@
-==============
-API references
-==============
+.. _api_reference:
+
+=============
+API reference
+=============
 
 
 System
