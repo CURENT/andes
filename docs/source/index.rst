@@ -23,14 +23,14 @@ ANDES documentation
 .. _`Binary Installer`: https://pypi.org/project/andes/
 .. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
 
-ANDES is an open-source Python library for modeling, computing, analyzing, and
-controlling power systems. It supports power flows calculation, transient
-stability simulation, and small-signal stability analysis for transmission
-systems. ANDES implements a symbolic-numeric framework for rapid rototyping of
+ANDES is an open-source Python library for power system modeling, computation,
+analysis, and control. It supports power flows calculation, transient stability
+simulation, and small-signal stability analysis for transmission systems. ANDES
+implements a symbolic-numeric framework for rapid prototyping of
 differential-algebraic equation-based models and control methods. In this
-framework, a comprehensive :ref:`library of models <modelref>`, including the
-full second-generation renewable models, and they have been :ref:`verified
-<verification>` with commercial software.
+framework, a comprehensive :ref:`library of models <modelref>` is developed,
+including the full second-generation renewable models. Models in ANDES have been
+:ref:`verified <verification>` with commercial software.
 
 ..
     ANDES has high computational performance and is close to that of commercial
@@ -49,9 +49,9 @@ full second-generation renewable models, and they have been :ref:`verified
     Getting started
     ^^^^^^^^^^^^^^^
 
-    New to ANDES? Check out the getting started guides. They contain a
-    tutorial to the ANDES command-line interface, scripting usages, as well as
-    ways to configure ANDES and work with cases files.
+    New to ANDES? Check out the getting started guides. They contain tutorials
+    to the ANDES command-line interface, scripting usages, as well as guides to
+    configure ANDES and work with case files.
 
     +++
 
@@ -65,7 +65,7 @@ full second-generation renewable models, and they have been :ref:`verified
     Examples
     ^^^^^^^^
 
-    The examples provides in-depth usage of ANDES in a Python scripting
+    The examples provide in-depth usage of ANDES in a Python scripting
     environment. Advanced usage and and power system studies are shown with
     explanation.
 
@@ -82,7 +82,7 @@ full second-generation renewable models, and they have been :ref:`verified
     ^^^^^^^^^^^^^^^^^^^^^^^
 
     Looking to implement new models, algorithms and functionalities in ANDES?
-    The model development guide provides in-depth information on the design
+    The development guide provides in-depth information on the design
     philosophy, data structure, and implementation of the hybrid
     symbolic-numeric framework.
 
@@ -97,7 +97,7 @@ full second-generation renewable models, and they have been :ref:`verified
     API reference
     ^^^^^^^^^^^^^
 
-    The reference guide contains a detailed description of the ANDES API. The
+    The API reference contains a detailed description of the ANDES package. The
     reference describes how the methods work and which parameters can be used.
     It assumes that you have an understanding of the key concepts.
 
