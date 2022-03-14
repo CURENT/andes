@@ -1,192 +1,8 @@
 .. _install:
 
-*************************
+************
 Installation
-*************************
-
-Package Install
-===============
-
-.. panels::
-    :card: + install-card
-    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
-
-    Working with conda?
-    ^^^^^^^^^^^^^^^^^^^
-
-    ANDES is available on conda-forge and can be installed with
-    Anaconda, Miniconda, and Mambaforge:
-
-    ++++++++++++++++++++++
-
-    .. code-block:: bash
-
-        conda install -c conda-forge andes
-
-    ---
-
-    Prefer pip?
-    ^^^^^^^^^^^
-
-    ANDES can be installed via pip from `PyPI <https://pypi.org/project/pandas>`__.
-
-    ++++
-
-    .. code-block:: bash
-
-        pip install andes
-
-    ---
-    :column: col-12 p-3
-
-    New to Python?
-    ^^^^^^^^^^^^^^
-    Set up a Mambaforge environment following `Setup Mambaforge`_
-
-    ---
-    :column: col-12 p-3
-
-    In-depth instructions?
-    ^^^^^^^^^^^^^^^^^^^^^^
-
-    Installing from source? Looking to develop models? Check the
-    guide in `Develop Install`_.
-
-Updating ANDES
-==============
-
-Regular ANDES updates will be pushed to both ``conda-forge`` and Python package index.
-It is recommended to use the latest version for bug fixes and new features.
-We also recommended you to check the :ref:`ReleaseNotes` before updating to stay informed
-of changes that might break your downstream code.
-
-Depending you how you installed ANDES, you will use one of the following ways to upgrade.
-
-If you installed it from mamba or conda, run
-
-.. code:: bash
-
-    conda install -c conda-forge --yes andes
-
-If you install it from PyPI (namely, through ``pip``), run
-
-.. code:: bash
-
-    python3 -m pip install --yes andes
-
-.. _Develop Install:
-
-Develop Install
-===============
-
-The development mode installation is for users who want to modify
-the code and, for example, develop new models or routines.
-The benefit of development mode installation is that
-changes to source code will be reflected immediately without re-installation.
-
-Step 1: Get ANDES source code
-
-As a developer, you are strongly encouraged to clone the source code using ``git``
-from either your fork or the original repository. Clone the repository with
-
-.. code:: bash
-
-    git clone https://github.com/cuihantao/andes
-
-You can replace the URL with your own fork.
-Using ``git``, you can later easily version control and update the source code.
-
-Alternatively, you can download the ANDES source code from
-https://github.com/cuihantao/andes and extract all files to the path of your choice.
-Although this will work, this is discouraged, since tracking changes and
-pushing back code would be painful.
-
-.. _Step 2:
-
-Step 2: Install dependencies
-
-In the Mambaforge environment, use ``cd`` to change directory to the ANDES root folder.
-The folder should contain the ``setup.py`` file.
-
-Install dependencies with
-
-.. code:: bash
-
-    mamba install --file requirements.txt
-    mamba install --file requirements-dev.txt
-
-Alternatively, you can install them with ``pip``:
-
-.. code:: bash
-
-    pip install -r requirements.txt
-    pip install -r requirements-dev.txt
-
-Step 3: Install ANDES in the development mode using
-
-.. code:: bash
-
-      python3 -m pip install -e .
-
-Note the dot at the end. Pip will take care of the rest.
-
-.. note::
-
-    The ANDES version number shown in ``pip list``
-    will stuck at the version that was intalled, unless
-    ANDES is develop-installed again.
-    It will not update automatically with ``git pull``.
-
-    To check the latest version number, check the preamble
-    by running the ``andes`` command or chek the output of
-    ``python -c "import andes; print(andes.__version__)"``
-
-.. note::
-
-    ANDES updates may infrequently introduce new package
-    requirements. If you see an ``ImportError`` after updating
-    ANDES, you can manually install the missing dependencies
-    or redo `Step 2`_.
-
-Performance Packages
-====================
-
-numba
------
-
-Numba is allows numerical functions calls to be compiled into machine code.
-It can accelerates simulations by as high as 30%.
-The speed up is visible in medium-scale systems with multiple models.
-Such systems involve heavy function calls but rather moderate load
-for linear equation solvers.
-It is is less significant in large-scale systems where
-solving equations is the major time consumer.
-
-.. note::
-
-    Numba is supported starting from ANDES 1.5.0 and is automatically
-    installed for ANDES >=1.5.3.
-    Please refer to the following for turning on Numba.
-
-Numba needs to be turned on manually.
-Refer to the tutorial for editing ANDES configuration.
-To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
-set ``numba = 1`` and ``numba_cache = 1``.
-
-Just-in-time compilation will compile the code upon the first execution
-based on the input types.
-When compilation is triggered, ANDES may appear frozen due to the compilation lag.
-The option ``numba_cache = 1`` will cache compiled machine code, so that
-the compilation lag only occurs once until the next code generation.
-
-Code can be compiled ahead of time with
-
-.. code:: bash
-
-    andes prep -c
-
-It may take a minute for the first time. Future compilations will be
-incremental and faster.
+************
 
 New to Python
 =============
@@ -241,4 +57,112 @@ Activate the new environment with
     in a new Miniforge Prompt or shell.
 
 If these steps complete without error, you now have a working Python environment.
-See the commands at the top to `install`_ ANDES.
+See the commands at the top to :ref:`getting-started` ANDES.
+
+.. _Develop Install:
+
+Develop Install
+===============
+
+The development mode installation is for users who want to modify
+the code and, for example, develop new models or routines.
+The benefit of development mode installation is that
+changes to source code will be reflected immediately without re-installation.
+
+Step 1: Get ANDES source code
+
+As a developer, you are strongly encouraged to clone the source code using ``git``
+from either your fork or the original repository. Clone the repository with
+
+.. code:: bash
+
+    git clone https://github.com/cuihantao/andes
+
+You can replace the URL with your own fork.
+Using ``git``, you can later easily version control and update the source code.
+
+Alternatively, you can download the ANDES source code from
+https://github.com/cuihantao/andes and extract all files to the path of your choice.
+Although this will work, this is discouraged, since tracking changes and
+pushing back code would be painful.
+
+.. _`Step 2`:
+
+Step 2: Install dependencies
+
+In the Mambaforge environment, use ``cd`` to change directory to the ANDES root folder.
+The folder should contain the ``setup.py`` file.
+
+Install dependencies with
+
+.. code:: bash
+
+    mamba install --file requirements.txt
+    mamba install --file requirements-dev.txt
+
+Alternatively, you can install them with ``pip``:
+
+.. code:: bash
+
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+
+Step 3: Install ANDES in the development mode using
+
+.. code:: bash
+
+      python3 -m pip install -e .
+
+Note the dot at the end. Pip will take care of the rest.
+
+.. note::
+
+    The ANDES version number shown in ``pip list``
+    will stuck at the version that was intalled, unless
+    ANDES is develop-installed again.
+    It will not update automatically with ``git pull``.
+
+    To check the latest version number, check the preamble
+    by running the ``andes`` command or chek the output of
+    ``python -c "import andes; print(andes.__version__)"``
+
+.. note::
+
+    ANDES updates may infrequently introduce new package
+    requirements. If you see an ``ImportError`` after updating
+    ANDES, you can manually install the missing dependencies
+    or redo `Step 2`_.
+
+Updating ANDES
+==============
+
+Regular ANDES updates will be pushed to both ``conda-forge`` and Python package index.
+It is recommended to use the latest version for bug fixes and new features.
+We also recommended you to check the :ref:`ReleaseNotes` before updating to stay informed
+of changes that might break your downstream code.
+
+Depending you how you installed ANDES, you will use one of the following ways to upgrade.
+
+If you installed it from mamba or conda, run
+
+.. code:: bash
+
+    conda install -c conda-forge --yes andes
+
+If you install it from PyPI (namely, through ``pip``), run
+
+.. code:: bash
+
+    python3 -m pip install --yes andes
+
+
+Troubleshooting
+===============
+
+If you get an error message on Windows, reading ::
+
+    ImportError: DLL load failed: The specified module could not be found.
+
+It is a path issue of your Python. In fact, Python on Windows is so broken that
+many people are resorting to WSL2 just for Python. Fixes can be convoluted, but
+the easiest one is to install ANDES in a Conda/Mambaforge environment.

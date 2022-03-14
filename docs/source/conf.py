@@ -120,7 +120,7 @@ html_theme = "pydata_sphinx_theme"
 # documentation.
 #
 html_theme_options = {
-    "use_edit_page_button": True,
+    # "use_edit_page_button": True,
 }
 
 html_context = {
@@ -128,7 +128,7 @@ html_context = {
     "github_user": "cuihantao",
     "github_repo": "andes",
     "github_version": "master",
-    "doc_path": "docs",
+    "doc_path": "doc/source",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -230,6 +230,9 @@ exec(open("genmodelref.py").read())
 shutil.rmtree("examples", ignore_errors=True)
 shutil.copytree("../../examples", "examples", )
 shutil.rmtree("examples/demonstration")
-shutil.rmtree("examples/verification")
 
 jupyter_execute_notebooks = "off"
+
+# sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False

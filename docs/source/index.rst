@@ -14,56 +14,106 @@
    Python Software for Symbolic Power System Modeling and Numerical Analysis</p>
    </embed>
 
-****
-Home
-****
+**Download documentation**: `PDF for stable version`_ | `PDF for development version`_
 
-ANDES is a Python-based free software package for power system simulation, control and analysis.
-It establishes a unique **hybrid symbolic-numeric framework** for modeling differential algebraic
-equations (DAEs) for numerical analysis. Main features of ANDES include
+.. _`PDF for stable version`: https://docs.andes.app/_/downloads/en/stable/pdf/
+.. _`PDF for development version`: https://docs.andes.app/_/downloads/en/latest/pdf/
 
-* a unique hybrid symbolic-numeric approach to modeling and simulation that enables descriptive DAE modeling and
-  automatic numerical code generation
-* a rich library of transfer functions and discontinuous components (including limiters, dead-bands, and
-  saturation) available for prototyping models, which can be readily instantiated as multiple devices for
-  system analysis
-* industry-grade second-generation renewable models (solar PV, type 3 and type 4 wind),
-  distributed PV and energy storage model
-* comes with the Newton method for power flow calculation, the implicit trapezoidal method for time-domain
-  simulation, and full eigenvalue calculation
-* strictly verified models with commercial software. ANDES obtains identical time-domain simulation results for
-  IEEE 14-bus and NPCC system with GENROU and multiple controller models. See the verification link for details.
-* developed with performance in mind. While written in Python, ANDES comes with a performance package and can
-  finish a 20-second transient simulation of a 2000-bus system in a few seconds on a typical desktop computer
-* out-of-the-box PSS/E raw and dyr file support for available models. Once a model is developed, inputs from a
-  dyr file can be readily supported
-* an always up-to-date equation documentation of implemented models
 
-ANDES is currently under active development. To get involved,
+**Useful Links**: `Binary Installer`_ | `Source Repository`_ | `Report Issues`_
+| `Q&A`_ | `Try in Jupyter Notebooks`_
 
-* Follow the tutorial at
-  `https://andes.readthedocs.io <https://andes.readthedocs.io/en/stable/tutorial.html>`_
-* Checkout the Notebook examples in the
-  `examples folder <https://github.com/cuihantao/andes/tree/master/examples>`_
-* Try ANDES in Jupyter Notebook
-  `with Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_
-* Download the PDF manual at
-  `download <https://andes.readthedocs.io/_/downloads/en/stable/pdf/>`_
-* Report issues in the
-  `GitHub issues page <https://github.com/cuihantao/andes/issues>`_
-* Learn version control with
-  `the command-line git <https://git-scm.com/docs/gittutorial>`_ or
-  `GitHub Desktop <https://help.github.com/en/desktop/getting-started-with-github-desktop>`_
-* If you are looking to develop models, read the
-  `Modeling Cookbook <https://andes.readthedocs.io/en/stable/modeling.html>`_
+.. _`Source Repository`: https://github.com/cuihantao/andes
+.. _`Report Issues`: https://github.com/cuihantao/andes/issues
+.. _`Q&A`: https://github.com/cuihantao/andes/discussions
+.. _`Binary Installer`: https://pypi.org/project/andes/
+.. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
 
-This work was supported in part by the Engineering Research Center Program of
-the National Science Foundation and the Department of Energy under NSF Award
-Number EEC-1041877 and the `CURENT <https://curent.utk.edu>`_ Industry Partnership Program.
-**ANDES is made open source as part of the CURENT Large Scale Testbed project.**
+ANDES is an open-source Python library for modeling, computing, analyzing, and
+controlling power systems. It supports power flows calculation, transient
+stability simulation, and small-signal stability analysis for transmission
+systems. ANDES implements a symbolic-numeric framework for rapid rototyping of
+differential-algebraic equation-based models and control methods. In this
+framework, a comprehensive :ref:`library of models <modelref>`, including the
+full second-generation renewable models, and they have been :ref:`verified
+<verification>` with commercial software.
 
-ANDES is developed and actively maintained by `Hantao Cui <https://cui.eecps.com>`_.
-See the GitHub repository for a full list of contributors.
+..
+    ANDES has high computational performance and is close to that of commercial
+    tools. It is compatible with a variety of :ref:`input data formats
+    <input-formats>`, including PSS/E, MATPOWER, and Excel. Model documentation is
+    generated using symbolic equations, ensuring that it is always current with the
+    latest development.
+
+
+.. panels::
+    :card: + intro-card text-center
+    :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 d-flex
+
+    ---
+
+    Getting started
+    ^^^^^^^^^^^^^^^
+
+    New to ANDES? Check out the getting started guides. They contain a
+    tutorial to the ANDES command-line interface, scripting usages, as well as
+    ways to configure ANDES and work with cases files.
+
+    +++
+
+    .. link-button:: getting-started
+            :type: ref
+            :text: To the getting started guides
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Examples
+    ^^^^^^^^
+
+    The examples provides in-depth usage of ANDES in a Python scripting
+    environment. Advanced usage and and power system studies are shown with
+    explanation.
+
+    +++
+
+    .. link-button:: scripting_examples
+            :type: ref
+            :text: To the examples
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Model development guide
+    ^^^^^^^^^^^^^^^^^^^^^^^
+
+    Looking to implement new models, algorithms and functionalities in ANDES?
+    The model development guide provides in-depth information on the design
+    philosophy, data structure, and implementation of the hybrid
+    symbolic-numeric framework.
+
+    +++
+
+    .. link-button:: development
+            :type: ref
+            :text: To the development guide
+            :classes: btn-block btn-secondary stretched-link
+    ---
+
+    API reference
+    ^^^^^^^^^^^^^
+
+    The reference guide contains a detailed description of the ANDES API. The
+    reference describes how the methods work and which parameters can be used.
+    It assumes that you have an understanding of the key concepts.
+
+    +++
+
+    .. link-button:: api_reference
+            :type: ref
+            :text: To the API reference
+            :classes: btn-block btn-secondary stretched-link
+
 
 .. toctree::
    :caption: ANDES Manual

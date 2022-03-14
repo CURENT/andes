@@ -133,10 +133,13 @@ models that are detected with changes since the last code generation.
 
     To developers:
 
-    ``andes prepare -i`` needs to be called immediately following any model
-    modification, such as equation modification and adding variables. Otherwise,
-    simulation results will not reflect the new equations, at best, or lead to
-    unexpected errors due to mismatches in model and code.
+    ``andes prepare -i`` needs to be called following model changes, such as
+    equation modification and adding variables. Otherwise, due to mismatches in
+    model and code, simulation results will not reflect the new changes, at
+    best, or even lead to unexpected errors
+
+ANDES supports precompiling the generated Python code using Numba. See
+:ref:`numba-compilation`.
 
 andes run
 -------------
@@ -237,7 +240,7 @@ discussed next.
 Each routine has a list of configuration options (called "config") to
 control their behaviors. Config needs to be distinguished from command-line
 options as not all config options are available in the command-line.
-Refer to the Config section below for more details.
+Refer to :ref:`configuration` for details.
 
 Power flow
 ..........
