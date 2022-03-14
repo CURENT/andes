@@ -69,7 +69,8 @@ Quick install
 
     New to Python?
     ^^^^^^^^^^^^^^
-    Set up a Mambaforge environment following :ref:`Setup Mambaforge`.
+    Set up a Mambaforge environment following :ref:`Setup Mambaforge`. We
+    recommend Mambaforge on Windows and Apple Silicon for new users.
 
     ---
     :column: col-12 p-3
