@@ -27,10 +27,10 @@ ANDES is an open-source Python library for power system modeling, computation,
 analysis, and control. It supports power flows calculation, transient stability
 simulation, and small-signal stability analysis for transmission systems. ANDES
 implements a symbolic-numeric framework for rapid prototyping of
-differential-algebraic equation-based models and control methods. In this
-framework, a comprehensive :ref:`library of models <modelref>` is developed,
-including the full second-generation renewable models. Models in ANDES have been
-:ref:`verified <verification>` with commercial software.
+differential-algebraic equation-based models. In this framework, a comprehensive
+:ref:`library of models <modelref>` is developed, including the full
+second-generation renewable models. Models in ANDES have been :ref:`verified
+<verification>` with commercial software.
 
 ..
     ANDES has high computational performance and is close to that of commercial
