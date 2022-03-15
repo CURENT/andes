@@ -189,12 +189,13 @@ class WTTQA1Model(Model):
                             tex_name=r'\omega_{r0}', export=False,
                             info='Retrieved initial w0 from RenGovernor',
                             v_str='fPe_y',
-                            e_str='-w0 + fPe_y',
+                            e_str='-w0 + fPe_y',  # update `wr0` of RenGovernor
                             v_setter=True,
                             ename='dwr',
                             tex_ename=r'\Delta \omega_r',
                             )
 
+        # `s2_y` is `wref` for WTPTA1
         self.s2 = Lag(u=self.fPe_y, T=self.Twref, K=1.0,
                       tex_name='s_2', info='speed filter',
                       )
