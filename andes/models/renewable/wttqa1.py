@@ -130,9 +130,10 @@ class WTTQA1Model(Model):
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree,
                             export=False,)
 
-        self.Sngo = ExtParam(model='RenGovernor', src='Sn', indexer=self.rego,
+        self.Sngo = ExtParam(model='RenGen', src='Sn', indexer=self.reg,
                              tex_name='S_{n,go}', export=False,
                              )
+
         self.Sn = NumSelect(self.Tn,
                             fallback=self.Sngo,
                             tex_name='S_n',
@@ -173,7 +174,7 @@ class WTTQA1Model(Model):
 
         self.s3_y = ExtState(model='RenGovernor', src='s3_y', indexer=self.rego,
                              tex_name='y_{s3}', export=False,
-                             v_str='Pref0 / wg / Kshaft',
+                             v_str='Pref0 / wg',
                              v_setter=True,
                              )
 
