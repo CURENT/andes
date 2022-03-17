@@ -107,7 +107,7 @@ To work with PSS/E inputs, refer to notebook `Example 2`_.
 
 .. note::
     :py:mod:`andes.main.run` can accept multiple input files for multiprocessing.
-    They can passe through the first positional argument as a list of strings.
+    They can be passed as a list of strings to the first positional argument.
 
 Passing options
 ...............
