@@ -1,3 +1,7 @@
+"""
+Simulation data streaming interface for CURENT DiME2.
+"""
+
 import logging
 from time import sleep
 import numpy as np

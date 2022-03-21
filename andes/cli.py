@@ -25,8 +25,14 @@ command_aliases = {
 
 def create_parser():
     """
-    The main level of command-line interface.
+    Create a parser for the command-line interface.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser with all ANDES options
     """
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -192,7 +198,7 @@ def preamble():
 
 def main():
     """
-    Main command-line interface
+    Entry point of the ANDES command-line interface.
     """
 
     parser = create_parser()

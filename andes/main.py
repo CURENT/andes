@@ -1,5 +1,9 @@
 #!/bin/bash python
 
+"""
+Main entry point for the ANDES CLI and scripting interfaces.
+"""
+
 #  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
