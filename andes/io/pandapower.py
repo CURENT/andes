@@ -382,7 +382,7 @@ def to_pandapower(ssa, verify=True):
 
     # fill the ctrl with False
     ssa_sg.fillna(value=False, inplace=True)
-    
+
     # conversion
     # a) `PV` with negative `p0` -> uncontrollable gen
     # b) `PV` with non-negative `p0`-> gen
@@ -436,3 +436,4 @@ def _verify_pf(ssa, ssp, tol=1e-6):
             return True
     else:
         logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
+        return False
