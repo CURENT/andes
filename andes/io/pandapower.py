@@ -2,11 +2,15 @@
 Simple pandapower (2.7.0) interface
 """
 
-from math import pi
-from numpy import sign
-
-from andes.shared import pd
+import logging
+import numpy as np
 import pandapower as pp
+import andes
+
+from numpy import pi
+from andes.shared import pd, rad2deg, deg2rad
+
+logger = logging.getLogger('andes')
 
 
 def make_link_table(ssa):
@@ -52,7 +56,7 @@ def make_link_table(ssa):
         ssa_syn = pd.concat([ssa_syn, syn.as_df()[syn_cols]], axis=0)
 
     # output
-    ssa_bus = ssa.Bus.as_df().copy()[['name', 'idx']]
+    ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
     ssa_key = pd.merge(left=ssa_syn.rename(columns={'bus': 'bus_idx', 'idx': 'syn_idx'}),
                        right=ssa_bus.rename(columns={'name': 'bus_name', 'idx': 'bus_idx'}),
                        how='left',
@@ -155,25 +159,39 @@ def add_gencost(ssp, gen_cost):
     return True
 
 
-def to_pandapower(ssa, validate=True):
+def to_pandapower(ssa, verify=True):
     """
-    Convert ADNES system (ssa) to pandapower network (ssp).
+    Convert an ADNES system to a pandapower network for power flow studies.
 
-    The power flow of `ssp` is consistent with ANDES.
+    Parameters
+    ----------
+    ssa : andes.system.System
+        The ADNES system to be converted
 
-    Line limts are set as 99999.0 in `ssp`.
+    Returns
+    -------
+    pandapower.auxiliary.pandapowerNet
+        A pandapower net with the same bus, branch, gen, and load data as the
+        ANDES system
 
-    Generator cost is not included in the conversion.
+    Notes
+    -----
+    Handling of the following parameters:
 
-    `SynGen` equipped with `TurbineGov` in `ssa` is considered as `controllable=True` in `ssp.gen`.
+      - Line limts are set as 99999.0 in the output network.
+      - Generator cost is not included in the conversion. Use ``add_gencost()``
+        to add cost data.
+      - ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
+        to generators with ``controllable=True`` in pp's network.
     """
-    # create PP net
+
+    # create a PP network
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,
                                   sn_mva=ssa.config.mva,
                                   )
 
-    # 1) bus
-    ssa_bus = ssa.Bus.as_df().copy()
+    # --- 1. convert buses ---
+    ssa_bus = ssa.Bus.as_df()
     for uid in ssa_bus.index:
         pp.create_bus(net=ssp,
                       vn_kv=ssa_bus["Vn"].iloc[uid],
@@ -185,50 +203,52 @@ def to_pandapower(ssa, validate=True):
                       index=uid,
                       )
 
-    # 2) line
+    # --- 2. convert Line ---
     # TODO: 1) from- and to- sides `Y`; 2)`g`
     ssa_mva = ssp.sn_mva
-    omega = pi * ssp.f_hz
+    omega = 2 * pi * ssp.f_hz
 
-    ssa_line = ssa.Line.as_df().merge(ssa.Bus.as_df()[['idx', 'Vn']].rename(
-        columns={"idx": "bus1", "Vn": "Vb"}), on='bus1', how='left')
+    ssa_bus_slice = ssa.Bus.as_df()[['idx', 'Vn']].rename(columns={"idx": "bus1", "Vn": "Vb"})
+    ssa_line = ssa.Line.as_df().merge(ssa_bus_slice, on='bus1', how='left')
 
     ssa_line['Zb'] = ssa_line["Vb"]**2 / ssa_line["Sn"]
     ssa_line['R'] = ssa_line["r"] * ssa_line['Zb']  # ohm
     ssa_line['X'] = ssa_line["x"] * ssa_line['Zb']  # ohm
-    ssa_line['C'] = ssa_line["b"] / ssa_line['Zb'] / omega * 1e9 / 2  # nF
+    ssa_line['C'] = ssa_line["b"] / ssa_line['Zb'] / omega * 1e9  # nF
+    # TODO: why commented out?
     # ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
 
-    # the line limits are set to be large
-    ll_ka = len(ssa_line) * [99999]
-
-    # line index
-    ssl = ssa_line.copy()
+    # find index for transmission lines (i.e., non-transformers)
+    ssl = ssa_line.copy()  # TODO: no need to copy here as `ssl` is not modified
     ssl['uidx'] = ssl.index
     index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
-    # 2a) line
+    ll_ka = len(ssa_line) * [99999]  # set large line limits
+
+    # --- 2a. transmission lines ---
     for num, uid in enumerate(index_line):
         from_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus1"].iloc[uid]].values[0]
         to_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus2"].iloc[uid]].values[0]
         from_bus = pp.get_element_index(ssp, 'bus', name=from_bus_name)
         to_bus = pp.get_element_index(ssp, 'bus', name=to_bus_name)
 
-        pp.create_line_from_parameters(net=ssp,
-                                       name=ssa_line["name"].iloc[uid],
-                                       from_bus=from_bus,
-                                       to_bus=to_bus,
-                                       in_service=ssa_line["u"].iloc[uid],
-                                       length_km=1,
-                                       r_ohm_per_km=ssa_line['R'].iloc[uid],
-                                       x_ohm_per_km=ssa_line['X'].iloc[uid],
-                                       c_nf_per_km=ssa_line['C'].iloc[uid],
-                                       #    g_us_per_km = ssa_line['R'].iloc[uid],
-                                       max_i_ka=ll_ka[uid],
-                                       type='ol',
-                                       max_loading_percent=100,
-                                       index=num,
-                                       )
-    # 2b) transformer
+        pp.create_line_from_parameters(
+            net=ssp,
+            name=ssa_line["name"].iloc[uid],
+            from_bus=from_bus,
+            to_bus=to_bus,
+            in_service=ssa_line["u"].iloc[uid],
+            length_km=1,
+            r_ohm_per_km=ssa_line['R'].iloc[uid],
+            x_ohm_per_km=ssa_line['X'].iloc[uid],
+            c_nf_per_km=ssa_line['C'].iloc[uid],
+            #    g_us_per_km = ssa_line['R'].iloc[uid],
+            max_i_ka=ll_ka[uid],
+            type='ol',
+            max_loading_percent=100,
+            index=num,
+            )
+
+    # --- 2b. transformer ---
     for num, uid in enumerate(ssa_line[~ssa_line.index.isin(index_line)].index):
         from_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus1"].iloc[uid]].values[0]
         to_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus2"].iloc[uid]].values[0]
@@ -252,28 +272,29 @@ def to_pandapower(ssa, validate=True):
         rk = ssa_line['r'].iloc[uid]
         xk = ssa_line['x'].iloc[uid]
         zk = (rk ** 2 + xk ** 2) ** 0.5
-        sn = 99999.0  # ssa_line['Sn'].iloc[uid]
+        sn = 99999.0  # ssa_line['Sn'].iloc[uid]   # TODO ?
         baseMVA = ssa_mva
 
         ratio_1 = (ssa_line['tap'].iloc[uid] - 1) * 100
         i0_percent = -ssa_line['b'].iloc[uid] * 100 * baseMVA / sn
 
-        pp.create_transformer_from_parameters(net=ssp,
-                                              hv_bus=hv_bus,
-                                              lv_bus=lv_bus,
-                                              sn_mva=sn,
-                                              vn_hv_kv=vn_hv_kv,
-                                              vn_lv_kv=vn_lv_kv,
-                                              vk_percent=sign(xk) * zk * sn * 100 / baseMVA,
-                                              vkr_percent=rk * sn * 100 / baseMVA,
-                                              max_loading_percent=100,
-                                              pfe_kw=0, i0_percent=i0_percent,
-                                              shift_degree=ssa_line['phi'].iloc[uid]*180/pi,
-                                              tap_step_percent=abs(ratio_1), tap_pos=sign(ratio_1),
-                                              tap_side=tap_side, tap_neutral=0,
-                                              index=num)
+        pp.create_transformer_from_parameters(
+            net=ssp,
+            hv_bus=hv_bus,
+            lv_bus=lv_bus,
+            sn_mva=sn,
+            vn_hv_kv=vn_hv_kv,
+            vn_lv_kv=vn_lv_kv,
+            vk_percent=np.sign(xk) * zk * sn * 100 / baseMVA,
+            vkr_percent=rk * sn * 100 / baseMVA,
+            max_loading_percent=100,
+            pfe_kw=0, i0_percent=i0_percent,
+            shift_degree=ssa_line['phi'].iloc[uid] * rad2deg,
+            tap_step_percent=abs(ratio_1), tap_pos=np.sign(ratio_1),
+            tap_side=tap_side, tap_neutral=0,
+            index=num)
 
-    # 3) load
+    # --- 3. load ---
     ssa_pq = ssa.PQ.as_df().copy()
     ssa_pq['p_mw'] = ssa_pq["p0"] * ssa_mva
     ssa_pq['q_mvar'] = ssa_pq["q0"] * ssa_mva
@@ -282,16 +303,16 @@ def to_pandapower(ssa, validate=True):
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_pq["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_load(net=ssp,
-                       name=ssa_pq["name"].iloc[uid],
-                       bus=bus,
-                       sn_mva=ssa_mva,
-                       p_mw=ssa_pq['p_mw'].iloc[uid],
-                       q_mvar=ssa_pq['q_mvar'].iloc[uid],
-                       in_service=ssa_pq["u"].iloc[uid],
-                       controllable=False,
-                       index=uid,
-                       type=None,
-                       )
+            name=ssa_pq["name"].iloc[uid],
+            bus=bus,
+            sn_mva=ssa_mva,
+            p_mw=ssa_pq['p_mw'].iloc[uid],
+            q_mvar=ssa_pq['q_mvar'].iloc[uid],
+            in_service=ssa_pq["u"].iloc[uid],
+            controllable=False,
+            index=uid,
+            type=None,
+            )
 
     # 4) shunt
     ssa_shunt = ssa.Shunt.as_df().copy()
@@ -302,16 +323,16 @@ def to_pandapower(ssa, validate=True):
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_shunt["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_shunt(net=ssp,
-                        bus=bus,
-                        p_mw=ssa_shunt['p_mw'].iloc[uid],
-                        q_mvar=ssa_shunt['q_mvar'].iloc[uid],
-                        vn_kv=ssa_shunt["Vn"].iloc[uid],
-                        step=1,
-                        max_step=1,
-                        name=ssa_shunt["name"].iloc[uid],
-                        in_service=ssa_shunt["u"].iloc[uid],
-                        index=uid,
-                        )
+            bus=bus,
+            p_mw=ssa_shunt['p_mw'].iloc[uid],
+            q_mvar=ssa_shunt['q_mvar'].iloc[uid],
+            vn_kv=ssa_shunt["Vn"].iloc[uid],
+            step=1,
+            max_step=1,
+            name=ssa_shunt["name"].iloc[uid],
+            in_service=ssa_shunt["u"].iloc[uid],
+            index=uid,
+            )
 
     # 5) generator
     ssa_busn = ssa.Bus.as_df().copy().reset_index()[["uid", "idx"]].rename(
@@ -361,6 +382,7 @@ def to_pandapower(ssa, validate=True):
 
     # fill the ctrl with False
     ssa_sg.fillna(value=False, inplace=True)
+    
     # conversion
     # a) `PV` with negative `p0` -> uncontrollable gen
     # b) `PV` with non-negative `p0`-> gen
@@ -381,24 +403,36 @@ def to_pandapower(ssa, validate=True):
                       index=uid,
                       )
 
-    # validation of power flow
-    if validate:
-        ssa.setup()
-        ssa.PFlow.run()
-        pp.runpp(ssp)
-        pf_bus = ssa.Bus.as_df()[["name"]].copy()
-        # ssa
-        pf_bus['v_ad'] = ssa.Bus.v.v
-        pf_bus['a_ad'] = ssa.Bus.a.v
-        # ssp
-        pf_bus['v_pp'] = ssp.res_bus['vm_pu']
-        pf_bus['a_pp'] = ssp.res_bus['va_degree'] * pi / 180
-        pf_bus['v_diff'] = pf_bus['v_ad'] - pf_bus['v_pp']
-        pf_bus['a_diff'] = pf_bus['a_ad'] - pf_bus['a_pp']
-        tol = 1e-6
-        if abs(pf_bus['v_diff'].max()) < tol:
-            if abs(pf_bus['a_diff'].max()) < tol:
-                print("Power flow results are consistent, conversion is successful.")
-        else:
-            print("Warning: Power flow results are inconsistent, pleaes check!")
+    if verify:
+        _verify_pf(ssa, ssp)
+
     return ssp
+
+
+def _verify_pf(ssa, ssp, tol=1e-6):
+    """
+    Verify power flow results.
+
+    """
+    ssa.PFlow.run()
+    pp.runpp(ssp)
+
+    pf_bus = ssa.Bus.as_df()[["name"]]
+
+    # ssa
+    pf_bus['v_andes'] = ssa.Bus.v.v
+    pf_bus['a_andes'] = ssa.Bus.a.v
+
+    # ssp
+    pf_bus['v_pp'] = ssp.res_bus['vm_pu']
+    pf_bus['a_pp'] = ssp.res_bus['va_degree'] * deg2rad
+    pf_bus['v_diff'] = pf_bus['v_andes'] - pf_bus['v_pp']
+    pf_bus['a_diff'] = pf_bus['a_andes'] - pf_bus['a_pp']
+
+    # TODO: take abs first and then max
+    if (np.max(np.abs(pf_bus['v_diff'])) < tol) and \
+        (np.max(np.abs(pf_bus['a_diff'])) < tol):
+            logger.info("Power flow results are consistent. Conversion is successful.")
+            return True
+    else:
+        logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
