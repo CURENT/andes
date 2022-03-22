@@ -1,3 +1,7 @@
+"""
+ANDES input parsers and output formatters.
+"""
+
 import importlib
 import io
 import logging
@@ -33,6 +37,19 @@ output_formats = {
 
 
 def get_output_ext(out_format):
+    """
+    Helper function to get the output extension for the given output format.
+
+    Parameters
+    ----------
+    out_format : str
+        Output format name.
+
+    Returns
+    -------
+    str : file extension without dot or empty if not supported
+    """
+
     if (out_format is None) or (out_format is True):
         logger.warning('Dump to XLSX format by default')
         return 'xlsx'

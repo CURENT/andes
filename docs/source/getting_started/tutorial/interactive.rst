@@ -1,9 +1,10 @@
 
-Interactive Usage
-=================
-This section is a tutorial for using ANDES in an interactive environment.
-All interactive shells are supported, including Python shell, IPython, Jupyter Notebook and Jupyter Lab.
-The examples below uses Jupyter Notebook.
+Scripting
+=========
+This section is a tutorial for using ANDES in an interactive/scripting
+environment. All scripting shells are supported, including Python shell,
+IPython, Jupyter Notebook and Jupyter Lab. The examples below uses Jupyter
+Notebook.
 
 Jupyter Notebook
 ----------------
@@ -14,25 +15,26 @@ Jupyter notebook can be installed with
 
     conda install jupyter notebook
 
-After the installation, change directory to the folder where you wish to store notebooks,
-then start the notebook with
+After the installation, change directory to the folder where you wish to store
+notebooks, then start the notebook with
 
 .. code:: bash
 
     jupyter notebook
 
-A browser window should open automatically with the notebook browser loaded.
-To create a new notebook, use the "New" button near the upper-right corner.
+A browser window should open automatically with the notebook browser loaded. To
+create a new notebook, use the "New" button near the upper-right corner.
 
 .. note::
 
-    Code lines following ``>>>`` are Python code.
-    Python code should be typed into a Python shell, IPython, or Jupyter Notebook,
-    not a Anaconda Prompt or command-line shell.
+    In the following, code that starts with ``>>>`` are Python code. and should
+    be run inside Python, IPython, or Jupyter Notebook. Python code should not
+    be entered into Anaconda Prompt or Linux shell.
 
 Import
 ------
-Like other Python libraries, ANDES needs to be imported into an interactive Python environment.
+Like other Python libraries, ANDES needs to be imported into an interactive
+scripting Python environment.
 
 .. code:: python
 
@@ -47,24 +49,34 @@ If you are debugging ANDES, you can enable debug messages with
 
     >>> andes.config_logger(stream_level=10)
 
-The ``stream_level`` uses the same verbosity levels as for the command-line.
-If not explicitly enabled, the default level 20 (INFO) will apply.
+or simply
+
+.. code:: python
+
+    >>> andes.config_logger(10)
+
+The ``stream_level`` uses the same verbosity levels as for the command-line. If
+not explicitly enabled, the default level 20 (INFO) will apply.
 
 To set a new logging level for the current session, call ``config_logger`` with
 the desired new levels.
 
 Making a System
 ---------------
-Before running studies, a "System" object needs to be create to hold the system data.
-The System object can be created by passing the path to the case file the entry-point function.
-For example, to run the file ``kundur_full.xlsx`` in the same directory as the notebook, use
+Before running studies, an :py:mod:`andes.system.System` object needs to be
+create to hold the system data. The System object can be created by passing the
+path to the case file the entry-point function.
+
+There are multiple ways to create such object, and :py:mod:`andes.main.run` is
+the most convenient way. For example, to run the file ``kundur_full.xlsx`` in
+the same directory as the notebook, use
 
 .. code:: python
 
     >>> ss = andes.run('kundur_full.xlsx')
 
-This function will parse the input file, run the power flow, and return the system as an object.
-Outputs will look like ::
+This function will parse the input file, run the power flow, and return the
+system as an object. Outputs will look like ::
 
     Parsing input file </Users/user/notebooks/kundur/kundur_full.xlsx>
     Input file kundur_full.xlsx parsed in 0.4172 second.
@@ -78,27 +90,31 @@ Outputs will look like ::
     Report saved to </Users/user/notebooks/kundur_full_out.txt> in 0.0015 second.
     -> Single process finished in 0.4677 second.
 
-In this example, ``ss`` is an instance of ``andes.System``.
-It contains member attributes for models, routines, and numerical DAE.
+In this example, ``ss`` is an instance of ``andes.System``. It contains member
+attributes for models, routines, and numerical DAE.
 
 Naming convention for the ``System`` attributes are as follows
 
-- Model attributes share the same name as class names. For example, ``ss.Bus`` is the ``Bus`` instance.
-- Routine attributes share the same name as class names. For example, ``ss.PFlow`` and ``ss.TDS`` are the
-  routine instances.
+- Model attributes share the same name as class names. For example, ``ss.Bus``
+  is the ``Bus`` instance, and ``ss.GENROU`` is the ``GENROU`` instance.
+- Routine attributes share the same name as class names. For example,
+  ``ss.PFlow`` and ``ss.TDS`` are the routine instances.
 - The numerical DAE instance is in lower case ``ss.dae``.
 
-To work with PSS/E inputs, refer to notebook `Example 2`_.
+To work with PSS/E inputs, refer to :ref:`scripting_examples` - "Working with
+Data".
 
-.. _`Example 2`: https://github.com/cuihantao/andes/blob/master/examples/2.%20inspect_data.ipynb
+.. note::
+    :py:mod:`andes.main.run` can accept multiple input files for multiprocessing.
+    They can be passed as a list of strings to the first positional argument.
 
 Passing options
 ...............
-``andes.run()`` can accept options that are available to the command-line ``andes run``.
-Options need to be passed as keyword arguments to ``andes.run()`` in addition to the positional
-argument for the test case.
-For example, setting ``no_output`` to ``True`` will disable all file outputs.
-When scripting, one can do
+``andes.run()`` can accept options that are available to the command-line
+``andes run``. Options need to be passed as keyword arguments to ``andes.run()``
+in addition to the positional argument for the test case. For example, setting
+``no_output`` to ``True`` will disable all file outputs. When scripting, one can
+do
 
 .. code:: python
 
@@ -110,26 +126,26 @@ which is equivalent to the following shell command:
 
     andes run kundur_full.xlsx --no-output
 
-Please note that the dash between ``no`` and ``output`` needs to be
-replaced with an underscore for scripting. This is the convention in
-Python's argument parser.
+Please note that the dash between ``no`` and ``output`` needs to be replaced
+with an underscore for scripting. This is the convention in Python's argument
+parser.
 
-Another example is to specify a folder for output files.
-By default, outputs will be saved to the folder where Python is run (or where the notebook is run).
-In case you need to organize outputs, a path prefix can be passed to ``andes.run()`` through
-``output_path``:
+Another example is to specify a folder for output files. By default, outputs
+will be saved to the folder where Python is run (or where the notebook is run).
+In case you need to organize outputs, a path prefix can be passed to
+``andes.run()`` through ``output_path``:
 
 .. code:: python
 
     >>> ss = andes.run('kundur_full.xlsx', output_path='outputs/')
 
-which will put outputs into folder ``outputs`` relative to the current path.
-You can also supply an absolute path to ``output_path``.
+which will put outputs into folder ``outputs`` relative to the current path. You
+can also supply an absolute path to ``output_path``.
 
 The next example is to specify the simulation time for a time-domain simulation.
-There are multiple ways to implement it (see :ref:`scripting_examples`),
-and one way is to pass the end time (in sec) through argument ``tf``
-and set the ``routine`` to ``tds``:
+There are multiple ways to implement it (see :ref:`scripting_examples`), and one
+way is to pass the end time (in sec) through argument ``tf`` and set the
+``routine`` to ``tds``:
 
 .. code:: python
 
@@ -139,77 +155,89 @@ which will set the simulation time to 5 seconds.
 
 .. note::
 
-    While ``andes run`` accepts single-letter alias for the option,
-    such as ``andes run -n`` for ``andes run --no-output``,
-    ``andes.run()`` can only work with the full option name
-    (with hyphen replaced by underscore)
+    While ``andes run`` accepts single-letter alias for the option, such as
+    ``andes run -n`` for ``andes run --no-output``, ``andes.run()`` can only
+    work with the full option name (with hyphen replaced by underscore)
+
+Load Only
+.........
+In many workflows, one will simulate many scenarios with largely identical
+system data. A base case can be loaded and modified to create scenarios in
+memory. See Example "Working with Data" for details
 
 Inspecting Parameter
 --------------------
 
 DataFrame
 .........
-Parameters for the loaded system can be easily inspected in Jupyter Notebook using Pandas.
+Parameters for the loaded system can be readily inspected in Jupyter Notebook
+using Pandas.
 
-Input parameters for each model instance is returned by the ``as_df()`` function.
-For example, to view the input parameters for ``Bus``, use
+Input parameters for each model instance is returned by the ``as_df()``
+function. For example, to view the input parameters for ``Bus``, use
 
 .. code:: python
 
     >>> ss.Bus.as_df()
 
-A table will be printed with the columns being each parameter and the rows being Bus instances.
-Parameter in the table is the same as the input file without per-unit conversion.
+A table will be printed with the columns being each parameter and the rows being
+Bus instances. Parameter in the table is the same as the input file without
+per-unit conversion.
 
-Parameters have been converted to per unit values under system base.
-To view the per unit values, use the ``as_df(vin=True)`` method.
-For example, to view the system-base per unit value of ``GENROU``, use
+For a system that has been setup, parameters have been converted to per unit
+values under system base. To view the per unit values, use the
+``as_df(vin=True)`` method. For example, to view the system-base per unit value
+of ``GENROU``, use
 
 .. code:: python
 
     >>> ss.GENROU.as_df(vin=True)
 
-Dict
-....
-In case you need the parameters in ``dict``, use ``as_dict()``.
-Values returned by ``as_dict()`` are system-base per unit values.
-To retrieve the input data, use ``as_dict(vin=True)``.
-
-For example, to retrieve the original input data of GENROU's, use
-
-.. code:: python
-
-    >>> ss.GENROU.as_dict(vin=True)
+Note that what :py:mod:`andes.core.model.as_df` returns is a view. Modifying the
+returned dataframe *will not* affect the original data used for simulation. To
+modify the data, see Example "Working with Data".
 
 Running Studies
 ---------------
 
-Three routines are currently supported: PFlow, TDS and EIG.
-Each routine provides a ``run()`` method to execute.
-The System instance contains member attributes having the same names.
-For example, to run the time-domain simulation for ``ss``, use
+Three routines are currently supported: PFlow, TDS and EIG. Each routine
+provides a ``run()`` method to execute. The System instance contains member
+attributes having the same names. For example, to run the time-domain simulation
+for ``ss``, use
 
 .. code:: python
 
     >>> ss.TDS.run()
 
+To change configuration for routines, one can set the attribute before
+calling run. For example, to change the end time to 5 sec, one can do
+
+.. code:: python
+
+    >>> ss.TDS.config.tf = 5
+    >>> ss.TDS.run()
+
+Note that not all config changes are respected. Some config values
+are used while creating the routine instance. For config changes
+that does not necessarily have to be done on-the-fly, it is recommended to
+edit the config file.
+
 Checking Exit Code
 ------------------
-``andes.System`` contains field ``exit_code`` for checking if error
-occurred in run time.
-A normal completion without error should always have ``exit_code == 0``.
-One should read output messages carefully and check the exit code, which is
+``andes.System`` contains field ``exit_code`` for checking if error occurred in
+run time. A normal completion without error should always have ``exit_code ==
+0``. One should read output messages carefully and check the exit code, which is
 particularly useful for batch simulations.
 
-Error may occur in any phase - data parsing, power flow, or simulation.
-To diagnose, split the simulation steps and check the outputs from each one.
+Error may occur in any phase - data parsing, power flow, or simulation. To
+diagnose, split the simulation steps and check the outputs from each one.
 
 Plotting TDS Results
 --------------------
-TDS comes with a plotting utility for interactive usage.
-After running the simulation, a ``plotter`` attributed will be created for ``TDS``.
-To use the plotter, provide the attribute instance of the variable to plot.
-For example, to plot all the generator speed, use
+TDS comes with a plotting utility for scripting usage. After running the
+simulation, a ``plotter`` attributed will be created for ``TDS``. To use the
+plotter, provide the attribute instance of the variable to plot. For example, to
+plot all the generator speed, use
 
 .. code:: python
 
@@ -227,8 +255,8 @@ For example, to plot all the generator speed, use
 
         >>> ss.TDS.load_plotter()
 
-Optional indices is accepted to choose the specific elements to plot.
-It can be passed as a tuple to the ``a`` argument
+Optional indices is accepted to choose the specific elements to plot. It can be
+passed as a tuple through the ``a`` argument
 
 .. code:: python
 
@@ -238,9 +266,9 @@ In the above example, the speed of the "zero-th" generator will be plotted.
 
 Scaling
 .......
-A lambda function can be passed to argument ``ycalc`` to scale the values.
-This is useful to convert a per-unit variable to nominal.
-For example, to plot generator speed in Hertz, use
+A lambda function can be passed to argument ``ycalc`` to scale the values. This
+is useful to convert a per-unit variable to nominal. For example, to plot
+generator speed in Hertz, use
 
 .. code:: python
 
@@ -258,9 +286,8 @@ A few formatting arguments are supported:
 
 Extracting Data
 ---------------
-One can extract data from ANDES for custom plotting.
-Variable names can be extracted from the following fields of
-``ss.dae``:
+One can extract data from ANDES for custom plotting. Variable names can be
+extracted from the following fields of ``ss.dae``:
 
 Un-formatted names (non-LaTeX):
 
@@ -274,15 +301,15 @@ LaTeX-formatted names:
 - ``y_tex_name``: algebraic variable names
 - ``xy_tex_name``: state variable names followed by algebraic ones
 
-These lists only contain the variable names used in the current analysis routine.
-If you only ran power flow, ``ss.dae.y_name`` will only contain the power flow
-algebraic variables, and ``ss.dae.x_name`` will likely be empty.
-After initializing time-domain simulation, these lists will be extended to include
-all variables used by TDS.
+These lists only contain the variable names used in the current analysis
+routine. If you only ran power flow, ``ss.dae.y_name`` will only contain the
+power flow algebraic variables, and ``ss.dae.x_name`` will likely be empty.
+After initializing time-domain simulation, these lists will be extended to
+include all variables used by TDS.
 
-In case you want to extract the discontinuous flags from TDS, you can
-set ``store_z`` to ``1`` in the config file under section ``[TDS]``.
-When enabled, discontinuous flag names will be populated at
+In case you want to extract the discontinuous flags from TDS, you can set
+``store_z`` to ``1`` in the config file under section ``[TDS]``. When enabled,
+discontinuous flag names will be populated at
 
 - ``ss.dae.z_name``: discontinuous flag names
 - ``ss.dae.z_tex_name``: LaTeX-formatted discontinuous flag names
@@ -291,23 +318,23 @@ If not enabled, both lists will be empty.
 
 Power flow solutions
 ....................
-The full power flow solutions are stored at ``ss.dae.xy`` after running
-power flow (and before initializing dynamic models).
-You can extract values from ``ss.dae.xy``, which corresponds to the names
-in ``ss.dae.xy_name`` or ``ss.dae.xy_tex_name``.
+The full power flow solutions are stored at ``ss.dae.xy`` after running power
+flow (and before initializing dynamic models). You can extract values from
+``ss.dae.xy``, which corresponds to the names in ``ss.dae.xy_name`` or
+``ss.dae.xy_tex_name``.
 
-If you want to extract variables from a particular model, for example,
-bus voltages, you can directly access the ``v`` field of that variable
+If you want to extract variables from a particular model, for example, bus
+voltages, you can directly access the ``v`` field of that variable
 
 .. code:: python
 
     >>> import numpy as np
     >>> voltages = np.array(ss.Bus.v.v)
 
-which stores a **copy** of the bus voltage values. Note that the first ``v``
-is the voltage variable of ``Bus``, and the second ``v`` stands for *value*.
-It is important to make a copy by using ``np.array()`` to avoid accidental
-changes to the solutions.
+which stores a **copy** of the bus voltage values. Note that the first ``v`` is
+the voltage variable of ``Bus``, and the second ``v`` stands for *value*. It is
+important to make a copy by using ``np.array()`` to avoid accidental changes to
+the solutions.
 
 If you want to extract bus voltage phase angles, do
 
@@ -317,18 +344,17 @@ If you want to extract bus voltage phase angles, do
 
 where ``a`` is the field name for voltage angle.
 
-To find out names of variables in a model, use command ``andes doc``
-or refer to :ref:`modelref`.
+To find out names of variables in a model, use command ``andes doc`` or refer to
+:ref:`modelref`.
 
 Time-domain data
 ................
 
-Time-domain simulation data will be ready when simulation completes.
-It is stored in ``ss.dae.ts``, which has the following fields:
+Time-domain simulation data will be ready when simulation completes. It is
+stored in ``ss.dae.ts``, which has the following fields:
 
-- ``txyz``: a two-dimensional array. The first column is time stamps,
-  and the following are variables. Each row contains all variables
-  for that time step.
+- ``txyz``: a two-dimensional array. The first column is time stamps, and the
+  following are variables. Each row contains all variables for that time step.
 - ``t``: all time stamps.
 - ``x``: all state variables (one column per variable).
 - ``y``: all algebraic variables (one column per variable).
@@ -345,84 +371,94 @@ Dataframes are stored in the following fields of ``ss.dae.ts``:
 - ``df``: dataframe for states and algebraic variables
 - ``df_z``: dataframe for discontinuous flags (if enabled)
 
-For both dataframes, time is the index column, and each column correspond to
-one variable.
+For both dataframes, time is the index column, and each column correspond to one
+variable.
+
+.. note::
+
+    Looking to extract data for a single variable? See :ref:`scripting_examples`
+    - "Working with Data".
 
 Pretty Print of Equations
 ----------------------------------------
-Each ANDES models offers pretty print of :math:`\LaTeX`-formatted equations in the jupyter notebook environment.
+Each ANDES models offers pretty print of :math:`\LaTeX`-formatted equations in
+the jupyter notebook environment.
 
-To use this feature, symbolic equations need to be generated in the current session using
+To use this feature, symbolic equations need to be generated in the current
+session using
 
 .. code:: python
 
-    import andes
-    ss = andes.System()
-    ss.prepare()
+    import andes ss = andes.System() ss.prepare()
 
 Or, more concisely, one can do
 
 .. code:: python
 
-    import andes
-    ss = andes.prepare()
+    import andes ss = andes.prepare()
 
-This process may take a few minutes to complete.
-To save time, you can selectively generate it only for interested models.
-For example, to generate for the classical generator model ``GENCLS``, do
+This process may take a few minutes to complete. To save time, you can
+selectively generate it only for interested models. For example, to generate for
+the classical generator model ``GENCLS``, do
 
 .. code:: python
 
-    import andes
-    ss = andes.System()
-    ss.GENROU.prepare()
+    import andes ss = andes.System() ss.GENROU.prepare()
 
-Once done, equations can be viewed by accessing ``ss.<ModelName>.syms.<PrintName>``,
-where ``<ModelName>`` is the model name, and ``<PrintName>`` is the
-equation or Jacobian name.
+Once done, equations can be viewed by accessing
+``ss.<ModelName>.syms.<PrintName>``, where ``<ModelName>`` is the model name,
+and ``<PrintName>`` is the equation or Jacobian name.
 
 .. Note ::
 
-    Pretty print only works for the particular ``System`` instance whose ``prepare()`` method is called.
-    In the above example, pretty print only works for ``ss`` after calling ``prepare()``.
+    Pretty print only works for the particular ``System`` instance whose
+    ``prepare()`` method is called. In the above example, pretty print only
+    works for ``ss`` after calling ``prepare()``.
 
 Supported equation names include the following:
 
 - ``xy``: variables in the order of `State`, `ExtState`, `Algeb` and `ExtAlgeb`
-- ``f``: the **right-hand side of** differential equations :math:`T \dot{\mathbf{x}} = \mathbf{f}`
+- ``f``: the **right-hand side of** differential equations :math:`\mathbf{M}
+  \dot{\mathbf{x}} = \mathbf{f}`
 - ``g``: implicit algebraic equations :math:`0 = \mathbf{g}`
 - ``df``: derivatives of ``f`` over all variables ``xy``
 - ``dg``: derivatives of ``g`` over all variables ``xy``
 - ``s``: the value equations for `ConstService`
 
-For example, to print the algebraic equations of model ``GENCLS``, one can use ``ss.GENCLS.syms.g``.
+For example, to print the algebraic equations of model ``GENCLS``, one can use
+``ss.GENCLS.syms.g``.
 
 Finding Help
 ------------
 
-General help
-............
+docstring
+.........
 
-To find help on a Python class, method, or function, use the built-in ``help()`` function.
-For example, to check how the ``get`` method of ``GENROU`` should be called, do
+To find out how a Python class, method, or function should be used, use the
+built-in ``help()`` function. This will print out the docstring of the
+class/method/function. For example, to check how the ``get`` method of
+``GENROU`` should be called, do
 
 .. code:: python
 
     help(ss.GENROU.get)
 
-In Jupyter notebook, this can be simplified into ``?ss.GENROU.get`` or ``ss.GENROU.get?``.
+In Jupyter notebook, this can be simplified into ``?ss.GENROU.get`` or
+``ss.GENROU.get?``.
+
+Please report issues if you find missing docstring.
 
 Model docs
 ..........
 
-Model docs can be shown by printing the return of ``doc()``.
-For example, to check the docs of ``GENCLS``, do
+Model docs can be shown by printing the return of ``doc()``. For example, to
+check the docs of ``GENCLS``, do
 
 .. code:: python
 
     print(ss.GENCLS.doc())
 
 It is the same as calling ``andes doc GENCLS`` from the command line.
-
+Likewise, a pretty-print version is available online in :ref:`modelref`.
 
 .. _formats:

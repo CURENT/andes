@@ -43,6 +43,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
+    'sphinx_panels',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'matplotlib.sphinxext.plot_directive',
@@ -74,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ANDES'
-copyright = '2021, Hantao Cui'
+copyright = '2022, Hantao Cui'
 author = 'Hantao Cui'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -118,7 +119,17 @@ html_theme = "pydata_sphinx_theme"
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "use_edit_page_button": True,
+}
+
+html_context = {
+    "github_url": "https://github.com",
+    "github_user": "cuihantao",
+    "github_repo": "andes",
+    "github_version": "master",
+    "doc_path": "doc/source",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -219,6 +230,9 @@ exec(open("genmodelref.py").read())
 shutil.rmtree("examples", ignore_errors=True)
 shutil.copytree("../../examples", "examples", )
 shutil.rmtree("examples/demonstration")
-shutil.rmtree("examples/verification")
 
 jupyter_execute_notebooks = "off"
+
+# sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False

@@ -1,129 +1,111 @@
 .. _install:
 
-*************************
+************
 Installation
-*************************
+************
 
-ANDES can be installed in Python 3.6+.
-Please follow the installation guide carefully.
+New to Python
+=============
 
-Environment
-===========
+.. _Setup Mambaforge:
 
-Setting Up Miniconda
---------------------
-We recommend the Miniconda distribution that includes the conda package manager and Python.
-Downloaded and install the latest Miniconda (x64, with Python 3)
-from https://conda.io/miniconda.html.
+Setting Up Mambaforge
+---------------------
+If you are new to Python and want to get started quickly, you can use
+Mambaforge, which is a conda-like package manager configured with conda-forge.
 
-Step 1: Open terminal (on Linux or maxOS) or `Anaconda Prompt` (on Windows, **not the cmd
-program!!**).
+Step 1:
+
+Downloaded the latest Mambaforge for your platform from
+https://github.com/conda-forge/miniforge#mambaforge.
+Most users will use ``x86_64(amd64)`` for Intel and AMD processors.
+Mac users with Apple Silicon should use ``arm64(Apple Silicon)``
+for best performance.
+
+Next, complete the Mambaforge installation on your system.
+
+.. note::
+
+    Mambaforge is a drop-in replacement for conda. If you have an existing
+    conda installation, you can replace all following ``mamba`` commands
+    with ``conda`` and achieve the same functionality.
+
+    If you are using Anaconda or Miniconda on Windows, you should open
+    ``Anaconda Prompt`` instead of ``Miniforge Prompt``.
+
+Step 2:
+
+Open Terminal (on Linux or maxOS) or `Miniforge Prompt` (on Windows, **not cmd!!**).
 Make sure you are in a conda environment - you should see ``(base)`` prepended to the
-command-line prompt, such as ``(base) C:\Users\user>``.
+command-line prompt, such as ``(base) C:\Users\username>``.
 
-Create a conda environment for ANDES (recommended)
+Create an environment for ANDES (recommended)
 
 .. code:: bash
 
-     conda create --name andes python=3.7
+     mamba create --name andes python=3.8
 
 Activate the new environment with
 
 .. code:: bash
 
-     conda activate andes
-
-You will need to activate the ``andes`` environment every time in a new Anaconda Prompt or
-shell.
-
-Step 2: Add the ``conda-forge`` channel and set it as default
-
-.. code:: bash
-
-     conda config --add channels conda-forge
-     conda config --set channel_priority flexible
-
-If these steps complete without an error, continue to `Install Andes`_.
-
-Existing Python Environment (Advanced)
---------------------------------------
-This is for advanced user only and is **not recommended on Microsoft Windows**.
-Please skip it if you have set up a Conda environment.
-
-Instead of using Conda, if you prefer an existing Python environment,
-you can install ANDES with `pip`:
-
-.. code:: bash
-
-      python3 -m pip install andes
-
-If you see a `Permission denied` error, you will need to
-install the packages locally with `--user`
-
-Install ANDES
-=============
-
-ANDES can be installed in the user mode and the development mode.
-
-- If you want to use ANDES without modifying the source code, install it in the `User Mode`_.
-- If you want to develop models or routine, install it in the `Development Mode`_.
-
-User Mode
----------
-.. warning ::
-    Please skip this section and install ANDES in the `Development Mode`_
-    if you want to modify ANDES code or receive unreleased development
-    updates.
-
-The User Model installation will install the latest stable version.
-In the Anaconda environment, run
-
-.. code:: bash
-
-    conda install andes
-
-You will be prompted to confirm the installation,
-
-This command installs ANDES into the active environment, which should be called ``andes`` if
-you followed all the above steps.
+     mamba activate andes
 
 .. note::
-    To use ``andes``, you will need to activate the ``andes`` environment every time in a new Anaconda Prompt or
-    shell.
 
+    You will need to activate the ``andes`` environment every time
+    in a new Miniforge Prompt or shell.
 
-Development Mode
-----------------
-This is for users who want to hack into the code and, for example, develop new models or routines.
-The usage of ANDES is the same in development mode as in user mode.
-In addition, changes to source code will be reflected immediately without re-installation.
+If these steps complete without error, you now have a working Python environment.
+See the commands at the top to :ref:`getting-started` ANDES.
+
+.. _Develop Install:
+
+Develop Install
+===============
+
+The development mode installation is for users who want to modify
+the code and, for example, develop new models or routines.
+The benefit of development mode installation is that
+changes to source code will be reflected immediately without re-installation.
 
 Step 1: Get ANDES source code
 
 As a developer, you are strongly encouraged to clone the source code using ``git``
-from either your fork or the original repository:
+from either your fork or the original repository. Clone the repository with
 
 .. code:: bash
 
     git clone https://github.com/cuihantao/andes
 
-In this way, you can easily update to the latest source code using ``git``.
+You can replace the URL with your own fork.
+Using ``git``, you can later easily version control and update the source code.
 
 Alternatively, you can download the ANDES source code from
 https://github.com/cuihantao/andes and extract all files to the path of your choice.
-Although this will work, this is not recommended since tracking changes and pushing back code
-would be painful.
+Although this will work, this is discouraged, since tracking changes and
+pushing back code would be painful.
+
+.. _`Step 2`:
 
 Step 2: Install dependencies
 
-In the Anaconda environment, use ``cd`` to change directory to the ANDES root folder.
+In the Mambaforge environment, use ``cd`` to change directory to the ANDES root folder.
+The folder should contain the ``setup.py`` file.
 
 Install dependencies with
 
 .. code:: bash
 
-    conda install --file requirements.txt
-    conda install --file requirements-dev.txt
+    mamba install --file requirements.txt
+    mamba install --file requirements-dev.txt
+
+Alternatively, you can install them with ``pip``:
+
+.. code:: bash
+
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
 
 Step 3: Install ANDES in the development mode using
 
@@ -132,6 +114,24 @@ Step 3: Install ANDES in the development mode using
       python3 -m pip install -e .
 
 Note the dot at the end. Pip will take care of the rest.
+
+.. note::
+
+    The ANDES version number shown in ``pip list``
+    will stuck at the version that was intalled, unless
+    ANDES is develop-installed again.
+    It will not update automatically with ``git pull``.
+
+    To check the latest version number, check the preamble
+    by running the ``andes`` command or chek the output of
+    ``python -c "import andes; print(andes.__version__)"``
+
+.. note::
+
+    ANDES updates may infrequently introduce new package
+    requirements. If you see an ``ImportError`` after updating
+    ANDES, you can manually install the missing dependencies
+    or redo `Step 2`_.
 
 Updating ANDES
 ==============
@@ -143,7 +143,7 @@ of changes that might break your downstream code.
 
 Depending you how you installed ANDES, you will use one of the following ways to upgrade.
 
-If you installed it from conda (most common for users), run
+If you installed it from mamba or conda, run
 
 .. code:: bash
 
@@ -155,68 +155,14 @@ If you install it from PyPI (namely, through ``pip``), run
 
     python3 -m pip install --yes andes
 
-If you installed ANDES from source code (in the `Development Mode`_),
-and the source was cloned using ``git``,
-you can use ``git pull`` to pull in changes from remote. However, if your source
-code was downloaded, you will have to download the new source code again and manually
-overwrite the existing one.
 
-In rare cases, after updating the source code, command-line ``andes`` will complain
-about missing dependency. If this ever happens, it means the new ANDES has introduced
-new dependencies. In such cases, reinstall andes in the development mode to fix.
-Change directory to the ANDES source code folder that contains ``setup.py`` and run
+Troubleshooting
+===============
 
-.. code:: bash
+If you get an error message on Windows, reading ::
 
-    python3 -m pip install -e .
+    ImportError: DLL load failed: The specified module could not be found.
 
-Performance Packages
-====================
-.. note::
-
-    Performance packages can be safely skipped and will not affect the
-    functionality of ANDES.
-
-numba
------
-
-.. note::
-
-    Numba is supported starting from ANDES 1.5.0 and is automatically
-    installed for ANDES >=1.5.3.
-    Please refer to the following for turning on Numba.
-
-Numba is allows numerical functions calls to be compiled into machine code.
-It can accelerates simulations by as high as 30%.
-The speed up is visible in medium-scale systems with multiple models.
-Such systems involve heavy function calls but rather moderate load
-for linear equation solvers.
-It is is less significant in large-scale systems where
-solving equations is the major time consumer.
-
-
-To install ``numba``, run the following command in the terminal or Anaconda Prompt
-
-.. code:: bash
-
-    python -m pip install numba
-
-Numba needs to be turned on manually.
-Refer to the tutorial for editing ANDES configuration.
-To turn on numba for ANDES, in the ANDES configuration under ``[System]``,
-set ``numba = 1`` and ``numba_cache = 1``.
-
-Just-in-time compilation will compile the code upon the first execution
-based on the input types.
-When compilation is triggered, ANDES may appear frozen due to the compilation lag.
-The option ``numba_cache = 1`` will cache compiled machine code, so that
-the compilation lag only occurs once until the next code generation.
-
-Code can be compiled ahead of time with
-
-.. code:: bash
-
-    andes prep -c
-
-It may take a minute for the first time. Future compilations will be
-incremental and faster.
+It is a path issue of your Python. In fact, Python on Windows is so broken that
+many people are resorting to WSL2 just for Python. Fixes can be convoluted, but
+the easiest one is to install ANDES in a Conda/Mambaforge environment.

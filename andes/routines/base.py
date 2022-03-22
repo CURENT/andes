@@ -1,3 +1,7 @@
+"""
+Base class for ANDES calculation routines.
+"""
+
 from andes.linsolvers.solverbase import Solver
 from andes.core import Config
 from collections import OrderedDict
@@ -24,7 +28,8 @@ class BaseRoutine:
                               sparselib="linear sparse solver name",
                               linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
                               )
-        self.config.add_extra("_alt", sparselib=("klu", "umfpack", "spsolve", "cupy"),
+        self.config.add_extra("_alt",
+                              sparselib=("klu", "umfpack", "spsolve", "cupy"),
                               linsolve=(0, 1),
                               )
 

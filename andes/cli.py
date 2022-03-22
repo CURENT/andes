@@ -10,7 +10,6 @@ import sys
 from time import strftime
 
 from andes.shared import NCPUS_PHYSICAL
-from ._version import get_versions
 
 from andes.main import config_logger, find_log_path
 from andes.routines import routine_cli
@@ -26,8 +25,14 @@ command_aliases = {
 
 def create_parser():
     """
-    The main level of command-line interface.
+    Create a parser for the command-line interface.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser with all ANDES options
     """
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -36,16 +41,12 @@ def create_parser():
              'or 40-ERROR.',
         type=int, default=20, choices=(1, 10, 20, 30, 40))
 
-    parser.add_argument(
-        '--version', help='show version info and exit', action='store_true')
-
     sub_parsers = parser.add_subparsers(dest='command', help='[run] run simulation routine; '
                                                              '[plot] plot results; '
                                                              '[doc] quick documentation; '
                                                              '[misc] misc. functions; '
                                                              '[prepare] prepare the numerical code; '
                                                              '[selftest] run self test; '
-                                                             '[demo] show demos.',
                                         )
 
     run = sub_parsers.add_parser('run')
@@ -146,6 +147,7 @@ def create_parser():
                       help='Set configuration option specificied by '
                       'NAME.FIELD=VALUE with no space. For example, "TDS.tf=2"',
                       type=str, default='', nargs='*')
+    misc.add_argument('--version', action='store_true', help='Display version information')
 
     prep = sub_parsers.add_parser('prepare', aliases=command_aliases['prepare'])
     prep_mode = prep.add_mutually_exclusive_group()
@@ -196,15 +198,11 @@ def preamble():
 
 def main():
     """
-    Main command-line interface
+    Entry point of the ANDES command-line interface.
     """
 
     parser = create_parser()
     args = parser.parse_args()
-
-    if args.version is True:
-        versioninfo()
-        return
 
     # Set up logging
     config_logger(stream=True,
@@ -216,7 +214,7 @@ def main():
 
     module = importlib.import_module('andes.main')
 
-    if args.command in ('plot', 'doc'):
+    if args.command in ('plot', 'doc', 'misc'):
         pass
     elif args.command == 'run' and args.no_preamble is True:
         pass
@@ -235,30 +233,3 @@ def main():
 
         func = getattr(module, cmd)
         return func(cli=True, **vars(args))
-
-
-def versioninfo():
-    """
-    Print version info for ANDES and dependencies.
-    """
-
-    import numpy as np
-    import sympy
-    import scipy
-    import pandas
-    import matplotlib
-    import numba
-    import kvxopt
-    versions = {'Python': platform.python_version(),
-                'andes': get_versions()['version'],
-                'numpy': np.__version__,
-                'kvxopt': kvxopt.__version__,
-                'sympy': sympy.__version__,
-                'scipy': scipy.__version__,
-                'pandas': pandas.__version__,
-                'numba': numba.__version__,
-                'matplotlib': matplotlib.__version__,
-                }
-
-    for key, val in versions.items():
-        print("{:12s}  {:s}".format(key, val))

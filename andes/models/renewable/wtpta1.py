@@ -1,6 +1,7 @@
 from andes.core import (Algeb, ExtAlgeb, ExtParam, ExtService, ExtState,
                         IdxParam, Model, ModelData, NumParam,)
 from andes.core.block import LagAntiWindupRate, PIAWHardLimit
+from andes.core.service import PostInitService
 
 
 class WTPTA1Data(ModelData):
@@ -85,7 +86,7 @@ class WTPTA1Model(Model):
                             export=False,
                             )
 
-        self.wt = ExtAlgeb(model='RenGovernor', src='wt', indexer=self.rego,
+        self.wt = ExtState(model='RenGovernor', src='wt', indexer=self.rego,
                            export=False,
                            )
 
@@ -114,9 +115,10 @@ class WTPTA1Model(Model):
 
         self.wref = Algeb(tex_name=r'\omega_{ref}',
                           info='optional speed reference',
-                          e_str='wt - wref',
+                          e_str='wref0 - wref',
                           v_str='wt',
                           )
+        self.wref0 = PostInitService(v_str='wref', info='initial wref')
 
         self.PIw = PIAWHardLimit(u='Kcc * (Pord - Pref) + wt - wref', kp=self.Kpw, ki=self.Kiw,
                                  aw_lower=self.thmin, aw_upper=self.thmax,

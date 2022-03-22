@@ -214,8 +214,9 @@ def get_pkl_path():
 
 def get_dot_andes_path():
     """
-    Return the path to ``<HomeDir>/.andes``
+    Return the path to ``$HOME/.andes``
     """
+
     return os.path.join(str(pathlib.Path.home()), '.andes')
 
 
@@ -239,6 +240,10 @@ def get_log_dir():
 
 
 def confirm_overwrite(outfile, overwrite=None):
+    """
+    Confirm overwriting a file.
+    """
+
     try:
         if os.path.isfile(outfile):
             if overwrite is None:

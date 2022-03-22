@@ -1,5 +1,5 @@
 """
-The Andes plotting tool.
+The ANDES plotting tool.
 """
 
 import logging

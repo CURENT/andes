@@ -12,9 +12,9 @@ if not (os.path.isfile('modelref.rst') and os.path.isfile('configref.rst')):
 
     out = """.. _modelref:
 
-****************
-Model references
-****************
+***************
+Model reference
+***************
 
 Use the left navigation pane to locate the group and model
 and view details.
@@ -49,9 +49,9 @@ and view details.
 
     out = ''
     out += '.. _configref:\n\n'
-    out += '*****************\n'
-    out += 'Config references\n'
-    out += '*****************\n'
+    out += '****************\n'
+    out += 'Config reference\n'
+    out += '****************\n'
     out += '\n'
 
     out += ss.config.doc(export='rest', target=True, symbol=False)

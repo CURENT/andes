@@ -486,7 +486,7 @@ class Limiter(Discrete):
 
         Notes
         -----
-        This method is only available if `allow_adjust` is True
+        This method is only executed if `allow_adjust` is True
         and `adjust_lower` is True.
         """
 
@@ -527,7 +527,7 @@ class Limiter(Discrete):
 
         Notes
         -----
-        This method is only available if `allow_adjust` is True
+        This method is only executed if `allow_adjust` is True
         and `adjust_upper` is True.
         """
 

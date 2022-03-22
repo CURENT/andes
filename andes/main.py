@@ -1,5 +1,9 @@
 #!/bin/bash python
 
+"""
+Main entry point for the ANDES CLI and scripting interfaces.
+"""
+
 #  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -24,6 +28,8 @@ from subprocess import call
 from time import sleep
 from typing import Optional, Union
 
+from ._version import get_versions
+
 import andes
 from andes.routines import routine_cli
 from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
@@ -34,9 +40,9 @@ from andes.utils.paths import get_config_path, get_log_dir, tests_root
 logger = logging.getLogger(__name__)
 
 
-def config_logger(stream=True,
+def config_logger(stream_level=logging.INFO, *,
+                  stream=True,
                   file=True,
-                  stream_level=logging.INFO,
                   log_file='andes.log',
                   log_path=None,
                   file_level=logging.DEBUG,
@@ -671,7 +677,7 @@ def plot(**kwargs):
 
 
 def misc(edit_config='', save_config='', show_license=False, clean=True, recursive=False,
-         overwrite=None, **kwargs):
+         overwrite=None, version=False, **kwargs):
     """
     Miscellaneous commands.
     """
@@ -686,6 +692,14 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
         return
     if clean is True:
         remove_output(recursive)
+        return
+
+    if demo is True:
+        demo(**kwargs)
+        return
+
+    if version is True:
+        versioninfo()
         return
 
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
@@ -809,3 +823,29 @@ def demo(**kwargs):
     TODO: show some demonstrations from CLI.
     """
     raise NotImplementedError("Demos have not been implemented")
+
+
+def versioninfo():
+    """
+    Print version info for ANDES and dependencies.
+    """
+
+    import numpy as np
+    import sympy
+    import scipy
+    import pandas
+    import numba
+    import kvxopt
+    versions = {'Python': platform.python_version(),
+                'andes': get_versions()['version'],
+                'numpy': np.__version__,
+                'kvxopt': kvxopt.__version__,
+                'sympy': sympy.__version__,
+                'scipy': scipy.__version__,
+                'pandas': pandas.__version__,
+                'numba': numba.__version__,
+                }
+    maxwidth = max([len(k) for k in versions.keys()])
+
+    for key, val in versions.items():
+        print(f"{key: <{maxwidth}}  {val}")
