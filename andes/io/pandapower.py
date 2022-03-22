@@ -1,23 +1,30 @@
 """
 Simple pandapower (2.7.0) interface
 """
-import pandapower as pp
+
 from math import pi
 from numpy import sign
-import pandas as pd
+
+from andes.shared import pd
+import pandapower as pp
 
 
-def ssa_link(ssa):
+def make_link_table(ssa):
     """
-    Build the link table `ssa_key` of an ADNES system.
-
-    `ssa_key` contains the `idx` of linked `StaticGen`, `Bus`,
-    `SynGen`, `Exciter`, and `TurbineGov`.
+    Build the link table for generators and generator controllers in an ADNES
+    System.
 
     Parameters
     ----------
     ssa :
         The ADNES system to link
+
+    Returns
+    -------
+    DataFrame
+
+        Each column in the output Dataframe contains the ``idx`` of linked
+        ``StaticGen``, ``Bus``, ``SynGen``, ``Exciter``, and ``TurbineGov``.
     """
     # build StaticGen df
     sg_cols = ['idx', 'bus']
@@ -65,25 +72,36 @@ def ssa_link(ssa):
     return ssa_key
 
 
-def opp_res(ssp, ssa_key):
+def runopp_map(ssp, link_table, **kwargs):
     """
-    Build the pandapower resutls DataFrame `ssp_res` of a pandapower network.
-
-    `ssp_res` contains the OPF resutls `p_mw`, `q_mvar`, `vm_pu` in p.u., and
-    corresponding `idx` of `StaticGen`, `Exciter`, `TurbineGov` in ANDES.
-
-    NOTE: The pandapower net and the ssa should have same bsae mva.
+    Run OPF in pandapower using ``pp.runopp()`` and map results back to ANDES
+    based on the link table.
 
     Parameters
     ----------
-    ssp :
+    ssp : pandapower network
         The pandapower network
 
-    ssa_key : DataFrame
+    link_table : DataFrame
         The link table of ADNES system
+
+    Returns
+    -------
+    DataFrame
+
+        The DataFrame contains the OPF results with columns ``p_mw``,
+        ``q_mvar``, ``vm_pu`` in p.u., and the corresponding ``idx`` of
+        ``StaticGen``, ``Exciter``, ``TurbineGov`` in ANDES.
+
+    Notes
+    -----
+    The pandapower net and the ANDES system must have same base MVA.
     """
-    pp.runopp(ssp)
+
+    pp.runopp(ssp, **kwargs)
+    # take dispatch results from pp
     ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
+
     ssp_res = pd.merge(left=ssp_res,
                        right=ssp.gen[['name', 'bus']],
                        how='left', on='name')
@@ -92,7 +110,7 @@ def opp_res(ssp, ssa_key):
                                                                              'name': 'bus_name'}),
                        how='left', on='bus')
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssa_key[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
+                       right=link_table[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
                        how='left', on='bus_name')
     ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
@@ -100,7 +118,7 @@ def opp_res(ssp, ssa_key):
     return ssp_res[['name', 'p', 'q', 'vm_pu', 'bus', 'bus_name', 'gov_idx', 'stg_idx', 'exc_idx']]
 
 
-def ssp_cost(ssp, gen_cost):
+def add_gencost(ssp, gen_cost):
     """
     Add cost function to converted pandapower net `ssp`.
 
@@ -380,7 +398,7 @@ def to_pandapower(ssa, validate=True):
         tol = 1e-6
         if abs(pf_bus['v_diff'].max()) < tol:
             if abs(pf_bus['a_diff'].max()) < tol:
-                print("Power flow are consistent, conversion is successful.")
+                print("Power flow results are consistent, conversion is successful.")
         else:
-            print("Warning: Power flow are inconsistent, pleaes check!")
+            print("Warning: Power flow results are inconsistent, pleaes check!")
     return ssp
