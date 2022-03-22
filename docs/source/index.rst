@@ -32,14 +32,6 @@ differential-algebraic equation-based models. In this framework, a comprehensive
 second-generation renewable models. Models in ANDES have been :ref:`verified
 <verification>` with commercial software.
 
-..
-    ANDES has high computational performance and is close to that of commercial
-    tools. It is compatible with a variety of :ref:`input data formats
-    <input-formats>`, including PSS/E, MATPOWER, and Excel. Model documentation is
-    generated using symbolic equations, ensuring that it is always current with the
-    latest development.
-
-
 .. panels::
     :card: + intro-card text-center
     :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 d-flex
@@ -107,6 +99,15 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
             :type: ref
             :text: To the API reference
             :classes: btn-block btn-secondary stretched-link
+
+
+Please cite our paper [Cui2020]_ if ANDES is used in your research for
+publication.
+
+.. [Cui2020] H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework
+       for Power System Modeling and Analysis," in IEEE Transactions on Power
+       Systems, vol. 36, no. 2, pp. 1373-1384, March 2021, doi:
+       10.1109/TPWRS.2020.3017019.
 
 
 .. toctree::
