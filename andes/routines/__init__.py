@@ -1,3 +1,7 @@
+"""
+Package for ANDES analysis routines.
+"""
+
 from collections import OrderedDict
 from andes.utils.func import list_flatten
 
