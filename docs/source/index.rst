@@ -100,11 +100,16 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
             :text: To the API reference
             :classes: btn-block btn-secondary stretched-link
 
+    ---
+    :column: col-12 p-3
 
-Please cite our paper [Cui2020]_ if ANDES is used in your research for
-publication.
+    Using ANDES for Research?
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+    Please cite our paper [Cui2021]_ if ANDES is used in your research for
+    publication.
 
-.. [Cui2020] H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework
+
+.. [Cui2021] H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework
        for Power System Modeling and Analysis," in IEEE Transactions on Power
        Systems, vol. 36, no. 2, pp. 1373-1384, March 2021, doi:
        10.1109/TPWRS.2020.3017019.
