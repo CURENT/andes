@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.2 (2022-03-22)
+-------------------
+- Improved the formatting of Model references.
+
 v1.6.1 (2022-03-13)
 -------------------
 - Revamped documentation with a much improved "Getting started" section.
