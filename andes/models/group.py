@@ -1,4 +1,5 @@
 import logging
+import inspect
 from collections import OrderedDict
 
 import numpy as np
@@ -412,8 +413,8 @@ class GroupBase:
         else:
             out += group_header + f'Group <{self.class_name}>\n' + group_header
 
-        if self.__doc__:
-            out += str(self.__doc__) + '\n\n'
+        if self.__doc__ is not None:
+            out += inspect.cleandoc(self.__doc__) + '\n\n'
 
         if len(self.common_params):
             out += 'Common Parameters: ' + ', '.join(self.common_params)
