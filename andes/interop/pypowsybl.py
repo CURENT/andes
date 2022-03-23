@@ -3,7 +3,12 @@
 """
 
 import logging
-import pypowsybl as pp
+
+try:
+    import pypowsybl as pp
+except ImportError:
+    print("Please install pypowsybl to continue")
+    pp = None
 
 logger = logging.getLogger(__name__)
 

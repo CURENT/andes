@@ -4,13 +4,18 @@ Simple pandapower (2.7.0) interface
 
 import logging
 import numpy as np
-import pandapower as pp
-import andes
 
 from numpy import pi
 from andes.shared import pd, rad2deg, deg2rad
 
-logger = logging.getLogger('andes')
+try:
+    import pandapower as pp
+except ImportError:
+    print("Please install pandapower to continue")
+    pp = None
+
+
+logger = logging.getLogger(__name__)
 
 
 def make_link_table(ssa):
@@ -248,7 +253,7 @@ def to_pandapower(ssa, verify=True):
             type='ol',
             max_loading_percent=100,
             index=num,
-            )
+        )
 
     # --- 2b. transformer ---
     for num, uid in enumerate(ssa_line[~ssa_line.index.isin(index_line)].index):
@@ -305,16 +310,16 @@ def to_pandapower(ssa, verify=True):
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_pq["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_load(net=ssp,
-            name=ssa_pq["name"].iloc[uid],
-            bus=bus,
-            sn_mva=ssa_mva,
-            p_mw=ssa_pq['p_mw'].iloc[uid],
-            q_mvar=ssa_pq['q_mvar'].iloc[uid],
-            in_service=ssa_pq["u"].iloc[uid],
-            controllable=False,
-            index=uid,
-            type=None,
-            )
+                       name=ssa_pq["name"].iloc[uid],
+                       bus=bus,
+                       sn_mva=ssa_mva,
+                       p_mw=ssa_pq['p_mw'].iloc[uid],
+                       q_mvar=ssa_pq['q_mvar'].iloc[uid],
+                       in_service=ssa_pq["u"].iloc[uid],
+                       controllable=False,
+                       index=uid,
+                       type=None,
+                       )
 
     # 4) shunt
     ssa_shunt = ssa.Shunt.as_df().copy()
@@ -325,16 +330,16 @@ def to_pandapower(ssa, verify=True):
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_shunt["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_shunt(net=ssp,
-            bus=bus,
-            p_mw=ssa_shunt['p_mw'].iloc[uid],
-            q_mvar=ssa_shunt['q_mvar'].iloc[uid],
-            vn_kv=ssa_shunt["Vn"].iloc[uid],
-            step=1,
-            max_step=1,
-            name=ssa_shunt["name"].iloc[uid],
-            in_service=ssa_shunt["u"].iloc[uid],
-            index=uid,
-            )
+                        bus=bus,
+                        p_mw=ssa_shunt['p_mw'].iloc[uid],
+                        q_mvar=ssa_shunt['q_mvar'].iloc[uid],
+                        vn_kv=ssa_shunt["Vn"].iloc[uid],
+                        step=1,
+                        max_step=1,
+                        name=ssa_shunt["name"].iloc[uid],
+                        in_service=ssa_shunt["u"].iloc[uid],
+                        index=uid,
+                        )
 
     # 5) generator
     ssa_busn = ssa.Bus.as_df().copy().reset_index()[["uid", "idx"]].rename(
@@ -432,9 +437,9 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     pf_bus['a_diff'] = pf_bus['a_andes'] - pf_bus['a_pp']
 
     if (np.max(np.abs(pf_bus['v_diff'])) < tol) and \
-        (np.max(np.abs(pf_bus['a_diff'])) < tol):
-            logger.info("Power flow results are consistent. Conversion is successful.")
-            return True
+            (np.max(np.abs(pf_bus['a_diff'])) < tol):
+        logger.info("Power flow results are consistent. Conversion is successful.")
+        return True
     else:
         logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
         return False
