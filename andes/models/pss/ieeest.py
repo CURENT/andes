@@ -103,18 +103,20 @@ class IEEEST(IEEESTData, IEEESTModel):
 
     Input signals (MODE):
 
-    1 - Rotor speed deviation (p.u.),
-    2 - Bus frequency deviation (*) (p.u.),
-    3 - Generator P electrical in Gen MVABase (p.u.),
-    4 - Generator accelerating power (p.u.),
-    5 - Bus voltage (p.u.),
-    6 - Derivative of p.u. bus voltage.
+    1. Rotor speed deviation (p.u.),
+    2. Bus frequency deviation (p.u.) (*),
+    3. Generator P electrical in Gen MVABase (p.u.),
+    4. Generator accelerating power (p.u.),
+    5. Bus voltage (p.u.),
+    6. Derivative of p.u. bus voltage.
 
     (*) Due to the frequency measurement implementation difference,
     mode 2 is likely to yield different results across software.
 
-    Blocks are named `F1`, `F2`, `LL1`, `LL2` and `WO` in sequence.
-    Two limiters are named `VLIM` and `OLIM` in sequence.
+    .. note::
+
+        Blocks are named `F1`, `F2`, `LL1`, `LL2` and `WO` in sequence.
+        Two limiters are named `VLIM` and `OLIM` in sequence.
     """
 
     def __init__(self, system, config):
