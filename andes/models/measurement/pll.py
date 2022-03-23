@@ -84,11 +84,9 @@ class PLL1(PLL1Data, PLL1Model):
     """
     Simple Phasor Lock Loop (PLL) using one PI controller.
 
-    Input bus angle signal ->
-      Lag filter 1 with Tf ->
-      PI Controller (Kp, Ki) ->
-      Estimated angle (2 * pi * fn * PI_y) ->
-      Lag filter 2 with Tp
+    Input bus angle signal -> Lag filter 1 with Tf ->
+    PI Controller (Kp, Ki) -> Estimated angle (2 * pi * fn * PI_y) ->
+    Lag filter 2 with Tp
 
     The output signal is ``am``.
     """
