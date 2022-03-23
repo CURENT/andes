@@ -2,6 +2,7 @@
 Documenter class for ANDES models.
 """
 
+import inspect
 from collections import OrderedDict
 
 from andes.utils.tab import make_doc_table, math_wrap
@@ -391,10 +392,9 @@ class Documenter:
         else:
             out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
 
-        if self.__doc__ is not None:
-            if self.parent.__doc__ is not None:
-                out += self.parent.__doc__
-            out += '\n'  # this fixes the indentation for the next line
+        if self.parent.__doc__ is not None:
+            out += inspect.cleandoc(self.parent.__doc__)
+        out += '\n\n'  # this fixes the indentation for the next line
 
         # add tables
         out += self._param_doc(max_width=max_width, export=export)
