@@ -151,7 +151,7 @@ def add_gencost(ssp, gen_cost):
                                 cp1_eur_per_mw=gen_cost[num, 5],
                                 cp0_eur=gen_cost[num, 6])
         else:  # TODO: piecewise linear
-            pass
+            continue
             pp.create_pwl_cost(net=ssp,
                                element=uid,
                                et='gen',
@@ -183,6 +183,8 @@ def to_pandapower(ssa, verify=True):
         to add cost data.
       - ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
         to generators with ``controllable=True`` in pp's network.
+      - ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
+        is converted to generators with ``controllable=False`` in pp's network.
     """
 
     # create a PP network
@@ -212,14 +214,14 @@ def to_pandapower(ssa, verify=True):
     ssa_line = ssa.Line.as_df().merge(ssa_bus_slice, on='bus1', how='left')
 
     ssa_line['Zb'] = ssa_line["Vb"]**2 / ssa_line["Sn"]
+    ssa_line['Yb'] = ssa_line["Sn"] / ssa_line["Vb"]**2
     ssa_line['R'] = ssa_line["r"] * ssa_line['Zb']  # ohm
     ssa_line['X'] = ssa_line["x"] * ssa_line['Zb']  # ohm
     ssa_line['C'] = ssa_line["b"] / ssa_line['Zb'] / omega * 1e9  # nF
-    # TODO: why commented out?
-    # ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
+    ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
 
     # find index for transmission lines (i.e., non-transformers)
-    ssl = ssa_line.copy()  # TODO: no need to copy here as `ssl` is not modified
+    ssl = ssa_line
     ssl['uidx'] = ssl.index
     index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
     ll_ka = len(ssa_line) * [99999]  # set large line limits
@@ -272,7 +274,7 @@ def to_pandapower(ssa, verify=True):
         rk = ssa_line['r'].iloc[uid]
         xk = ssa_line['x'].iloc[uid]
         zk = (rk ** 2 + xk ** 2) ** 0.5
-        sn = 99999.0  # ssa_line['Sn'].iloc[uid]   # TODO ?
+        sn = 99999.0
         baseMVA = ssa_mva
 
         ratio_1 = (ssa_line['tap'].iloc[uid] - 1) * 100
@@ -429,7 +431,6 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     pf_bus['v_diff'] = pf_bus['v_andes'] - pf_bus['v_pp']
     pf_bus['a_diff'] = pf_bus['a_andes'] - pf_bus['a_pp']
 
-    # TODO: take abs first and then max
     if (np.max(np.abs(pf_bus['v_diff'])) < tol) and \
         (np.max(np.abs(pf_bus['a_diff'])) < tol):
             logger.info("Power flow results are consistent. Conversion is successful.")
