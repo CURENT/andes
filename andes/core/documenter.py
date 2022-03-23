@@ -388,7 +388,6 @@ class Documenter:
 
         if export == 'rest':
             out += model_header + f'{self.class_name}\n' + model_header
-            out += f'\nIn Group {self.parent.group}_\n\n'
         else:
             out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
 
