@@ -11,7 +11,7 @@ v1.6 Notes
 
 v1.6.2 (2022-03-22)
 -------------------
-- Improved the formatting of Model references.
+- Improved the formatting and navigation of Model references.
 
 v1.6.1 (2022-03-13)
 -------------------
