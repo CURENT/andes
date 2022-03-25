@@ -15,10 +15,12 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
+        # work around a pip issue with extras_require: https://github.com/pypa/pip/issues/8323
+        python -m pip install -U "pip @ git+https://github.com/pypa/pip.git"
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install -r requirements-dev.txt
-        python -m pip install .
+        python -m pip install .[interop]
         python -m pip install nbmake==0.10 pytest-xdist line_profiler  # add'l packages for notebook tests.
     - name: Lint with flake8 for pull requests
       if: github.event_name == 'pull_request'
