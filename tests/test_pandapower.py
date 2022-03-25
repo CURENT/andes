@@ -1,13 +1,13 @@
 """
-Test ANDES-pandapower interface.
+Test the ANDES-pandapower interface.
 """
 
 import unittest
 import numpy as np
-from andes.interop.pandapower import to_pandapower, make_link_table
-from math import pi
-import andes
 
+import andes
+from andes.shared import rad2deg
+from andes.interop.pandapower import to_pandapower, make_link_table
 
 try:
     import pandapower as pp
@@ -37,7 +37,7 @@ class TestPandapower(unittest.TestCase):
         pp.runpp(ssp)
 
         self.v_andes = ssa.Bus.v.v
-        self.a_andes = ssa.Bus.a.v * 180 / pi
+        self.a_andes = ssa.Bus.a.v * rad2deg
 
         self.v_pp = ssp.res_bus['vm_pu']
         self.a_pp = ssp.res_bus['va_degree']
@@ -48,6 +48,7 @@ class TestPandapower(unittest.TestCase):
         """
         Test `andes.interop.pandapower.to_pandapower`
         """
+
         np.testing.assert_almost_equal(self.v_andes, self.v_pp, decimal=6)
         np.testing.assert_almost_equal(self.a_andes, self.a_pp, decimal=6)
 
@@ -55,6 +56,7 @@ class TestPandapower(unittest.TestCase):
         """
         Test `andes.interop.pandapower.make_link_table`
         """
+
         ridx = self.link_table[self.link_table['syn_idx'] == 'GENROU_1'].index
         c_bus = self.link_table['bus_name'].iloc[ridx].astype(str) == 'BUS1'
         c_exc = self.link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
