@@ -58,8 +58,8 @@ setup(
     },
     install_requires=requirements,
     extras_require={
-        "interop": ["pandapower"],
-        },
+        "interop": ["pandapower", "pypowsybl"],
+    },
     license="GNU Public License v3",
     classifiers=[
         'Development Status :: 4 - Beta',
