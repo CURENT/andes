@@ -703,6 +703,9 @@ class Model:
         self.ii_args = OrderedDict()
         self.ij_args = OrderedDict()
 
+        self.coeffs = dict()  # pu conversion coefficient storage
+        self.bases = dict()   # base storage, such as Vn, Vb, Zn, Zb
+
     def _register_attribute(self, key, value):
         """
         Register a pair of attributes to the model instance.
