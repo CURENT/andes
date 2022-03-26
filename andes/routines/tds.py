@@ -328,7 +328,7 @@ class TDS(BaseRoutine):
                                 disable=self.config.no_tqdm)
         else:
             self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
-                            file=sys.stdout, disable=self.config.no_tqdm)
+                             file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
             perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)

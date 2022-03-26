@@ -26,6 +26,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as readme_file:
     readme = readme_file.read()
 
+
 def parse_requires(filename):
     with open(os.path.join(here, filename)) as requirements_file:
         reqs = [
@@ -33,6 +34,7 @@ def parse_requires(filename):
             if not line.startswith('#')
         ]
     return reqs
+
 
 def get_extra_requires(filename, add_all=True):
     """
