@@ -69,6 +69,7 @@ extras_require = get_extra_requires("requirements-extra.txt")
 
 # --- update `extras_conda` to include packages only available in PyPI ---
 extras_require["interop"].add("pypowsybl")
+extras_require["all"].add("pypowsybl")
 
 setup(
     name='andes',
