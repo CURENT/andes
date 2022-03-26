@@ -14,7 +14,7 @@ v1.6.2 (2022-03-22)
 - Added interoperability modules for pandapower and pypowsybl.
 - Improved the setup script to support extra dependencies. The following extras
   groups are supported: ``dev`` and ``interop``. See :ref:`Install_extras` for
-  more information.`
+  more information.
 
 Others:
 
