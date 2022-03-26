@@ -121,7 +121,7 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
    :hidden:
 
    getting_started/index
-   examples
+   examples/index
    modeling/index
    release-notes
    modelref
