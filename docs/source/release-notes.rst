@@ -18,6 +18,8 @@ v1.6.2 (2022-03-22)
 
 Others:
 
+- Added a shorthand command ``andes.system.example()`` to return a disposable
+  system. It can be useful for quick prototyping.
 - Improved the formatting and navigation of Model references.
 - Models store the base values for per-unit conversion in ``Model.bases``.
 
