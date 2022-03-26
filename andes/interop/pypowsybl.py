@@ -126,6 +126,9 @@ def _make_tline_tf(ss):
     tf_idx = ss.Line.get_tf_idx()
     tline_idx = ss.Line.get_tline_idx()
 
+    tline_pos = ss.Line.idx2uid(tline_idx)
+    tf_pos = ss.Line.idx2uid(tf_idx)
+
     transformers = pd.DataFrame.from_records(index='id', data={
         'id': ['{}'.format(i) for i in ss.Line.get("idx", tf_idx)],
         'name': ['{}'.format(i) for i in ss.Line.get("name", tf_idx)],
@@ -138,10 +141,10 @@ def _make_tline_tf(ss):
         'rated_u1': ss.Bus.get("Vn", ss.Line.get("bus1", tf_idx)),
         'rated_u2': ss.Bus.get("Vn", ss.Line.get("bus2", tf_idx)),
         'rated_s': 9999 * np.ones(len(tf_idx)),
-        'r': ss.Line.get("r", tf_idx),
-        'x': ss.Line.get("x", tf_idx),
-        'g': ss.Line.get("g", tf_idx),
-        'b': ss.Line.get("b", tf_idx),
+        'r': ss.Line.get("r", tf_idx) * ss.Line.bases['Zb'][tf_pos],
+        'x': ss.Line.get("x", tf_idx) * ss.Line.bases['Zb'][tf_pos],
+        'g': ss.Line.get("g", tf_idx) / ss.Line.bases['Zb'][tf_pos],
+        'b': ss.Line.get("b", tf_idx) / ss.Line.bases['Zb'][tf_pos],
     })
 
     lines = pd.DataFrame.from_records(index='id', data={
@@ -151,12 +154,12 @@ def _make_tline_tf(ss):
         'voltage_level2_id': ["VL{}".format(item) for item in ss.Line.get("bus2", tline_idx)],
         'bus1_id': ["{}".format(item) for item in ss.Line.get("bus1", tline_idx)],
         'bus2_id': ["{}".format(item) for item in ss.Line.get("bus2", tline_idx)],
-        'r': ss.Line.get("r", tline_idx),
-        'x': ss.Line.get("x", tline_idx),
-        'g1': ss.Line.get("g1", tline_idx),
-        'b1': ss.Line.get("b1", tline_idx),
-        'g2': ss.Line.get("g2", tline_idx),
-        'b2': ss.Line.get("b2", tline_idx),
+        'r': ss.Line.get("r", tline_idx) * ss.Line.bases['Zb'][tline_pos],
+        'x': ss.Line.get("x", tline_idx) * ss.Line.bases['Zb'][tline_pos],
+        'g1': ss.Line.get("g1", tline_idx) / ss.Line.bases['Zb'][tline_pos],
+        'b1': ss.Line.get("b1", tline_idx) / ss.Line.bases['Zb'][tline_pos],
+        'g2': ss.Line.get("g2", tline_idx) / ss.Line.bases['Zb'][tline_pos],
+        'b2': ss.Line.get("b2", tline_idx) / ss.Line.bases['Zb'][tline_pos],
     })
 
     return lines, transformers
@@ -168,8 +171,8 @@ def _make_loads(ss):
         'voltage_level_id': ["VL{}".format(item) for item in ss.PQ.bus.v],
         'id': ["{}".format(item) for item in ss.PQ.idx.v],
         'bus_id': ["{}".format(item) for item in ss.PQ.bus.v],
-        'p0': ss.PQ.p0.v,
-        'q0': ss.PQ.q0.v,
+        'p0': ss.PQ.p0.v * ss.config.mva,
+        'q0': ss.PQ.q0.v * ss.config.mva,
     })
 
     return loads
@@ -205,8 +208,8 @@ def _make_shunts(ss):
     shunt_model_df = pd.DataFrame.from_records(
         index='id',
         data={"id": [f"SHN{item}" for item in ss.Shunt.idx.v],
-              "g": ss.Shunt.g.v,
-              "b": ss.Shunt.b.v
+              "g": ss.Shunt.g.v / ss.Shunt.bases['Zb'],
+              "b": ss.Shunt.b.v / ss.Shunt.bases['Zb'],
               }
     )
 
