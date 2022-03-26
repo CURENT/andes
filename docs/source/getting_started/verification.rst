@@ -15,6 +15,6 @@ match for large systems with a variety of dynamic models.
 .. toctree::
    :maxdepth: 2
 
-   ../examples/verification/andes-ieee14-verification.ipynb
-   ../examples/verification/andes-npcc-verification.ipynb
-   ../examples/verification/andes-wecc-verification.ipynb
+   ../_examples/verification/andes-ieee14-verification.ipynb
+   ../_examples/verification/andes-npcc-verification.ipynb
+   ../_examples/verification/andes-wecc-verification.ipynb
