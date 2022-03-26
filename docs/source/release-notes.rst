@@ -11,7 +11,9 @@ v1.6 Notes
 
 v1.6.2 (2022-03-22)
 -------------------
+- Added interoperability modules for pandapower and pypowsybl.
 - Improved the formatting and navigation of Model references.
+- Models store the base values for per-unit conversion in ``Model.bases``.
 
 v1.6.1 (2022-03-13)
 -------------------
