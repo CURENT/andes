@@ -98,14 +98,14 @@ Install dependencies with
 .. code:: bash
 
     mamba install --file requirements.txt
-    mamba install --file requirements-dev.txt
+    mamba install --file requirements-extra.txt
 
 Alternatively, you can install them with ``pip``:
 
 .. code:: bash
 
     pip install -r requirements.txt
-    pip install -r requirements-dev.txt
+    pip install -r requirements-extra.txt
 
 Step 3: Install ANDES in the development mode using
 

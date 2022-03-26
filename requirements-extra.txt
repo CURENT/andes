@@ -1,0 +1,22 @@
+# FORMAT
+# Put your extra requirements here in the following format
+#
+# package[version_required]# tag1, tag2, ...
+#
+# Only one `#` is allowed per line. Lines start with `#` are ignored.
+
+codecov#                      dev
+coverage#                     dev
+pytest==7.0.1#                dev
+flake8#                       dev
+sphinx#                       dev, doc
+ipython#                      dev
+numpydoc#                     dev, doc
+sphinx-copybutton#            dev, doc
+sphinx-panels#                dev, doc
+pydata-sphinx-theme#          dev, doc
+myst-parser#                  dev, doc
+myst-nb#                      dev, doc
+pre-commit#                   dev
+
+pandapower#                   interop
