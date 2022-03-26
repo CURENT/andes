@@ -2,6 +2,7 @@
 AC transmission line and two-winding transformer line.
 """
 
+import numpy as np
 from andes.core import (ModelData, IdxParam, NumParam, DataParam,
                         Model, ExtAlgeb, ConstService)
 
@@ -191,3 +192,30 @@ class Line(LineData, Model):
         self.v2.e_str = 'u * (-v2 ** 2 * (bh + bhk) + \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) + \
                                          bhk * cos(a1 - a2 - phi)) * itap)'
+
+    @property
+    def istf(self):
+        """
+        Return an array of booleans to indicate whether or not the device is a
+        transformer.
+
+        A transformer has ``tap != 1`` or ``phi != 0``.
+        """
+        tap_istf = (self.tap.v) != 1
+        phi_istf = (self.phi.v) != 0
+
+        return np.logical_or(tap_istf, phi_istf)
+
+    def get_tline_idx(self):
+        """
+        Return ``idx`` of transmission lines and exclude transformers.
+        """
+
+        return np.array(self.idx.v)[np.logical_not(self.istf)]
+
+    def get_tf_idx(self):
+        """
+        Return ``idx`` of transformers and exclude lines.
+        """
+
+        return np.array(self.idx.v)[self.istf]
