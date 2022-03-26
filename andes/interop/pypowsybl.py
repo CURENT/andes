@@ -10,7 +10,6 @@ from andes.shared import pd
 try:
     import pypowsybl as pp
 except ImportError:
-    print("Please install pypowsybl to continue")
     pp = None
 
 logger = logging.getLogger(__name__)
@@ -53,6 +52,8 @@ def to_pypowsybl(ss):
         n.get_single_line_diagram("VL6")  # show single-line diagram for bus 6
 
     """
+    if pp is None:
+        raise ImportError("Please install pypowsybl.")
 
     substations, voltage_levels = _make_substation_voltage(ss)
     buses = _make_buses(ss)
