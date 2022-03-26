@@ -92,7 +92,7 @@ To install all extra packages, do:
 
     pip install andes[all]
 
-One can also inspect the ``requirements-extra.txt`` and identify the packages
+One can also inspect the ``requirements-extra.txt`` to identify the packages
 for manual installation.
 
 .. _Develop Install:
@@ -172,13 +172,8 @@ Note the dot at the end. Pip will take care of the rest.
 .. note::
 
     To install extra support packages, one can append ``[NAME_OF_EXTRA]`` to
-    ``pip install -e .``. For example,
-
-    .. code::bash
-
-        python3 -m pip install -e .[interop]
-
-    will install all packages for interoperability while installing ANDES in the
+    ``pip install -e .``. For example, ``pip install -e .[interop]`` will
+    install packages to support interoperability when installing ANDES in the
     development, editable mode.
 
 Updating ANDES
