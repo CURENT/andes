@@ -2,6 +2,7 @@
 Documenter class for ANDES models.
 """
 
+import inspect
 from collections import OrderedDict
 
 from andes.utils.tab import make_doc_table, math_wrap
@@ -71,8 +72,10 @@ class Documenter:
         if export == 'rest':
             symbols = [item.tex_name for item in self.params.values()]
             symbols = math_wrap(symbols, export=export)
+            title = 'Parameters\n----------'
         else:
             symbols = [item.name for item in self.params.values()]
+            title = 'Parameters'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Description', info),
@@ -88,7 +91,7 @@ class Documenter:
                                  ('Properties', properties)])
 
         # convert to rows and export as table
-        return make_doc_table(title='Parameters',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -118,10 +121,13 @@ class Documenter:
                     plist.append(item)
             properties.append(','.join(plist))
 
+        title = 'Variables'
+
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            title = 'Variables\n---------'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', ty),
@@ -136,7 +142,7 @@ class Documenter:
                                  ('Unit', units_rest),
                                  ('Properties', properties)])
 
-        return make_doc_table(title='Variables (States + Algebraics)',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -146,6 +152,7 @@ class Documenter:
         """
         Variable initialization docs.
         """
+
         if len(self.cache.all_vars) == 0:
             return ''
 
@@ -157,11 +164,13 @@ class Documenter:
             ty.append(p.class_name)
             ivs.append(p.v_str if p.v_str else '')
 
+        title = 'Initialization Equations'
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
             ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
+        title = 'Initialization Equations\n------------------------'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', ty),
@@ -174,7 +183,7 @@ class Documenter:
                                  ('Initial Value', ivs_rest),
                                  ])
 
-        return make_doc_table(title='Variable Initialization Equations',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -221,7 +230,7 @@ class Documenter:
                                       ('Type', class_names),
                                       (f'RHS of Equation "{e2form[e_name]}"', eqs),
                                       ])
-
+            title = f'{e2full[e_name]} Equations'
             if export == 'rest':
                 call_store = self.system.calls[self.class_name]
                 e2var_sym = {'f': call_store.x_latex,
@@ -231,6 +240,7 @@ class Documenter:
 
                 symbols = math_wrap(e2var_sym[e_name], export=export)
                 eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
+                title = f'{e2full[e_name]} Equations\n-----------------------------'
 
             rest_dict = OrderedDict([('Name', names),
                                      ('Symbol', symbols),
@@ -242,7 +252,7 @@ class Documenter:
                 plain_dict['T (LHS)'] = lhs_names
                 rest_dict['T (LHS)'] = math_wrap(lhs_tex_names, export=export)
 
-            out += make_doc_table(title=f'{e2full[e_name]} Equations',
+            out += make_doc_table(title=title,
                                   max_width=max_width,
                                   export=export,
                                   plain_dict=plain_dict,
@@ -263,10 +273,12 @@ class Documenter:
             symbols.append(p.tex_name if p.tex_name is not None else '')
             eqs.append(p.v_str if p.v_str else '')
 
+        title = 'Services'
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(symbols, export=export)
             eqs_rest = math_wrap(call_store.s_latex, export=export)
+            title = 'Services\n----------'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Equation', eqs),
@@ -277,7 +289,7 @@ class Documenter:
                                  ('Equation', eqs_rest),
                                  ('Type', class_names)])
 
-        return make_doc_table(title='Services',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -295,8 +307,11 @@ class Documenter:
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
 
+        title = 'Discretes'
         if export == 'rest':
             symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
+            title = 'Discretes\n-----------'
+
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', class_names),
                                   ('Info', info)])
@@ -306,7 +321,7 @@ class Documenter:
                                  ('Type', class_names),
                                  ('Info', info)])
 
-        return make_doc_table(title='Discrete',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -327,8 +342,10 @@ class Documenter:
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
 
+        title = 'Blocks'
         if export == 'rest':
             symbols = math_wrap([item.tex_name for item in self.blocks.values()], export=export)
+            title = 'Blocks\n-------'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', class_names),
@@ -339,7 +356,7 @@ class Documenter:
                                  ('Type', class_names),
                                  ('Info', info)])
 
-        return make_doc_table(title='Blocks',
+        return make_doc_table(title=title,
                               max_width=max_width,
                               export=export,
                               plain_dict=plain_dict,
@@ -371,14 +388,12 @@ class Documenter:
 
         if export == 'rest':
             out += model_header + f'{self.class_name}\n' + model_header
-            out += f'\nGroup {self.parent.group}_\n\n'
         else:
             out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
 
-        if self.__doc__ is not None:
-            if self.parent.__doc__ is not None:
-                out += self.parent.__doc__
-            out += '\n'  # this fixes the indentation for the next line
+        if self.parent.__doc__ is not None:
+            out += inspect.cleandoc(self.parent.__doc__)
+        out += '\n\n'  # this fixes the indentation for the next line
 
         # add tables
         out += self._param_doc(max_width=max_width, export=export)

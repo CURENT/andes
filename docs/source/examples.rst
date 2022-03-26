@@ -23,3 +23,4 @@ can run the examples in a live Jupyter Notebook online using
    examples/ex8.ipynb
    examples/ex9.ipynb
    examples/ex10.ipynb
+   examples/ex11.ipynb

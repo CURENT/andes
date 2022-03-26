@@ -14,3 +14,6 @@ To install dependencies for *development*, in the ANDES source code folder, do:
     pip install -e .[interop]
 
 """
+
+from andes.interop import pandapower  # NOQA
+from andes.interop import pypowsybl   # NOQA

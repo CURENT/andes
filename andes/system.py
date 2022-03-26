@@ -2053,13 +2053,24 @@ class System:
             A table-formatted string for the groups and models
         """
 
+        def rst_ref(name, export):
+            """
+            Refer to the model in restructuredText mode so that
+            it renders as a hyperlink.
+            """
+
+            if export == 'rest':
+                return ":ref:`" + name + '`'
+            else:
+                return name
+
         pairs = list()
         for g in self.groups:
             models = list()
             for m in self.groups[g].models:
-                models.append(m)
+                models.append(rst_ref(m, export))
             if len(models) > 0:
-                pairs.append((g, ', '.join(models)))
+                pairs.append((rst_ref(g, export), ', '.join(models)))
 
         tab = Tab(title='Supported Groups and Models',
                   header=['Group', 'Models'],

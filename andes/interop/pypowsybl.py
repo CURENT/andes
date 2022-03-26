@@ -3,10 +3,15 @@ Interoperability with pypowsybl.
 """
 
 import logging
-import pypowsybl as pp
 import numpy as np
 
 from andes.shared import pd
+
+try:
+    import pypowsybl as pp
+except ImportError:
+    print("Please install pypowsybl to continue")
+    pp = None
 
 logger = logging.getLogger(__name__)
 
