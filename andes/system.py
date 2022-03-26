@@ -940,7 +940,7 @@ class System:
 
             # store coeffs and bases back in models.
             mdl.coeffs = coeffs
-            mdl.bases = {'Sn': Sn, 'Sb': Sb, 'Vn': Vn, 'Vb': Vb, 'Zn': Zn, 'Zb': Zb,}
+            mdl.bases = {'Sn': Sn, 'Sb': Sb, 'Vn': Vn, 'Vb': Vb, 'Zn': Zn, 'Zb': Zb}
 
     def l_update_var(self, models: OrderedDict, niter=None, err=None):
         """
