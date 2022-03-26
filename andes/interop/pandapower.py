@@ -17,7 +17,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def make_link_table(ssa, ctrl=[]):
+def make_link_table(ssa):
     """
     Build the link table for generators and generator controllers in an ADNES
     System.
@@ -26,11 +26,6 @@ def make_link_table(ssa, ctrl=[]):
     ----------
     ssa :
         The ADNES system to link
-    ctrl : list
-        The controlability of generators. The length should be the same with the
-        number of ``StaticGen``.
-        If not given, controllability of generators will be assigned by default.
-        Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
 
     Returns
     -------
@@ -38,16 +33,6 @@ def make_link_table(ssa, ctrl=[]):
 
         Each column in the output Dataframe contains the ``idx`` of linked
         ``StaticGen``, ``Bus``, ``SynGen``, ``Exciter``, and ``TurbineGov``.
-
-    Notes
-    -----
-    It is unpratical
-
-
-
-    Handling of the following parameters:
-
-      - By default, ``StaticGen`` linked with ``TurbineGov`` is set ``ctrl=True``.
     """
     # build StaticGen df
     sg_cols = ['name', 'idx', 'bus']
@@ -92,14 +77,7 @@ def make_link_table(ssa, ctrl=[]):
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syn_idx'}),
                        how='left',
                        on='syn_idx')
-    if ctrl:
-        if len(ctrl) != len(ctrl):
-            raise ValueError("ctrl length does not match StaticGen length")
-        ctrl = [bool(x) for x in ctrl]
-    else:
-        ctrl = [not x for x in ssa_key['gov_idx'].isna()]
-    ssa_key['ctrl'] = ctrl
-    cols = ['stg_name', 'ctrl', 'stg_idx', 'bus_idx', 'syn_idx', 'exc_idx', 'gov_idx', 'bus_name']
+    cols = ['stg_name', 'stg_idx', 'bus_idx', 'syn_idx', 'exc_idx', 'gov_idx', 'bus_name']
     return ssa_key[cols]
 
 
@@ -408,7 +386,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
             raise ValueError("ctrl length does not match StaticGen length")
         ssa_sg_ctr["ctrl"] = [bool(x) for x in ctrl]
     else:
-        ssa_sg_ctr["ctrl"] = make_link_table(ssa)["ctrl"]
+        ssa_sg_ctr["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].isna()]
     ssa_sg = ssa_sg.merge(ssa_sg_ctr[["bus_idx", "ctrl"]], on="bus_idx", how="left")
 
     # assign slack bus
