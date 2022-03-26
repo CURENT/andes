@@ -112,19 +112,20 @@ def runopp_map(ssp, link_table, **kwargs):
     ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
 
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.gen[['name', 'bus']],
+                       right=ssp.gen[['name', 'bus', 'controllable']],
                        how='left', on='name')
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.bus[['name']].reset_index().rename(columns={'index': 'bus',
-                                                                             'name': 'bus_name'}),
+                       right=ssp.bus[['name']].reset_index().rename(
+                           columns={'index': 'bus', 'name': 'bus_name'}),
                        how='left', on='bus')
     ssp_res = pd.merge(left=ssp_res,
-                       right=link_table[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
+                       right=link_table[['bus_name', 'bus_idx', 'syn_idx', 'gov_idx', 'stg_idx', 'exc_idx']],
                        how='left', on='bus_name')
     ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
-
-    return ssp_res[['name', 'p', 'q', 'vm_pu', 'bus', 'bus_name', 'gov_idx', 'stg_idx', 'exc_idx']]
+    col = ['name', 'p', 'q', 'vm_pu', 'bus_name', 'bus_idx',
+           'controllable', 'syn_idx', 'gov_idx', 'exc_idx', 'stg_idx']
+    return ssp_res[col]
 
 
 def add_gencost(ssp, gen_cost):
