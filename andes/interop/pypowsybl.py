@@ -1,5 +1,5 @@
 """
-[WIP] Interoperability with pypowsybl.
+Interoperability with pypowsybl.
 """
 
 import logging
@@ -15,14 +15,37 @@ def to_pypowsybl(ss):
     """
     Convert an ANDES system to a pypowsybl network.
 
+    Returns
+    -------
+    pypowsybl.network.Network
+
     Parameters
     ----------
     ss : andes.system.System
         The ANDES system to be converted.
 
-    Returns
-    -------
-    pypowsybl.network.Network
+    Notes
+    -----
+    - Only the BUS_BREAKER topology is supported.
+    - Each bus has a voltage level named "VL" followed by the bus idx.
+    - Buses connected by transformers are in the same substation.
+
+    Warnings
+    --------
+    - Power flow results are not verified.
+
+    Examples
+    --------
+    One can utilize pypowsybl to draw network topology. For example,
+
+    .. code:: python
+
+        ss = andes.system.example()
+        n = to_pypowsybl(ss)
+        results = pp.loadflow.run_ac(n)
+
+        n.get_network_area_diagram()  # show diagram for system
+        n.get_single_line_diagram("VL6")  # show single-line diagram for bus 6
 
     """
 
