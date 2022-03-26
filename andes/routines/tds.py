@@ -14,7 +14,7 @@ from andes.routines.daeint import method_map, Trapezoid
 
 from andes.utils.misc import elapsed, is_notebook, is_interactive
 from andes.utils.tab import Tab
-from andes.shared import tqdm, np, pd
+from andes.shared import tqdm, tqdm_nb, np, pd
 from andes.shared import matrix, spdiag
 
 logger = logging.getLogger(__name__)
@@ -323,8 +323,12 @@ class TDS(BaseRoutine):
             logger.debug("Initialization only is requested and done")
             return self.initialized
 
-        self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
-                         file=sys.stdout, disable=self.config.no_tqdm)
+        if is_notebook():
+            self.pbar = tqdm_nb(total=100, unit='%', file=sys.stdout,
+                                disable=self.config.no_tqdm)
+        else:
+            self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
+                             file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
             perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)

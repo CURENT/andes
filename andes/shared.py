@@ -57,6 +57,7 @@ for jname in jac_names:
 
 # --- lazy import packages ---
 tqdm = LazyImport('from tqdm import tqdm')
+tqdm_nb = LazyImport('from tqdm.notebook import tqdm')
 
 pd = LazyImport('import pandas')
 numba = LazyImport('import numba')

@@ -11,7 +11,6 @@ from andes.shared import pd, rad2deg, deg2rad
 try:
     import pandapower as pp
 except ImportError:
-    print("Please install pandapower to continue")
     pp = None
 
 
@@ -219,6 +218,8 @@ def to_pandapower(ssa, ctrl=[], verify=True):
       - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
         is converted to generators with ``controllable=False`` in pp's network.
     """
+    if pp is None:
+        raise ImportError("Please install pandapower to continue")
 
     # create a PP network
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,

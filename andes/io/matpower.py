@@ -199,8 +199,8 @@ def read(system, file):
         #  0     1      2   3   4     5       6       7       8      9
         # status	angmin	angmax	Pf	Qf	Pt	Qt
         #   10       11       12    13  14  15  16
-        fbus = data[0]
-        tbus = data[1]
+        fbus = int(data[0])
+        tbus = int(data[1])
         r = data[2]
         x = data[3]
         b = data[4]
