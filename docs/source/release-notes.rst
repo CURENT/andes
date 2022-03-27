@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
-v1.6.2 (2022-03-22)
+v1.6.2 (2022-03-27)
 -------------------
 Interoperability:
 
@@ -19,6 +19,7 @@ Interoperability:
 - Improved the setup script to support extra dependencies. The following extras
   groups are supported: ``dev`` and ``interop``. See :ref:`Install_extras` for
   more information.
+- Added tests for power flow calculation against MATPOWER.
 
 Others:
 
