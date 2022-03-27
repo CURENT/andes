@@ -14,9 +14,10 @@ Summary
 =======
 
 Below is a summary of the folders and the corresponding test cases. Some folders
-contain a README file. When viewing on GitHub, the README is automatically
-rendered in the folder for quick reference.
+contain a README file with notes. When viewing the case folder on GitHub, one
+can conveniently read the README file below the file listing.
 
+- ``smib``: single machine infinite bus (SMIB) system [Sauer]_.
 - ``5bus``: a small PJM 5-bus test case for power flow study [PJM5]_.
 - ``GBnetwork``: a 2,000-bus system for the Great Britain network [GB]_. Dynamic
   data is randomly generated.
@@ -123,9 +124,9 @@ contribute new test cases. Please follow the structure in the ``cases`` folder
 and provide an example Jupyter notebook (see ``examples/demonstration``) to
 showcase the results of your system.
 
-..
-    todo: verification
-
+.. [Sauer] P. W. Sauer, M. A. Pai, and J. H. Chow, Power system dynamics
+        and stability: with synchrophasor measurement and power system toolbox,
+        Second edition. Hoboken, NJ, USA: IEEE Press, Wiley, 2017.
 .. [PJM5] F. Li and R. Bo, "Small test systems for power system economic
         studies," IEEE PES General Meeting, 2010, pp. 1-4, doi:
         10.1109/PES.2010.5589973.
