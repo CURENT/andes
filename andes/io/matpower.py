@@ -4,8 +4,8 @@ import logging
 import re
 
 import andes.io
-
-from andes.shared import deg2rad, np
+import numpy as np
+from andes.shared import deg2rad
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,35 @@ def read(system, file):
     Read a MATPOWER data file into mpc, and build andes device elements.
     """
 
+    mpc = m2mpc(file)
+    return mpc2system(system, mpc)
+
+
+def m2mpc(infile: str) -> dict:
+    """
+    Parse MATPOWER file and return a dictionary with the data.
+
+    Supported fields include
+
+    - baseMVA
+    - bus
+    - bus_names
+    - gen
+    - branch
+    - gencost (parsed but not used)
+    - areas (parsed but not used)
+
+    Parameters
+    ----------
+    infile : str
+        Path to the MATPOWER file.
+
+    Returns
+    -------
+    dict
+        mpc struct names : numpy arrays
+    """
+
     func = re.compile(r'function\s')
     mva = re.compile(r'\s*mpc.baseMVA\s*=\s*')
     bus = re.compile(r'\s*mpc.bus\s*=\s*\[?')
@@ -36,12 +65,12 @@ def read(system, file):
     end = re.compile(r'\s*\];?')
     has_digit = re.compile(r'.*\d+\s*]?;?')
 
-    ret = True
     field = None
     info = True
 
-    base_mva = 100
     mpc = {
+        'version': 2,  # not in use
+        'baseMVA': 100,
         'bus': [],
         'gen': [],
         'branch': [],
@@ -50,7 +79,7 @@ def read(system, file):
         'bus_name': [],
     }
 
-    input_list = andes.io.read_file_like(file)
+    input_list = andes.io.read_file_like(infile)
 
     for line in input_list:
         line = line.strip().rstrip(';')
@@ -65,7 +94,7 @@ def read(system, file):
             else:
                 continue
         elif mva.search(line):
-            base_mva = float(line.split('=')[1])
+            mpc["baseMVA"] = float(line.split('=')[1])
 
         if not field:
             if bus.search(line):
@@ -110,19 +139,42 @@ def read(system, file):
                     try:
                         data = np.array([float(val) for val in item.split()])
                     except Exception as e:
-                        logger.error(f'Error parsing {system.files.case}')
+                        logger.error('Error parsing ', infile)
                         raise e
                     mpc[field].append(data)
 
     # convert mpc to np array
     mpc_array = dict()
     for key, val in mpc.items():
-        mpc_array[key] = np.array(val)
+        if isinstance(val, (float, int)):
+            mpc_array[key] = val
+        else:
+            mpc_array[key] = np.array(val)
+
+    return mpc_array
+
+
+def mpc2system(system, mpc: dict) -> bool:
+    """
+    Load an mpc dict into an empty ANDES system.
+
+    Parameters
+    ----------
+    system : andes.system.System
+        Empty system to load the data into.
+    mpc : dict
+        mpc struct names : numpy arrays
+
+    Returns
+    -------
+    bool
+        True if successful, False otherwise.
+    """
 
     # list of buses with slack gen
     sw = []
 
-    system.mva = base_mva
+    system.config.mva = base_mva = mpc['baseMVA']
 
     for data in mpc['bus']:
         # idx  ty   pd   qd  gs  bs  area  vmag  vang  baseKV  zone  vmax  vmin
@@ -230,4 +282,4 @@ def read(system, file):
     if len(mpc['bus_name']) == len(system.Bus.name.v):
         system.Bus.name.v[:] = mpc['bus_name']
 
-    return ret
+    return True
