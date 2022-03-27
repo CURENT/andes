@@ -311,6 +311,8 @@ def _get_bus_id_caller(bus):
 def system2mpc(system) -> dict:
     """
     Convert data from an ANDES system to an mpc dict.
+
+    In the ``gen`` section, slack generators preceeds PV generators.
     """
 
     mpc = dict(version='2',
@@ -355,16 +357,16 @@ def system2mpc(system) -> dict:
     if system.PV.n > 0:
         pv_pos = system.Bus.idx2uid(system.PV.bus.v)
         bus[pv_pos, 1] = 2
-        gen[:system.PV.n, 0] = to_busid(system.PV.bus.v)
-        gen[:system.PV.n, 1] = system.PV.p0.v * base_mva
-        gen[:system.PV.n, 2] = system.PV.q0.v * base_mva
-        gen[:system.PV.n, 3] = system.PV.qmax.v * base_mva
-        gen[:system.PV.n, 4] = system.PV.qmin.v * base_mva
-        gen[:system.PV.n, 5] = system.PV.v0.v
-        gen[:system.PV.n, 6] = base_mva
-        gen[:system.PV.n, 7] = system.PV.u.v
-        gen[:system.PV.n, 8] = system.PV.pmax.v * base_mva
-        gen[:system.PV.n, 9] = system.PV.pmin.v * base_mva
+        gen[system.Slack.n:, 0] = to_busid(system.PV.bus.v)
+        gen[system.Slack.n:, 1] = system.PV.p0.v * base_mva
+        gen[system.Slack.n:, 2] = system.PV.q0.v * base_mva
+        gen[system.Slack.n:, 3] = system.PV.qmax.v * base_mva
+        gen[system.Slack.n:, 4] = system.PV.qmin.v * base_mva
+        gen[system.Slack.n:, 5] = system.PV.v0.v
+        gen[system.Slack.n:, 6] = base_mva
+        gen[system.Slack.n:, 7] = system.PV.u.v
+        gen[system.Slack.n:, 8] = system.PV.pmax.v * base_mva
+        gen[system.Slack.n:, 9] = system.PV.pmin.v * base_mva
 
     # --- Slack ---
     if system.Slack.n > 0:
@@ -372,16 +374,16 @@ def system2mpc(system) -> dict:
         bus[slack_pos, 1] = 3
         bus[slack_pos, 8] = system.Slack.a0.v
 
-        gen[system.PV.n:, 0] = to_busid(system.Slack.bus.v)
-        gen[system.PV.n:, 1] = system.Slack.p0.v * base_mva
-        gen[system.PV.n:, 2] = system.Slack.q0.v * base_mva
-        gen[system.PV.n:, 3] = system.Slack.qmax.v * base_mva
-        gen[system.PV.n:, 4] = system.Slack.qmin.v * base_mva
-        gen[system.PV.n:, 5] = system.Slack.v0.v
-        gen[system.PV.n:, 6] = base_mva
-        gen[system.PV.n:, 7] = system.Slack.u.v
-        gen[system.PV.n:, 8] = system.Slack.pmax.v * base_mva
-        gen[system.PV.n:, 9] = system.Slack.pmin.v * base_mva
+        gen[:system.Slack.n, 0] = to_busid(system.Slack.bus.v)
+        gen[:system.Slack.n, 1] = system.Slack.p0.v * base_mva
+        gen[:system.Slack.n, 2] = system.Slack.q0.v * base_mva
+        gen[:system.Slack.n, 3] = system.Slack.qmax.v * base_mva
+        gen[:system.Slack.n, 4] = system.Slack.qmin.v * base_mva
+        gen[:system.Slack.n, 5] = system.Slack.v0.v
+        gen[:system.Slack.n, 6] = base_mva
+        gen[:system.Slack.n, 7] = system.Slack.u.v
+        gen[:system.Slack.n, 8] = system.Slack.pmax.v * base_mva
+        gen[:system.Slack.n, 9] = system.Slack.pmin.v * base_mva
 
     if system.Line.n > 0:
         branch = mpc['branch']
