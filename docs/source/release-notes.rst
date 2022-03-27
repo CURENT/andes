@@ -11,7 +11,11 @@ v1.6 Notes
 
 v1.6.2 (2022-03-22)
 -------------------
-- Added interoperability modules for pandapower and pypowsybl.
+Interoperability:
+
+- Added interoperability modules for MATPOWER (through Oct2Py), pandapower and
+  pypowsybl.
+- Added Examples and API reference for the interoperability module.
 - Improved the setup script to support extra dependencies. The following extras
   groups are supported: ``dev`` and ``interop``. See :ref:`Install_extras` for
   more information.
