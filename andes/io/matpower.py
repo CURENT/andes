@@ -148,8 +148,12 @@ def m2mpc(infile: str) -> dict:
     for key, val in mpc.items():
         if isinstance(val, (float, int)):
             mpc_array[key] = val
-        else:
+        elif isinstance(val, list):
+            if len(val) == 0:
+                continue
             mpc_array[key] = np.array(val)
+        else:
+            raise NotImplementedError("Unkonwn type for mpc, ", type(val))
 
     return mpc_array
 
