@@ -389,7 +389,7 @@ class TDS(BaseRoutine):
                     break
 
         self.pbar.close()
-        delattr(self, 'pbar')  # removed `pbar` so that System object can be serialized
+        self.pbar = None  # removed `pbar` so that System object can be serialized
 
         if self.busted:
             logger.error(self.err_msg)
