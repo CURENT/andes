@@ -165,12 +165,13 @@ class Documenter:
             ivs.append(p.v_str if p.v_str else '')
 
         title = 'Initialization Equations'
+        
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
             call_store = self.system.calls[self.class_name]
             symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
             ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
-        title = 'Initialization Equations\n------------------------'
+            title = 'Initialization Equations\n------------------------'
 
         plain_dict = OrderedDict([('Name', names),
                                   ('Type', ty),
