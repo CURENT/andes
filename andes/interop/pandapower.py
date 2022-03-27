@@ -156,12 +156,10 @@ def add_gencost(ssp, gen_cost):
                                 cp2_eur_per_mw2=gen_cost[num, 4],
                                 cp1_eur_per_mw=gen_cost[num, 5],
                                 cp0_eur=gen_cost[num, 6])
-        else:  # TODO: piecewise linear
+        else:
+            # TODO: piecewise linear
             continue
-            pp.create_pwl_cost(net=ssp,
-                               element=uid,
-                               et='gen',
-                               )
+
     return True
 
 
