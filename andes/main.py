@@ -1,5 +1,9 @@
 #!/bin/bash python
 
+"""
+Main entry point for the ANDES CLI and scripting interfaces.
+"""
+
 #  [ANDES] (C)2015-2021 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -578,8 +582,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
     """
 
-    if is_interactive() and len(logger.handlers) == 0:
-        config_logger(file=False, stream_level=verbose)
+    if is_interactive():
+        config_logger(verbose, file=False)
 
     # put `input_path` back to `kwargs`
     kwargs['input_path'] = input_path

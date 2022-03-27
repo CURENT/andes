@@ -121,7 +121,7 @@ class WTDTA1Model(Model):
 
         self.wg = AliasState(self.s2_y, tex_name=r'\omega_g')
 
-        # TODO: `s3_y` needs to be properly reinitialized with the new `wr0`
+        # `s3_y` gets reinitialized in `WTTQA1`
         self.s3 = Integrator(u='s1_y - s2_y',
                              T=1.0,
                              K=self.Kshaft,

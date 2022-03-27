@@ -66,8 +66,7 @@ set up your fork for local development::
 
     $ mkvirtualenv andes
     $ cd andes/
-    $ python setup.py develop
-    $ pip install requirements-dev.txt
+    $ pip install -e .[dev]
 
 4. Create a branch for local development::
 

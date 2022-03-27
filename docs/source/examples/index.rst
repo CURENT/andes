@@ -12,14 +12,23 @@ can run the examples in a live Jupyter Notebook online using
 
 .. toctree::
    :maxdepth: 2
+   :caption: Scripting
 
-   examples/ex1.ipynb
-   examples/ex2.ipynb
-   examples/ex3.ipynb
-   examples/ex4.ipynb
-   examples/ex5.ipynb
-   examples/ex6.ipynb
-   examples/ex7.ipynb
-   examples/ex8.ipynb
-   examples/ex9.ipynb
-   examples/ex10.ipynb
+   ../_examples/ex1.ipynb
+   ../_examples/ex2.ipynb
+   ../_examples/ex3.ipynb
+   ../_examples/ex4.ipynb
+   ../_examples/ex5.ipynb
+   ../_examples/ex6.ipynb
+   ../_examples/ex7.ipynb
+   ../_examples/ex8.ipynb
+   ../_examples/ex9.ipynb
+   ../_examples/ex10.ipynb
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Interoperability
+
+   matpower.ipynb
+   pandapower.ipynb
+   pypowsybl.ipynb

@@ -63,7 +63,7 @@ coverage.xml
 docs/source/modelref.rst
 docs/source/configref.rst
 docs/source/groupdoc
-docs/source/examples
+docs/source/_examples
 docs/build/
 docs/jupyter_execute/
 docs/source/_build/

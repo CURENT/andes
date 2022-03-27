@@ -1,3 +1,7 @@
+"""
+A new PSS/E parser. NOT CURRENTLY IN USE.
+"""
+
 from andes.io.em_psse import parse_raw
 
 import logging

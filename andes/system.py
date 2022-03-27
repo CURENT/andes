@@ -880,9 +880,12 @@ class System:
         """
         Perform per unit value conversion.
 
-        This function calculates the per unit conversion factors, stores input parameters to `vin`, and perform
-        the conversion.
+        This function calculates the per unit conversion factors, stores input
+        parameters to `vin`, and perform the conversion.
         """
+        # `Sb`, `Vb` and `Zb` are the system base, bus base values
+        # `Sn`, `Vn` and `Zn` are the device bases
+
         Sb = self.config.mva
 
         for mdl in self.models.values():
@@ -934,6 +937,10 @@ class System:
             for prop, coeff in coeffs.items():
                 for p in mdl.find_param(prop).values():
                     p.set_pu_coeff(coeff)
+
+            # store coeffs and bases back in models.
+            mdl.coeffs = coeffs
+            mdl.bases = {'Sn': Sn, 'Sb': Sb, 'Vn': Vn, 'Vb': Vb, 'Zn': Zn, 'Zb': Zb}
 
     def l_update_var(self, models: OrderedDict, niter=None, err=None):
         """
@@ -2046,13 +2053,24 @@ class System:
             A table-formatted string for the groups and models
         """
 
+        def rst_ref(name, export):
+            """
+            Refer to the model in restructuredText mode so that
+            it renders as a hyperlink.
+            """
+
+            if export == 'rest':
+                return ":ref:`" + name + '`'
+            else:
+                return name
+
         pairs = list()
         for g in self.groups:
             models = list()
             for m in self.groups[g].models:
-                models.append(m)
+                models.append(rst_ref(m, export))
             if len(models) > 0:
-                pairs.append((g, ', '.join(models)))
+                pairs.append((rst_ref(g, export), ', '.join(models)))
 
         tab = Tab(title='Supported Groups and Models',
                   header=['Group', 'Models'],
@@ -2203,3 +2221,21 @@ def _set_z_name(mdl, dae, dests):
                 dests[0].append(f'{name} {_append_model_name(mdl_name, idx_item)}')
                 dests[1].append(rf'${item.tex_name}$ {_append_model_name(mdl_name, idx_item)}')
                 dae.o += 1
+
+
+def example(setup=True, no_output=True, **kwargs):
+    """
+    Return an :py:class:`andes.system.System` object for the
+    ``ieee14_linetrip.xlsx`` as an example.
+
+    This function is useful when a user wants to quickly get a
+    System object for testing.
+
+    Returns
+    -------
+    System
+        An example :py:class:`andes.system.System` object.
+    """
+
+    return andes.load(andes.get_case("ieee14/ieee14_linetrip.xlsx"),
+                      setup=setup, no_output=no_output, **kwargs)

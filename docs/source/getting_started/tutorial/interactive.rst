@@ -101,13 +101,12 @@ Naming convention for the ``System`` attributes are as follows
   ``ss.PFlow`` and ``ss.TDS`` are the routine instances.
 - The numerical DAE instance is in lower case ``ss.dae``.
 
-To work with PSS/E inputs, refer to notebook `Example 2`_.
-
-.. _`Example 2`: https://github.com/cuihantao/andes/blob/master/examples/2.%20inspect_data.ipynb
+To work with PSS/E inputs, refer to :ref:`scripting_examples` - "Working with
+Data".
 
 .. note::
     :py:mod:`andes.main.run` can accept multiple input files for multiprocessing.
-    They can passe through the first positional argument as a list of strings.
+    They can be passed as a list of strings to the first positional argument.
 
 Passing options
 ...............
@@ -374,6 +373,11 @@ Dataframes are stored in the following fields of ``ss.dae.ts``:
 
 For both dataframes, time is the index column, and each column correspond to one
 variable.
+
+.. note::
+
+    Looking to extract data for a single variable? See :ref:`scripting_examples`
+    - "Working with Data".
 
 Pretty Print of Equations
 ----------------------------------------

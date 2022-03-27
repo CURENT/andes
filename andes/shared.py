@@ -36,6 +36,7 @@ NCPUS_PHYSICAL = psutil.cpu_count(logical=False)
 
 # --- MATH CONSTANTS ---
 deg2rad = math.pi/180
+rad2deg = 180 / math.pi
 pi2o3 = math.pi * 2 / 3
 sqrt3 = math.sqrt(3)
 isqrt3 = math.sqrt(1/3)
@@ -56,6 +57,7 @@ for jname in jac_names:
 
 # --- lazy import packages ---
 tqdm = LazyImport('from tqdm import tqdm')
+tqdm_nb = LazyImport('from tqdm.notebook import tqdm')
 
 pd = LazyImport('import pandas')
 numba = LazyImport('import numba')

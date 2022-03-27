@@ -59,6 +59,42 @@ Activate the new environment with
 If these steps complete without error, you now have a working Python environment.
 See the commands at the top to :ref:`getting-started` ANDES.
 
+.. _Install_extras:
+
+Extra support package
+=====================
+
+Some ANDES features require extra support packages, which are not installed by
+default. For example, to build the documentation, one will need to install
+development packages. Other packages will be required for interoperability.
+
+The extra support packages are specified in groups. The following group names
+are supported, with descriptions given below:
+
+- ``dev``: packages to support development such as testing and documentation
+- ``interop``: packages to support interoperability of ANDES and other power
+  systems tools.
+
+.. note::
+
+    Extra support packages are not supported by conda/mamba installation. One
+    needs to install ANDES with ``pip``.
+
+To install packages in the ``dev`` when installing ANDES, do:
+
+.. code:: bash
+
+    pip install andes[dev]
+
+To install all extra packages, do:
+
+.. code:: bash
+
+    pip install andes[all]
+
+One can also inspect the ``requirements-extra.txt`` to identify the packages
+for manual installation.
+
 .. _Develop Install:
 
 Develop Install
@@ -98,14 +134,14 @@ Install dependencies with
 .. code:: bash
 
     mamba install --file requirements.txt
-    mamba install --file requirements-dev.txt
+    mamba install --file requirements-extra.txt
 
 Alternatively, you can install them with ``pip``:
 
 .. code:: bash
 
     pip install -r requirements.txt
-    pip install -r requirements-dev.txt
+    pip install -r requirements-extra.txt
 
 Step 3: Install ANDES in the development mode using
 
@@ -132,6 +168,13 @@ Note the dot at the end. Pip will take care of the rest.
     requirements. If you see an ``ImportError`` after updating
     ANDES, you can manually install the missing dependencies
     or redo `Step 2`_.
+
+.. note::
+
+    To install extra support packages, one can append ``[NAME_OF_EXTRA]`` to
+    ``pip install -e .``. For example, ``pip install -e .[interop]`` will
+    install packages to support interoperability when installing ANDES in the
+    development, editable mode.
 
 Updating ANDES
 ==============

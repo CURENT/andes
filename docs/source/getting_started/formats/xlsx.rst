@@ -11,9 +11,10 @@ Office <https://www.wps.com/>`_.
 Format definition
 .................
 
-The ANDES xlsx format contains multiple workbooks (aka sheet) shown as tabs at
-the bottom. The name of a workbook is a *model* name, and each workbook contains
-the parameters of all *devices* that are *instances* of the model.
+The ANDES xlsx format contains multiple workbooks (also known as "sheets") shown
+as tabs at the bottom. The name of a workbook is a *model* name, and each
+workbook contains the parameters of all *devices* that are *instances* of the
+model.
 
 In each sheet, the first row contains the names of parameters of the model.
 Starting from the second row, each row corresponds to a *device instance* with
@@ -54,20 +55,41 @@ A few columns are used across all models. That includes ``uid``, ``idx``,
 
 Connecting devices
 ..................
-Most importantly, ``idx`` is the unique index to *connect* a device. In a system, a
-PQ (constant PQ load) device needs to connect to a Bus device to inject power.
-That is, the PQ device needs to indicate the Bus device to which it is
-connected. Such connection is done in the ``PQ`` sheet by setting the ``bus``
-parameter to the ``idx`` of the connected bus.
+Most importantly, ``idx`` is the *unique* index for referencing a device, so
+that it can be properly connected by supported devices. In a system, a PQ
+(constant PQ load) device needs to connect to a Bus device to inject power. That
+is, the PQ device needs to indicate the Bus device to which it is connected.
+Such connection is done in the ``PQ`` sheet by setting the ``bus`` parameter to
+the ``idx`` of the connected bus.
 
 .. image:: xlsx-pq.png
    :width: 600
    :alt: Example workbook for PQ
 
-In the above example PQ workbook, there are two PQ instances called ``PQ_0`` and
-``PQ_1`` (referred to by ``idx``). They are connected to buses ``7`` and ``8``.
-Therefore, on the ``Bus`` sheet, two rows need to exist with ``idx`` being ``7``
-and ``8``.
+The screenshot above is from the case file
+``andes/cases/kundur/kundur_fault.xlsx``. In this ``PQ`` workbook, there are two
+PQ instances (also known as "devices") called ``PQ_0`` and ``PQ_1`` (referred to
+by ``idx``). They are connected to buses ``7`` and ``8``, respectively. The
+``bus`` parameter of ``PQ`` is konwn as an indexing parameter
+(:py:mod:`andes.core.param.IdxParam`) through which the connections are
+specified. To get the connection actually work, on the ``Bus`` sheet, two rows
+must exist for two bus devices, respectively, with ``idx`` being ``7`` and
+``8``.
+
+To find out the IdxParams of a device for connecting to other devices, refer to
+:ref:`modelref`. For example, to find out how a device of the exciter model
+:ref:`EXDC2` should be connected to a synchronous generator, in the
+**Parameters** section, check the *Properties* column for *mandatory*
+parameters. Almost all IdxParams are mandatory, meaning that they must be
+specified to build a consistent test case. It can be seen that for :ref:`EXDC2`,
+``syn`` is mandatory. From the description, one can tell that this is the
+"Synchronous generator idx", which should be the ``idx`` of an existing
+synchronous generator, i.e., :ref:`GENROU` or :ref:`GENCLS`.
+
+Typically, models of the same group use the same IdxParams to connect to other
+models. Each link on the left sidebar of :ref:`modelref` is a group, such as the
+:ref:`Exciter` group. With this convention, all exciters have a ``syn``
+parameter for connecting to synchronous generators.
 
 Creating cases
 ..............

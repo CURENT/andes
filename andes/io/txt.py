@@ -1,3 +1,7 @@
+"""
+Output TXT file formatter.
+"""
+
 import os
 from typing import Iterable
 
