@@ -372,7 +372,7 @@ def system2mpc(system) -> dict:
     if system.Slack.n > 0:
         slack_pos = system.Bus.idx2uid(system.Slack.bus.v)
         bus[slack_pos, 1] = 3
-        bus[slack_pos, 8] = system.Slack.a0.v
+        bus[slack_pos, 8] = system.Slack.a0.v * rad2deg
 
         gen[:system.Slack.n, 0] = to_busid(system.Slack.bus.v)
         gen[:system.Slack.n, 1] = system.Slack.p0.v * base_mva
