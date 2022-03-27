@@ -5,7 +5,7 @@ import re
 
 import andes.io
 import numpy as np
-from andes.shared import deg2rad
+from andes.shared import deg2rad, rad2deg
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def read(system, file):
     """
 
     mpc = m2mpc(file)
-    return mpc2system(system, mpc)
+    return mpc2system(mpc, system)
 
 
 def m2mpc(infile: str) -> dict:
@@ -158,7 +158,7 @@ def m2mpc(infile: str) -> dict:
     return mpc_array
 
 
-def mpc2system(system, mpc: dict) -> bool:
+def mpc2system(mpc: dict, system) -> bool:
     """
     Load an mpc dict into an empty ANDES system.
 
@@ -262,11 +262,8 @@ def mpc2system(system, mpc: dict) -> bool:
         b = data[4]
         status = int(data[10])
 
-        if data[8] == 0.0:  # not a transformer
-            tf = False
-            ratio = 1
-            angle = 0
-        elif data[8] == 1.0 and data[9] == 0.0:  # not a transformer
+        if (data[8] == 0.0) or (data[8] == 1.0 and data[9] == 0.0):
+            # not a transformer
             tf = False
             ratio = 1
             angle = 0
@@ -283,7 +280,121 @@ def mpc2system(system, mpc: dict) -> bool:
                    r=r, x=x, b=b,
                    trans=tf, tap=ratio, phi=angle)
 
-    if len(mpc['bus_name']) == len(system.Bus.name.v):
+    if ('bus_name' in mpc) and (len(mpc['bus_name']) == len(system.Bus.name.v)):
         system.Bus.name.v[:] = mpc['bus_name']
 
     return True
+
+
+def _get_bus_id_caller(bus):
+    """
+    Helper function to get the bus id. If any of bus ``idx`` is a string, use
+    ``uid`` + 1. Otherwise, use ``idx``.
+
+    Parameters
+    ----------
+    bus : andes.models.bus.Bus
+        Bus object
+
+    Returns
+    -------
+    lambda function to that takes bus idx and returns bus id for matpower case
+
+    """
+
+    if np.array(bus.idx.v).dtype == np.object:
+        return lambda x: bus.idx2uid(x) + 1
+    else:
+        return lambda x: x
+
+
+def system2mpc(system) -> dict:
+    """
+    Convert data from an ANDES system to an mpc dict.
+    """
+
+    mpc = dict(version='2',
+               baseMVA=system.config.mva,
+               bus=np.zeros((system.Bus.n, 13), dtype=np.float64),
+               gen=np.zeros((system.PV.n + system.Slack.n, 21), dtype=np.float64),
+               branch=np.zeros((system.Line.n, 17), dtype=np.float64),
+               bus_name=np.zeros((system.Bus.n, ), dtype=object),
+               )
+
+    base_mva = system.config.mva
+
+    to_busid = _get_bus_id_caller(system.Bus)
+
+    # --- bus ---
+    bus = mpc['bus']
+    gen = mpc['gen']
+
+    bus[:, 0] = to_busid(system.Bus.idx.v)
+    bus[:, 1] = 1
+    bus[:, 7] = system.Bus.v0.v
+    bus[:, 8] = system.Bus.a0.v * rad2deg
+    bus[:, 9] = system.Bus.Vn.v
+    bus[:, 11] = system.Bus.vmax.v
+    bus[:, 12] = system.Bus.vmin.v
+
+    # area and zone not supported
+
+    # --- PQ ---
+    if system.PQ.n > 0:
+        pq_pos = system.Bus.idx2uid(system.PQ.bus.v)
+        bus[pq_pos, 2] = system.PQ.p0.v * base_mva
+        bus[pq_pos, 3] = system.PQ.q0.v * base_mva
+
+    # --- Shunt ---
+    if system.Shunt.n > 0:
+        shunt_pos = system.Bus.idx2uid(system.Shunt.bus.v)
+        bus[shunt_pos, 4] = system.Shunt.g.v * base_mva
+        bus[shunt_pos, 5] = system.Shunt.b.v * base_mva
+
+    # --- PV ---
+    if system.PV.n > 0:
+        pv_pos = system.Bus.idx2uid(system.PV.bus.v)
+        bus[pv_pos, 1] = 2
+        gen[:system.PV.n, 0] = to_busid(system.PV.bus.v)
+        gen[:system.PV.n, 1] = system.PV.p0.v * base_mva
+        gen[:system.PV.n, 2] = system.PV.q0.v * base_mva
+        gen[:system.PV.n, 3] = system.PV.qmax.v * base_mva
+        gen[:system.PV.n, 4] = system.PV.qmin.v * base_mva
+        gen[:system.PV.n, 5] = system.PV.v0.v
+        gen[:system.PV.n, 6] = base_mva
+        gen[:system.PV.n, 7] = system.PV.u.v
+        gen[:system.PV.n, 8] = system.PV.pmax.v * base_mva
+        gen[:system.PV.n, 9] = system.PV.pmin.v * base_mva
+
+    # --- Slack ---
+    if system.Slack.n > 0:
+        slack_pos = system.Bus.idx2uid(system.Slack.bus.v)
+        bus[slack_pos, 1] = 3
+        bus[slack_pos, 8] = system.Slack.a0.v
+
+        gen[system.PV.n:, 0] = to_busid(system.Slack.bus.v)
+        gen[system.PV.n:, 1] = system.Slack.p0.v * base_mva
+        gen[system.PV.n:, 2] = system.Slack.q0.v * base_mva
+        gen[system.PV.n:, 3] = system.Slack.qmax.v * base_mva
+        gen[system.PV.n:, 4] = system.Slack.qmin.v * base_mva
+        gen[system.PV.n:, 5] = system.Slack.v0.v
+        gen[system.PV.n:, 6] = base_mva
+        gen[system.PV.n:, 7] = system.Slack.u.v
+        gen[system.PV.n:, 8] = system.Slack.pmax.v * base_mva
+        gen[system.PV.n:, 9] = system.Slack.pmin.v * base_mva
+
+    if system.Line.n > 0:
+        branch = mpc['branch']
+        branch[:, 0] = to_busid(system.Line.bus1.v)
+        branch[:, 1] = to_busid(system.Line.bus2.v)
+        branch[:, 2] = system.Line.r.v
+        branch[:, 3] = system.Line.x.v
+        branch[:, 4] = system.Line.b.v
+
+        branch[:, 8] = system.Line.tap.v
+        branch[:, 9] = system.Line.phi.v * rad2deg
+        branch[:, 10] = system.Line.u.v
+
+    mpc['bus_name'] = np.array(system.Bus.name.v)
+
+    return mpc
