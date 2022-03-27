@@ -53,7 +53,7 @@ Numerical code will be automatically generated for fast simulation.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1.png) <br><br> Write into DAEs: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-tgov1/tgov1_class.png) |
+| Diagram: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png) <br><br> Write into DAEs: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document.
 ANDES automatically generates model documentation, and the docs always stay up to date.
