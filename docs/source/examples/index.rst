@@ -29,5 +29,6 @@ can run the examples in a live Jupyter Notebook online using
    :maxdepth: 2
    :caption: Interoperability
 
+   matpower.ipynb
    pandapower.ipynb
    pypowsybl.ipynb
