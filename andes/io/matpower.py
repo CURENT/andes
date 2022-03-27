@@ -139,7 +139,7 @@ def m2mpc(infile: str) -> dict:
                     try:
                         data = np.array([float(val) for val in item.split()])
                     except Exception as e:
-                        logger.error('Error parsing ', infile)
+                        logger.error('Error parsing "%s"', infile)
                         raise e
                     mpc[field].append(data)
 
