@@ -16,10 +16,6 @@ To create a MATLAB/Octave instance, do:
 
 """
 
-try:
-    from oct2py import Oct2PyError
-except (ImportError, ModuleNotFoundError):
-    Oct2PyError = None
 
 import logging
 
@@ -29,6 +25,12 @@ try:
     from matpower import start_instance
 except ImportError:
     start_instance = None
+
+try:
+    from oct2py import Oct2PyError
+except ImportError:
+    Oct2PyError = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +58,7 @@ def from_matpower(m, varname, system=None):
     .. code:: python
 
 
-        from andes.interop.matpower import (start_instance,
-            to_matpower, from_matpower)
+        from andes.interop.matpower import start_instance, to_matpower, from_matpower
 
         system = from_matpower(m, 'mpc')
 
