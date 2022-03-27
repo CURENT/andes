@@ -62,4 +62,5 @@ class TestPandapower(unittest.TestCase):
         c_exc = self.link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
         c_stg = self.link_table['stg_idx'].iloc[ridx].astype(str) == '1'
         c_gov = self.link_table['gov_idx'].iloc[ridx].astype(str) == 'TGOV1_1'
-        return c_bus[0] and c_exc[0] and c_stg[0] and c_gov[0]
+        c = c_bus.values[0] and c_exc.values[0] and c_stg.values[0] and c_gov.values[0]
+        return c

@@ -35,7 +35,7 @@ def make_link_table(ssa):
         ``StaticGen``, ``Bus``, ``SynGen``, ``Exciter``, and ``TurbineGov``.
     """
     # build StaticGen df
-    sg_cols = ['idx', 'bus']
+    sg_cols = ['name', 'idx', 'bus']
     ssa_sg = pd.DataFrame(columns=sg_cols)
     for key in ssa.StaticGen.models:
         sg = getattr(ssa, key)
@@ -61,8 +61,12 @@ def make_link_table(ssa):
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
-    ssa_key = pd.merge(left=ssa_syn.rename(columns={'bus': 'bus_idx', 'idx': 'syn_idx'}),
+    ssa_key = pd.merge(left=ssa_sg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx', 'bus': 'bus_idx'}),
                        right=ssa_bus.rename(columns={'name': 'bus_name', 'idx': 'bus_idx'}),
+                       how='left',
+                       on='bus_idx')
+    ssa_key = pd.merge(left=ssa_key,
+                       right=ssa_syn.rename(columns={'idx': 'syn_idx', 'bus': 'bus_idx'}),
                        how='left',
                        on='bus_idx')
     ssa_key = pd.merge(left=ssa_key,
@@ -70,14 +74,11 @@ def make_link_table(ssa):
                        how='left',
                        on='syn_idx')
     ssa_key = pd.merge(left=ssa_key,
-                       right=ssa_sg.rename(columns={'idx': 'stg_idx', 'bus': 'bus_idx'}),
-                       how='left',
-                       on='bus_idx')
-    ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syn_idx'}),
                        how='left',
                        on='syn_idx')
-    return ssa_key
+    cols = ['stg_name', 'stg_idx', 'bus_idx', 'syn_idx', 'exc_idx', 'gov_idx', 'bus_name']
+    return ssa_key[cols]
 
 
 def runopp_map(ssp, link_table, **kwargs):
@@ -111,19 +112,20 @@ def runopp_map(ssp, link_table, **kwargs):
     ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
 
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.gen[['name', 'bus']],
+                       right=ssp.gen[['name', 'bus', 'controllable']],
                        how='left', on='name')
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.bus[['name']].reset_index().rename(columns={'index': 'bus',
-                                                                             'name': 'bus_name'}),
+                       right=ssp.bus[['name']].reset_index().rename(
+                           columns={'index': 'bus', 'name': 'bus_name'}),
                        how='left', on='bus')
     ssp_res = pd.merge(left=ssp_res,
-                       right=link_table[['bus_name', 'gov_idx', 'stg_idx', 'exc_idx']],
+                       right=link_table[['bus_name', 'bus_idx', 'syn_idx', 'gov_idx', 'stg_idx', 'exc_idx']],
                        how='left', on='bus_name')
     ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
-
-    return ssp_res[['name', 'p', 'q', 'vm_pu', 'bus', 'bus_name', 'gov_idx', 'stg_idx', 'exc_idx']]
+    col = ['name', 'p', 'q', 'vm_pu', 'bus_name', 'bus_idx',
+           'controllable', 'syn_idx', 'gov_idx', 'exc_idx', 'stg_idx']
+    return ssp_res[col]
 
 
 def add_gencost(ssp, gen_cost):
@@ -163,7 +165,7 @@ def add_gencost(ssp, gen_cost):
     return True
 
 
-def to_pandapower(ssa, verify=True):
+def to_pandapower(ssa, ctrl=[], verify=True):
     """
     Convert an ADNES system to a pandapower network for power flow studies.
 
@@ -171,6 +173,11 @@ def to_pandapower(ssa, verify=True):
     ----------
     ssa : andes.system.System
         The ADNES system to be converted
+    ctrl : list
+        The controlability of generators. The length should be the same with the
+        number of ``StaticGen``.
+        If not given, controllability of generators will be assigned by default.
+        Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
 
     Returns
     -------
@@ -185,9 +192,9 @@ def to_pandapower(ssa, verify=True):
       - Line limts are set as 99999.0 in the output network.
       - Generator cost is not included in the conversion. Use ``add_gencost()``
         to add cost data.
-      - ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
+      - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
         to generators with ``controllable=True`` in pp's network.
-      - ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
+      - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
         is converted to generators with ``controllable=False`` in pp's network.
     """
     if pp is None:
@@ -373,11 +380,15 @@ def to_pandapower(ssa, verify=True):
         gov = getattr(ssa, key)
         ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
 
-    # Consider the SynGen equipped with Exciter as controllable
-    ssa_sg_ctr = pd.merge(ssa_syg.rename(columns={"idx": "syn"}), ssa_gov[["syn", "idx"]], how="left", on="syn")
-    ssa_sg_out = ssa_sg_ctr.rename(columns={"bus": "bus_idx"})
-    ssa_sg_out["ctrl"] = bool(str(ssa_sg_ctr[["idx"]]))
-    ssa_sg = ssa_sg.merge(ssa_sg_out[["bus_idx", "ctrl"]], on="bus_idx", how="left")
+    # By default, consider the StaticGen equipped with Exciter as controllable
+    ssa_sg_ctr = ssa_sg[["bus_idx"]]
+    if ctrl:
+        if len(ctrl) != len(ssa_sg):
+            raise ValueError("ctrl length does not match StaticGen length")
+        ssa_sg_ctr["ctrl"] = [bool(x) for x in ctrl]
+    else:
+        ssa_sg_ctr["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].isna()]
+    ssa_sg = ssa_sg.merge(ssa_sg_ctr[["bus_idx", "ctrl"]], on="bus_idx", how="left")
 
     # assign slack bus
     ssa_sg["slack"] = False
@@ -392,8 +403,6 @@ def to_pandapower(ssa, verify=True):
     ssa_sg.fillna(value=False, inplace=True)
 
     # conversion
-    # a) `PV` with negative `p0` -> uncontrollable gen
-    # b) `PV` with non-negative `p0`-> gen
     for uid in ssa_sg.index:
         pp.create_gen(net=ssp,
                       slack=ssa_sg["slack"].iloc[uid],
