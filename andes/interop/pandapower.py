@@ -371,10 +371,6 @@ def to_pp_gen_pre(ssa):
     ssa_syg.rename(inplace=True,
                    columns={"gen": "stg_idx",
                             "idx": "syg_idx"})
-    # merge stg and syg as the syg
-    ssa_syg = pd.merge(ssa_stg, ssa_syg,
-                       how='right', on='stg_idx')
-
     # build DG df
     dg_cols = ['idx', 'name', 'gen', 'gammap', 'gammaq']
     ssa_dg = build_group_table(ssa, 'DG', dg_cols)
@@ -382,18 +378,26 @@ def to_pp_gen_pre(ssa):
                   columns={"idx": "dg_idx",
                            "gen": "stg_idx"})
 
-    ssa_dgs = ssa_dg.groupby(['stg_idx']).sum().reset_index()
-    ssa_dgs_idx = ssa_dgs.index + 1
-    ssa_dgs['name'] = "DG_" + ssa_dgs_idx.astype(str)
+    if ssa_syg.shape[0] + ssa_dg.shape[0] == 0:
+        ssa_stg['name'] = ssa_stg['stg_name']
+        return ssa_stg
+    else:
+        # merge stg and syg as the syg
+        ssa_syg = pd.merge(ssa_stg, ssa_syg,
+                           how='right', on='stg_idx')
 
-    # merge sg and DG as the dg
-    ssa_dgs = pd.merge(ssa_stg, ssa_dgs,
-                       how='right', on='stg_idx')
+        ssa_dgs = ssa_dg.groupby(['stg_idx']).sum().reset_index()
+        ssa_dgs_idx = ssa_dgs.index + 1
+        ssa_dgs['name'] = "DG_" + ssa_dgs_idx.astype(str)
 
-    # concat syg and dg as sg
-    ssa_sg = pd.concat([ssa_syg, ssa_dgs], axis=0).reset_index(drop=True)
+        # merge sg and DG as the dgs
+        ssa_dgs = pd.merge(ssa_stg, ssa_dgs,
+                           how='right', on='stg_idx')
 
-    return ssa_sg
+        # concat syg and dg as sg
+        ssa_sg = pd.concat([ssa_syg, ssa_dgs], axis=0).reset_index(drop=True)
+
+        return ssa_sg
 
 
 def to_pp_gen(ssa, ssp, ctrl=[]):
@@ -408,8 +412,12 @@ def to_pp_gen(ssa, ssp, ctrl=[]):
     # compute the actual value
     stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
     ssa_sg[stg_calc_cols] = ssa_sg[stg_calc_cols].apply(lambda x: x * ssp.sn_mva)
-    ssa_sg['p0'] = ssa_sg['p0'] * ssa_sg['gammap']
-    ssa_sg['q0'] = ssa_sg['q0'] * ssa_sg['gammaq']
+    if 'gammap' not in to_pp_gen_pre(ssa).columns:
+        ssa_sg['gammap'] = 1
+        ssa_sg['gammaq'] = 1
+    else:
+        ssa_sg['p0'] = ssa_sg['p0'] * ssa_sg['gammap']
+        ssa_sg['q0'] = ssa_sg['q0'] * ssa_sg['gammaq']
 
     # default controllable is determined by governor
     if ctrl:
@@ -417,7 +425,10 @@ def to_pp_gen(ssa, ssp, ctrl=[]):
             raise ValueError("ctrl length does not match StaticGen length")
         ssa_sg["ctrl"] = [bool(x) for x in ctrl]
     else:
-        ssa_sg["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].drop_duplicates().isna()]
+        if make_link_table(ssa)["gov_idx"].shape[0] == 0:
+            ssa_sg["ctrl"] = [bool(x) for x in [1]*len(ssa_sg)]
+        else:
+            ssa_sg["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].drop_duplicates().isna()]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
