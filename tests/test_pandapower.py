@@ -22,35 +22,25 @@ class TestPandapower(unittest.TestCase):
     Tests for the ANDES-pandapower interface.
     """
 
+    cases = ['ieee14/ieee14_ieeet1.xlsx',
+             'ieee14/ieee14_pvd1.xlsx',
+             'ieee39/ieee39.xlsx',
+             'npcc/npcc.xlsx',
+             ]
+
     def setUp(self) -> None:
         """
         Test setup. This is executed before each test case.
         """
-        pass
 
-    def test_to_pandapower_ieee14(self):
+    def test_to_pandapower(self):
         """
-        Test `andes.interop.pandapower.to_pandapower` with ieee14
+        Test `andes.interop.pandapower.to_pandapower` with cases
         """
+        for case_file in self.cases:
+            case = andes.get_case(case_file)
 
-        case14 = andes.get_case('ieee14/ieee14_ieeet1.xlsx')
-        return test_to_pandapower_single(case14, tol=1e-7)
-
-    def test_to_pandapower_ieee39(self):
-        """
-        Test `andes.interop.pandapower.to_pandapower` with ieee39
-        """
-
-        case39 = andes.get_case('ieee39/ieee39.xlsx')
-        return test_to_pandapower_single(case39, tol=1e-6)
-
-    def test_to_pandapower_wecc(self):
-        """
-        Test `andes.interop.pandapower.to_pandapower` with wecc
-        """
-
-        case_wecc = andes.get_case('wecc/wecc_full.xlsx')
-        return test_to_pandapower_single(case_wecc, tol=1e-5)
+        test_to_pandapower_single(case, tol=1e-3)
 
     def test_make_link_table(self):
         """
@@ -62,7 +52,7 @@ class TestPandapower(unittest.TestCase):
                           no_output=True,
                           default_config=True)
         link_table = make_link_table(sa14)
-        ridx = link_table[link_table['syn_idx'] == 'GENROU_1'].index
+        ridx = link_table[link_table['syg_idx'] == 'GENROU_1'].index
         c_bus = link_table['bus_name'].iloc[ridx].astype(str) == 'BUS1'
         c_exc = link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
         c_stg = link_table['stg_idx'].iloc[ridx].astype(str) == '1'
@@ -91,4 +81,4 @@ def test_to_pandapower_single(case, **kwargs):
     rid_slack = np.argmin(np.abs(a_pp))
     a_andes = a_andes - a_andes[rid_slack]
 
-    return np.testing.assert_almost_equal(v_andes, v_pp, decimal=5)
+    return np.testing.assert_almost_equal(v_andes, v_pp, decimal=3)
