@@ -23,7 +23,7 @@ def build_group_table(ssa, group, columns, mdl_name=[]):
 
     Parameters
     ----------
-    ssa :
+    ssa : andes.system.System
         The ADNES system to build the table
     group : string
         The ADNES group
@@ -59,7 +59,7 @@ def make_link_table(ssa):
 
     Parameters
     ----------
-    ssa :
+    ssa : andes.system.System
         The ADNES system to link
 
     Returns
