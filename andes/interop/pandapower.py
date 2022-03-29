@@ -396,7 +396,7 @@ def to_pp_gen_pre(ssa):
     return ssa_sg
 
 
-def to_pp_gen(ssa, ssp, ctrl):
+def to_pp_gen(ssa, ssp, ctrl=[]):
     """Create shunt in pandapower net"""
     # TODO: Add RenGen
     ssa_sg = to_pp_gen_pre(ssa)
