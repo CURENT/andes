@@ -67,7 +67,8 @@ def make_link_table(ssa):
     DataFrame
 
         Each column in the output Dataframe contains the ``idx`` of linked
-        ``StaticGen``, ``Bus``, ``SynGen`` or ``DG``, ``Exciter``, and ``TurbineGov``.
+        ``StaticGen``, ``Bus``, ``DG``, ``SynGen``, ``Exciter``, and ``TurbineGov``,
+        ``gammap``, ``gammaq``.
     """
     # build StaticGen df
     ssa_stg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
@@ -97,7 +98,8 @@ def make_link_table(ssa):
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
-    cols = ['stg_name', 'stg_idx', 'bus_idx', 'syg_idx', 'exc_idx', 'gov_idx', 'bus_name', 'gammap', 'gammaq']
+    cols = ['stg_name', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
+            'gov_idx', 'bus_name', 'gammap', 'gammaq']
     return ssa_key[cols]
 
 
@@ -124,7 +126,9 @@ def runopp_map(ssp, link_table, **kwargs):
 
     Notes
     -----
-    The pandapower net and the ANDES system must have same base MVA.
+      - The pandapower net and the ANDES system must have same base MVA.
+      - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
+        The power is dispatched to each ``DG`` by the power ratio
     """
 
     pp.runopp(ssp, **kwargs)
@@ -140,12 +144,13 @@ def runopp_map(ssp, link_table, **kwargs):
                        how='left', on='bus')
     ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
-    # ssp_res = pd.merge(left=ssp_res,
-    #                    right=link_table[['bus_name', 'bus_idx', 'agen_idx', 'gov_idx', 'stg_idx', 'exc_idx']],
-    #                    how='left', on='bus_name')
+    ssp_res = pd.merge(left=ssp_res,
+                       right=link_table,
+                       how='left', on='bus_name')
+    ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap']
+    ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq']
     col = ['name', 'p', 'q', 'vm_pu', 'bus_name', 'bus_idx',
-           'controllable', 'agen_idx', 'gov_idx', 'exc_idx', 'stg_idx']
-    col = ['name', 'p', 'q', 'vm_pu', 'bus_name']
+           'controllable', 'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx', 'stg_idx']
     return ssp_res[col]
 
 
@@ -412,7 +417,7 @@ def to_pp_gen(ssa, ssp, ctrl):
             raise ValueError("ctrl length does not match StaticGen length")
         ssa_sg["ctrl"] = [bool(x) for x in ctrl]
     else:
-        ssa_sg["ctrl"] = [not x for x in make_link_table(ssa).drop_duplicates()["gov_idx"].isna()]
+        ssa_sg["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].drop_duplicates().isna()]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
@@ -467,7 +472,9 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
       - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
         is converted to generators with ``controllable=False`` in pp's network
       - The online status of generators are determined by the online status of ``StaticGen``
-        that connected to the ``SynGen``
+        that connected to the ``SynGen`` or ``DG``
+      - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
+        The power is dispatched to each ``DG`` by the power ratio in ``runopp_map``
     """
     if pp is None:
         raise ImportError("Please install pandapower to continue")
