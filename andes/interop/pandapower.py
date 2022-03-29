@@ -17,7 +17,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def build_group_table(ssa, group, columns):
+def build_group_table(ssa, group, columns, mdl_name=[]):
     """
     Build the table for devices in a group in an ADNES System.
 
@@ -29,6 +29,8 @@ def build_group_table(ssa, group, columns):
         The ADNES group
     columns : list of string
         The common columns of a group that to be included in the table.
+    mdl_name : list of string
+        The list of models that to be included in the table. Default as all models.
 
     Returns
     -------
@@ -38,10 +40,15 @@ def build_group_table(ssa, group, columns):
     """
     group_df = pd.DataFrame(columns=columns)
     group = getattr(ssa, group)
-    mdl_dict = getattr(group, 'models')
-    for key in mdl_dict:
-        mdl = getattr(ssa, key)
-        group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
+    if not mdl_name:
+        mdl_dict = getattr(group, 'models')
+        for key in mdl_dict:
+            mdl = getattr(ssa, key)
+            group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
+    else:
+        for key in mdl_name:
+            mdl = getattr(ssa, key)
+            group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
     return group_df
 
 
@@ -63,44 +70,28 @@ def make_link_table(ssa):
         ``StaticGen``, ``Bus``, ``SynGen``, ``Exciter``, and ``TurbineGov``.
     """
     # build StaticGen df
-    ssa_sg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
+    ssa_stg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
     # build TurbineGov df
-    gov_cols = ['idx', 'syn']
-    ssa_gov = pd.DataFrame(columns=gov_cols)
-    for key in ssa.TurbineGov.models:
-        gov = getattr(ssa, key)
-        ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
+    ssa_gov = build_group_table(ssa, 'TurbineGov', ['idx', 'syn'])
     # build Exciter df
-    exc_cols = ['idx', 'syn']
-    ssa_exc = pd.DataFrame(columns=exc_cols)
-    for key in ssa.Exciter.models:
-        exc = getattr(ssa, key)
-        ssa_exc = pd.concat([ssa_exc, exc.as_df()[exc_cols]], axis=0)
+    ssa_exc = build_group_table(ssa, 'Exciter', ['idx', 'syn'])
     # build SynGen df
-    syn_cols = ['idx', 'bus']
-    ssa_syn = pd.DataFrame(columns=syn_cols)
-    for key in ssa.SynGen.models:
-        syn = getattr(ssa, key)
-        ssa_syn = pd.concat([ssa_syn, syn.as_df()[syn_cols]], axis=0)
+    ssa_syn = build_group_table(ssa, 'SynGen', ['idx', 'bus', 'gen'])
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
-    ssa_key = pd.merge(left=ssa_sg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx', 'bus': 'bus_idx'}),
+    ssa_key = pd.merge(left=ssa_stg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx', 'bus': 'bus_idx'}),
                        right=ssa_bus.rename(columns={'name': 'bus_name', 'idx': 'bus_idx'}),
-                       how='left',
-                       on='bus_idx')
+                       how='left', on='bus_idx')
     ssa_key = pd.merge(left=ssa_key,
-                       right=ssa_syn.rename(columns={'idx': 'syn_idx', 'bus': 'bus_idx'}),
-                       how='left',
-                       on='bus_idx')
+                       right=ssa_syn.rename(columns={'idx': 'syn_idx', 'gen': 'stg_idx'}),
+                       how='left', on='stg_idx')
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_exc.rename(columns={'idx': 'exc_idx', 'syn': 'syn_idx'}),
-                       how='left',
-                       on='syn_idx')
+                       how='left', on='syn_idx')
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syn_idx'}),
-                       how='left',
-                       on='syn_idx')
+                       how='left', on='syn_idx')
     cols = ['stg_name', 'stg_idx', 'bus_idx', 'syn_idx', 'exc_idx', 'gov_idx', 'bus_name']
     return ssa_key[cols]
 
@@ -215,9 +206,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
       - Generator cost is not included in the conversion. Use ``add_gencost()``
         to add cost data.
       - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
-        to generators with ``controllable=True`` in pp's network.
+        to generators with ``controllable=True`` in pp's network
       - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
-        is converted to generators with ``controllable=False`` in pp's network.
+        is converted to generators with ``controllable=False`` in pp's network
+      - The online status of generators are determined by the online status of ``StaticGen``
+        that connected to the ``SynGen``
     """
     if pp is None:
         raise ImportError("Please install pandapower to continue")
@@ -375,70 +368,64 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
                         )
 
     # 5) generator
-    ssa_busn = ssa.Bus.as_df().copy().reset_index()[["uid", "idx"]].rename(
-        columns={"uid": "pp_id", "idx": "bus_idx"})
-
     # build StaticGen df
-    sg_cols = ['idx', 'u', 'name', 'Sn', 'bus', 'v0',
-               'p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin',
-               'vmax', 'vmin']
-    ssa_sg = pd.DataFrame(columns=sg_cols)
-    for key in ssa.StaticGen.models:
-        sg = getattr(ssa, key)
-        ssa_sg = pd.concat([ssa_sg, sg.as_df()[sg_cols]], axis=0)
+    stg_cols = ['idx', 'u', 'name', 'bus', 'v0', 'vmax', 'vmin']
+    stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin', ]
+    ssa_stg = build_group_table(ssa, 'StaticGen', stg_cols + stg_calc_cols)
+    ssa_stg.rename(inplace=True,
+                   columns={"bus": "bus_idx",
+                            "u": "stg_u",
+                            "idx": "stg_idx",
+                            "name": "stg_name"})
+    # retrieve Bus idx in pp net
+    ssa_busn = ssa.Bus.as_df().copy().reset_index()[["uid", "idx"]].rename(
+        columns={"uid": "pp_bus", "idx": "bus_idx"})
 
-    ssa_sg = pd.merge(ssa_sg.rename(columns={"bus": "bus_idx"}),
-                      ssa_busn,
-                      how="left", on="bus_idx")
+    ssa_stg = pd.merge(ssa_stg, ssa_busn,
+                       how="left", on="bus_idx")
 
     # build SynGen df
-    syg_cols = ['idx', 'u', 'name', 'bus']
-    ssa_syg = pd.DataFrame(columns=syg_cols)
-    for key in ssa.SynGen.models:
-        syg = getattr(ssa, key)
-        ssa_syg = pd.concat([ssa_syg, syg.as_df()[syg_cols]], axis=0)
+    syg_cols = ['idx', 'name', 'gen', 'gammap', 'gammaq']
+    ssa_syg = build_group_table(ssa, 'SynGen', syg_cols, ['GENROU', 'GENCLS'])
+    ssa_syg.rename(inplace=True,
+                   columns={"bus": "bus_idx",
+                            "gen": "stg_idx",
+                            "idx": "syg_idx",
+                            "name": "syg_name"})
 
-    # build TurbineGov df
-    gov_cols = ['idx', 'u', 'name', 'syn']
-    ssa_gov = pd.DataFrame(columns=gov_cols)
-    for key in ssa.TurbineGov.models:
-        gov = getattr(ssa, key)
-        ssa_gov = pd.concat([ssa_gov, gov.as_df()[gov_cols]], axis=0)
-
-    # By default, consider the StaticGen equipped with Exciter as controllable
-    ssa_sg_ctr = ssa_sg[["bus_idx"]]
-    if ctrl:
-        if len(ctrl) != len(ssa_sg):
-            raise ValueError("ctrl length does not match StaticGen length")
-        ssa_sg_ctr["ctrl"] = [bool(x) for x in ctrl]
-    else:
-        ssa_sg_ctr["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].isna()]
-    ssa_sg = ssa_sg.merge(ssa_sg_ctr[["bus_idx", "ctrl"]], on="bus_idx", how="left")
+    # merge stg and syg as the sg
+    ssa_sg = pd.merge(ssa_stg, ssa_syg,
+                      how='right', on='stg_idx')
 
     # assign slack bus
     ssa_sg["slack"] = False
     ssa_sg["slack"][ssa_sg["bus_idx"] == ssa.Slack.bus.v[0]] = True
 
     # compute the actual value
-    calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
-    for col in calc_cols:
-        ssa_sg[col] = ssa_sg[col] * ssp.sn_mva
+    ssa_sg[stg_calc_cols] = ssa_sg[stg_calc_cols].apply(lambda x: x * ssp.sn_mva)
+    ssa_sg['p0'] = ssa_sg['p0'] * ssa_sg['gammap']
+    ssa_sg['q0'] = ssa_sg['q0'] * ssa_sg['gammaq']
 
-    # fill the ctrl with False
-    ssa_sg.fillna(value=False, inplace=True)
+    # default controllable is determined by governor
+    if ctrl:
+        if len(ctrl) != len(ssa_sg):
+            raise ValueError("ctrl length does not match StaticGen length")
+        ssa_sg["ctrl"] = [bool(x) for x in ctrl]
+    else:
+        ssa_sg["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].isna()]
 
-    ssa_sg['name'] = _rename(ssa_sg['name'])
+    ssa_sg['name'] = _rename(ssa_sg['syg_name'])
     # conversion
     for uid in ssa_sg.index:
         pp.create_gen(net=ssp,
                       slack=ssa_sg["slack"].iloc[uid],
-                      bus=ssa_sg["pp_id"].iloc[uid],
+                      bus=ssa_sg["pp_bus"].iloc[uid],
                       p_mw=ssa_sg["p0"].iloc[uid],
                       vm_pu=ssa_sg["v0"].iloc[uid],
                       sn_mva=ssp.sn_mva,
                       name=ssa_sg['name'].iloc[uid],
                       controllable=ssa_sg["ctrl"].iloc[uid],
-                      in_service=ssa_sg["u"].iloc[uid],
+                      in_service=ssa_sg["stg_u"].iloc[uid],
                       max_p_mw=ssa_sg["pmax"].iloc[uid],
                       min_p_mw=ssa_sg["pmin"].iloc[uid],
                       max_q_mvar=ssa_sg["qmax"].iloc[uid],
