@@ -178,51 +178,8 @@ def add_gencost(ssp, gen_cost):
     return True
 
 
-def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
-    """
-    Convert an ADNES system to a pandapower network for power flow studies.
-
-    Parameters
-    ----------
-    ssa : andes.system.System
-        The ADNES system to be converted
-    ctrl : list
-        The controlability of generators. The length should be the same with the
-        number of ``StaticGen``.
-        If not given, controllability of generators will be assigned by default.
-        Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
-
-    Returns
-    -------
-    pandapower.auxiliary.pandapowerNet
-        A pandapower net with the same bus, branch, gen, and load data as the
-        ANDES system
-
-    Notes
-    -----
-    Handling of the following parameters:
-
-      - Line limts are set as 99999.0 in the output network.
-      - Generator cost is not included in the conversion. Use ``add_gencost()``
-        to add cost data.
-      - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
-        to generators with ``controllable=True`` in pp's network
-      - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
-        is converted to generators with ``controllable=False`` in pp's network
-      - The online status of generators are determined by the online status of ``StaticGen``
-        that connected to the ``SynGen``
-    """
-    if pp is None:
-        raise ImportError("Please install pandapower to continue")
-
-    # create a PP network
-    ssp = pp.create_empty_network(f_hz=ssa.config.freq,
-                                  sn_mva=ssa.config.mva,
-                                  )
-
-    # --- 1. convert buses ---
-    ssa_bus = ssa.Bus.as_df()
-    ssa_bus['name'] = _rename(ssa_bus['name'])
+def to_pp_bus(ssp, ssa_bus):
+    """Create bus in pandapower net"""
     for uid in ssa_bus.index:
         pp.create_bus(net=ssp,
                       vn_kv=ssa_bus["Vn"].iloc[uid],
@@ -233,8 +190,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
                       zone=ssa_bus["zone"].iloc[uid],
                       index=uid,
                       )
+    return ssp
 
-    # --- 2. convert Line ---
+
+def to_pp_line(ssa, ssp, ssa_bus):
+    """Create line in pandapower net"""
     # TODO: 1) from- and to- sides `Y`; 2)`g`
     omega = 2 * pi * ssp.f_hz
 
@@ -324,9 +284,12 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
             tap_step_percent=abs(ratio_1), tap_pos=np.sign(ratio_1),
             tap_side=tap_side, tap_neutral=0,
             index=num)
+    return ssp
 
-    # --- 3. load ---
-    ssa_pq = ssa.PQ.as_df().copy()
+
+def to_pp_load(ssa, ssp, ssa_bus):
+    """Create load in pandapower net"""
+    ssa_pq = ssa.PQ.as_df()
     ssa_pq['p_mw'] = ssa_pq["p0"] * ssp.sn_mva
     ssa_pq['q_mvar'] = ssa_pq["q0"] * ssp.sn_mva
 
@@ -345,9 +308,12 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
                        index=uid,
                        type=None,
                        )
+    return ssp
 
-    # 4) shunt
-    ssa_shunt = ssa.Shunt.as_df().copy()
+
+def to_pp_shunt(ssa, ssp, ssa_bus):
+    """Create shunt in pandapower net"""
+    ssa_shunt = ssa.Shunt.as_df()
     ssa_shunt['p_mw'] = ssa_shunt["g"] * ssp.sn_mva
     ssa_shunt['q_mvar'] = ssa_shunt["b"] * (-1) * ssp.sn_mva
 
@@ -366,8 +332,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
                         in_service=ssa_shunt["u"].iloc[uid],
                         index=uid,
                         )
+    return ssp
 
-    # 5) generator
+
+def to_pp_gen(ssa, ssp, ctrl):
+    """Create shunt in pandapower net"""
     # build StaticGen df
     stg_cols = ['idx', 'u', 'name', 'bus', 'v0', 'vmax', 'vmin']
     stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin', ]
@@ -432,6 +401,69 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
                       min_q_mvar=ssa_sg["qmin"].iloc[uid],
                       index=uid,
                       )
+    return ssp
+
+
+def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
+    """
+    Convert an ADNES system to a pandapower network for power flow studies.
+
+    Parameters
+    ----------
+    ssa : andes.system.System
+        The ADNES system to be converted
+    ctrl : list
+        The controlability of generators. The length should be the same with the
+        number of ``StaticGen``.
+        If not given, controllability of generators will be assigned by default.
+        Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
+
+    Returns
+    -------
+    pandapower.auxiliary.pandapowerNet
+        A pandapower net with the same bus, branch, gen, and load data as the
+        ANDES system
+
+    Notes
+    -----
+    Handling of the following parameters:
+
+      - Line limts are set as 99999.0 in the output network.
+      - Generator cost is not included in the conversion. Use ``add_gencost()``
+        to add cost data.
+      - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
+        to generators with ``controllable=True`` in pp's network
+      - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
+        is converted to generators with ``controllable=False`` in pp's network
+      - The online status of generators are determined by the online status of ``StaticGen``
+        that connected to the ``SynGen``
+    """
+    if pp is None:
+        raise ImportError("Please install pandapower to continue")
+
+    # create a PP network
+    ssp = pp.create_empty_network(f_hz=ssa.config.freq,
+                                  sn_mva=ssa.config.mva,
+                                  )
+
+    # build bus table
+    ssa_bus = ssa.Bus.as_df()
+    ssa_bus['name'] = _rename(ssa_bus['name'])
+
+    # --- 1. convert buses ---
+    ssp = to_pp_bus(ssp, ssa_bus)
+
+    # --- 2. convert Line ---
+    ssp = to_pp_line(ssa, ssp, ssa_bus)
+
+    # --- 3. load ---
+    ssp = to_pp_load(ssa, ssp, ssa_bus)
+
+    # 4) shunt
+    ssp = to_pp_shunt(ssa, ssp, ssa_bus)
+
+    # 5) generator
+    ssp = to_pp_gen(ssa, ssp, ctrl)
 
     if verify:
         _verify_pf(ssa, ssp, tol)
