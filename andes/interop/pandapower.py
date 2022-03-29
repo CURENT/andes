@@ -163,7 +163,7 @@ def add_gencost(ssp, gen_cost):
     return True
 
 
-def to_pandapower(ssa, ctrl=[], verify=True):
+def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     """
     Convert an ADNES system to a pandapower network for power flow studies.
 
@@ -205,6 +205,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
 
     # --- 1. convert buses ---
     ssa_bus = ssa.Bus.as_df()
+    ssa_bus['name'] = _rename(ssa_bus['name'])
     for uid in ssa_bus.index:
         pp.create_bus(net=ssp,
                       vn_kv=ssa_bus["Vn"].iloc[uid],
@@ -218,7 +219,6 @@ def to_pandapower(ssa, ctrl=[], verify=True):
 
     # --- 2. convert Line ---
     # TODO: 1) from- and to- sides `Y`; 2)`g`
-    ssa_mva = ssp.sn_mva
     omega = 2 * pi * ssp.f_hz
 
     ssa_bus_slice = ssa.Bus.as_df()[['idx', 'Vn']].rename(columns={"idx": "bus1", "Vn": "Vb"})
@@ -237,6 +237,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
     index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
     ll_ka = len(ssa_line) * [99999]  # set large line limits
 
+    ssa_line['name'] = _rename(ssa_line['name'])
     # --- 2a. transmission lines ---
     for num, uid in enumerate(index_line):
         from_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus1"].iloc[uid]].values[0]
@@ -286,7 +287,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
         xk = ssa_line['x'].iloc[uid]
         zk = (rk ** 2 + xk ** 2) ** 0.5
         sn = 99999.0
-        baseMVA = ssa_mva
+        baseMVA = ssp.sn_mva
 
         ratio_1 = (ssa_line['tap'].iloc[uid] - 1) * 100
         i0_percent = -ssa_line['b'].iloc[uid] * 100 * baseMVA / sn
@@ -309,16 +310,17 @@ def to_pandapower(ssa, ctrl=[], verify=True):
 
     # --- 3. load ---
     ssa_pq = ssa.PQ.as_df().copy()
-    ssa_pq['p_mw'] = ssa_pq["p0"] * ssa_mva
-    ssa_pq['q_mvar'] = ssa_pq["q0"] * ssa_mva
+    ssa_pq['p_mw'] = ssa_pq["p0"] * ssp.sn_mva
+    ssa_pq['q_mvar'] = ssa_pq["q0"] * ssp.sn_mva
 
+    ssa_pq['name'] = _rename(ssa_pq['name'])
     for uid in ssa_pq.index:
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_pq["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
         pp.create_load(net=ssp,
                        name=ssa_pq["name"].iloc[uid],
                        bus=bus,
-                       sn_mva=ssa_mva,
+                       sn_mva=ssp.sn_mva,
                        p_mw=ssa_pq['p_mw'].iloc[uid],
                        q_mvar=ssa_pq['q_mvar'].iloc[uid],
                        in_service=ssa_pq["u"].iloc[uid],
@@ -329,9 +331,10 @@ def to_pandapower(ssa, ctrl=[], verify=True):
 
     # 4) shunt
     ssa_shunt = ssa.Shunt.as_df().copy()
-    ssa_shunt['p_mw'] = ssa_shunt["g"] * ssa_mva
-    ssa_shunt['q_mvar'] = ssa_shunt["b"] * (-1) * ssa_mva
+    ssa_shunt['p_mw'] = ssa_shunt["g"] * ssp.sn_mva
+    ssa_shunt['q_mvar'] = ssa_shunt["b"] * (-1) * ssp.sn_mva
 
+    ssa_shunt['name'] = _rename(ssa_shunt['name'])
     for uid in ssa_shunt.index:
         bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_shunt["bus"].iloc[uid]].values[0]
         bus = pp.get_element_index(ssp, 'bus', name=bus_name)
@@ -395,11 +398,12 @@ def to_pandapower(ssa, ctrl=[], verify=True):
     # compute the actual value
     calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
     for col in calc_cols:
-        ssa_sg[col] = ssa_sg[col] * ssa_sg["Sn"]
+        ssa_sg[col] = ssa_sg[col] * ssp.sn_mva
 
     # fill the ctrl with False
     ssa_sg.fillna(value=False, inplace=True)
 
+    ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
     for uid in ssa_sg.index:
         pp.create_gen(net=ssp,
@@ -407,7 +411,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
                       bus=ssa_sg["pp_id"].iloc[uid],
                       p_mw=ssa_sg["p0"].iloc[uid],
                       vm_pu=ssa_sg["v0"].iloc[uid],
-                      sn_mva=ssa_sg["Sn"].iloc[uid],
+                      sn_mva=ssp.sn_mva,
                       name=ssa_sg['name'].iloc[uid],
                       controllable=ssa_sg["ctrl"].iloc[uid],
                       in_service=ssa_sg["u"].iloc[uid],
@@ -419,7 +423,7 @@ def to_pandapower(ssa, ctrl=[], verify=True):
                       )
 
     if verify:
-        _verify_pf(ssa, ssp)
+        _verify_pf(ssa, ssp, tol)
 
     return ssp
 
@@ -427,7 +431,6 @@ def to_pandapower(ssa, ctrl=[], verify=True):
 def _verify_pf(ssa, ssp, tol=1e-6):
     """
     Verify power flow results.
-
     """
     ssa.PFlow.run()
     pp.runpp(ssp)
@@ -441,6 +444,11 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     # ssp
     pf_bus['v_pp'] = ssp.res_bus['vm_pu']
     pf_bus['a_pp'] = ssp.res_bus['va_degree'] * deg2rad
+
+    # align ssa angle with slcka bus angle
+    row_slack = np.argmin(np.abs(pf_bus['a_pp']))
+    pf_bus['a_andes'] = pf_bus['a_andes'] - pf_bus['a_andes'].iloc[row_slack]
+
     pf_bus['v_diff'] = pf_bus['v_andes'] - pf_bus['v_pp']
     pf_bus['a_diff'] = pf_bus['a_andes'] - pf_bus['a_pp']
 
@@ -451,3 +459,16 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     else:
         logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
         return False
+
+
+def _rename(pds_in):
+    """
+    Rename the duplicated elelemts in a pandas.Series.
+    """
+    if pds_in.duplicated().any():
+        pds = pds_in.copy()
+        dp_index = pds.duplicated()[pds.duplicated()].index
+        pds.iloc[dp_index] = pds.iloc[dp_index] + ' ' + pds.iloc[dp_index].index.astype(str)
+        return pds
+    else:
+        return pds_in
