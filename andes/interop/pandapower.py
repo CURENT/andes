@@ -17,6 +17,34 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def build_group_table(ssa, group, columns):
+    """
+    Build the table for devices in a group in an ADNES System.
+
+    Parameters
+    ----------
+    ssa :
+        The ADNES system to build the table
+    group : string
+        The ADNES group
+    columns : list of string
+        The common columns of a group that to be included in the table.
+
+    Returns
+    -------
+    DataFrame
+
+        The output Dataframe contains the columns from the device
+    """
+    group_df = pd.DataFrame(columns=columns)
+    group = getattr(ssa, group)
+    mdl_dict = getattr(group, 'models')
+    for key in mdl_dict:
+        mdl = getattr(ssa, key)
+        group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
+    return group_df
+
+
 def make_link_table(ssa):
     """
     Build the link table for generators and generator controllers in an ADNES
@@ -35,11 +63,7 @@ def make_link_table(ssa):
         ``StaticGen``, ``Bus``, ``SynGen``, ``Exciter``, and ``TurbineGov``.
     """
     # build StaticGen df
-    sg_cols = ['name', 'idx', 'bus']
-    ssa_sg = pd.DataFrame(columns=sg_cols)
-    for key in ssa.StaticGen.models:
-        sg = getattr(ssa, key)
-        ssa_sg = pd.concat([ssa_sg, sg.as_df()[sg_cols]], axis=0)
+    ssa_sg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
     # build TurbineGov df
     gov_cols = ['idx', 'syn']
     ssa_gov = pd.DataFrame(columns=gov_cols)
