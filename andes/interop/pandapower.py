@@ -189,7 +189,7 @@ def add_gencost(ssp, gen_cost):
     return True
 
 
-def to_pp_bus(ssp, ssa_bus):
+def _to_pp_bus(ssp, ssa_bus):
     """Create bus in pandapower net"""
     for uid in ssa_bus.index:
         pp.create_bus(net=ssp,
@@ -204,7 +204,7 @@ def to_pp_bus(ssp, ssa_bus):
     return ssp
 
 
-def to_pp_line(ssa, ssp, ssa_bus):
+def _to_pp_line(ssa, ssp, ssa_bus):
     """Create line in pandapower net"""
     # TODO: 1) from- and to- sides `Y`; 2)`g`
     omega = 2 * pi * ssp.f_hz
@@ -298,7 +298,7 @@ def to_pp_line(ssa, ssp, ssa_bus):
     return ssp
 
 
-def to_pp_load(ssa, ssp, ssa_bus):
+def _to_pp_load(ssa, ssp, ssa_bus):
     """Create load in pandapower net"""
     ssa_pq = ssa.PQ.as_df()
     ssa_pq['p_mw'] = ssa_pq["p0"] * ssp.sn_mva
@@ -322,7 +322,7 @@ def to_pp_load(ssa, ssp, ssa_bus):
     return ssp
 
 
-def to_pp_shunt(ssa, ssp, ssa_bus):
+def _to_pp_shunt(ssa, ssp, ssa_bus):
     """Create shunt in pandapower net"""
     ssa_shunt = ssa.Shunt.as_df()
     ssa_shunt['p_mw'] = ssa_shunt["g"] * ssp.sn_mva
@@ -346,7 +346,7 @@ def to_pp_shunt(ssa, ssp, ssa_bus):
     return ssp
 
 
-def to_pp_gen_pre(ssa):
+def _to_pp_gen_pre(ssa):
     """Create generator data in pandapower net"""
     # build StaticGen df
     stg_cols = ['idx', 'u', 'name', 'bus', 'v0', 'vmax', 'vmin']
@@ -399,10 +399,10 @@ def to_pp_gen_pre(ssa):
         return ssa_sg
 
 
-def to_pp_gen(ssa, ssp, ctrl=[]):
+def _to_pp_gen(ssa, ssp, ctrl=[]):
     """Create shunt in pandapower net"""
     # TODO: Add RenGen
-    ssa_sg = to_pp_gen_pre(ssa)
+    ssa_sg = _to_pp_gen_pre(ssa)
 
     # assign slack bus
     ssa_sg["slack"] = False
@@ -411,7 +411,7 @@ def to_pp_gen(ssa, ssp, ctrl=[]):
     # compute the actual value
     stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
     ssa_sg[stg_calc_cols] = ssa_sg[stg_calc_cols].apply(lambda x: x * ssp.sn_mva)
-    if 'gammap' not in to_pp_gen_pre(ssa).columns:
+    if 'gammap' not in _to_pp_gen_pre(ssa).columns:
         ssa_sg['gammap'] = 1
         ssa_sg['gammaq'] = 1
     else:
@@ -502,19 +502,19 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     ssa_bus['name'] = _rename(ssa_bus['name'])
 
     # --- 1. convert buses ---
-    ssp = to_pp_bus(ssp, ssa_bus)
+    ssp = _to_pp_bus(ssp, ssa_bus)
 
     # --- 2. convert Line ---
-    ssp = to_pp_line(ssa, ssp, ssa_bus)
+    ssp = _to_pp_line(ssa, ssp, ssa_bus)
 
     # --- 3. load ---
-    ssp = to_pp_load(ssa, ssp, ssa_bus)
+    ssp = _to_pp_load(ssa, ssp, ssa_bus)
 
     # --- 4. shunt ---
-    ssp = to_pp_shunt(ssa, ssp, ssa_bus)
+    ssp = _to_pp_shunt(ssa, ssp, ssa_bus)
 
     # --- 5. generator ---
-    ssp = to_pp_gen(ssa, ssp, ctrl)
+    ssp = _to_pp_gen(ssa, ssp, ctrl)
 
     if verify:
         _verify_pf(ssa, ssp, tol)
