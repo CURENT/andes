@@ -346,7 +346,6 @@ def to_pp_shunt(ssa, ssp, ssa_bus):
     return ssp
 
 
-# --- debug ---
 def to_pp_gen_pre(ssa):
     """Create generator data in pandapower net"""
     # build StaticGen df
@@ -425,10 +424,13 @@ def to_pp_gen(ssa, ssp, ctrl=[]):
             raise ValueError("ctrl length does not match StaticGen length")
         ssa_sg["ctrl"] = [bool(x) for x in ctrl]
     else:
-        if make_link_table(ssa)["gov_idx"].shape[0] == 0:
+        key = make_link_table(ssa)
+        if key.shape[0] == 0:
+            # if no dyn device, set all generators as controllable
             ssa_sg["ctrl"] = [bool(x) for x in [1]*len(ssa_sg)]
         else:
-            ssa_sg["ctrl"] = [not x for x in make_link_table(ssa)["gov_idx"].drop_duplicates().isna()]
+            key = key[~key['stg_idx'].duplicated()]
+            ssa_sg["ctrl"] = [bool(x) for x in key['gov_idx']]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
