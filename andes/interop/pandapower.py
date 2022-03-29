@@ -76,9 +76,9 @@ def make_link_table(ssa):
     # build Exciter df
     ssa_exc = build_group_table(ssa, 'Exciter', ['idx', 'syn'])
     # build SynGen df
-    ssa_syg = build_group_table(ssa, 'SynGen', ['idx', 'bus', 'gen'])
+    ssa_syg = build_group_table(ssa, 'SynGen', ['idx', 'bus', 'gen', 'gammap', 'gammaq'], ['GENCLS', 'GENROU'])
     # build DG df
-    ssa_dg = build_group_table(ssa, 'DG', ['idx', 'bus', 'gen'])
+    ssa_dg = build_group_table(ssa, 'DG', ['idx', 'bus', 'gen', 'gammap', 'gammaq'])
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
@@ -97,7 +97,7 @@ def make_link_table(ssa):
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
-    cols = ['stg_name', 'stg_idx', 'bus_idx', 'syg_idx', 'exc_idx', 'gov_idx', 'bus_name']
+    cols = ['stg_name', 'stg_idx', 'bus_idx', 'syg_idx', 'exc_idx', 'gov_idx', 'bus_name', 'gammap', 'gammaq']
     return ssa_key[cols]
 
 
