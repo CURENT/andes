@@ -430,7 +430,7 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
             ssa_sg["ctrl"] = [bool(x) for x in [1]*len(ssa_sg)]
         else:
             key = key[~key['stg_idx'].duplicated()]
-            ssa_sg["ctrl"] = [bool(x) for x in key['gov_idx']]
+            ssa_sg["ctrl"] = [bool(x) for x in key['gov_idx'].fillna(False)]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
