@@ -142,13 +142,11 @@ def runopp_map(ssp, link_table, **kwargs):
                        right=ssp.bus[['name']].reset_index().rename(
                            columns={'index': 'bus', 'name': 'bus_name'}),
                        how='left', on='bus')
-    ssp_res['p'] = ssp_res['p_mw'] / ssp.sn_mva
-    ssp_res['q'] = ssp_res['q_mvar'] / ssp.sn_mva
     ssp_res = pd.merge(left=ssp_res,
                        right=link_table,
                        how='left', on='bus_name')
-    ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap']
-    ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq']
+    ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap'] / ssp.sn_mva
+    ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq'] / ssp.sn_mva
     col = ['name', 'p', 'q', 'vm_pu', 'bus_name', 'bus_idx',
            'controllable', 'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx', 'stg_idx']
     return ssp_res[col]
