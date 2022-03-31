@@ -221,7 +221,7 @@ def _to_pp_line(ssa, ssp, ssa_bus):
     ssl = ssa_line
     ssl['uidx'] = ssl.index
     index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
-    ll_ka = len(ssa_line) * [99999]  # set large line limits
+    ll_ka = len(ssa_line) * [100]  # set large line limits
 
     ssa_line['name'] = _rename(ssa_line['name'])
     # --- 2a. transmission lines ---
@@ -475,7 +475,7 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     -----
     Handling of the following parameters:
 
-      - Line limts are set as 99999.0 in the output network.
+      - Line limts are set as 100.0 in the output network.
       - Generator cost is not included in the conversion. Use ``add_gencost()``
         to add cost data.
       - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
