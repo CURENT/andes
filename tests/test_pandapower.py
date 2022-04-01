@@ -40,7 +40,7 @@ class TestPandapower(unittest.TestCase):
         for case_file in self.cases:
             case = andes.get_case(case_file)
 
-        test_to_pandapower_single(case, tol=1e-3)
+            _test_to_pandapower_single(case, tol=1e-3)
 
     def test_make_link_table(self):
         """
@@ -61,7 +61,7 @@ class TestPandapower(unittest.TestCase):
         return c
 
 
-def test_to_pandapower_single(case, **kwargs):
+def _test_to_pandapower_single(case, **kwargs):
     """
     Test `andes.interop.pandapower.to_pandapower` with a single case
     """
