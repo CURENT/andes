@@ -13,7 +13,7 @@ try:
     m = start_instance()
     m.exit()
     MATPOWER_WORKING = True
-except ImportError:
+except (ImportError, OSError):
     MATPOWER_WORKING = False
 
 
@@ -33,9 +33,9 @@ class TestRunMATPOWER(unittest.TestCase):
         case_path = [get_case(os.path.join('matpower', item)) for item in self.cases]
         andes.run(case_path, no_output=True, ncpu=2, pool=False, verbose=40, default_config=True)
 
+
 @unittest.skipUnless(MATPOWER_WORKING, "MATPOWER not available")
 class TestMATPOWEROct2Py(unittest.TestCase):
-
 
     def test_pflow_against_matpower(self):
 
@@ -45,8 +45,8 @@ class TestMATPOWEROct2Py(unittest.TestCase):
         for name in cases:
 
             ss = andes.run(andes.get_case(os.path.join("matpower", name)),
-                        no_output=True,
-                        default_config=True)
+                           no_output=True,
+                           default_config=True)
 
             m.eval('clear mpc')
             andes.interop.matpower.to_matpower(m, 'mpc', ss)
