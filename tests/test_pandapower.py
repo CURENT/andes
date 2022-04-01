@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 
 import andes
-from andes.shared import rad2deg
+from andes.shared import deg2rad
 from andes.interop.pandapower import to_pandapower, make_link_table
 
 try:
@@ -22,45 +22,63 @@ class TestPandapower(unittest.TestCase):
     Tests for the ANDES-pandapower interface.
     """
 
+    cases = ['ieee14/ieee14_ieeet1.xlsx',
+             'ieee14/ieee14_pvd1.xlsx',
+             'ieee39/ieee39.xlsx',
+             'npcc/npcc.xlsx',
+             ]
+
     def setUp(self) -> None:
         """
         Test setup. This is executed before each test case.
         """
 
-        ssa = andes.load(andes.get_case('ieee14/ieee14_ieeet1.xlsx'),
-                         setup=True,
-                         no_output=True,
-                         default_config=True)
-        ssp = to_pandapower(ssa)
-
-        ssa.PFlow.run()
-        pp.runpp(ssp)
-
-        self.v_andes = ssa.Bus.v.v
-        self.a_andes = ssa.Bus.a.v * rad2deg
-
-        self.v_pp = ssp.res_bus['vm_pu']
-        self.a_pp = ssp.res_bus['va_degree']
-
-        self.link_table = make_link_table(ssa)
-
     def test_to_pandapower(self):
         """
-        Test `andes.interop.pandapower.to_pandapower`
+        Test `andes.interop.pandapower.to_pandapower` with cases
         """
+        for case_file in self.cases:
+            case = andes.get_case(case_file)
 
-        np.testing.assert_almost_equal(self.v_andes, self.v_pp, decimal=6)
-        np.testing.assert_almost_equal(self.a_andes, self.a_pp, decimal=6)
+            _test_to_pandapower_single(case, tol=1e-3)
 
     def test_make_link_table(self):
         """
         Test `andes.interop.pandapower.make_link_table`
         """
 
-        ridx = self.link_table[self.link_table['syn_idx'] == 'GENROU_1'].index
-        c_bus = self.link_table['bus_name'].iloc[ridx].astype(str) == 'BUS1'
-        c_exc = self.link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
-        c_stg = self.link_table['stg_idx'].iloc[ridx].astype(str) == '1'
-        c_gov = self.link_table['gov_idx'].iloc[ridx].astype(str) == 'TGOV1_1'
+        sa14 = andes.load(andes.get_case('ieee14/ieee14_ieeet1.xlsx'),
+                          setup=True,
+                          no_output=True,
+                          default_config=True)
+        link_table = make_link_table(sa14)
+        ridx = link_table[link_table['syg_idx'] == 'GENROU_1'].index
+        c_bus = link_table['bus_name'].iloc[ridx].astype(str) == 'BUS1'
+        c_exc = link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
+        c_stg = link_table['stg_idx'].iloc[ridx].astype(str) == '1'
+        c_gov = link_table['gov_idx'].iloc[ridx].astype(str) == 'TGOV1_1'
         c = c_bus.values[0] and c_exc.values[0] and c_stg.values[0] and c_gov.values[0]
         return c
+
+
+def _test_to_pandapower_single(case, **kwargs):
+    """
+    Test `andes.interop.pandapower.to_pandapower` with a single case
+    """
+
+    sa = andes.load(case, setup=True, no_output=True, default_config=True)
+    sp = to_pandapower(sa, **kwargs)
+
+    sa.PFlow.run()
+    pp.runpp(sp)
+
+    v_andes = sa.Bus.v.v
+    a_andes = sa.Bus.a.v
+    v_pp = sp.res_bus['vm_pu']
+    a_pp = sp.res_bus['va_degree'] * deg2rad
+
+    # align ssa angle with slcka bus angle
+    rid_slack = np.argmin(np.abs(a_pp))
+    a_andes = a_andes - a_andes[rid_slack]
+
+    return np.testing.assert_almost_equal(v_andes, v_pp, decimal=3)
