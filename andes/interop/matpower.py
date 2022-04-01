@@ -28,7 +28,7 @@ except ImportError:
 
 try:
     from oct2py import Oct2PyError
-except ImportError:
+except (ImportError, OSError):
     Oct2PyError = None
 
 
