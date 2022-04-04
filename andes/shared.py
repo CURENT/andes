@@ -65,6 +65,7 @@ cupy = LazyImport('import cupy')
 mpl = LazyImport('import matplotlib')
 unittest = LazyImport('import unittest')
 yaml = LazyImport('import yaml')
+pp = LazyImport('import pandapower')
 
 plt = LazyImport('from matplotlib import pyplot')
 Pool = LazyImport('from pathos.multiprocessing import Pool')
@@ -74,6 +75,8 @@ newton_krylov = LazyImport('from scipy.optimize import newton_krylov')
 fsolve = LazyImport('from scipy.optimize import fsolve')
 solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
 odeint = LazyImport('from scipy.integrate import odeint')
+
+Oct2PyError = LazyImport('from oct2py import Oct2PyError')
 
 
 # --- Shared functions ---
