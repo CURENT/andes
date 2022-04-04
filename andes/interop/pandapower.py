@@ -85,7 +85,8 @@ def make_link_table(ssa):
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
-    ssa_key = pd.merge(left=ssa_stg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx', 'bus': 'bus_idx'}),
+    ssa_key = pd.merge(left=ssa_stg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx',
+                                                    'bus': 'bus_idx', 'u': 'stg_u'}),
                        right=ssa_bus.rename(columns={'name': 'bus_name', 'idx': 'bus_idx'}),
                        how='left', on='bus_idx')
     ssa_syg = pd.merge(left=ssa_key, how='right', on='stg_idx',
@@ -100,7 +101,7 @@ def make_link_table(ssa):
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
-    cols = ['stg_name', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
+    cols = ['stg_name', 'stg_u', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
             'gov_idx', 'bus_name', 'gammap', 'gammaq']
     return ssa_key[cols]
 
