@@ -26,11 +26,7 @@ try:
 except ImportError:
     start_instance = None
 
-try:
-    from oct2py import Oct2PyError
-except (ImportError, OSError):
-    Oct2PyError = None
-
+from andes.shared import Oct2PyError
 
 logger = logging.getLogger(__name__)
 
