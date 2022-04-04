@@ -4,19 +4,34 @@ Simple pandapower (2.7.0) interface
 
 import logging
 import numpy as np
+from functools import wraps
 
 from numpy import pi
 from andes.shared import pd, rad2deg, deg2rad
 
 try:
     import pandapower as pp
+    from pandapower.pypower.makePTDF import makePTDF
+    from pandapower.pd2ppc import _pd2ppc
 except ImportError:
     pp = None
 
-from pandapower.pypower.makePTDF import makePTDF
-from pandapower.pd2ppc import _pd2ppc
-
 logger = logging.getLogger(__name__)
+
+
+def require_pandapower(f):
+    """
+    Decorator for functions that require pandapower.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        if pp is None:
+            raise ModuleNotFoundError("pandapower needs to be manually installed.")
+
+        return f(*args, **kwds)
+
+    return wrapper
 
 
 def build_group_table(ssa, group, columns, mdl_name=[]):
@@ -106,6 +121,7 @@ def make_link_table(ssa):
     return ssa_key[cols]
 
 
+@require_pandapower
 def runopp_map(ssp, link_table, **kwargs):
     """
     Run OPF in pandapower using ``pp.runopp()`` and map results back to ANDES
@@ -155,6 +171,7 @@ def runopp_map(ssp, link_table, **kwargs):
     return ssp_res[col]
 
 
+@require_pandapower
 def add_gencost(ssp, gen_cost):
     """
     Add cost function to converted pandapower net `ssp`.
@@ -171,7 +188,8 @@ def add_gencost(ssp, gen_cost):
     gen_cost : array
         generator cost data
     """
-    # check dim
+
+    # check dimension
     if gen_cost.shape[0] != ssp.gen[ssp.gen['controllable']].shape[0]:
         print('Input cost function size does not match controllable gen size.')
 
@@ -454,6 +472,7 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
     return ssp
 
 
+@require_pandapower
 def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     """
     Convert an ADNES system to a pandapower network for power flow studies.
@@ -490,8 +509,6 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
       - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
         The power is dispatched to each ``DG`` by the power ratio in ``runopp_map``
     """
-    if pp is None:
-        raise ImportError("Please install pandapower to continue")
 
     # create a PP network
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,
@@ -571,7 +588,27 @@ def _rename(pds_in):
 
 # TODO: add test for make GSF
 def make_GSF(ppn, verify=True, using_sparse_solver=False):
-    """Build the GSF array of a pandapower net"""
+    """
+    Build the Generation Shift Factor matrix of a pandapower net.
+
+    Parameters
+    ----------
+    ppn : pandapower.network.Network
+        Pandapower network
+    verify : bool
+        True to verify the GSF with that from DC power flow
+    using_sparse_solver : bool
+        True to use a sparse solver for pandapower maktPTDF
+
+    Returns
+    -------
+    np.ndarray
+        The GSF array
+    """
+
+    if pp is None:
+        raise ImportError("Please install pandapower to continue")
+
     # --- run DCPF ---
     pp.rundcpp(ppn)
 
