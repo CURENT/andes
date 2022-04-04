@@ -8,13 +8,7 @@ from functools import wraps
 
 from numpy import pi
 from andes.shared import pd, rad2deg, deg2rad
-
-try:
-    import pandapower as pp
-    from pandapower.pypower.makePTDF import makePTDF
-    from pandapower.pd2ppc import _pd2ppc
-except ImportError:
-    pp = None
+from andes.shared import pandapower as pp
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +20,9 @@ def require_pandapower(f):
 
     @wraps(f)
     def wrapper(*args, **kwds):
-        if pp is None:
+        try:
+            getattr(pp, '__version__')
+        except AttributeError:
             raise ModuleNotFoundError("pandapower needs to be manually installed.")
 
         return f(*args, **kwds)
@@ -587,6 +583,7 @@ def _rename(pds_in):
 
 
 # TODO: add test for make GSF
+@require_pandapower
 def make_GSF(ppn, verify=True, using_sparse_solver=False):
     """
     Build the Generation Shift Factor matrix of a pandapower net.
@@ -606,8 +603,8 @@ def make_GSF(ppn, verify=True, using_sparse_solver=False):
         The GSF array
     """
 
-    if pp is None:
-        raise ImportError("Please install pandapower to continue")
+    from pandapower.pypower.makePTDF import makePTDF
+    from pandapower.pd2ppc import _pd2ppc
 
     # --- run DCPF ---
     pp.rundcpp(ppn)

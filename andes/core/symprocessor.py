@@ -9,13 +9,11 @@ import pprint
 from collections import OrderedDict, defaultdict
 
 import numpy as np
-import sympy
-from sympy import (Matrix, SparseMatrix, Symbol, SympifyError, lambdify, latex,
-                   sympify,)
 
 from andes.thirdparty.sympymod import FixPiecewise
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
+from andes.shared import sympy as sp
 from andes.utils.paths import get_pycode_path
 
 logger = logging.getLogger(__name__)
@@ -24,9 +22,9 @@ select_args_add = ["__zeros", "__ones", "__falses", "__trues"]
 
 
 # the line below caches Piecewise instances
-sympy.OldPiecewise = sympy.Piecewise
+sp.OldPiecewise = sp.Piecewise
 
-sympy.Piecewise = FixPiecewise
+sp.Piecewise = FixPiecewise
 
 
 class SymProcessor:
@@ -106,22 +104,22 @@ class SymProcessor:
 
         # clear symbols storage
         self.f_list, self.g_list = list(), list()
-        self.f_matrix, self.g_matrix = Matrix([]), Matrix([])
+        self.f_matrix, self.g_matrix = sp.Matrix([]), sp.Matrix([])
 
         # process tex_names defined in model
         # -----------------------------------------------------------
         for key in self.parent.tex_names.keys():
-            self.tex_names[key] = Symbol(self.parent.tex_names[key])
+            self.tex_names[key] = sp.Symbol(self.parent.tex_names[key])
         for instance in self.parent.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
                 self.tex_names[name] = tex_name
         # -----------------------------------------------------------
 
         for var in self.cache.all_params_names:
-            self.inputs_dict[var] = Symbol(var)
+            self.inputs_dict[var] = sp.Symbol(var)
 
         for var in self.cache.all_vars_names:
-            tmp = Symbol(var)
+            tmp = sp.Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
             if var in self.cache.vars_int:
@@ -129,24 +127,24 @@ class SymProcessor:
 
         # store tex names defined in `self.config`
         for key in self.config.as_dict():
-            tmp = Symbol(key)
+            tmp = sp.Symbol(key)
             self.inputs_dict[key] = tmp
             if key in self.config.tex_names:
-                self.tex_names[tmp] = Symbol(self.config.tex_names[key])
+                self.tex_names[tmp] = sp.Symbol(self.config.tex_names[key])
 
         # store tex names for pretty printing replacement later
         for var in self.inputs_dict:
             if var in self.parent.__dict__ and self.parent.__dict__[var].tex_name is not None:
-                self.tex_names[Symbol(var)] = Symbol(self.parent.__dict__[var].tex_name)
+                self.tex_names[sp.Symbol(var)] = sp.Symbol(self.parent.__dict__[var].tex_name)
 
         # additional variables by conventions
-        self.inputs_dict['dae_t'] = Symbol('dae_t')
-        self.inputs_dict['sys_f'] = Symbol('sys_f')
-        self.inputs_dict['sys_mva'] = Symbol('sys_mva')
-        self.inputs_dict['__zeros'] = Symbol('__zeros')
-        self.inputs_dict['__ones'] = Symbol('__ones')
-        self.inputs_dict['__falses'] = Symbol('__falses')
-        self.inputs_dict['__trues'] = Symbol('__trues')
+        self.inputs_dict['dae_t'] = sp.Symbol('dae_t')
+        self.inputs_dict['sys_f'] = sp.Symbol('sys_f')
+        self.inputs_dict['sys_mva'] = sp.Symbol('sys_mva')
+        self.inputs_dict['__zeros'] = sp.Symbol('__zeros')
+        self.inputs_dict['__ones'] = sp.Symbol('__ones')
+        self.inputs_dict['__falses'] = sp.Symbol('__falses')
+        self.inputs_dict['__trues'] = sp.Symbol('__trues')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -199,8 +197,8 @@ class SymProcessor:
                     elist.append(0)
                 else:
                     try:
-                        expr = sympify(instance.e_str, locals=self.inputs_dict)
-                    except (SympifyError, TypeError) as e:
+                        expr = sp.sympify(instance.e_str, locals=self.inputs_dict)
+                    except (sp.SympifyError, TypeError) as e:
                         logger.error('Error parsing equation "%s "for %s.%s',
                                      instance.e_str, instance.owner.class_name, name)
                         raise e
@@ -219,16 +217,16 @@ class SymProcessor:
             if len(elist) == 0 or not any(elist):  # `any`, not `all`
                 self.calls.__dict__[ename] = None
             else:
-                self.calls.__dict__[ename] = lambdify(sym_args, tuple(elist),
-                                                      modules=self.lambdify_func)
+                self.calls.__dict__[ename] = sp.lambdify(sym_args, tuple(elist),
+                                                         modules=self.lambdify_func)
 
                 # manually append additional arguments for select.
                 if 'select' in inspect.getsource(self.calls.__dict__[ename]):
                     eargs.extend(select_args_add)
 
         # convert to SymPy matrices
-        self.f_matrix = Matrix(self.f_list)
-        self.g_matrix = Matrix(self.g_list)
+        self.f_matrix = sp.Matrix(self.f_list)
+        self.g_matrix = sp.Matrix(self.g_list)
 
     def generate_services(self):
         """
@@ -250,15 +248,15 @@ class SymProcessor:
         for name, instance in self.parent.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
             try:
-                expr = sympify(v_str, locals=self.inputs_dict)
-            except (SympifyError, TypeError) as e:
+                expr = sp.sympify(v_str, locals=self.inputs_dict)
+            except (sp.SympifyError, TypeError) as e:
                 logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                 raise e
 
             fs = self._check_expr_symbols(expr)
             s_syms[name] = expr
             s_args[name] = [str(i) for i in fs]
-            s_calls[name] = lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+            s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
 
             if 'select' in inspect.getsource(s_calls[name]):
                 s_args[name].extend(select_args_add)
@@ -286,7 +284,7 @@ class SymProcessor:
         from sympy import Tuple
 
         # clear storage
-        self.df_syms, self.dg_syms = Matrix([]), Matrix([])
+        self.df_syms, self.dg_syms = sp.Matrix([]), sp.Matrix([])
         self.calls.clear_ijv()
 
         # NOTE: SymPy does not allow getting the derivative of an empty array
@@ -296,8 +294,8 @@ class SymProcessor:
         if len(self.f_matrix) > 0:
             self.df_syms = self.f_matrix.jacobian(self.vars_list)
 
-        self.df_sparse = SparseMatrix(self.df_syms)
-        self.dg_sparse = SparseMatrix(self.dg_syms)
+        self.df_sparse = sp.SparseMatrix(self.df_syms)
+        self.dg_sparse = sp.SparseMatrix(self.dg_syms)
 
         vars_syms_list = list(self.vars_dict)
         algebs_and_ext_list = list(self.cache.algebs_and_ext)
@@ -337,7 +335,7 @@ class SymProcessor:
             self.calls.j_args[jname] = [str(i) for i in j_args[jname]]
             # workaround for SymPy 1.10 to generate tuples with one element. See
             # https://github.com/sympy/sympy/issues/23224
-            self.calls.j[jname] = lambdify(j_args[jname], Tuple(*j_calls[jname]), modules=self.lambdify_func)
+            self.calls.j[jname] = sp.lambdify(j_args[jname], Tuple(*j_calls[jname]), modules=self.lambdify_func)
 
             # manually append additional arguments for select
             if 'select' in inspect.getsource(self.calls.j[jname]):
@@ -379,10 +377,10 @@ class SymProcessor:
         logger.debug("- Generating pretty prints for %s", self.class_name)
 
         # equation symbols for pretty printing
-        self.f, self.g = Matrix([]), Matrix([])
+        self.f, self.g = sp.Matrix([]), sp.Matrix([])
 
         try:
-            self.xy = Matrix(list(self.vars_dict.values())).subs(self.tex_names)
+            self.xy = sp.Matrix(list(self.vars_dict.values())).subs(self.tex_names)
         except TypeError as e:
             logger.error("Error while substituting tex_name for variables.")
             logger.error("Variable names might have conflicts with SymPy functions.")
@@ -396,12 +394,12 @@ class SymProcessor:
         # store latex strings
         nx = len(self.f)
         ny = len(self.g)
-        self.calls.x_latex = [latex(item) for item in self.xy[:nx]]
-        self.calls.y_latex = [latex(item) for item in self.xy[nx:nx + ny]]
+        self.calls.x_latex = [sp.latex(item) for item in self.xy[:nx]]
+        self.calls.y_latex = [sp.latex(item) for item in self.xy[nx:nx + ny]]
 
-        self.calls.f_latex = [latex(item) for item in self.f]
-        self.calls.g_latex = [latex(item) for item in self.g]
-        self.calls.s_latex = [latex(item) for item in self.s]
+        self.calls.f_latex = [sp.latex(item) for item in self.f]
+        self.calls.g_latex = [sp.latex(item) for item in self.g]
+        self.calls.s_latex = [sp.latex(item) for item in self.s]
 
         self.df = self.df_sparse.subs(self.tex_names)
         self.dg = self.dg_sparse.subs(self.tex_names)
@@ -413,9 +411,9 @@ class SymProcessor:
                 init_latex[name] = ''
             else:
                 if instance.v_str is not None:
-                    init_latex[name] = latex(self.v_str_syms[name].subs(self.tex_names))
+                    init_latex[name] = sp.latex(self.v_str_syms[name].subs(self.tex_names))
                 if instance.v_iter is not None:
-                    init_latex[name] = latex(self.v_iter_syms[name].subs(self.tex_names))
+                    init_latex[name] = sp.latex(self.v_iter_syms[name].subs(self.tex_names))
 
         self.calls.init_latex = init_latex
 
@@ -542,16 +540,16 @@ from andes.core.npfunc import *                                     # NOQA
         # convert to symbols
         for name, instance in self.cache.all_vars.items():
             if instance.v_str is not None:
-                sympified = sympify(instance.v_str, locals=self.inputs_dict)
+                sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 self._check_expr_symbols(sympified)
                 self.v_str_syms[name] = sympified
             else:
                 # default initial values to zero
-                sympified = sympify('0.0', locals=self.inputs_dict)
+                sympified = sp.sympify('0.0', locals=self.inputs_dict)
                 self.v_str_syms[name] = sympified
 
             if instance.v_iter is not None:
-                sympified = sympify(instance.v_iter, locals=self.inputs_dict)
+                sympified = sp.sympify(instance.v_iter, locals=self.inputs_dict)
                 self._check_expr_symbols(sympified)
                 self.v_iter_syms[name] = sympified
 
@@ -622,12 +620,12 @@ from andes.core.npfunc import *                                     # NOQA
                 if instance.v_str is not None:
                     self.init_asn[item] = self.v_str_syms[item]
                 if instance.v_iter is not None:
-                    self.init_itn[item] = Matrix([self.v_iter_syms[item]])
+                    self.init_itn[item] = sp.Matrix([self.v_iter_syms[item]])
                     self.init_itn_vars[item] = [item]
 
             elif isinstance(item, list):
                 name_concat = '_'.join(item)
-                eqn_set = Matrix([self.v_iter_syms[name] for name in item])
+                eqn_set = sp.Matrix([self.v_iter_syms[name] for name in item])
                 self.init_itn[name_concat] = eqn_set
                 self.init_itn_vars[name_concat] = item
                 for vv in item:
@@ -657,21 +655,21 @@ from andes.core.npfunc import *                                     # NOQA
         for name, expr in self.init_asn.items():
             fs = self._check_expr_symbols(expr)
             ia_args[name] = [str(i) for i in fs]
-            init_a[name] = lambdify(ia_args[name], expr, modules=self.lambdify_func)
+            init_a[name] = sp.lambdify(ia_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_a[name]):
                 ia_args[name].extend(select_args_add)
 
         for name, expr in self.init_itn.items():
             fs = self._check_expr_symbols(expr)
             ii_args[name] = [str(i) for i in fs]
-            init_i[name] = lambdify(ii_args[name], expr, modules=self.lambdify_func)
+            init_i[name] = sp.lambdify(ii_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_i[name]):
                 ii_args[name].extend(select_args_add)
 
             jexpr = self.init_jac[name]
             fs = self._check_expr_symbols(jexpr)
             ij_args[name] = [str(i) for i in fs]
-            init_j[name] = lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
+            init_j[name] = sp.lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_j[name]):
                 ij_args[name].extend(select_args_add)
 

@@ -1,4 +1,4 @@
-import sympy
+from andes.shared import sympy
 
 
 class Indicator(sympy.Expr):
