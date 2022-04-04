@@ -13,6 +13,8 @@ try:
 except ImportError:
     pp = None
 
+from pandapower.pypower.makePTDF import makePTDF
+from pandapower.pd2ppc import _pd2ppc
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ def make_link_table(ssa):
         ``gammap``, ``gammaq``.
     """
     # build StaticGen df
-    ssa_stg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
+    ssa_stg = build_group_table(ssa, 'StaticGen', ['u', 'name', 'idx', 'bus'])
     # build TurbineGov df
     ssa_gov = build_group_table(ssa, 'TurbineGov', ['idx', 'syn'])
     # build Exciter df
@@ -564,3 +566,50 @@ def _rename(pds_in):
         return pds
     else:
         return pds_in
+
+
+# TODO: add test for make GSF
+def make_GSF(ppn, verify=True, using_sparse_solver=False):
+    """Build the GSF array of a pandapower net"""
+    # --- run DCPF ---
+    pp.rundcpp(ppn)
+
+    # --- compute PTDF ---
+    _, ppci = _pd2ppc(ppn)
+    ptdf = makePTDF(ppci["baseMVA"], ppci["bus"], ppci["branch"],
+                    using_sparse_solver=using_sparse_solver)
+
+    # --- get the gsf ---
+    line_size = ppn.line.shape[0]
+    gsf = ptdf[0:line_size, :]
+
+    if verify:
+        _verifyGSF(ppn, gsf)
+
+    return gsf
+
+
+def _verifyGSF(ppn, gsf, tol=1e-4):
+    """Verify the GSF with DCPF"""
+    # --- DCPF results ---
+    rl = pd.concat([ppn.res_line['p_from_mw'], ppn.line[['from_bus', 'to_bus']]], axis=1)
+    rp = _sumPF_ppn(ppn)
+    rl_c = np.array(np.matrix(gsf) * np.matrix(rp.ngen).T)
+    res_gap = rl.p_from_mw.values - rl_c.flatten()
+    if np.abs(res_gap).max() <= tol:
+        logger.info("GSF is consisstent.")
+    else:
+        logger.warning("Warning: GSF is inconsistent. Pleaes check!")
+
+
+def _sumPF_ppn(ppn):
+    """Summarize PF results of a pandapower net"""
+    rg = pd.concat([ppn.res_gen[['p_mw']], ppn.gen[['bus']]], axis=1).rename(columns={'p_mw': 'gen'})
+    rd = pd.concat([ppn.res_load[['p_mw']], ppn.load[['bus']]], axis=1).rename(columns={'p_mw': 'demand'})
+    rp = pd.DataFrame()
+    rp['bus'] = ppn.bus.index
+    rp = rp.merge(rg, on='bus', how='left')
+    rp = rp.merge(rd, on='bus', how='left')
+    rp.fillna(0, inplace=True)
+    rp['ngen'] = rp['gen'] - rp['demand']
+    return rp
