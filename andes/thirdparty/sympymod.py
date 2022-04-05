@@ -1,4 +1,8 @@
-from andes.shared import sympy
+"""
+Module with extra SymPy classes.
+"""
+
+import sympy
 
 
 class Indicator(sympy.Expr):

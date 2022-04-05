@@ -58,7 +58,6 @@ for jname in jac_names:
 tqdm = LazyImport('from tqdm import tqdm')
 tqdm_nb = LazyImport('from tqdm.notebook import tqdm')
 
-sympy = LazyImport('import sympy')
 pd = LazyImport('import pandas')
 numba = LazyImport('import numba')
 cupy = LazyImport('import cupy')

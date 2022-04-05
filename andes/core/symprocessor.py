@@ -9,11 +9,11 @@ import pprint
 from collections import OrderedDict, defaultdict
 
 import numpy as np
+import sympy as sp
 
 from andes.thirdparty.sympymod import FixPiecewise
 from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
-from andes.shared import sympy as sp
 from andes.utils.paths import get_pycode_path
 
 logger = logging.getLogger(__name__)
