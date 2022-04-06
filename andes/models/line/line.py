@@ -105,6 +105,24 @@ class LineData(ModelData):
                             unit='radian',
                             )
 
+        self.rate_a = NumParam(default=0.0,
+                               info="long-term flow limit (placeholder)",
+                               tex_name='R_{ATEA}',
+                               unit='MVA',
+                               )
+
+        self.rate_b = NumParam(default=0.0,
+                               info="short-term flow limit (placeholder)",
+                               tex_name='R_{ATEB}',
+                               unit='MVA',
+                               )
+
+        self.rate_c = NumParam(default=0.0,
+                               info="emergency flow limit (placeholder)",
+                               tex_name='R_{ATEC}',
+                               unit='MVA',
+                               )
+
         self.owner = IdxParam(model='Owner', info="owner code")
 
         self.xcoord = DataParam(info="x coordinates")

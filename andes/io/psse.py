@@ -450,6 +450,7 @@ def _parse_line_v33(raw, system):
         param = {
             'bus1': data[0], 'bus2': data[1],
             'r': data[3], 'x': data[4], 'b': data[5],
+            'rate_a': data[6], 'rate_b': data[7], 'rate_c': data[8],
             'Vn1': system.Bus.get(src='Vn', idx=data[0], attr='v'),
             'Vn2': system.Bus.get(src='Vn', idx=data[1], attr='v'),
         }
@@ -485,6 +486,9 @@ def _parse_transf_v33(raw, system, max_bus):
             transf = True
             tap = data[2][0]  # pu or in kV
             phi = data[2][2] * deg2rad  # `ANG1` is entered in degree; convert to rad
+            rate_a = data[2][3]
+            rate_b = data[2][4]
+            rate_c = data[2][5]
 
             # CW - Winding I/O code, 1-turn ratio on pu bus base kV, 2: winding V, 3: turn ratio pu on norn wind V
             if data[0][4] == 2:
@@ -516,6 +520,9 @@ def _parse_transf_v33(raw, system, max_bus):
                      'Sn': Sn,
                      'Vn1': Vn1,
                      'Vn2': Vn2,
+                     'rate_a': rate_a,
+                     'rate_b': rate_b,
+                     'rate_c': rate_c,
                      }
 
             out['Line'].append(param)
