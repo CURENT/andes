@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.3 (2022-04-06)
+-------------------
+- Adjustments in the Pandapower interface. Added make generation shift factor.
+- Reduced import overhead for command-line tool.
+
 v1.6.2 (2022-03-27)
 -------------------
 Interoperability:
