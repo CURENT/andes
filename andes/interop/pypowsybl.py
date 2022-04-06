@@ -4,17 +4,32 @@ Interoperability with pypowsybl.
 
 import logging
 import numpy as np
+from functools import wraps
 
 from andes.shared import pd
-
-try:
-    import pypowsybl as pp
-except ImportError:
-    pp = None
+from andes.shared import pypowsybl as pp
 
 logger = logging.getLogger(__name__)
 
 
+def require_pypowsybl(f):
+    """
+    Decorator for functions that require pypowsybl.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        try:
+            getattr(pp, '__version__')
+        except AttributeError:
+            raise ModuleNotFoundError("pypowsybl needs to be manually installed.")
+
+        return f(*args, **kwds)
+
+    return wrapper
+
+
+@require_pypowsybl
 def to_pypowsybl(ss):
     """
     Convert an ANDES system to a pypowsybl network.
@@ -52,8 +67,6 @@ def to_pypowsybl(ss):
         n.get_single_line_diagram("VL6")  # show single-line diagram for bus 6
 
     """
-    if pp is None:
-        raise ImportError("Please install pypowsybl.")
 
     substations, voltage_levels = _make_substation_voltage(ss)
     buses = _make_buses(ss)

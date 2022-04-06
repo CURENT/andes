@@ -18,19 +18,33 @@ To create a MATLAB/Octave instance, do:
 
 
 import logging
+from functools import wraps
 
 import andes
-
-try:
-    from matpower import start_instance
-except ImportError:
-    start_instance = None
 
 from andes.shared import Oct2PyError
 
 logger = logging.getLogger(__name__)
 
 
+def require_matpower(f):
+    """
+    Decorator for functions that require matpower.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        try:
+            from matpower import start_instance   # NOQA
+        except ImportError:
+            raise ModuleNotFoundError("Package `matpower` needs to be manually installed.")
+
+        return f(*args, **kwds)
+
+    return wrapper
+
+
+@require_matpower
 def from_matpower(m, varname, system=None):
     """
     Retrieve a MATPOWER mpc case from a MATLAB/Octave instance.
@@ -105,6 +119,7 @@ def from_matpower(m, varname, system=None):
     return system
 
 
+@require_matpower
 def to_matpower(m, varname, system):
     """
     Send an ANDES case to a running MATLAB instance.

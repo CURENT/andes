@@ -4,17 +4,30 @@ Simple pandapower (2.7.0) interface
 
 import logging
 import numpy as np
+from functools import wraps
 
 from numpy import pi
 from andes.shared import pd, rad2deg, deg2rad
-
-try:
-    import pandapower as pp
-except ImportError:
-    pp = None
-
+from andes.shared import pandapower as pp
 
 logger = logging.getLogger(__name__)
+
+
+def require_pandapower(f):
+    """
+    Decorator for functions that require pandapower.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        try:
+            getattr(pp, '__version__')
+        except AttributeError:
+            raise ModuleNotFoundError("pandapower needs to be manually installed.")
+
+        return f(*args, **kwds)
+
+    return wrapper
 
 
 def build_group_table(ssa, group, columns, mdl_name=[]):
@@ -71,7 +84,7 @@ def make_link_table(ssa):
         ``gammap``, ``gammaq``.
     """
     # build StaticGen df
-    ssa_stg = build_group_table(ssa, 'StaticGen', ['name', 'idx', 'bus'])
+    ssa_stg = build_group_table(ssa, 'StaticGen', ['u', 'name', 'idx', 'bus'])
     # build TurbineGov df
     ssa_gov = build_group_table(ssa, 'TurbineGov', ['idx', 'syn'])
     # build Exciter df
@@ -83,7 +96,8 @@ def make_link_table(ssa):
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
-    ssa_key = pd.merge(left=ssa_stg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx', 'bus': 'bus_idx'}),
+    ssa_key = pd.merge(left=ssa_stg.rename(columns={'name': 'stg_name', 'idx': 'stg_idx',
+                                                    'bus': 'bus_idx', 'u': 'stg_u'}),
                        right=ssa_bus.rename(columns={'name': 'bus_name', 'idx': 'bus_idx'}),
                        how='left', on='bus_idx')
     ssa_syg = pd.merge(left=ssa_key, how='right', on='stg_idx',
@@ -98,11 +112,12 @@ def make_link_table(ssa):
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
-    cols = ['stg_name', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
+    cols = ['stg_name', 'stg_u', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
             'gov_idx', 'bus_name', 'gammap', 'gammaq']
     return ssa_key[cols]
 
 
+@require_pandapower
 def runopp_map(ssp, link_table, **kwargs):
     """
     Run OPF in pandapower using ``pp.runopp()`` and map results back to ANDES
@@ -152,6 +167,7 @@ def runopp_map(ssp, link_table, **kwargs):
     return ssp_res[col]
 
 
+@require_pandapower
 def add_gencost(ssp, gen_cost):
     """
     Add cost function to converted pandapower net `ssp`.
@@ -168,7 +184,8 @@ def add_gencost(ssp, gen_cost):
     gen_cost : array
         generator cost data
     """
-    # check dim
+
+    # check dimension
     if gen_cost.shape[0] != ssp.gen[ssp.gen['controllable']].shape[0]:
         print('Input cost function size does not match controllable gen size.')
 
@@ -451,6 +468,7 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
     return ssp
 
 
+@require_pandapower
 def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     """
     Convert an ADNES system to a pandapower network for power flow studies.
@@ -487,8 +505,6 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
       - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
         The power is dispatched to each ``DG`` by the power ratio in ``runopp_map``
     """
-    if pp is None:
-        raise ImportError("Please install pandapower to continue")
 
     # create a PP network
     ssp = pp.create_empty_network(f_hz=ssa.config.freq,
@@ -564,3 +580,71 @@ def _rename(pds_in):
         return pds
     else:
         return pds_in
+
+
+# TODO: add test for make GSF
+@require_pandapower
+def make_GSF(ppn, verify=True, using_sparse_solver=False):
+    """
+    Build the Generation Shift Factor matrix of a pandapower net.
+
+    Parameters
+    ----------
+    ppn : pandapower.network.Network
+        Pandapower network
+    verify : bool
+        True to verify the GSF with that from DC power flow
+    using_sparse_solver : bool
+        True to use a sparse solver for pandapower maktPTDF
+
+    Returns
+    -------
+    np.ndarray
+        The GSF array
+    """
+
+    from pandapower.pypower.makePTDF import makePTDF
+    from pandapower.pd2ppc import _pd2ppc
+
+    # --- run DCPF ---
+    pp.rundcpp(ppn)
+
+    # --- compute PTDF ---
+    _, ppci = _pd2ppc(ppn)
+    ptdf = makePTDF(ppci["baseMVA"], ppci["bus"], ppci["branch"],
+                    using_sparse_solver=using_sparse_solver)
+
+    # --- get the gsf ---
+    line_size = ppn.line.shape[0]
+    gsf = ptdf[0:line_size, :]
+
+    if verify:
+        _verifyGSF(ppn, gsf)
+
+    return gsf
+
+
+def _verifyGSF(ppn, gsf, tol=1e-4):
+    """Verify the GSF with DCPF"""
+    # --- DCPF results ---
+    rl = pd.concat([ppn.res_line['p_from_mw'], ppn.line[['from_bus', 'to_bus']]], axis=1)
+    rp = _sumPF_ppn(ppn)
+    rl_c = np.array(np.matrix(gsf) * np.matrix(rp.ngen).T)
+    res_gap = rl.p_from_mw.values - rl_c.flatten()
+    if np.abs(res_gap).max() <= tol:
+        logger.info("GSF is consisstent.")
+    else:
+        logger.warning("Warning: GSF is inconsistent. Pleaes check!")
+
+
+def _sumPF_ppn(ppn):
+    """Summarize PF results of a pandapower net"""
+    rg = pd.concat([ppn.res_gen[['p_mw']], ppn.gen[['bus']]], axis=1).rename(columns={'p_mw': 'gen'})
+    rd = pd.concat([ppn.res_load[['p_mw']], ppn.load[['bus']]], axis=1).rename(columns={'p_mw': 'demand'})
+    rp = pd.DataFrame()
+    rp['bus'] = ppn.bus.index
+    rp = rp.merge(rg, on='bus', how='left')
+    rp = rp.merge(rd, on='bus', how='left')
+    rp.fillna(0, inplace=True)
+    rp['ngen'] = rp['gen'] - rp['demand']
+    return rp

@@ -11,8 +11,9 @@ from andes.interop.pandapower import to_pandapower, make_link_table
 
 try:
     import pandapower as pp
+    getattr(pp, '__version__')
     HAVE_PANDAPOWER = True
-except ImportError:
+except (ImportError, AttributeError):
     HAVE_PANDAPOWER = False
 
 

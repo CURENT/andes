@@ -14,7 +14,6 @@ import math
 import os
 import psutil
 
-from distutils.spawn import find_executable
 
 import coloredlogs  # NOQA
 import numpy as np  # NOQA
@@ -65,7 +64,8 @@ cupy = LazyImport('import cupy')
 mpl = LazyImport('import matplotlib')
 unittest = LazyImport('import unittest')
 yaml = LazyImport('import yaml')
-pp = LazyImport('import pandapower')
+pandapower = LazyImport('import pandapower')
+pypowsybl = LazyImport('import pypowsybl')
 
 plt = LazyImport('from matplotlib import pyplot')
 Pool = LazyImport('from pathos.multiprocessing import Pool')
@@ -80,6 +80,8 @@ Oct2PyError = LazyImport('from oct2py import Oct2PyError')
 
 
 # --- Shared functions ---
+find_executable = LazyImport('from distutils.spawn import find_executable')
+
 
 def set_latex():
     """

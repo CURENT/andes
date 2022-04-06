@@ -165,7 +165,7 @@ class Documenter:
             ivs.append(p.v_str if p.v_str else '')
 
         title = 'Initialization Equations'
-        
+
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
             call_store = self.system.calls[self.class_name]

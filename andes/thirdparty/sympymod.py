@@ -1,3 +1,7 @@
+"""
+Module with extra SymPy classes.
+"""
+
 import sympy
 
 
