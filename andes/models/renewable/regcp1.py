@@ -2,13 +2,13 @@
 Module for renewable energy generator (converter) model A with PLL support.
 """
 
-from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
+from andes.core import (Algeb, ConstService, ExtAlgeb, ExtState, ExtParam, ExtService,
                         IdxParam, Lag, Model, ModelData, NumParam, Piecewise,)
 from andes.core.block import GainLimiter, LagAntiWindupRate
 from andes.core.service import DeviceFinder
 
 
-class REGCA2Data(ModelData):
+class REGCP1Data(ModelData):
     """
     REGC_A model data.
 
@@ -108,9 +108,9 @@ class REGCA2Data(ModelData):
                                )
 
 
-class REGCA2Model(Model):
+class REGCP1Model(Model):
     """
-    REGCA2 implementation.
+    REGCP1 implementation.
     """
 
     def __init__(self, system, config):
@@ -199,6 +199,14 @@ class REGCA2Model(Model):
                              tex_name='L_{VG}',
                              )
 
+        self.am = ExtState(model='PLL', src='am', indexer=self.pllidx)
+
+        self.vd = Algeb(v_str='v', info='d-axis voltage', tex_name='V_d',
+                        e_str='vd - v*cos(a - am)')
+
+        self.vq = Algeb(v_str='0', info='q-axis voltage', tex_name='V_q',
+                        e_str='-vq - v*sin(a - am)')
+
         # `Ipcmd` is not defined when the initial `LVG_y` is zero
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
@@ -279,9 +287,10 @@ class REGCA2Model(Model):
                                  )  # `Iqout_y` is the final Iq output
 
         self.Pe = Algeb(tex_name='P_e', info='Active power output',
-                        v_str='p0', e_str='Ipout * v - Pe')
+                        v_str='p0', e_str='(vd * Ipout + vq * Iqout_y) - Pe')
+
         self.Qe = Algeb(tex_name='Q_e', info='Reactive power output',
-                        v_str='q0', e_str='Iqout_y * v - Qe')
+                        v_str='q0', e_str='(vd * Iqout_y - vq * Ipout) - Qe')
 
     def v_numeric(self, **kwargs):
         """
@@ -290,7 +299,7 @@ class REGCA2Model(Model):
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
-class REGCA2(REGCA2Data, REGCA2Model):
+class REGCP1(REGCP1Data, REGCP1Model):
     """
     Renewable energy generator model type A with PLL.
 
@@ -300,5 +309,5 @@ class REGCA2(REGCA2Data, REGCA2Model):
     """
 
     def __init__(self, system, config):
-        REGCA2Data.__init__(self)
-        REGCA2Model.__init__(self, system, config)
+        REGCP1Data.__init__(self)
+        REGCP1Model.__init__(self, system, config)
