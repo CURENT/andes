@@ -262,6 +262,39 @@ class TDSData:
 
         logger.info(f'CSV data saved to "{path}".')
 
+    def _process_yidx(self, yidx, a):
+        """
+        Helper function for processing ``yidx`` if it is a ``BaseVar`` or a list
+        of BaseVars.
+
+        Indexing by ``a`` is considered.
+        """
+        if isinstance(yidx, BaseVar):
+            yidx = [yidx]
+
+        if isinstance(yidx, list) and isinstance(yidx[0], BaseVar):
+            all_yidx = np.array([], dtype=int)
+            for item in yidx:
+                if item.n == 0:
+                    logger.warning("Variable <%s> contains no values, ignored.", item.name)
+                    continue
+                if item.v_code == 'y':
+                    offs = self.dae.n + 1
+                else:
+                    offs = 1
+
+                new_yidx = item.a + offs
+
+                if a is not None:
+                    new_yidx = np.take(new_yidx, a)
+                all_yidx = np.append(all_yidx, new_yidx)
+
+            yidx = all_yidx
+
+        # a list of integers will remain unchanged
+
+        return yidx
+
     def plot(self, yidx, xidx=(0,), *, a=None, ytimes=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None,
              xlabel=None, ylabel=None, xheader=None, yheader=None,
@@ -370,19 +403,17 @@ class TDSData:
             Figure object for bqplot backend.
 
         """
+
         if self._mode == 'memory':
-            if isinstance(yidx, BaseVar):
-                if yidx.n == 0:
-                    logger.error(f"Variable <{yidx.name}> contains no values.")
-                    return
-                offs = 1
-                if yidx.v_code == 'y':
-                    offs += self.dae.n
+            yidx = self._process_yidx(yidx, a)
 
-                yidx = yidx.a + offs
+        else:  # file mode
+            if a is not None:
+                yidx = np.take(yidx, a)
 
-        if a is not None:
-            yidx = np.take(yidx, a)
+        if len(yidx) == 0:
+            logger.error("No variables to plot.")
+            return
 
         xvalue = self.get_values(xidx)
         yvalue = self.get_values(yidx)

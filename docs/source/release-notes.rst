@@ -9,10 +9,17 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.4 (2022-04-xx)
+-------------------
+- ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
+  ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
+  the rotor speed and angles of the 0-th and the 1-st generator.
+
 v1.6.3 (2022-04-06)
 -------------------
-- Adjustments in the Pandapower interface. Added make generation shift factor.
-- Reduced import overhead for command-line tool.
+- Adjustments in the Pandapower interface. Added ``make_GSF()`` for the
+  generation shift factor matrix.
+- Reduced import overhead for the command-line tool.
 
 v1.6.2 (2022-03-27)
 -------------------
