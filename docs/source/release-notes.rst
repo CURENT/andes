@@ -14,6 +14,7 @@ v1.6.4 (2022-04-xx)
 - ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
   ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
   the rotor speed and angles of the 0-th and the 1-st generator.
+- Added :ref:`REGCP1` model for generic converters with PLL support.
 
 v1.6.3 (2022-04-06)
 -------------------
