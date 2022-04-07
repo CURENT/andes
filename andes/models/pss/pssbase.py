@@ -42,7 +42,8 @@ class PSSBase(Model):
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus',
+                                    default_model='BusFreq')
 
         # from SynGen
         self.Sn = ExtParam(model='SynGen', src='Sn', indexer=self.syn, tex_name='S_n',

@@ -720,6 +720,14 @@ class PhasorMeasurement(GroupBase):
         self.common_vars.extend(('am', 'vm'))
 
 
+class PLL(GroupBase):
+    """Phase-locked loop models."""
+
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('am',))
+
+
 class Motor(GroupBase):
     """Induction Motor group
     """

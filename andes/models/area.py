@@ -90,7 +90,8 @@ class ACEc(ACEData, Model):
         self.area = ExtParam(model='Bus', src='area', indexer=self.bus, export=False)
 
         self.busf.model = self.config.freq_model
-        self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus')
+        self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus',
+                                    default_model='BusFreq')
 
         self.imva = ConstService(v_str='1/sys_mva', info='reciprocal of system mva',
                                  tex_name='1/S_{b, sys}')

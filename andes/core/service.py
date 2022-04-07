@@ -595,7 +595,7 @@ class DeviceFinder(BaseService):
 
     .. code-block :: python
 
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus', default_model='BusFreq')
 
     where `self.busf` is the optional input, `self.buss` is the bus indices that `busf` should measure,
     and `idx_name` is the name of a BusFreq parameter through which the measured bus indices are specified.
@@ -605,12 +605,14 @@ class DeviceFinder(BaseService):
     the returned list of `BusFreq` indices are connected to `self.buss`, respectively.
     """
 
-    def __init__(self, u, link, idx_name, name=None, tex_name=None, info=None):
+    def __init__(self, u, link, idx_name, default_model,
+                 name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
 
         self.u = u
         self.model = u.model
         self.idx_name = idx_name
+        self.default_model = default_model
 
         if self.model is None:
             raise ValueError(f'{u.owner.class_name}.{u.name} must contain "model".')
@@ -626,24 +628,35 @@ class DeviceFinder(BaseService):
         Find devices one by one.
         Devices previously added in this function can be used later without duplication.
         """
-        mdl = system.models[self.model]
+
+        if self.model in system.models:
+            is_model = True
+        elif self.model in system.groups:
+            is_model = False
+        else:
+            raise ValueError('<%s> is not a valid model or group name.' % self.model)
+
+        add_to_model = self.model if is_model else self.default_model
+
+        mdl = system.__dict__[self.model]
         added = False
 
         for ii, link_to in enumerate(self.link.v):
             idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
 
             if idx is None:
-                added = True
-                new_idx = system.add(self.model, {self.idx_name: link_to})
+                new_idx = system.add(add_to_model, {self.idx_name: link_to})
                 self.u.v[ii] = new_idx
 
                 logger.info(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
-                            f"added {self.model} <{new_idx}> "
+                            f"added {add_to_model} <{new_idx}> "
                             f"linked to {self.idx_name} <{link_to}>")
+                added = True
             else:
                 self.u.v[ii] = idx
 
         if added:
+            mdl = system.models[add_to_model]
             mdl.list2array()
             mdl.refresh_inputs()
             system.link_ext_param({mdl.name: mdl})

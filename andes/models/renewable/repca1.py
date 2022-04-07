@@ -246,7 +246,8 @@ class REPCA1Model(Model):
 
         self.buss = DataSelect(self.busr, self.bus, info='selected bus (bus or busr)')
 
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus',
+                                    default_model='BusFreq')
 
         # from Bus
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
