@@ -5,7 +5,7 @@ from typing import List, Union
 import numpy as np
 
 from andes.core import JacTriplet
-from andes.core.var import BaseVar
+from andes.core.var import BaseVar, ExtVar
 from andes.shared import jac_names, pd, spmatrix
 
 logger = logging.getLogger(__name__)
@@ -101,20 +101,23 @@ class DAETimeSeries:
 
         return True
 
-    def get_data(self, base_vars: Union[BaseVar, List[BaseVar]], a=None):
+    def get_data(self, base_vars: Union[BaseVar, List[BaseVar]], *,
+                 a=None, rhs: bool = False,):
         """
-        Get time-series data for a variable instance.
+        Get time-series data, either for a variable or for the equation
+        associated with the variable.
 
-        Values for different variables will be stacked horizontally.
+        Each row correspond to a timestamp. Values for different variables will
+        be appended horizontally.
 
         Parameters
         ----------
         base_var : BaseVar or a sequence of BaseVar(s)
-            The variable types and internal addresses
-            are used for looking up the data.
+            The variable types and internal addresses are used for looking up
+            the data.
         a : an array/list of int or None
-            Sub-indices into the address of `base_var`.
-            Applied to each variable.
+            Sub-indices into the address of `base_var`. Applied to each
+            variable.
 
         """
         out = np.zeros((len(self.t), 0))
@@ -131,9 +134,33 @@ class DAETimeSeries:
             if a is not None:
                 indices = indices[a]
 
-            out = np.hstack((out, self.__dict__[base_var.v_code][:, indices]))
+            if rhs is False:
+                out = np.hstack((out, self.__dict__[base_var.v_code][:, indices]))
+            else:
+                # RHS of an internal algebraic variable is always zero
+                if isinstance(base_var, ExtVar):
+                    out = np.hstack((out, self._access_array(base_var.r_code, indices)))
+                else:
+                    out = np.hstack((out, self._access_array(base_var.e_code, indices)))
 
         return out
+
+    def _access_array(self, array_name, indices=None):
+        """
+        Helper function to access an existing array in TimeSeries.
+
+        The function checks for empty arrays and shows warnings.
+        """
+        if np.count_nonzero(self.__dict__[array_name]) == 0:
+            logger.error("TimeSeries matrix <%s> contains no element. Check if `[TDS] store_%s = 1`",
+                         array_name, array_name)
+
+            return None
+
+        if indices is None:
+            return self.__dict__[array_name][:, :]
+        else:
+            return self.__dict__[array_name][:, indices]
 
     @property
     def df(self):
