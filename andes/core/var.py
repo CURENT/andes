@@ -533,6 +533,7 @@ class ExtState(ExtVar):
     source ``State`` variable. In fact, one should not set ``e_str`` for ``ExtState``.
     """
     e_code = 'f'
+    r_code = 'h'
     v_code = 'x'
     t_const = None
 
@@ -542,6 +543,7 @@ class ExtAlgeb(ExtVar):
     External algebraic variable type.
     """
     e_code = 'g'
+    r_code = 'i'
     v_code = 'y'
 
 
