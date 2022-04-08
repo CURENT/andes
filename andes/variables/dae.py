@@ -130,18 +130,27 @@ class DAETimeSeries:
                             base_var.owner.class_name, base_var.name)
                 continue
 
-            indices = base_var.a
-            if a is not None:
-                indices = indices[a]
+            if rhs is True and (base_var.e_code == 'g') and \
+                    not isinstance(base_var, ExtVar):
+                logger.warning("RHS of an internal algebraic variable <%s.%s> is always zero. Ignored",
+                               base_var.owner.class_name, base_var.name)
+                continue
 
             if rhs is False:
-                out = np.hstack((out, self.__dict__[base_var.v_code][:, indices]))
+                indices = base_var.a
+                array_code = base_var.v_code
             else:
-                # RHS of an internal algebraic variable is always zero
                 if isinstance(base_var, ExtVar):
-                    out = np.hstack((out, self._access_array(base_var.r_code, indices)))
+                    # external algebraic variables
+                    indices = base_var.r
+                    array_code = base_var.r_code
                 else:
-                    out = np.hstack((out, self._access_array(base_var.e_code, indices)))
+                    # internal differential variables
+                    indices = base_var.a
+                    array_code = base_var.e_code
+
+            indices = indices[a] if a is not None else indices
+            out = np.hstack((out, self._access_array(array_code, indices)))
 
         return out
 
