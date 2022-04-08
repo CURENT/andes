@@ -233,12 +233,14 @@ def _to_pp_line(ssa, ssp, ssa_bus):
     ssa_line['X'] = ssa_line["x"] * ssa_line['Zb']  # ohm
     ssa_line['C'] = ssa_line["b"] / ssa_line['Zb'] / omega * 1e9  # nF
     ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
+    # default rate_a is 2000 MVA
+    ssa_line['rate_a'] = ssa_line['rate_a'].replace(0, 2000)
+    ssa_line['max_i_ka'] = ssa_line["rate_a"] / ssa_line['Vb']  # kA
 
     # find index for transmission lines (i.e., non-transformers)
     ssl = ssa_line
     ssl['uidx'] = ssl.index
     index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
-    ll_ka = len(ssa_line) * [100]  # set large line limits
 
     ssa_line['name'] = _rename(ssa_line['name'])
     # --- 2a. transmission lines ---
@@ -259,7 +261,7 @@ def _to_pp_line(ssa, ssp, ssa_bus):
             x_ohm_per_km=ssa_line['X'].iloc[uid],
             c_nf_per_km=ssa_line['C'].iloc[uid],
             #    g_us_per_km = ssa_line['R'].iloc[uid],
-            max_i_ka=ll_ka[uid],
+            max_i_ka=ssa_line['max_i_ka'].iloc[uid],
             type='ol',
             max_loading_percent=100,
             index=num,
@@ -493,7 +495,6 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     -----
     Handling of the following parameters:
 
-      - Line limts are set as 100.0 in the output network.
       - Generator cost is not included in the conversion. Use ``add_gencost()``
         to add cost data.
       - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
