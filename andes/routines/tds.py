@@ -2,20 +2,19 @@
 ANDES module for time-domain simulation.
 """
 
-import sys
-import os
-import time
 import importlib
 import logging
+import math
+import os
+import sys
+import time
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
-from andes.routines.daeint import method_map, Trapezoid
-
-from andes.utils.misc import elapsed, is_notebook, is_interactive
+from andes.routines.daeint import Trapezoid, method_map
+from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
+from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
-from andes.shared import tqdm, tqdm_nb, np, pd
-from andes.shared import matrix, spdiag
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +116,7 @@ class TDS(BaseRoutine):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
-        self.next_pc = 0
+        self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
         self.tol_zero = self.config.tol / 1e6
@@ -332,7 +331,7 @@ class TDS(BaseRoutine):
 
         if resume:
             perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)
-            self.next_pc = perc + 1
+            self.last_pc = perc
             self.pbar.update(perc)
 
         self.qrt_start = time.time()
@@ -363,9 +362,12 @@ class TDS(BaseRoutine):
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
-                if perc >= self.next_pc:
-                    self.pbar.update(1)
-                    self.next_pc += 1
+
+                perc_diff = round(perc - self.last_pc, 2)
+
+                if perc_diff >= 1:
+                    self.pbar.update(perc_diff)
+                    self.last_pc = self.last_pc + perc_diff
 
                 # quasi-real-time check and wait (except for the last step)
                 if config.qrt and self.h > 0:
@@ -388,9 +390,6 @@ class TDS(BaseRoutine):
                     self.busted = True
                     break
 
-        self.pbar.close()
-        self.pbar = None  # removed `pbar` so that System object can be serialized
-
         if self.busted:
             logger.error(self.err_msg)
             logger.error("Simulation terminated at t=%.4f s.", system.dae.t)
@@ -398,8 +397,12 @@ class TDS(BaseRoutine):
         elif system.dae.t == self.config.tf:
             succeed = True   # success flag
             system.exit_code += 0
+            self.pbar.update(100 - self.last_pc)
         else:
             system.exit_code += 1
+
+        self.pbar.close()
+        self.pbar = None  # removed `pbar` so that System object can be serialized
 
         _, s1 = elapsed(t0)
         logger.info('Simulation completed in %s.', s1)
@@ -883,7 +886,7 @@ class TDS(BaseRoutine):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
-        self.next_pc = 0.1
+        self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
 
