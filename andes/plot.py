@@ -429,7 +429,7 @@ class TDSData:
         if ytimes is not None:
             ytimes = float(ytimes)
             if ytimes != 1.0:
-                yvalue = scale_func(ytimes)(yvalue)
+                yvalue = _scale_func(ytimes)(yvalue)
 
         # call `ycalc` on `yvalue`
         if ycalc is not None:
@@ -899,7 +899,7 @@ def parse_y(y, upper, lower=0):
             return []
 
         elif y[0].count(':') == 0:
-            if isint(y[0]):
+            if _isint(y[0]):
                 y[0] = int(y[0])
                 return y
         elif y[0].count(':') == 1:
@@ -1028,15 +1028,11 @@ def tdsplot(filename, y, x=(0,),
         raise NotImplementedError("Plotting multiple data files are not supported yet")
 
 
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
+def _isint(value):
+    """
+    Helper function to tell if ``value`` is convertable to an integer.
+    """
 
-
-def isint(value):
     try:
         int(value)
         return True
@@ -1044,7 +1040,7 @@ def isint(value):
         return False
 
 
-def scale_func(k):
+def _scale_func(k):
     """
     Return a lambda function that scales its input by k
 
@@ -1060,7 +1056,7 @@ def scale_func(k):
     return lambda y_values_input: k * y_values_input
 
 
-def label_latexify(label):
+def _label_latexify(label):
     """
     Convert a label to latex format by appending surrounding $ and escaping spaces
 

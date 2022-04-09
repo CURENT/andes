@@ -533,6 +533,7 @@ class ExtState(ExtVar):
     source ``State`` variable. In fact, one should not set ``e_str`` for ``ExtState``.
     """
     e_code = 'f'
+    r_code = 'h'
     v_code = 'x'
     t_const = None
 
@@ -542,6 +543,7 @@ class ExtAlgeb(ExtVar):
     External algebraic variable type.
     """
     e_code = 'g'
+    r_code = 'i'
     v_code = 'y'
 
 
@@ -550,12 +552,14 @@ class AliasAlgeb(ExtAlgeb):
     Alias algebraic variable. Essentially ``ExtAlgeb`` that links to a a model's
     own variable.
 
-    ``AliasAlgeb`` is useful when the final output of a model is from a block, but
-    the model must provide the final output in a pre-defined name.
-    Using ``AliasAlgeb``, A model can avoid adding an additional variable with a dummy equations.
+    ``AliasAlgeb`` is useful when the final output of a model is from a block,
+    but the model must provide the final output in a pre-defined name. Using
+    ``AliasAlgeb``, A model can avoid adding an additional variable with a dummy
+    equations.
 
-    Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final output.
-    When plotting from file, one need to look up the original variable name.
+    Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final
+    output. When plotting from file, one need to look up the original variable
+    name.
     """
 
     def __init__(self, var, **kwargs):

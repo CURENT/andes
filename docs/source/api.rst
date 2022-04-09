@@ -10,9 +10,10 @@ System
 
 .. autosummary::
    :maxdepth:4
-   :toctree: _generated
    :recursive:
+   :toctree: _generated
    :caption: System
+   :template: autosummary/module_toctree.rst
 
    andes.system
    andes.variables
