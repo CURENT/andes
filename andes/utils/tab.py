@@ -1,4 +1,8 @@
-from andes.shared import Texttable
+"""
+Module for drawing tables based on texttable.
+"""
+
+from texttable import Texttable
 
 
 class Tab(Texttable):

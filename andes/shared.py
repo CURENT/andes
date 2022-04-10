@@ -28,7 +28,6 @@ printing.options['dformat'] = '%.1f'
 printing.options['width'] = -1
 
 from andes.utils.paths import get_dot_andes_path  # NOQA
-from texttable import Texttable  # NOQA
 
 # --- SYSTEM INFO ---
 NCPUS_PHYSICAL = psutil.cpu_count(logical=False)
