@@ -241,11 +241,20 @@ class DAE:
 
     def __init__(self, system):
         self.system = system
-        self.t = np.array(0, dtype=float)
+        self.t = np.array(0.0, dtype=float)
         self.ts = DAETimeSeries(self)
 
-        self.m, self.n, self.o = 0, 0, 0
-        self.p, self.q = 0, 0
+        self._array_and_counter = {
+            'f': 'n',  # differential equation RHS
+            'x': 'n',  # differential variables
+            'g': 'm',  # algebraic equation residual
+            'y': 'm',  # algebraic variables
+            'z': 'o',  # limiter flags
+            'h': 'p',  # RHS of external states
+            'i': 'q',  # RHS of external algebraic variables
+            }
+
+        self.m, self.n, self.o, self.p, self.q = 0, 0, 0, 0, 0
 
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])  # RHS of equations
@@ -258,17 +267,40 @@ class DAE:
         self.gx, self.gy = None, None
         self.rx, self.tx = None, None
 
-        self.h_name, self.h_tex_name = [], []
-        self.i_name, self.i_tex_name = [], []
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []
+        self.h_name, self.h_tex_name = [], []
+        self.i_name, self.i_tex_name = [], []
 
         self.triplets = JacTriplet()
 
         self.tpl = dict()  # sparsity templates with constants
 
+    def request_address(self, array_name: str, ndevice, nvar, collate=False):
+
+        out = []
+        counter_name = self._array_and_counter[array_name]
+
+        idx_begin = self.__dict__[counter_name]
+        idx_end = idx_begin + ndevice * nvar
+
+        if not collate:
+            for idx in range(nvar):
+                out.append(np.arange(idx_begin + idx * ndevice, idx_begin + (idx + 1) * ndevice))
+        else:
+            for idx in range(nvar):
+                out.append(np.arange(idx_begin + idx, idx_end, nvar))
+
+        self.__dict__[counter_name] = idx_end
+
+        return out
+
     def clear_ts(self):
+        """
+        Drop the TimeSeries data and create a new one.
+        """
+
         self.ts = DAETimeSeries(self)
 
     def clear_arrays(self):
@@ -339,7 +371,10 @@ class DAE:
         self.clear_ts()
 
     def set_t(self, t):
-        """Helper function for setting time in-place"""
+        """
+        Helper function for setting time in-place.
+        """
+
         self.t.itemset(t)
 
     def get_size(self, name):
@@ -358,9 +393,9 @@ class DAE:
         """
         ret = []
         for char in name:
-            if char in ('f', 'x', 't'):
+            if char in ('f', 'x'):
                 ret.append(self.n)
-            elif char in ('g', 'y', 'r'):
+            elif char in ('g', 'y'):
                 ret.append(self.m)
             elif char == 'z':
                 ret.append(self.o)

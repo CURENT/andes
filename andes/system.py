@@ -558,6 +558,8 @@ class System:
         """
         Set addresses for differential and algebraic variables.
         """
+
+        # --- Phase 1: set internal variable addresses ---
         for mdl in models.values():
             if mdl.flags.address is True:
                 logger.debug('%s internal address exists', mdl.class_name)
@@ -565,33 +567,32 @@ class System:
             if mdl.n == 0:
                 continue
 
-            # set internal variable addresses
             logger.debug('Setting internal address for %s', mdl.class_name)
-            n = mdl.n
-            m0 = self.dae.m
-            n0 = self.dae.n
-            m_end = m0 + len(mdl.algebs) * n
-            n_end = n0 + len(mdl.states) * n
+
             collate = mdl.flags.collate
+            ndevice = mdl.n
 
-            if not collate:
-                for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx * n, m0 + (idx + 1) * n), contiguous=True)
-                for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx * n, n0 + (idx + 1) * n), contiguous=True)
-            else:
-                for idx, item in enumerate(mdl.algebs.values()):
-                    item.set_address(np.arange(m0 + idx, m_end, len(mdl.algebs)), contiguous=False)
-                for idx, item in enumerate(mdl.states.values()):
-                    item.set_address(np.arange(n0 + idx, n_end, len(mdl.states)), contiguous=False)
+            # get and set internal variable addresses
+            xaddr = self.dae.request_address('x', ndevice=ndevice,
+                                              nvar=len(mdl.states),
+                                              collate=mdl.flags.collate,
+                                              )
+            yaddr = self.dae.request_address('y', ndevice=ndevice,
+                                              nvar=len(mdl.algebs),
+                                              collate=mdl.flags.collate,
+                                              )
 
-            self.dae.m = m_end
-            self.dae.n = n_end
+            for idx, item in enumerate(mdl.states.values()):
+                item.set_address(xaddr[idx], contiguous=not collate)
+            for idx, item in enumerate(mdl.algebs.values()):
+                item.set_address(yaddr[idx], contiguous=not collate)
 
-        # set external variable addresses
+        # --- Phase 2: set external variable addresses ---
+        # NOTE: this step will retrieve the number of variables (item.n) for
+        # Phase 3.
         for mdl in models.values():
             # handle external groups
-            for name, instance in mdl.cache.vars_ext.items():
+            for instance in mdl.cache.vars_ext.values():
                 ext_name = instance.model
                 try:
                     ext_model = self.__dict__[ext_name]
@@ -605,7 +606,7 @@ class System:
                                  mdl.class_name, instance.name, instance.model,
                                  instance.indexer.name, repr(e))
 
-        # set external variable RHS addresses
+        #  --- Phase 3: set external variable RHS addresses ---
         for mdl in models.values():
             if mdl.flags.address is True:
                 logger.debug('%s RHS address exists', mdl.class_name)
