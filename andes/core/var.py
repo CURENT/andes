@@ -77,6 +77,7 @@ class BaseVar:
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
                  deps: Optional[List] = None,
+                 is_output: Optional[bool] = False,
                  ):
 
         self.name = name
@@ -100,6 +101,7 @@ class BaseVar:
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
         self.deps = deps          # a list of variable names this BaseVar depends on for initialization
+        self.is_output = is_output      # indicate if this variable is an output terminal
 
         # --- attributes assigned by `set_address` begins ---
         self.n = 0
@@ -366,6 +368,7 @@ class ExtVar(BaseVar):
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
+                 is_input: Optional[bool] = False,
                  ):
         super().__init__(name=name,
                          tex_name=tex_name,
@@ -387,6 +390,8 @@ class ExtVar(BaseVar):
         self.src = src
         self.indexer = indexer
         self.allow_none = allow_none
+        self.is_input = is_input  # if this ExtVar is an input terminal
+
         self.parent = None
         self._idx = None
         self._n = []
@@ -568,6 +573,7 @@ class AliasAlgeb(ExtAlgeb):
                           src=var.name,
                           indexer=var.owner.idx,
                           info=f'Alias of {var.name}',
+                          is_input=False,
                           **kwargs,
                           )
 
@@ -585,5 +591,6 @@ class AliasState(ExtState):
                           src=var.name,
                           indexer=var.owner.idx,
                           info=f'Alias of {var.name}',
+                          is_input=False,
                           **kwargs,
                           )

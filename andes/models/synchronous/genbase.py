@@ -135,6 +135,7 @@ class GENBase(Model):
                           e_str='-u * (vd * Id + vq * Iq)',
                           ename='P',
                           tex_ename='P',
+                          is_input=True,
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
@@ -144,6 +145,7 @@ class GENBase(Model):
                           e_str='-u * (vq * Id - vd * Iq)',
                           ename='Q',
                           tex_ename='Q',
+                          is_input=True,
                           )
 
         # algebraic variables
