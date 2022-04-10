@@ -10,10 +10,9 @@ from collections import OrderedDict, defaultdict
 
 import numpy as np
 import sympy as sp
-
-from andes.thirdparty.sympymod import FixPiecewise
-from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
+from andes.thirdparty.npfunc import safe_div
+from andes.thirdparty.sympymod import FixPiecewise
 from andes.utils.paths import get_pycode_path
 
 logger = logging.getLogger(__name__)
@@ -440,7 +439,7 @@ from numpy import real, imag, conj, angle, radians, abs             # NOQA
 from numpy import arcsin, arccos, arctan, arctan2                   # NOQA
 from numpy import log                                               # NOQA
 
-from andes.core.npfunc import *                                     # NOQA
+from andes.thirdparty.npfunc import *                               # NOQA
 
 """
         # header goes first
