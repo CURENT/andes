@@ -136,6 +136,7 @@ class PQ(PQData, Model):
                           tex_name=r'\theta',
                           ename='P',
                           tex_ename='P',
+                          is_input=True,
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
@@ -143,6 +144,7 @@ class PQ(PQData, Model):
                           tex_name=r'V',
                           ename='Q',
                           tex_ename='Q',
+                          is_input=True,
                           )
 
         self.v0 = ExtService(src='v',

@@ -86,10 +86,12 @@ class PVModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
                           ename='P',
                           tex_ename='P',
+                          is_input=True,
                           )
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V',
                           ename='dV',
                           tex_ename=r'\Delta V',
+                          is_input=True,
                           )
 
         self.p = ConstService(v_str='p0',

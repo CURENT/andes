@@ -102,6 +102,7 @@ class BaseVar:
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
         self.deps = deps          # a list of variable names this BaseVar depends on for initialization
         self.is_output = is_output      # indicate if this variable is an output terminal
+        self.is_input = False     # internal variables are never inputs
 
         # --- attributes assigned by `set_address` begins ---
         self.n = 0
@@ -391,6 +392,7 @@ class ExtVar(BaseVar):
         self.indexer = indexer
         self.allow_none = allow_none
         self.is_input = is_input  # if this ExtVar is an input terminal
+        self.is_output = False    # external variables are never outputs
 
         self.parent = None
         self._idx = None

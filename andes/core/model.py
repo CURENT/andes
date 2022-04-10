@@ -676,6 +676,9 @@ class Model:
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
         self.cache.add_callback('iter_vars', self._iter_vars)
+        self.cache.add_callback('input_vars', self._input_vars)
+        self.cache.add_callback('output_vars', self._output_vars)
+
         self.cache.add_callback('all_vars_names', self._all_vars_names)
         self.cache.add_callback('all_params', self._all_params)
         self.cache.add_callback('all_params_names', self._all_params_names)
@@ -1535,6 +1538,20 @@ class Model:
                 continue
 
             out[name] = var
+        return out
+
+    def _input_vars(self):
+        out = list()
+        for name, var in self.cache.all_vars.items():
+            if var.is_input:
+                out.append(name)
+        return out
+
+    def _output_vars(self):
+        out = list()
+        for name, var in self.cache.all_vars.items():
+            if var.is_output:
+                out.append(name)
         return out
 
     def set_in_use(self):

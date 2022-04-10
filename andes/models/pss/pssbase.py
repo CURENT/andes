@@ -51,6 +51,7 @@ class PSSBase(Model):
 
         self.omega = ExtState(model='SynGen', src='omega', indexer=self.syn,
                               tex_name=r'\omega', info='Generator speed', unit='p.u.',
+                              is_input=True,
                               )
 
         self.tm0 = ExtService(model='SynGen', src='tm', indexer=self.syn,
@@ -58,13 +59,16 @@ class PSSBase(Model):
                               )
         self.tm = ExtAlgeb(model='SynGen', src='tm', indexer=self.syn,
                            tex_name=r'\tau_m', info='Generator mechanical input',
+                           is_input=True,
                            )
         self.te = ExtAlgeb(model='SynGen', src='te', indexer=self.syn,
                            tex_name=r'\tau_e', info='Generator electrical output',
+                           is_input=True,
                            )
         # from Bus
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name=r'V',
                           info='Bus (or busr, if given) terminal voltage',
+                          is_input=True,
                           )
         self.v0 = ExtService(model='Bus', src='v', indexer=self.buss, tex_name="V_0",
                              info='Initial bus voltage',
@@ -72,7 +76,9 @@ class PSSBase(Model):
 
         # from BusFreq
         self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq, export=False,
-                          info='Bus frequency')
+                          info='Bus frequency',
+                          is_input=True,
+                          )
 
         # from Exciter
         self.vi = ExtAlgeb(model='Exciter', src='vi', indexer=self.avr, tex_name='v_i',
@@ -80,8 +86,10 @@ class PSSBase(Model):
                            e_str='u * vsout',
                            ename='Vi',
                            tex_ename='V_i',
+                           is_input=True,
                            )
 
         self.vsout = Algeb(info='PSS output voltage to exciter',
                            tex_name='v_{sout}',
+                           is_output=True,
                            )  # `self.vsout.e_str` to be provided by specific models

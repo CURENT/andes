@@ -146,6 +146,7 @@ class ExcBase(Model):
                           tex_name='v_{out}',
                           v_str='ue * vf0',
                           diag_eps=True,
+                          is_output=True,
                           )
 
         # Note:
