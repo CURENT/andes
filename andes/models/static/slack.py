@@ -4,7 +4,7 @@ Slack generator model for steady state.
 
 from collections import OrderedDict
 
-from andes.core import NumParam, ExtParam, SortedLimiter
+from andes.core import NumParam, ExtParam, SortedLimiter, Algeb
 from andes.models.static.pv import PVData, PVModel
 
 
@@ -42,9 +42,18 @@ class Slack(SlackData, PVModel):
         self.a.v_setter = True
         self.a.v_str = 'u * a0 + (1-u) * busa0'
 
-        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
-                                  enable=self.config.av2pv)
+        delattr(self, 'p')
+        self.p = Algeb(info='actual active power generation',
+                       unit='p.u.',
+                       tex_name=r'p',
+                       diag_eps=True,
+                       v_str='u * p0',
+                       )
 
         self.p.e_str = "u*(plim_zi * (a0-a) + " \
                        "plim_zl * (pmin-p) + " \
                        "plim_zu * (pmax-p))"
+        self.a.e_str = '-u * p'
+
+        self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
+                                  enable=self.config.av2pv)

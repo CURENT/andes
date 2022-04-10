@@ -2,7 +2,7 @@
 System class for power system data and methods
 """
 
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -29,11 +29,11 @@ from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.routines import all_routines
-from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars, jac_names, matrix, np,
-                          sparse, spmatrix,)
+from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
+                          jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
-                               get_pkl_path, get_pycode_path,)
+                               get_pkl_path, get_pycode_path)
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
