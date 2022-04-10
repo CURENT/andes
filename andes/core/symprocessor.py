@@ -141,10 +141,6 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = sp.Symbol('dae_t')
         self.inputs_dict['sys_f'] = sp.Symbol('sys_f')
         self.inputs_dict['sys_mva'] = sp.Symbol('sys_mva')
-        self.inputs_dict['__zeros'] = sp.Symbol('__zeros')
-        self.inputs_dict['__ones'] = sp.Symbol('__ones')
-        self.inputs_dict['__falses'] = sp.Symbol('__falses')
-        self.inputs_dict['__trues'] = sp.Symbol('__trues')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -517,7 +513,8 @@ from andes.core.npfunc import *                                     # NOQA
 
         # append additional arguments for select
         if 'select' in src:
-            src = src.replace("):", ", __zeros, __ones, __falses, __trues):")
+            right_parenthesis = ", " + ', '.join(select_args_add) + "):"
+            src = src.replace("):", right_parenthesis)
 
         if yapf_pycode:
             try:
