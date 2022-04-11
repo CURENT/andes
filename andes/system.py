@@ -1613,7 +1613,7 @@ class System:
                     sv_name = f'{instance.name}_svc'
                     model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
 
-            # services - non serial 
+            # services - non serial
             model.calls.sns = pycode_model.__dict__.get("sns_update")
 
             # load initialization; assignment

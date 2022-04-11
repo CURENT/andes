@@ -1126,17 +1126,18 @@ class Model:
         """
         Update service equation values.
 
-        This function is only evaluated at initialization.
-        Service values are updated sequentially.
-        The ``v`` attribute of services will be assigned at a new memory address.
+        This function is only evaluated at initialization. Service values are
+        updated sequentially. The ``v`` attribute of services will be assigned
+        at a new memory address.
         """
         for name, instance in self.services.items():
             if name in self.calls.s:
                 func = self.calls.s[name]
                 if callable(func):
                     self.get_inputs(refresh=True)
-                    # NOTE: use new assignment due to possible size change
-                    #   Always make a copy and make the RHS a 1-d array
+                    # NOTE:
+                    # Use new assignment due to possible size change.
+                    # Always make a copy and make the RHS a 1-d array
                     instance.v = np.ravel(np.array(func(*self.s_args[name]), dtype=instance.vtype))
                 else:
                     instance.v = np.ravel(np.array(func, dtype=instance.vtype))
@@ -1179,7 +1180,7 @@ class Model:
             # apply nonserial from ``v_str``:w
             if callable(self.calls.sns):
                 ret = self.calls.sns(*self.sns_args)
-                for idx, instance in enumerate(self.services_var_serial.keys()):
+                for idx, instance in enumerate(self.services_var_nonserial.values()):
                     instance.v[:] = ret[idx]
 
             # Apply individual `v_numeric`
@@ -1718,6 +1719,8 @@ class Model:
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
 
+            md5.update(str(int(item.serial)).encode())
+
         for name, item in self.discrete.items():
             md5.update(str(name).encode())
             md5.update(str(','.join(item.export_flags)).encode())
@@ -1821,6 +1824,7 @@ class Model:
 
         # evaluate `ConstService` and `VarService`
         self.s_update()
+        self.s_update_var()
 
         # find out if variables need to be initialized for `routine`
         flag_name = routine + '_init'

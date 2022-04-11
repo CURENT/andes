@@ -720,8 +720,8 @@ class TDS(BaseRoutine):
         Perform one round of evaluation for one iteration step.
         The following operations are performed in order:
 
-        - discrete flags updating through ``l_update_var``
         - variable service updating through ``s_update_var``
+        - discrete flags updating through ``l_update_var``
         - evaluation of the right-hand-side of ``f``
         - equation-dependent discrete flags updating through ``l_update_eq``
         - evaluation of the right-hand-side of ``g``
@@ -732,12 +732,11 @@ class TDS(BaseRoutine):
         system = self.system
         system.dae.clear_fg()
 
+        system.s_update_var(models=models)  # update VarService
         system.l_update_var(models=models,
                             niter=self.niter,
                             err=self.mis[-1],
                             )
-
-        system.s_update_var(models=models)  # update VarService
 
         # evalute the RHS of `f` and check the limiters (anti-windup)
         # 12/08/2020: Moved `l_update_eq` to before `g_update`
