@@ -1069,6 +1069,9 @@ class Model:
 
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
+        self.sns_args = [self._input[arg] for arg in self.calls.sns_args]
+
+        # each value below is a dict
         mapping = {
             'j_args': self.j_args,
             's_args': self.s_args,
@@ -1162,24 +1165,29 @@ class Model:
     def s_update_var(self):
         """
         Update values of :py:class:`andes.core.service.VarService`.
-
-
         """
+
         if len(self.services_var):
             kwargs = self.get_inputs()
-            for name, instance in self.services_var.items():
-                # apply generated functions for `v_str`
-                if (instance.v_str is not None) and (instance.serial is True):
+            # apply generated functions in serial for `v_str`
+            for name, instance in self.services_var_serial.items():
+                if instance.v_str is not None:
                     func = self.calls.s[name]
                     if callable(func):
                         instance.v[:] = func(*self.s_args[name])
 
-                # Apply individual `v_numeric`
-                func = instance.v_numeric
-                if func is not None and callable(func):
-                    instance.v[:] = func(**kwargs)
+            # apply nonserial from ``v_str``:w
+            if callable(self.calls.sns):
+                ret = self.calls.sns(*self.sns_args)
+                for idx, instance in enumerate(self.services_var_serial.keys()):
+                    instance.v[:] = ret[idx]
 
-            # TODO: update non-serial (independent) VarService
+            # Apply individual `v_numeric`
+            for instance in self.services_var.values():
+                if instance.v_numeric is None:
+                    continue
+                if callable(instance.v_numeric):
+                    instance.v[:] = instance.v_numeric(**kwargs)
 
         if self.flags.sv_num is True:
             kwargs = self.get_inputs()

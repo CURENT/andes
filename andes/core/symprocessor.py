@@ -229,6 +229,9 @@ class SymProcessor:
         ``VarService`` among others. Sequence is preserved due to possible
         dependency.
 
+        All ``VarService`` with ``serial = False`` are generated into one
+        function, ``calls.sns``.
+
         Starting from SymPy 1.9, ``Matrix`` no longer supports non-Expr objects.
         Due to the use of logical conditions in services, service expressions
         will not be converted to SymPy Matrix. The dictionary to look up service
@@ -238,7 +241,7 @@ class SymProcessor:
         s_syms = OrderedDict()
         s_args = OrderedDict()
         s_calls = OrderedDict()
-        sns_args = list()
+        sns_args = list()   # ``sns`` means services that are non-serial
         sns_calls = None
 
         s_calls_nonserial = list()
