@@ -226,14 +226,13 @@ class SymProcessor:
     def generate_services(self):
         """
         Generate calls for services, including ``ConstService`` and
-        ``VarService`` among others.
-        Sequence is preserved due to possible dependency.
+        ``VarService`` among others. Sequence is preserved due to possible
+        dependency.
 
-        Since SymPy 1.9, ``Matrix`` no longer supports non-Expr
-        objects. Due to the use of logical conditions in services,
-        service expressions will not be converted to SymPy Matrix.
-        The dictionary to look up service name and expression
-        is in ``self.s_syms``.
+        Starting from SymPy 1.9, ``Matrix`` no longer supports non-Expr objects.
+        Due to the use of logical conditions in services, service expressions
+        will not be converted to SymPy Matrix. The dictionary to look up service
+        name and expression is in ``self.s_syms``.
         """
 
         s_args = OrderedDict()

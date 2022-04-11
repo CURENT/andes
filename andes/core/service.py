@@ -140,12 +140,15 @@ class ConstService(BaseService):
 
 class VarService(ConstService):
     """
-    Variable service that gets updated in each step/loop as variables change.
+    Variable service that gets updated in each step/iteration before computing
+    the residual equations. As a results, variable values from the k-th step are
+    used to compute a ``VarService`` that will be used to compute the residual
+    for the (k+1)-th step.
 
     This class is useful when one has non-differentiable algebraic equations,
-    which make use of `abs()`, `re` and `im`.
-    Instead of creating `Algeb`, one can put the equation in `VarService`,
-    which will be updated before solving algebraic equations.
+    which make use of `abs()`, `re` and `im`. Instead of creating `Algeb`, one
+    can put the equation in `VarService`, which will be updated before solving
+    algebraic equations.
 
     Examples
     --------
@@ -159,10 +162,8 @@ class VarService(ConstService):
     One can use `VarService` to implement this equation ::
 
         self.VE = VarService(
-            tex_name='V_E',
-            info='VE',
-            v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI + KPC*XL)*(Id + 1j*Iq))',
-            )
+            tex_name='V_E', info='VE', v_str='Abs(KPC*(vd + 1j*vq) + 1j*(KI +
+            KPC*XL)*(Id + 1j*Iq))', )
 
     Warnings
     --------
