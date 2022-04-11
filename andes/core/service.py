@@ -114,6 +114,9 @@ class ConstService(BaseService):
     evaluated once in the initialization phase before variables are initialized.
     Therefore, uninitialized variables must not be used in `v_str``.
 
+    ConstService are evaluated *in serial* after getting external variables and
+    parameters and before initializing internal variables.
+
     Parameters
     ----------
     name : str
@@ -122,6 +125,8 @@ class ConstService(BaseService):
         An equation string to calculate the variable value.
     v_numeric : Callable, optional
         A callable which returns the value of the ConstService
+    v_type: type, optional, default to float
+        Type of element in the value array in float or complex
 
     Attributes
     ----------
@@ -133,10 +138,13 @@ class ConstService(BaseService):
                  v_str: Optional[str] = None,
                  v_numeric: Optional[Callable] = None,
                  vtype: Optional[type] = None,
-                 name: Optional[str] = None, tex_name=None, info=None):
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 ):
         super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
-        self.v_str = v_str
-        self.v_numeric = v_numeric
+        self.v_str: str = v_str
+        self.v_numeric: Callable = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.0
 
 
@@ -151,6 +159,13 @@ class VarService(ConstService):
     which make use of `abs()`, `re` and `im`. Instead of creating `Algeb`, one
     can put the equation in `VarService`, which will be updated before solving
     algebraic equations.
+
+    Parameters
+    ----------
+    independent : bool, optional, default to False
+        True if this VarService depends on previously defined VarService and
+        should be evaluated in serial. False if this VarService only uses known
+        variables.
 
     Examples
     --------
@@ -174,7 +189,23 @@ class VarService(ConstService):
     Use an algebraic variable whenever possible.
     """
 
-    pass
+    def __init__(self,
+                 v_str: Optional[str] = None,
+                 v_numeric: Optional[Callable] = None,
+                 vtype: Optional[type] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 independent: Optional[bool] = True,
+                 ):
+
+        super().__init__(name=name,
+                         vtype=vtype,
+                         tex_name=tex_name,
+                         info=info,
+                         v_str=v_str,
+                         v_numeric=v_numeric)
+        self.independent = independent
 
 
 class EventFlag(VarService):
