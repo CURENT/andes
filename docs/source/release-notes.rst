@@ -17,6 +17,7 @@ Breaking change:
   value of ``p0``. This change affects the addresses of variables.
 
 Other changes:
+
 - ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
   ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
   the rotor speed and angles of the 0-th and the 1-st generator.

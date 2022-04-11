@@ -41,7 +41,8 @@ class BaseService:
         The hosting/owner model instance
     """
 
-    def __init__(self, name: str = None, tex_name: str = None, info: str = None, vtype: Type = None):
+    def __init__(self, name: str = None, tex_name: str = None,
+                 info: str = None, vtype: Type = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
@@ -83,7 +84,8 @@ class BaseService:
         """
         Return the count of values in ``self.v``.
 
-        Needs to be overloaded if ``v`` of subclasses is not a 1-dimensional array.
+        Needs to be overloaded if ``v`` of subclasses is not a 1-dimensional
+        array.
 
         Returns
         -------
@@ -108,9 +110,9 @@ class ConstService(BaseService):
     """
     A type of Service that stays constant once initialized.
 
-    ConstService are usually constants calculated from parameters. They are only evaluated once in the
-    initialization phase before variables are initialized. Therefore, uninitialized variables must not be
-    used in `v_str``.
+    ConstService are usually constants calculated from parameters. They are only
+    evaluated once in the initialization phase before variables are initialized.
+    Therefore, uninitialized variables must not be used in `v_str``.
 
     Parameters
     ----------
@@ -135,7 +137,7 @@ class ConstService(BaseService):
         super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
         self.v_str = v_str
         self.v_numeric = v_numeric
-        self.v: Union[float, int, np.ndarray] = np.array([0.])
+        self.v: Union[float, int, np.ndarray] = 0.0
 
 
 class VarService(ConstService):
@@ -177,15 +179,14 @@ class VarService(ConstService):
 
 class EventFlag(VarService):
     """
-    Service to flag events when the input value changes.
-    The typical input is a `v-provider` with binary values.
+    Service to flag events when the input value changes. The typical input is a
+    `v-provider` with binary values.
 
     Implemented by providing `self.check(**kwargs)` as `v_numeric`.
-    `EventFlag.v` stores the values of the input variable
-    in the most recent iteration/step.
+    `EventFlag.v` stores the values of the input variable in the most recent
+    iteration/step.
 
-    After the evaluation of `self.check()`, `self.v` will be
-    updated.
+    After the evaluation of `self.check()`, `self.v` will be updated.
     """
 
     def __init__(self, u,
@@ -215,9 +216,8 @@ class VarHold(VarService):
     Parameters
     ----------
     hold : v-provider, binary
-        Hold signal array with length equal to the input.
-        For elements that are 1, the corresponding inputs
-        are held until the hold signal returns to 0.
+        Hold signal array with length equal to the input. For elements that are
+        1, the corresponding inputs are held until the hold signal returns to 0.
     """
 
     def __init__(self, u, hold, vtype=None, name=None, tex_name=None, info=None):
@@ -252,12 +252,12 @@ class ExtendedEvent(VarService):
 
     The triggering of an event, whether the rise or fall edge, is specified
     through `trig`. For example, if `trig = rise`, the change of the input from
-    0 to 1 will be considered as an input, whereas the subsequent change back
-    to 0 will be considered as the event end.
+    0 to 1 will be considered as an input, whereas the subsequent change back to
+    0 will be considered as the event end.
 
     `ExtendedEvent.v` stores the flags whether the extended time has completed.
-    Outputs will become 1 once the event starts and return to 0 when
-    the extended time ends.
+    Outputs will become 1 once the event starts and return to 0 when the
+    extended time ends.
 
     Warnings
     --------
@@ -357,7 +357,8 @@ class ExtendedEvent(VarService):
                 self.n_ext += len(ending)
 
                 # TODO: insert extended event end times to a model-level list
-                logger.debug(f"Extended Event ending time set at t={final_times} sec.")
+                logger.debug("Extended Event ending time set at t=%.4f sec.",
+                             final_times)
 
         # final time of the extended event
         if self.n_ext and np.any(self.t_final <= dae_t):
@@ -374,24 +375,22 @@ class PostInitService(ConstService):
     """
     Constant service that gets stored once after init.
 
-    This service is useful when one need to store initialization
-    values stored in variables.
+    This service is useful when one need to store initialization values stored
+    in variables.
 
     Examples
     --------
     In ESST3A model, the `vf` variable is initialized followed by other
-    variables. One can store the initial `vf` into `vf0` so that equation
-    ``vf - vf0 = 0`` will hold. ::
+    variables. One can store the initial `vf` into `vf0` so that equation ``vf -
+    vf0 = 0`` will hold. ::
 
         self.vref0 = PostInitService(info='Initial reference voltage input',
-                                     tex_name='V_{ref0}',
-                                     v_str='vref',
-                                     )
+                                     tex_name='V_{ref0}', v_str='vref', )
 
-    Since all `ConstService` are evaluated before equation evaluation,
-    without using PostInitService, one will need to create lots
-    of `ConstService` to store values in the initialization path
-    towards `vf0`, in order to correctly initialize `vf`.
+    Since all `ConstService` are evaluated before equation evaluation, without
+    using PostInitService, one will need to create lots of `ConstService` to
+    store values in the initialization path towards `vf0`, in order to correctly
+    initialize `vf`.
     """
 
     pass
@@ -401,17 +400,18 @@ class BackRef(BaseService):
     """
     A special type of reference collector.
 
-    `BackRef` is used for collecting device indices of other models referencing the parent model of the
-    `BackRef`. The `v``field will be a list of lists, each containing the `idx` of other models
-    referencing each device of the parent model.
+    `BackRef` is used for collecting device indices of other models referencing
+    the parent model of the `BackRef`. The `v``field will be a list of lists,
+    each containing the `idx` of other models referencing each device of the
+    parent model.
 
-    BackRef can be passed as indexer for params and vars, or shape for `NumReduce` and
-    `NumRepeat`. See examples for illustration.
+    BackRef can be passed as indexer for params and vars, or shape for
+    `NumReduce` and `NumRepeat`. See examples for illustration.
 
     Examples
     --------
-    A Bus device has an `IdxParam` of `area`, storing the `idx` of area to which the bus device belongs.
-    In ``Bus.__init__()``, one has ::
+    A Bus device has an `IdxParam` of `area`, storing the `idx` of area to which
+    the bus device belongs. In ``Bus.__init__()``, one has ::
 
         self.area = IdxParam(model='Area')
 
@@ -426,36 +426,36 @@ class BackRef(BaseService):
         4      1     500
         ====   ====  ====
 
-    The Area model wants to collect the indices of Bus devices which points to the corresponding Area device.
-    In ``Area.__init__``, one defines ::
+    The Area model wants to collect the indices of Bus devices which points to
+    the corresponding Area device. In ``Area.__init__``, one defines ::
 
         self.Bus = BackRef()
 
-    where the member attribute name `Bus` needs to match exactly model name that `Area` wants to collect
-    `idx` for.
-    Similarly, one can define ``self.ACTopology = BackRef()`` to collect devices in the `ACTopology` group
+    where the member attribute name `Bus` needs to match exactly model name that
+    `Area` wants to collect `idx` for. Similarly, one can define
+    ``self.ACTopology = BackRef()`` to collect devices in the `ACTopology` group
     that references Area.
 
-    The collection of `idx` happens in :py:func:`andes.system.System._collect_ref_param`.
-    It has to be noted that the specific `Area` entry must exist to collect model idx-dx referencing it.
+    The collection of `idx` happens in
+    :py:func:`andes.system.System._collect_ref_param`. It has to be noted that
+    the specific `Area` entry must exist to collect model idx-dx referencing it.
     For example, if `Area` has the following data ::
 
-        idx
-        1
+        idx 1
 
-    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely, ``self.Bus.v == [ [1, 3, 4] ]``.
+    Then, only Bus 1, 3, and 4 will be collected into `self.Bus.v`, namely,
+    ``self.Bus.v == [ [1, 3, 4] ]``.
 
     If `Area` has data ::
 
-        idx
-        1
-        2
+        idx 1 2
 
     Then, `self.Bus.v` will end up with ``[ [1, 3, 4], [2] ]``.
 
     See Also
     --------
-    andes.core.service.NumReduce : A more complete example using BackRef to build the COI model
+    andes.core.service.NumReduce : A more complete example using BackRef to
+        build the COI model
 
     """
 
@@ -476,14 +476,17 @@ class ExtService(BaseService):
     model : str
         A model name or a group name
     indexer : IdxParam or BaseParam
-        An "Indexer" instance whose ``v`` field contains the ``idx`` of devices in the model or group.
+        An "Indexer" instance whose ``v`` field contains the ``idx`` of devices
+        in the model or group.
 
     Examples
     --------
-    A synchronous generator needs to retrieve the ``p`` and ``q`` values from static generators
-    for initialization. ``ExtService`` is used for this purpose.
+    A synchronous generator needs to retrieve the ``p`` and ``q`` values from
+    static generators for initialization. ``ExtService`` is used for this
+    purpose.
 
-    In a synchronous generator, one can define the following to retrieve ``StaticGen.p`` as ``p0``::
+    In a synchronous generator, one can define the following to retrieve
+    ``StaticGen.p`` as ``p0``::
 
         class GENCLSModel(Model):
             def __init__(...):
@@ -518,7 +521,8 @@ class ExtService(BaseService):
 
     def link_external(self, ext_model):
         """
-        Method to be called by ``System`` for getting values from the external model or group.
+        Method to be called by ``System`` for getting values from the external
+        model or group.
 
         Parameters
         ----------
@@ -541,19 +545,26 @@ class DataSelect(BaseService):
     """
     Class for selecting values for optional DataParam or NumParam.
 
-    This service is a v-provider that uses optional DataParam if available with a fallback.
+    This service is a v-provider that uses optional DataParam when available.
+    Otherwise, use the fallback value.
 
-    DataParam will be tested for `None`, and NumParam will be tested with `np.isnan()`.
+    DataParam will be tested for `None`, and NumParam will be tested with
+    ``np.isnan()``.
 
     Notes
     -----
-    An use case of DataSelect is remote bus. One can do ::
+    An use case of DataSelect is remote bus. One can do
+
+    .. code:: python
 
         self.buss = DataSelect(option=self.busr, fallback=self.bus)
 
-    Then, pass ``self.buss`` instead of ``self.bus`` as indexer to retrieve voltages.
+    Then, pass ``self.buss`` instead of ``self.bus`` as indexer to retrieve
+    voltages.
 
-    Another use case is to allow an optional turbine rating. One can do ::
+    Another use case is to allow an optional turbine rating. One can do
+
+    .. code:: python
 
         self.Tn = NumParam(default=None)
         self.Sg = ExtParam(...)
@@ -587,23 +598,30 @@ class DeviceFinder(BaseService):
     """
     Service for finding indices of optionally linked devices.
 
-    If not provided, `DeviceFinder` will add devices at the beginning of `System.setup`.
+    If not provided, `DeviceFinder` will add devices at the beginning of
+    `System.setup`.
 
     Examples
     --------
-    IEEEST stabilizer takes an optional `busf` (IdxParam) for specifying the connected BusFreq,
-    which is needed for mode 6. To avoid reimplementing `BusFreq` within IEEEST, one can do
+    IEEEST stabilizer takes an optional `busf` (IdxParam) for specifying the
+    connected BusFreq, which is needed for mode 6. To avoid reimplementing
+    `BusFreq` within IEEEST, one can do
 
     .. code-block :: python
 
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus', default_model='BusFreq')
+        self.busfreq = DeviceFinder(self.busf,
+                                    link=self.buss, idx_name='bus',
+                                    default_model='BusFreq')
 
-    where `self.busf` is the optional input, `self.buss` is the bus indices that `busf` should measure,
-    and `idx_name` is the name of a BusFreq parameter through which the measured bus indices are specified.
-    For each `None` values in `self.busf`, a `BusFreq` is created to measure the corresponding bus in `self.buss`.
+    where ``self.busf`` is the optional input, ``self.buss`` is the bus indices
+    that ``busf`` should measure, and ``idx_name`` is the name of a BusFreq
+    parameter through which the measured bus indices are specified. For each
+    ``None`` values in ``self.busf``, a ``BusFreq`` device will be created to
+    measure the corresponding bus in ``self.buss``.
 
-    That is, ``BusFreq.[idx_name].v = [link]``. `DeviceFinder` will find / create `BusFreq` devices so that
-    the returned list of `BusFreq` indices are connected to `self.buss`, respectively.
+    That is, ``BusFreq.[idx_name].v = [link]``. ``DeviceFinder`` will find or
+    create ``BusFreq`` devices so that the returned list of ``BusFreq`` indices
+    are connected to `self.buss`, respectively.
     """
 
     def __init__(self, u, link, idx_name, default_model,
@@ -670,8 +688,8 @@ class DeviceFinder(BaseService):
 class OperationService(BaseService):
     """
     Base class for a type of Service which performs specific operations.
-    OperationService may not use the `assign_memory` from `BaseService`,
-    because it can have a different size.
+    OperationService may not use the `assign_memory` from `BaseService`, because
+    it can have a different size.
 
     This class cannot be used by itself.
 
@@ -679,9 +697,11 @@ class OperationService(BaseService):
     --------
     NumReduce : Service for Reducing linearly stored 2-D services into 1-D
 
-    NumRepeat : Service for repeating 1-D NumParam/ v-array following a sub-pattern
+    NumRepeat : Service for repeating 1-D NumParam/ v-array following a
+    sub-pattern
 
-    IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a sub-pattern
+    IdxRepeat : Service for repeating 1-D IdxParam/ v-list following a
+    sub-pattern
     """
 
     def __init__(self,
@@ -707,11 +727,13 @@ class OperationService(BaseService):
 
 class NumReduce(OperationService):
     """
-    A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D Service.
+    A helper Service type which reduces a linearly stored 2-D ExtParam into 1-D
+    Service.
 
-    NumReduce works with ExtParam whose `v` field is a list of lists. A reduce function
-    which takes an array-like and returns a scalar need to be supplied. NumReduce calls the reduce
-    function on each of the lists and return all the scalars in an array.
+    NumReduce works with ExtParam whose `v` field is a list of lists. A reduce
+    function which takes an array-like and returns a scalar need to be supplied.
+    NumReduce calls the reduce function on each of the lists and return all the
+    scalars in an array.
 
     Parameters
     ----------
@@ -724,7 +746,8 @@ class NumReduce(OperationService):
 
     Examples
     --------
-    Suppose one wants to calculate the mean value of the ``Vn`` in one Area. In the ``Area`` class, one defines ::
+    Suppose one wants to calculate the mean value of the ``Vn`` in one Area. In
+    the ``Area`` class, one defines ::
 
         class AreaModel(...):
             def __init__(...):
@@ -734,12 +757,12 @@ class NumReduce(OperationService):
 
                 # collect the Vn in an 1-D array
                 self.Vn = ExtParam(model='Bus',
-                    src='Vn',
-                    indexer=self.Bus)
+                                   src='Vn',
+                                   indexer=self.Bus)
 
                 self.Vn_mean = NumReduce(u=self.Vn,
-                    fun=np.mean,
-                    ref=self.Bus)
+                                         fun=np.mean,
+                                         ref=self.Bus)
 
     Suppose we define two areas, 1 and 2, the Bus data looks like
 
@@ -753,10 +776,10 @@ class NumReduce(OperationService):
         ===   =====  ====
 
     Then, `self.Bus.v` is a list of two lists ``[ [1, 3, 4], [2] ]``.
-    `self.Vn.v` will be retrieved and linearly stored as ``[110, 345, 500, 220]``.
-    Based on the shape from `self.Bus`, :py:func:`numpy.mean`
-    will be called on ``[110, 345, 500]`` and ``[220]`` respectively.
-    Thus, `self.Vn_mean.v` will become ``[318.33, 220]``.
+    `self.Vn.v` will be retrieved and linearly stored as ``[110, 345, 500,
+    220]``. Based on the shape from `self.Bus`, :py:func:`numpy.mean` will be
+    called on ``[110, 345, 500]`` and ``[220]`` respectively. Thus,
+    `self.Vn_mean.v` will become ``[318.33, 220]``.
 
     """
 
@@ -799,19 +822,21 @@ class NumReduce(OperationService):
 
 class NumRepeat(OperationService):
     r"""
-    A helper Service type which repeats a v-provider's value based on the shape from a BackRef
+    A helper Service type which repeats a v-provider's value based on the shape
+    from a BackRef
 
     Examples
     --------
-    NumRepeat was originally designed for computing the inertia-weighted average rotor speed (center of
-    inertia speed). COI speed is computed with
+    NumRepeat was originally designed for computing the inertia-weighted average
+    rotor speed (center of inertia speed). COI speed is computed with
 
     .. math ::
         \omega_{COI} = \frac{ \sum{M_i * \omega_i} } {\sum{M_i}}
 
-    The numerator can be calculated with a mix of BackRef, ExtParam and ExtState. The denominator needs to be
-    calculated with NumReduce and Service Repeat. That is, use NumReduce to calculate the sum,
-    and use NumRepeat to repeat the summed value for each device.
+    The numerator can be calculated with a mix of BackRef, ExtParam and
+    ExtState. The denominator needs to be calculated with NumReduce and Service
+    Repeat. That is, use NumReduce to calculate the sum, and use NumRepeat to
+    repeat the summed value for each device.
 
     In the COI class, one would have
 
@@ -852,8 +877,9 @@ class NumRepeat(OperationService):
                                  indexer=self.pidx,
                                  )
 
-    It is very worth noting that the implementation uses a trick to separate the average weighted sum into `n`
-    sub-equations, each calculating the :math:`(M_i * \omega_i) / (\sum{M_i})`. Since all the variables are
+    It is very worth noting that the implementation uses a trick to separate the
+    average weighted sum into `n` sub-equations, each calculating the
+    :math:`(M_i * \omega_i) / (\sum{M_i})`. Since all the variables are
     preserved in the sub-equation, the derivatives can be calculated correctly.
 
     """
@@ -891,8 +917,9 @@ class IdxRepeat(OperationService):
     """
     Helper class to repeat IdxParam.
 
-    This class has the same functionality as :py:class:`andes.core.service.NumRepeat`
-    but only operates on IdxParam, DataParam or NumParam.
+    This class has the same functionality as
+    :py:class:`andes.core.service.NumRepeat` but only operates on IdxParam,
+    DataParam or NumParam.
     """
 
     def __init__(self,
@@ -919,7 +946,8 @@ class IdxRepeat(OperationService):
 
 class RefFlatten(OperationService):
     """
-    A service type for flattening :py:class:`andes.core.service.BackRef` into a 1-D list.
+    A service type for flattening :py:class:`andes.core.service.BackRef` into a
+    1-D list.
 
     Examples
     --------
@@ -932,12 +960,12 @@ class RefFlatten(OperationService):
 
         self.SynGen = BackRef(info='SynGen idx lists', export=False)
 
-    After collecting BackRefs, `self.SynGen.v` will become a two-level list of indices,
-    where the first level correspond to each COI and the second level correspond to generators
-    of the COI.
+    After collecting BackRefs, `self.SynGen.v` will become a two-level list of
+    indices, where the first level correspond to each COI and the second level
+    correspond to generators of the COI.
 
-    Convert `self.SynGen` into 1-d as `self.SynGenIdx`, which can be passed as indexer for
-    retrieving other parameters and variables
+    Convert `self.SynGen` into 1-d as `self.SynGenIdx`, which can be passed as
+    indexer for retrieving other parameters and variables
 
     .. code-block :: python
 
@@ -963,9 +991,11 @@ class NumSelect(OperationService):
 
     NumSelect works with internal and external parameters.
 
-    Notes
-    -----
-    One use case is to allow an optional turbine rating. One can do ::
+    Examples
+    --------
+    One use case is to allow an optional turbine rating. One can do
+
+    .. code:: python
 
         self.Tn = NumParam(default=None)
         self.Sg = ExtParam(...)
@@ -1002,8 +1032,8 @@ class InitChecker(OperationService):
     Class for checking init values against known typical values.
 
     Instances will be stored in `Model.services_post` and
-    `Model.services_icheck`, which will be checked in
-    `Model.post_init_check()` after initialization.
+    `Model.services_icheck`, which will be checked in `Model.post_init_check()`
+    after initialization.
 
     Parameters
     ----------
@@ -1022,9 +1052,8 @@ class InitChecker(OperationService):
 
     Examples
     --------
-    Let's say generator excitation voltages are known to be in
-    the range of 1.6 - 3.0 per unit. One can add the following
-    instance to `GENBase` ::
+    Let's say generator excitation voltages are known to be in the range of 1.6
+    - 3.0 per unit. One can add the following instance to `GENBase` ::
 
         self._vfc = InitChecker(u=self.vf,
                                 info='vf range',
@@ -1032,11 +1061,10 @@ class InitChecker(OperationService):
                                 upper=3.0,
                                 )
 
-    `lower` and `upper` can also take v-providers instead of
-    float values.
+    `lower` and `upper` can also take v-providers instead of float values.
 
-    One can also pass float values from Config to make it
-    adjustable as in our implementation of ``GENBase._vfc``.
+    One can also pass float values from Config to make it adjustable as in our
+    implementation of ``GENBase._vfc``.
     """
 
     def __init__(self, u, lower=None, upper=None, equal=None, not_equal=None,
@@ -1118,8 +1146,8 @@ class FlagValue(BaseService):
 
     Warnings
     --------
-    `FlagNotNone` can only be applied to `BaseParam` with `cache=True`.
-    Applying to `Service` will fail unless `cache` is False (at a performance cost).
+    `FlagNotNone` can only be applied to `BaseParam` with `cache=True`. Applying
+    to `Service` will fail unless `cache` is False (at a performance cost).
     """
 
     def __init__(self, u, value, flag=0, name=None, tex_name=None, info=None, cache=True):
@@ -1191,9 +1219,8 @@ class FlagCondition(BaseService):
     """
     Class for flagging values based on a condition function.
 
-    By default, values whose condition function output equal
-    that equal to True/1 will be flagged as `1`.
-    `0` otherwise.
+    By default, values whose condition function output equal that equal to
+    True/1 will be flagged as `1`. `0` otherwise.
 
     Parameters
     ----------
@@ -1202,15 +1229,15 @@ class FlagCondition(BaseService):
     func
         A condition function that returns True or False.
     flag : 1 by default, only 0 or 1 is accepted.
-        The flag for the inputs whose condition output
-        is True.
+        The flag for the inputs whose condition output is True.
 
     Warnings
     --------
     This class is not ready.
 
     `FlagCondition` can only be applied to `BaseParam` with `cache=True`.
-    Applying to `Service` will fail unless `cache` is False (at a performance cost).
+    Applying to `Service` will fail unless `cache` is False (at a performance
+    cost).
     """
 
     def __init__(self, u, func, flag=1, name=None, tex_name=None, info=None, cache=True):
@@ -1246,8 +1273,8 @@ class FlagLessThan(FlagCondition):
     """
     Service for flagging parameters < or <= the given value element-wise.
 
-    Parameters that satisfy the comparison (u < or <= value) will flagged
-    as `flag` (1 by default).
+    Parameters that satisfy the comparison (u < or <= value) will flagged as
+    `flag` (1 by default).
     """
 
     def __init__(self, u, value=0.0, flag=1, equal=False,
@@ -1271,8 +1298,8 @@ class FlagGreaterThan(FlagCondition):
     """
     Service for flagging parameters > or >= the given value element-wise.
 
-    Parameters that satisfy the comparison (u > or >= value) will flagged
-    as `flag` (1 by default).
+    Parameters that satisfy the comparison (u > or >= value) will flagged as
+    `flag` (1 by default).
     """
 
     def __init__(self, u, value=0.0, flag=1, equal=False,
@@ -1294,16 +1321,16 @@ class FlagGreaterThan(FlagCondition):
 
 class CurrentSign(ConstService):
     """
-    Service for computing the sign of the current flowing through a series device.
+    Service for computing the sign of the current flowing through a series
+    device.
 
     With a given line connecting `bus1` and `bus2`, one can compute the current
-    flow using ``(v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + jx)`` whose value is
-    the outflow on `bus1`.
+    flow using ``(v1*exp(1j*a1) - v2*exp(1j*a2)) / (r + jx)`` whose value is the
+    outflow on `bus1`.
 
     `CurrentSign` can be used to compute the sign to be multiplied depending on
-    the observing bus.
-    For each value in `bus`, the sign will be ``+1`` if it appears in `bus1` or
-    ``-1`` otherwise.
+    the observing bus. For each value in `bus`, the sign will be ``+1`` if it
+    appears in `bus1` or ``-1`` otherwise.
 
     ::
 
@@ -1405,8 +1432,8 @@ class RandomService(BaseService):
 
     Warnings
     --------
-    The value will be randomized every time it is accessed. Do not use it if the value needs to be stable for
-    each simulation step.
+    The value will be randomized every time it is accessed. Do not use it if the
+    value needs to be stable for each simulation step.
     """
 
     def __init__(self, func=np.random.rand, **kwargs):
