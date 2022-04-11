@@ -1763,11 +1763,12 @@ class Model:
 
         self.calls.f = to_jit(self.calls.f, **kwargs)
         self.calls.g = to_jit(self.calls.g, **kwargs)
+        self.calls.sns = to_jit(self.calls.sns, **kwargs)
 
         for jname in self.calls.j:
             self.calls.j[jname] = to_jit(self.calls.j[jname], **kwargs)
 
-        for name, instance in self.services_var.items():
+        for name, instance in self.services_var_seq.items():
             if instance.v_str is not None:
                 self.calls.s[name] = to_jit(self.calls.s[name], **kwargs)
 
@@ -1792,10 +1793,13 @@ class Model:
         if callable(self.calls.g):
             self.calls.g(*self.g_args)
 
+        if callable(self.calls.sns):
+            self.calls.sns(*self.sns_args)
+
         for jname, jfunc in self.calls.j.items():
             jfunc(*self.j_args[jname])
 
-        for name, instance in self.services_var.items():
+        for name, instance in self.services_var_seq.items():
             if instance.v_str is not None:
                 self.calls.s[name](*self.s_args[name])
 
