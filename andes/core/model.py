@@ -424,6 +424,7 @@ class ModelCall:
         self.g = None
         self.j = dict()
         self.s = OrderedDict()
+        self.sns = None
 
         # `f_args` and `g_args` are the arg names
         self.f_args = list()
@@ -433,6 +434,7 @@ class ModelCall:
         self.ii = OrderedDict()
         self.ij = OrderedDict()
         self.s_args = OrderedDict()
+        self.sns_args = list()
         self.ia_args = OrderedDict()  # assignment initialization
         self.ii_args = OrderedDict()  # iterative initialization
         self.ij_args = OrderedDict()
@@ -624,6 +626,8 @@ class Model:
 
         self.services = OrderedDict()  # service/temporary variables
         self.services_var = OrderedDict()  # variable services updated each step/iter
+        self.services_var_serial = OrderedDict()
+        self.services_var_nonserial = OrderedDict()
         self.services_post = OrderedDict()  # post-initialization storage services
         self.services_icheck = OrderedDict()  # post-initialization check services
         self.services_ref = OrderedDict()  # BackRef
@@ -729,7 +733,11 @@ class Model:
             self.services[key] = value
             # store VarService in an additional dict
             if isinstance(value, VarService):
-                self.services_var[key] = value
+                self.services_var[key] = value  # TODO: remove at the end
+                if value.serial:
+                    self.services_var_serial[key] = value
+                else:
+                    self.services_var_nonserial[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
         elif isinstance(value, DeviceFinder):
@@ -1153,12 +1161,15 @@ class Model:
 
     def s_update_var(self):
         """
-        Update VarService.
+        Update values of :py:class:`andes.core.service.VarService`.
+
+
         """
         if len(self.services_var):
             kwargs = self.get_inputs()
             for name, instance in self.services_var.items():
-                if instance.v_str is not None:
+                # apply generated functions for `v_str`
+                if (instance.v_str is not None) and (instance.serial is True):
                     func = self.calls.s[name]
                     if callable(func):
                         instance.v[:] = func(*self.s_args[name])
@@ -1167,6 +1178,8 @@ class Model:
                 func = instance.v_numeric
                 if func is not None and callable(func):
                     instance.v[:] = func(**kwargs)
+
+            # TODO: update non-serial (independent) VarService
 
         if self.flags.sv_num is True:
             kwargs = self.get_inputs()

@@ -574,13 +574,13 @@ class System:
 
             # get and set internal variable addresses
             xaddr = self.dae.request_address('x', ndevice=ndevice,
-                                              nvar=len(mdl.states),
-                                              collate=mdl.flags.collate,
-                                              )
+                                             nvar=len(mdl.states),
+                                             collate=mdl.flags.collate,
+                                             )
             yaddr = self.dae.request_address('y', ndevice=ndevice,
-                                              nvar=len(mdl.algebs),
-                                              collate=mdl.flags.collate,
-                                              )
+                                             nvar=len(mdl.algebs),
+                                             collate=mdl.flags.collate,
+                                             )
 
             for idx, item in enumerate(mdl.states.values()):
                 item.set_address(xaddr[idx], contiguous=not collate)
@@ -1609,9 +1609,12 @@ class System:
 
             # services
             for instance in model.services.values():
-                if instance.v_str is not None:
+                if (instance.v_str is not None) and instance.serial is True:
                     sv_name = f'{instance.name}_svc'
                     model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
+
+            # services - non serial 
+            model.calls.sns = pycode_model.__dict__.get("sns_update")
 
             # load initialization; assignment
             for instance in model.cache.all_vars.values():

@@ -235,9 +235,14 @@ class SymProcessor:
         name and expression is in ``self.s_syms``.
         """
 
-        s_args = OrderedDict()
         s_syms = OrderedDict()
+        s_args = OrderedDict()
         s_calls = OrderedDict()
+        sns_args = list()
+        sns_calls = None
+
+        s_calls_nonserial = list()
+        s_calls_nonserial_args = list()
 
         for name, instance in self.parent.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
@@ -249,15 +254,28 @@ class SymProcessor:
 
             fs = self._check_expr_symbols(expr)
             s_syms[name] = expr
-            s_args[name] = [str(i) for i in fs]
-            s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+            args_expr = [str(i) for i in fs]
 
-            if 'select' in inspect.getsource(s_calls[name]):
-                s_args[name].extend(select_args_add)
+            if instance.serial is True:
+                s_args[name] = args_expr
+                s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+                if 'select' in inspect.getsource(s_calls[name]):
+                    s_args[name].extend(select_args_add)
+            else:
+                s_calls_nonserial.append(expr)
+                s_calls_nonserial_args.extend(args_expr)
+
+        if len(s_calls_nonserial) > 0:
+            sns_args = sorted(list(set(s_calls_nonserial_args)))
+            sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonserial), modules=self.lambdify_func)
+            if 'select' in inspect.getsource(sns_calls):
+                sns_args.extend(select_args_add)
 
         self.s_syms = s_syms
         self.calls.s = s_calls
         self.calls.s_args = s_args
+        self.calls.sns = sns_calls
+        self.calls.sns_args = sns_args
 
     def generate_jacobians(self, diag_eps=1e-8):
         """
@@ -467,6 +485,9 @@ from andes.thirdparty.npfunc import *                               # NOQA
         for name in self.calls.s:
             out.append(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
 
+        # non-serial services
+        out.append(self._rename_func(self.calls.sns, 'sns_update', yf))
+
         # variables
         for name in dilled_vars:
             out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]))
@@ -494,8 +515,15 @@ from andes.thirdparty.npfunc import *                               # NOQA
         """
         Rename the function name and return source code.
 
-        This function does not check for name conflicts.
-        Install `yapf` for optional code reformatting (takes extra processing time).
+        This function performs these tasks:
+
+        1. rename ``_lambdifygenerated`` to the given ``func_name``.
+        2. append four arguments if ``select`` is used to pass numba
+           compilation.
+        3. remove ``Indicator`` for wrappers of logic expressions.
+
+        This function does not check for name conflicts. Install `yapf` for
+        optional code reformatting (takes extra processing time).
 
         It also patches function argument list for select.
         """

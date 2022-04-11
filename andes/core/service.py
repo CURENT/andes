@@ -146,6 +146,7 @@ class ConstService(BaseService):
         self.v_str: str = v_str
         self.v_numeric: Callable = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.0
+        self.serial = True
 
 
 class VarService(ConstService):
@@ -162,7 +163,7 @@ class VarService(ConstService):
 
     Parameters
     ----------
-    independent : bool, optional, default to False
+    serial : bool, optional, default to True
         True if this VarService depends on previously defined VarService and
         should be evaluated in serial. False if this VarService only uses known
         variables.
@@ -196,7 +197,7 @@ class VarService(ConstService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
-                 independent: Optional[bool] = True,
+                 serial: Optional[bool] = True,
                  ):
 
         super().__init__(name=name,
@@ -205,7 +206,7 @@ class VarService(ConstService):
                          info=info,
                          v_str=v_str,
                          v_numeric=v_numeric)
-        self.independent = independent
+        self.serial = serial
 
 
 class EventFlag(VarService):
