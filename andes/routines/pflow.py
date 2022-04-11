@@ -17,6 +17,7 @@ class PFlow(BaseRoutine):
     """
     Power flow calculation routine.
     """
+
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
         self.config.add(OrderedDict((('tol', 1e-6),
@@ -165,6 +166,7 @@ class PFlow(BaseRoutine):
         out = list()
         out.append('')
         out.append('-> Power flow calculation')
+        out.append(f'{"Numba":>16s}: {"On" if self.system.config.numba else "Off"}')
         out.append(f'{"Sparse solver":>16s}: {self.solver.sparselib.upper()}')
         out.append(f'{"Solution method":>16s}: {self.config.method} method')
         out_str = '\n'.join(out)
