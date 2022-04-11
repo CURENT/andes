@@ -16,6 +16,20 @@ Breaking change:
 - ``PV`` model no longer has ``p`` as a variable in the DAE. ``p`` copies the
   value of ``p0``. This change affects the addresses of variables.
 
+Operator splitting for internal algebraic variables:
+
+- ``VarService`` can be evaluate model-internal algebraic variables outside the
+  DAE system. This is known as operator splitting and commonly used in other
+  simulation tools.
+- Operator splitting reduces the size of the DAE system but introduces a
+  one-iteration lag betweent the internal algebraic variables and others in the
+  DAE system.
+- ``VarService`` shall be avoided for singular functions (non-continuous) and
+  shall not be adopted to circumvent initializing algebraic equations.
+- ``VarService`` takes an argument ``sequential``, which is ``True`` by default.
+  Non-sequential ``VarService`` shall not depend on other ``VarService``
+  calculated at the same step as they will be evaluated simultaneously.
+
 Other changes:
 
 - ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
