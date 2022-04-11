@@ -229,7 +229,7 @@ class SymProcessor:
         ``VarService`` among others. Sequence is preserved due to possible
         dependency.
 
-        All ``VarService`` with ``serial = False`` are generated into one
+        All ``VarService`` with ``sequential = False`` are generated into one
         function, ``calls.sns``.
 
         Starting from SymPy 1.9, ``Matrix`` no longer supports non-Expr objects.
@@ -241,11 +241,11 @@ class SymProcessor:
         s_syms = OrderedDict()
         s_args = OrderedDict()
         s_calls = OrderedDict()
-        sns_args = list()   # ``sns`` means services that are non-serial
+        sns_args = list()   # ``sns`` means services that are non-sequential
         sns_calls = None
 
-        s_calls_nonserial = list()
-        s_calls_nonserial_args = list()
+        s_calls_nonseq = list()
+        s_calls_nonseq_args = list()
 
         for name, instance in self.parent.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
@@ -259,18 +259,18 @@ class SymProcessor:
             s_syms[name] = expr
             args_expr = [str(i) for i in fs]
 
-            if instance.serial is True:
+            if instance.sequential is True:
                 s_args[name] = args_expr
                 s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
                 if 'select' in inspect.getsource(s_calls[name]):
                     s_args[name].extend(select_args_add)
             else:
-                s_calls_nonserial.append(expr)
-                s_calls_nonserial_args.extend(args_expr)
+                s_calls_nonseq.append(expr)
+                s_calls_nonseq_args.extend(args_expr)
 
-        if len(s_calls_nonserial) > 0:
-            sns_args = sorted(list(set(s_calls_nonserial_args)))
-            sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonserial), modules=self.lambdify_func)
+        if len(s_calls_nonseq) > 0:
+            sns_args = sorted(list(set(s_calls_nonseq_args)))
+            sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonseq), modules=self.lambdify_func)
             if 'select' in inspect.getsource(sns_calls):
                 sns_args.extend(select_args_add)
 
@@ -488,7 +488,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
         for name in self.calls.s:
             out.append(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
 
-        # non-serial services
+        # non-sequential services
         out.append(self._rename_func(self.calls.sns, 'sns_update', yf))
 
         # variables

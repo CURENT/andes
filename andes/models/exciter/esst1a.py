@@ -243,12 +243,12 @@ class ESST1AModel(ExcBase, ExcVsum):
         self.efdu = VarService(info='Output exciter voltage upper bound',
                                tex_name=r'efd_{u}',
                                v_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd',
-                               serial=False,
+                               sequential=False,
                                )
         self.efdl = VarService(info='Output exciter voltage lower bound',
                                tex_name=r'efd_{l}',
                                v_str='Abs(vd + 1j*vq) * VRMIN',
-                               serial=False,
+                               sequential=False,
                                )
 
         self.vol = GainLimiter(u=self.LVG_y,

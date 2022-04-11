@@ -1609,11 +1609,11 @@ class System:
 
             # services
             for instance in model.services.values():
-                if (instance.v_str is not None) and instance.serial is True:
+                if (instance.v_str is not None) and instance.sequential is True:
                     sv_name = f'{instance.name}_svc'
                     model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
 
-            # services - non serial
+            # services - non sequential
             model.calls.sns = pycode_model.__dict__.get("sns_update")
 
             # load initialization; assignment

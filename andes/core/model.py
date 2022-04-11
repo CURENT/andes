@@ -626,8 +626,8 @@ class Model:
 
         self.services = OrderedDict()  # service/temporary variables
         self.services_var = OrderedDict()  # variable services updated each step/iter
-        self.services_var_serial = OrderedDict()
-        self.services_var_nonserial = OrderedDict()
+        self.services_var_seq = OrderedDict()
+        self.services_var_nonseq = OrderedDict()
         self.services_post = OrderedDict()  # post-initialization storage services
         self.services_icheck = OrderedDict()  # post-initialization check services
         self.services_ref = OrderedDict()  # BackRef
@@ -734,10 +734,10 @@ class Model:
             # store VarService in an additional dict
             if isinstance(value, VarService):
                 self.services_var[key] = value  # TODO: remove at the end
-                if value.serial:
-                    self.services_var_serial[key] = value
+                if value.sequential:
+                    self.services_var_seq[key] = value
                 else:
-                    self.services_var_nonserial[key] = value
+                    self.services_var_nonseq[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
         elif isinstance(value, DeviceFinder):
@@ -1170,17 +1170,17 @@ class Model:
 
         if len(self.services_var):
             kwargs = self.get_inputs()
-            # apply generated functions in serial for `v_str`
-            for name, instance in self.services_var_serial.items():
+            # evaluate `v_str` functions for sequential VarService
+            for name, instance in self.services_var_seq.items():
                 if instance.v_str is not None:
                     func = self.calls.s[name]
                     if callable(func):
                         instance.v[:] = func(*self.s_args[name])
 
-            # apply nonserial from ``v_str``:w
+            # apply non-sequential services from ``v_str``:w
             if callable(self.calls.sns):
                 ret = self.calls.sns(*self.sns_args)
-                for idx, instance in enumerate(self.services_var_nonserial.values()):
+                for idx, instance in enumerate(self.services_var_nonseq.values()):
                     instance.v[:] = ret[idx]
 
             # Apply individual `v_numeric`
@@ -1719,7 +1719,7 @@ class Model:
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
 
-            md5.update(str(int(item.serial)).encode())
+            md5.update(str(int(item.sequential)).encode())
 
         for name, item in self.discrete.items():
             md5.update(str(name).encode())

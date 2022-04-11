@@ -114,8 +114,8 @@ class ConstService(BaseService):
     evaluated once in the initialization phase before variables are initialized.
     Therefore, uninitialized variables must not be used in `v_str``.
 
-    ConstService are evaluated *in serial* after getting external variables and
-    parameters and before initializing internal variables.
+    ConstService are evaluated *in sequence* after getting external variables
+    and parameters and before initializing internal variables.
 
     Parameters
     ----------
@@ -146,7 +146,7 @@ class ConstService(BaseService):
         self.v_str: str = v_str
         self.v_numeric: Callable = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.0
-        self.serial = True
+        self.sequential = True
 
 
 class VarService(ConstService):
@@ -163,9 +163,9 @@ class VarService(ConstService):
 
     Parameters
     ----------
-    serial : bool, optional, default to True
+    sequential : bool, optional, default to True
         True if this VarService depends on previously defined VarService and
-        should be evaluated in serial. False if this VarService only uses known
+        should be evaluated in sequence. False if this VarService only uses known
         variables.
 
     Examples
@@ -197,7 +197,7 @@ class VarService(ConstService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
-                 serial: Optional[bool] = True,
+                 sequential : Optional[bool] = True,
                  ):
 
         super().__init__(name=name,
@@ -206,7 +206,7 @@ class VarService(ConstService):
                          info=info,
                          v_str=v_str,
                          v_numeric=v_numeric)
-        self.serial = serial
+        self.sequential = sequential
 
 
 class EventFlag(VarService):
