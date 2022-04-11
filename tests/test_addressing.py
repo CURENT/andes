@@ -35,4 +35,3 @@ class TestAddressing(unittest.TestCase):
 
         np.testing.assert_array_equal(ss.Slack.p.a,
                                       np.array([33]))
-

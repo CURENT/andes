@@ -197,7 +197,7 @@ class VarService(ConstService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
-                 sequential : Optional[bool] = True,
+                 sequential: Optional[bool] = True,
                  ):
 
         super().__init__(name=name,

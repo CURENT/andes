@@ -4,7 +4,6 @@ ANDES module for time-domain simulation.
 
 import importlib
 import logging
-import math
 import os
 import sys
 import time
