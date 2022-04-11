@@ -308,6 +308,23 @@ class ModelData:
 
         return out
 
+    def as_df_local(self):
+        """
+        Export local variable values and services to a DataFrame.
+        """
+
+        out = dict()
+        out['uid'] = np.arange(self.n)
+        out['idx'] = self.idx.v
+
+        for name, instance in self.cache.all_vars.items():
+            out[name] = instance.v
+
+        for name, instance in self.services.items():
+            out[name] = instance.v
+
+        return pd.DataFrame(out).set_index('uid')
+
     def update_from_df(self, df, vin=False):
         """
         Update parameter values from a DataFrame.
