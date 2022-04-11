@@ -733,7 +733,7 @@ class Model:
             self.services[key] = value
             # store VarService in an additional dict
             if isinstance(value, VarService):
-                self.services_var[key] = value  # TODO: remove at the end
+                self.services_var[key] = value
                 if value.sequential:
                     self.services_var_seq[key] = value
                 else:
