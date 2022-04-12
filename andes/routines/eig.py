@@ -301,7 +301,8 @@ class EIG(BaseRoutine):
         self.calc_As()
         self.mu, self.pfactors, self.N, self.W = self.calc_pfactor()
         self._store_stats()
-        _, s = elapsed(t1)
+        t2, s = elapsed(t1)
+        self.exec_time = t2 - t1
 
         logger.info('  Positive  %6g', self.n_positive)
         logger.info('  Zeros     %6g', self.n_zeros)

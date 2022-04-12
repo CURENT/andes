@@ -75,6 +75,7 @@ class PFlow(BaseRoutine):
         self.A = None
         self.niter = None
         self.mis = [1]
+        self.exec_time = 0.0
 
         self.x_sol = None
         self.y_sol = None
@@ -213,7 +214,8 @@ class PFlow(BaseRoutine):
                 break
             self.niter += 1
 
-        _, s1 = elapsed(t0)
+        t1, s1 = elapsed(t0)
+        self.exec_time = t1 - t0
 
         if not self.converged:
             if abs(self.mis[-1] - self.mis[-2]) < self.config.tol:

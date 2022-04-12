@@ -366,9 +366,9 @@ class TDS(BaseRoutine):
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
+                perc = round(perc, 2)
 
-                perc_diff = round(perc - self.last_pc, 2)
-
+                perc_diff = perc - self.last_pc
                 if perc_diff >= 1:
                     self.pbar.update(perc_diff)
                     self.last_pc = self.last_pc + perc_diff
@@ -408,7 +408,8 @@ class TDS(BaseRoutine):
         self.pbar.close()
         self.pbar = None  # removed `pbar` so that System object can be serialized
 
-        _, s1 = elapsed(t0)
+        t1, s1 = elapsed(t0)
+        self.exec_time = t1 - t0
         logger.info('Simulation completed in %s.', s1)
 
         if config.qrt:
