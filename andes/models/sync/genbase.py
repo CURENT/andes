@@ -161,14 +161,28 @@ class GENBaseOS(Model):
                         e_str=''
                         )  # to be completed
 
-        self.vd = SubsService(info='d-axis voltage',
-                              v_str='u * v * sin(delta - a)',
-                              tex_name=r'V_d',
-                              )
-        self.vq = SubsService(info='q-axis voltage',
-                              v_str='u * v * cos(delta - a)',
-                              tex_name=r'V_q',
-                              )
+        self.vd = Algeb(info='d-axis voltage',
+                        v_str='u * vd0',
+                        e_str='u * v * sin(delta - a) - vd',
+                        tex_name=r'V_d',
+                        )
+        self.vq = Algeb(info='q-axis voltage',
+                        v_str='u * vq0',
+                        e_str='u * v * cos(delta - a) - vq',
+                        tex_name=r'V_q',
+                        )
+        # --- NOTE ---
+        # The following `SubService` brings little speed up
+        # is not compatible with exciters.
+        # self.vd = SubsService(info='d-axis voltage',
+        #                       v_str='u * v * sin(delta - a)',
+        #                       tex_name=r'V_d',
+        #                       )
+        # self.vq = SubsService(info='q-axis voltage',
+        #                       v_str='u * v * cos(delta - a)',
+        #                       tex_name=r'V_q',
+        #                       )
+        # ------
 
         self.tm = VarService(info='mechanical torque',
                              tex_name=r'\tau_m',
