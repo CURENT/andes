@@ -149,6 +149,37 @@ class ConstService(BaseService):
         self.sequential = True
 
 
+class SubsService(BaseService):
+    """
+    A service to be substituted by its ``v_str`` in equations where it appears.
+
+    ``SubsService`` is useful for eliminating explicit algebraic variables from
+    equations.
+
+    Examples
+    --------
+
+    If one defines the following inside ``__init__()``:
+
+    .. code:: python
+
+        self.vd = SubsService(v_str='v * cos(delta - a)') self.p =
+        Algeb(e_str='vd * Id + vq * Iq')
+
+    At code-generation time, in ``p`` 's equation, the ``vd`` variable will be
+    replaced by its full expression, namely, ``v * cos(delta - a)``.
+    """
+
+    def __init__(self,
+                 v_str: Optional[str] = None,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
+                 ):
+        super().__init__(name=name, tex_name=tex_name, info=info)
+        self.v_str: str = v_str
+
+
 class VarService(ConstService):
     """
     Variable service that gets updated in each step/iteration before computing

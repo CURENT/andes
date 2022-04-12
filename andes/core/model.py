@@ -27,7 +27,7 @@ from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
                                 DeviceFinder, ExtService, FlagValue,
                                 InitChecker, NumReduce, NumRepeat, NumSelect,
                                 ParamCalc, PostInitService, RandomService,
-                                Replace, SwBlock, VarService, )
+                                Replace, SwBlock, VarService, SubsService)
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
 from andes.shared import jac_full_names, jac_names, jac_types, np, pd, numba
@@ -646,6 +646,7 @@ class Model:
         self.services_var_seq = OrderedDict()
         self.services_var_nonseq = OrderedDict()
         self.services_post = OrderedDict()  # post-initialization storage services
+        self.services_subs = OrderedDict()  # to-be-substituted services
         self.services_icheck = OrderedDict()  # post-initialization check services
         self.services_ref = OrderedDict()  # BackRef
         self.services_fnd = OrderedDict()  # services to find/add devices
@@ -757,6 +758,8 @@ class Model:
                     self.services_var_nonseq[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
+        elif isinstance(value, SubsService):
+            self.services_subs[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
         elif isinstance(value, BackRef):
@@ -1486,6 +1489,7 @@ class Model:
                            list(self.services.items()) +
                            list(self.services_ext.items()) +
                            list(self.services_ops.items()) +
+                           list(self.services_subs.items()) +
                            list(self.discrete.items())
                            )
 
@@ -1694,6 +1698,7 @@ class Model:
         self.calls.md5 = self.get_md5()
 
         self.syms.generate_symbols()
+        self.syms.generate_subs_expr()
         self.syms.generate_equations()
         self.syms.generate_services()
         self.syms.generate_jacobians()
