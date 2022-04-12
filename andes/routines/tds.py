@@ -138,6 +138,7 @@ class TDS(BaseRoutine):
         self.test_ok = None
         self.qrt_start = None
         self.headroom = 0.0
+        self.call_stats = list()
 
         # internal storage for iterations
         self.x0 = None
@@ -348,6 +349,10 @@ class TDS(BaseRoutine):
                 step_status = self.itm_step()  # compute for the current step
             else:
                 step_status = self._csv_step()
+
+            # record number of iterations and success flag
+            if system.config.call_stats:
+                self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
                 dae.store()
