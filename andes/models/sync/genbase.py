@@ -2,7 +2,7 @@ import logging
 
 from andes.core import (ModelData, IdxParam, NumParam, Model, State,
                         ExtAlgeb, Algeb, ExtParam, ExtService, ConstService)
-from andes.core.service import InitChecker, VarService
+from andes.core.service import InitChecker, VarService, SubsService
 
 logger = logging.getLogger(__name__)
 
@@ -161,24 +161,25 @@ class GENBaseOS(Model):
                         e_str=''
                         )  # to be completed
 
-        self.vd = VarService(info='d-axis voltage',
-                             v_str='u * v * sin(delta - a)',
-                             tex_name=r'V_d',
-                             )
-        self.vq = VarService(info='q-axis voltage',
-                             v_str='u * v * cos(delta - a)',
-                             tex_name=r'V_q',
-                             )
+        self.vd = SubsService(info='d-axis voltage',
+                              v_str='u * v * sin(delta - a)',
+                              tex_name=r'V_d',
+                              )
+        self.vq = SubsService(info='q-axis voltage',
+                              v_str='u * v * cos(delta - a)',
+                              tex_name=r'V_q',
+                              )
 
         self.tm = VarService(info='mechanical torque',
                              tex_name=r'\tau_m',
-                             v_str='tm0'
+                             v_str='tm0',
                              )
         self.te = VarService(info='electric torque',
                              tex_name=r'\tau_e',
                              v_str='u * (psid * Iq - psiq * Id)',
                              )
         self.vf = VarService(info='excitation voltage',
+                             unit='pu',
                              v_str='u * vf0',
                              tex_name=r'v_f'
                              )
@@ -189,10 +190,12 @@ class GENBaseOS(Model):
                                 upper=self.config.vf_upper,
                                 )
 
-        self.XadIfd = VarService(tex_name='X_{ad}I_{fd}',
-                                 info='d-axis armature excitation current',
-                                 v_str='u * vf0'
-                                 )  # e_str to be provided. Not available in GENCLS
+        self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
+                            info='d-axis armature excitation current',
+                            unit='p.u (kV)',
+                            v_str='u * vf0',
+                            e_str='u * vf0 - XadIfd'
+                            )  # e_str to be provided. Not available in GENCLS
 
         self.subidx = ExtParam(model='StaticGen',
                                src='subidx',
@@ -233,15 +236,6 @@ class GENBaseOS(Model):
                                tex_name='Q_0',
                                info='initial Q of this gen',
                                )
-
-        # self.Pe = Algeb(tex_name='P_e',
-        #                 info='active power injection',
-        #                 e_str='u * (vd * Id + vq * Iq) - Pe',
-        #                 v_str='u * (vd0 * Id0 + vq0 * Iq0)')
-        # self.Qe = Algeb(tex_name='Q_e',
-        #                 info='reactive power injection',
-        #                 e_str='u * (vq * Id - vd * Iq) - Qe',
-        #                 v_str='u * (vq0 * Id0 - vd0 * Iq0)')
 
     def v_numeric(self, **kwargs):
         """
