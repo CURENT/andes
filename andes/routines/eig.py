@@ -16,7 +16,7 @@ from andes.variables.report import report_info
 
 from andes.plot import set_latex
 
-from andes.shared import matrix, spmatrix, sparse, plt, mpl
+from andes.shared import matrix, set_font, spmatrix, sparse, plt, mpl
 from andes.shared import div, spdiag
 
 
@@ -371,7 +371,7 @@ class EIG(BaseRoutine):
 
         """
 
-        mpl.rc('font', family='Times New Roman', size=12)
+        set_font(family='Times New Roman', size=12)
 
         if mu is None:
             mu = self.mu
