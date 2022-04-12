@@ -330,7 +330,7 @@ class TDS(BaseRoutine):
                              file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
-            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)
+            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 2)
             self.last_pc = perc
             self.pbar.update(perc)
 
