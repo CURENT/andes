@@ -41,11 +41,12 @@ class BaseService:
         The hosting/owner model instance
     """
 
-    def __init__(self, name: str = None, tex_name: str = None,
+    def __init__(self, name: str = None, tex_name: str = None, unit: str = None,
                  info: str = None, vtype: Type = None):
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
+        self.unit = unit
         self.vtype = vtype if vtype is not None else float  # type for `v`
         self.owner = None
 
@@ -141,8 +142,10 @@ class ConstService(BaseService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
+                 unit: Optional[str] = None,
                  ):
-        super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info)
+        super().__init__(name=name, vtype=vtype, tex_name=tex_name, info=info,
+                         unit=unit)
         self.v_str: str = v_str
         self.v_numeric: Callable = v_numeric
         self.v: Union[float, int, np.ndarray] = 0.0
@@ -175,8 +178,9 @@ class SubsService(BaseService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
+                 unit: Optional[str] = None,
                  ):
-        super().__init__(name=name, tex_name=tex_name, info=info)
+        super().__init__(name=name, tex_name=tex_name, info=info, unit=unit)
         self.v_str: str = v_str
 
 
@@ -228,6 +232,7 @@ class VarService(ConstService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
+                 unit: Optional[str] = None,
                  sequential: Optional[bool] = True,
                  ):
 
@@ -235,6 +240,7 @@ class VarService(ConstService):
                          vtype=vtype,
                          tex_name=tex_name,
                          info=info,
+                         unit=unit,
                          v_str=v_str,
                          v_numeric=v_numeric)
         self.sequential = sequential
