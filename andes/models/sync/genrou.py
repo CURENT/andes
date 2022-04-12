@@ -171,17 +171,14 @@ class GENROUOSModel:
         # --- Operator Splitting equations ---
         self.psi2q = VarService(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
                                 v_str='gq1*e1d + (1-gq1)*e2q',
-                                sequential=False,
                                 )
 
         self.psi2d = VarService(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
                                 v_str='gd1*e1q + gd2*(xd1-xl)*e2d',
-                                sequential=False,
                                 )
 
         self.psi2 = VarService(tex_name=r"\psi_a", info='air gap flux magnitude',
                                v_str='sqrt(psi2d **2 + psi2q ** 2)',
-                               sequential=False,
                                )
 
         # `LT` is a reserved keyword for SymPy
