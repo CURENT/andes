@@ -16,7 +16,7 @@ from andes.variables.report import report_info
 
 from andes.plot import set_latex
 
-from andes.shared import matrix, set_font, spmatrix, sparse, plt, mpl
+from andes.shared import matrix, set_font, spmatrix, sparse, plt
 from andes.shared import div, spdiag
 
 

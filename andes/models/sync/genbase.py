@@ -2,7 +2,7 @@ import logging
 
 from andes.core import (ModelData, IdxParam, NumParam, Model, State,
                         ExtAlgeb, Algeb, ExtParam, ExtService, ConstService)
-from andes.core.service import InitChecker, VarService, SubsService
+from andes.core.service import InitChecker
 
 logger = logging.getLogger(__name__)
 
