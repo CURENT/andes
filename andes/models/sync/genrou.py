@@ -5,7 +5,7 @@ Round-rotor generator model.
 import logging
 
 from andes.core import NumParam, ConstService, Algeb, LessThan, State
-from andes.core.service import InitChecker, FlagValue
+from andes.core.service import InitChecker, FlagValue, VarService
 from andes.models.exciter import ExcQuadSat
 from andes.models.sync.genbase import GENBaseOSData, GENBaseOS, Flux0
 
@@ -151,20 +151,38 @@ class GENROUOSModel:
                                  v_str='-Iq0*(xl - xq) - Se0*gqd*psi2q0')
 
         # begin variables and equations
-        self.psi2q = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
-                           v_str='psi2q0',
-                           e_str='gq1*e1d + (1-gq1)*e2q - psi2q',
-                           )
 
-        self.psi2d = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
-                           v_str='u * psi2d0',
-                           e_str='gd1*e1q + gd2*(xd1-xl)*e2d - psi2d')
+        # --- DAE ---
+        # self.psi2q = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
+        #                    v_str='psi2q0',
+        #                    e_str='gq1*e1d + (1-gq1)*e2q - psi2q',
+        #                    )
 
-        self.psi2 = Algeb(tex_name=r"\psi_a", info='air gap flux magnitude',
-                          v_str='u * abs(psi20_dq)',
-                          e_str='psi2d **2 + psi2q ** 2 - psi2 ** 2',
-                          diag_eps=True,
-                          )
+        # self.psi2d = Algeb(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
+        #                    v_str='u * psi2d0',
+        #                    e_str='gd1*e1q + gd2*(xd1-xl)*e2d - psi2d')
+
+        # self.psi2 = Algeb(tex_name=r"\psi_a", info='air gap flux magnitude',
+        #                   v_str='u * abs(psi20_dq)',
+        #                   e_str='psi2d **2 + psi2q ** 2 - psi2 ** 2',
+        #                   diag_eps=True,
+        #                   )
+
+        # --- Operator Splitting equations ---
+        self.psi2q = VarService(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
+                                v_str='gq1*e1d + (1-gq1)*e2q',
+                                sequential=False,
+                                )
+
+        self.psi2d = VarService(tex_name=r"\psi_{ad}", info='d-axis air gap flux',
+                                v_str='gd1*e1q + gd2*(xd1-xl)*e2d',
+                                sequential=False,
+                                )
+
+        self.psi2 = VarService(tex_name=r"\psi_a", info='air gap flux magnitude',
+                               v_str='sqrt(psi2d **2 + psi2q ** 2)',
+                               sequential=False,
+                               )
 
         # `LT` is a reserved keyword for SymPy
         self.SL = LessThan(u=self.psi2, bound=self.SAT_A, equal=False, enable=True, cache=False)

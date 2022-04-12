@@ -173,15 +173,18 @@ class GENBaseOS(Model):
         self.tm = VarService(info='mechanical torque',
                              tex_name=r'\tau_m',
                              v_str='tm0',
+                             sequential=False,
                              )
         self.te = VarService(info='electric torque',
                              tex_name=r'\tau_e',
                              v_str='u * (psid * Iq - psiq * Id)',
+                             sequential=False,
                              )
         self.vf = VarService(info='excitation voltage',
                              unit='pu',
                              v_str='u * vf0',
-                             tex_name=r'v_f'
+                             tex_name=r'v_f',
+                             sequential=False,
                              )
 
         self._vfc = InitChecker(u=self.vf,
