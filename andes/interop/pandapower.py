@@ -633,7 +633,7 @@ def _verifyGSF(ppn, gsf, tol=1e-4):
     rl_c = np.array(np.matrix(gsf) * np.matrix(rp.ngen).T)
     res_gap = rl.p_from_mw.values - rl_c.flatten()
     if np.abs(res_gap).max() <= tol:
-        logger.info("GSF is consisstent.")
+        logger.info("GSF is consistent.")
     else:
         logger.warning("Warning: GSF is inconsistent. Pleaes check!")
 
@@ -648,4 +648,6 @@ def _sumPF_ppn(ppn):
     rp = rp.merge(rd, on='bus', how='left')
     rp.fillna(0, inplace=True)
     rp['ngen'] = rp['gen'] - rp['demand']
+    rp = rp.groupby('bus').sum().reset_index(drop=True)
+    rp['bus'] = rp.index
     return rp
