@@ -7,7 +7,7 @@ import logging
 from andes.core import NumParam, ConstService, Algeb, LessThan, State
 from andes.core.service import InitChecker, FlagValue, VarService
 from andes.models.exciter import ExcQuadSat
-from andes.models.sync.genbase import GENBaseOSData, GENBaseOS, Flux0
+from andes.models.experimental.genbaseos import GENBaseOSData, GENBaseOS, Flux0
 
 logger = logging.getLogger(__name__)
 
