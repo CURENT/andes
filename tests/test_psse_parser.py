@@ -16,6 +16,10 @@ class TestPSSEParser(unittest.TestCase):
     """
 
     def test_sort_models(self):
+        """
+        Test sort_models.
+        """
+
         system = System()
 
         dirname = os.path.dirname(__file__)
