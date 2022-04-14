@@ -184,10 +184,10 @@ def add_gencost(ssp, gen_cost):
     """
 
     # check dimension
-    if gen_cost.shape[0] != ssp.gen[ssp.gen['controllable']].shape[0]:
-        print('Input cost function size does not match controllable gen size.')
+    if gen_cost.shape[0] != ssp.gen.shape[0]:
+        print('Input cost function size does not match gen size.')
 
-    for num, uid in enumerate(ssp.gen[ssp.gen['controllable']].index):
+    for num, uid in enumerate(ssp.gen.index):
         if gen_cost[num, 0] == 2:  # poly_cost
             pp.create_poly_cost(net=ssp,
                                 element=uid,
