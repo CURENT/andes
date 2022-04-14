@@ -143,27 +143,25 @@ def runopp_map(ssp, link_table, **kwargs):
     -----
       - The pandapower net and the ANDES system must have same base MVA.
       - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
-        The power is dispatched to each ``DG`` by the power ratio
+        The power is dispatched to each ``DG`` by the power ratio ``gammap``
     """
 
     pp.runopp(ssp, **kwargs)
+
     # take dispatch results from pp
-    ssp_res = pd.concat([ssp.gen['name'], ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
+    ssp_gen = ssp.gen.rename(columns={'name': 'stg_idx'})
+    ssp_res = pd.concat([ssp_gen[['stg_idx']],
+                        ssp.res_gen[['p_mw', 'q_mvar', 'vm_pu']]], axis=1)
 
     ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.gen[['name', 'bus', 'controllable']],
-                       how='left', on='name')
-    ssp_res = pd.merge(left=ssp_res,
-                       right=ssp.bus[['name']].reset_index().rename(
-                           columns={'index': 'bus', 'name': 'bus_name'}),
-                       how='left', on='bus')
-    ssp_res = pd.merge(left=ssp_res,
-                       right=link_table,
-                       how='left', on='bus_name')
+                       right=ssp_gen[['stg_idx', 'controllable']],
+                       how='left', on='stg_idx')
+    ssp_res = pd.merge(left=ssp_res, right=link_table,
+                       how='left', on='stg_idx')
     ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq'] / ssp.sn_mva
-    col = ['name', 'p', 'q', 'vm_pu', 'bus_name', 'bus_idx',
-           'controllable', 'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx', 'stg_idx']
+    col = ['stg_idx', 'p', 'q', 'vm_pu', 'bus_idx', 'controllable',
+           'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx']
     return ssp_res[col]
 
 
@@ -366,14 +364,14 @@ def _to_pp_shunt(ssa, ssp, ssa_bus):
 def _to_pp_gen_pre(ssa):
     """Create generator data in pandapower net"""
     # build StaticGen df
-    stg_cols = ['idx', 'u', 'name', 'bus', 'v0', 'vmax', 'vmin']
+    stg_cols = ['idx', 'u', 'bus', 'v0', 'vmax', 'vmin']
     stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
     ssa_stg = build_group_table(ssa, 'StaticGen', stg_cols + stg_calc_cols)
+    ssa_stg['name'] = ssa_stg.idx
     ssa_stg.rename(inplace=True,
                    columns={"bus": "bus_idx",
                             "u": "stg_u",
-                            "idx": "stg_idx",
-                            "name": "stg_name"})
+                            "idx": "stg_idx"})
     # retrieve Bus idx in pp net
     ssa_busn = ssa.Bus.as_df().copy().reset_index()[["uid", "idx"]].rename(
         columns={"uid": "pp_bus", "idx": "bus_idx"})
@@ -381,39 +379,7 @@ def _to_pp_gen_pre(ssa):
     ssa_stg = pd.merge(ssa_stg, ssa_busn,
                        how="left", on="bus_idx")
 
-    # build SynGen df
-    syg_cols = ['idx', 'name', 'gen', 'gammap', 'gammaq']
-    ssa_syg = build_group_table(ssa, 'SynGen', syg_cols, ['GENROU', 'GENCLS'])
-    ssa_syg.rename(inplace=True,
-                   columns={"gen": "stg_idx",
-                            "idx": "syg_idx"})
-    # build DG df
-    dg_cols = ['idx', 'name', 'gen', 'gammap', 'gammaq']
-    ssa_dg = build_group_table(ssa, 'DG', dg_cols)
-    ssa_dg.rename(inplace=True,
-                  columns={"idx": "dg_idx",
-                           "gen": "stg_idx"})
-
-    if ssa_syg.shape[0] + ssa_dg.shape[0] == 0:
-        ssa_stg['name'] = ssa_stg['stg_name']
-        return ssa_stg
-    else:
-        # merge stg and syg as the syg
-        ssa_syg = pd.merge(ssa_stg, ssa_syg,
-                           how='right', on='stg_idx')
-
-        ssa_dgs = ssa_dg.groupby(['stg_idx']).sum().reset_index()
-        ssa_dgs_idx = ssa_dgs.index + 1
-        ssa_dgs['name'] = "DG_" + ssa_dgs_idx.astype(str)
-
-        # merge sg and DG as the dgs
-        ssa_dgs = pd.merge(ssa_stg, ssa_dgs,
-                           how='right', on='stg_idx')
-
-        # concat syg and dg as sg
-        ssa_sg = pd.concat([ssa_syg, ssa_dgs], axis=0).reset_index(drop=True)
-
-        return ssa_sg
+    return ssa_stg
 
 
 def _to_pp_gen(ssa, ssp, ctrl=[]):
@@ -436,18 +402,12 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
         ssa_sg['q0'] = ssa_sg['q0'] * ssa_sg['gammaq']
 
     # default controllable is determined by governor
-    if ctrl:
+    if len(ctrl) > 0:
         if len(ctrl) != len(ssa_sg):
             raise ValueError("ctrl length does not match StaticGen length")
-        ssa_sg["ctrl"] = [bool(x) for x in ctrl]
     else:
-        key = make_link_table(ssa)
-        if key.shape[0] == 0:
-            # if no dyn device, set all generators as controllable
-            ssa_sg["ctrl"] = [bool(x) for x in [1]*len(ssa_sg)]
-        else:
-            key = key[~key['stg_idx'].duplicated()]
-            ssa_sg["ctrl"] = [bool(x) for x in key['gov_idx'].fillna(False)]
+        ctrl = [1] * len(ssa_sg)
+    ssa_sg["ctrl"] = [bool(x) for x in ctrl]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
     # conversion
@@ -497,14 +457,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
 
       - Generator cost is not included in the conversion. Use ``add_gencost()``
         to add cost data.
-      - By default, ``SynGen`` equipped with ``TurbineGov`` in the ANDES System is converted
-        to generators with ``controllable=True`` in pp's network
-      - By default, ``SynGen`` that has no ``TurbineGov`` and ``DG`` in the ANDES System
-        is converted to generators with ``controllable=False`` in pp's network
+      - By default, all generators in ``ssp`` are controllable unless user-defined controllability
+        is given
       - The online status of generators are determined by the online status of ``StaticGen``
         that connected to the ``SynGen`` or ``DG``
-      - Multiple ``DG`` connected to the same ``StaticGen`` will be converted to one generator.
-        The power is dispatched to each ``DG`` by the power ratio in ``runopp_map``
+      - ``ssp.gen.name`` is from ``ssa.StaticGen.idx``, which should be unique
     """
 
     # create a PP network
