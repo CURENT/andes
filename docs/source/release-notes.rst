@@ -15,6 +15,8 @@ Breaking change:
 
 - ``PV`` model no longer has ``p`` as a variable in the DAE. ``p`` copies the
   value of ``p0``. This change affects the addresses of variables.
+- Changed ``models.file_classes`` to a list to improve the control over
+  the class initialization sequence in the same package.
 
 Operator splitting for internal algebraic variables:
 

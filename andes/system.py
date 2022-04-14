@@ -375,11 +375,11 @@ class System:
         model_names = list(models.keys())
         model_list = list()
 
-        for file, cls_list in file_classes.items():
+        for fname, cls_list in file_classes:
             for model_name in cls_list:
                 if model_name not in model_names:
                     continue
-                the_module = importlib.import_module('andes.models.' + file)
+                the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
                 model_list.append(the_class(system=None, config=self._config_object))
 
@@ -1821,9 +1821,9 @@ class System:
 
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
-        for file, cls_list in file_classes.items():
+        for fname, cls_list in file_classes:
             for model_name in cls_list:
-                the_module = importlib.import_module('andes.models.' + file)
+                the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
                 self.__dict__[model_name] = the_class(system=self, config=self._config_object)
                 self.models[model_name] = self.__dict__[model_name]

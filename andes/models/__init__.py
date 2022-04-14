@@ -2,17 +2,14 @@
 The package for DAE models in ANDES.
 """
 
-from collections import OrderedDict
-
 # Notes:
 # - `timer`s are moved to the beginning for initialization.
 #   Connectivity statuses should be restored before initializing the rest.
 
+# `file_classes` records the `.py` files under `andes/models` and the classes in
+# each file. Models will be initialized in the order given below.
 
-# `file_classes` records the `.py` files under `andes/models` and the classes in each file.
-# Models will be initialized in the order given below.
-
-file_classes = OrderedDict([
+file_classes = list([
     ('info', ['Summary']),
     ('timer', ['Toggler', 'Fault', 'Alter']),
     ('timeseries', ['TimeSeries']),
@@ -35,8 +32,11 @@ file_classes = OrderedDict([
     ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
-    ('renewable', ['REGCA1', 'REGCP1', 'REECA1', 'REECA1E', 'REECA1G',
-                   'REPCA1', 'WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
+    ('renewable', ['REGCA1', 'REGCP1']),
+    ('experimental', ['REECA1OS']),
+    ('renewable', ['REECA1', 'REECA1E', 'REECA1G']),
+    ('renewable', ['REPCA1']),
+    ('renewable', ['WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCV1', 'REGCV2']),
     ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt']),
     ('coi', ['COI']),
