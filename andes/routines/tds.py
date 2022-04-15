@@ -837,12 +837,14 @@ class TDS(BaseRoutine):
             Index of the equation into the `g` array. Diff. eqns. are not counted in.
         """
         y_idx = y_idx.tolist()
-        logger.debug('Max. algebraic mismatch associated with <%s> [y_idx=%d]',
-                     self.system.dae.y_name[y_idx], y_idx)
+        logger.debug('Max. algebraic equation mismatch:')
+        logger.debug('  <%s> [y_idx=%d]', self.system.dae.y_name[y_idx], y_idx)
+        logger.debug('  Mismatch value = %.4g', self.system.dae.y[y_idx])
+
         assoc_vars = self.system.dae.gy[y_idx, :]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
-        logger.debug('')
+        logger.debug('Related variable values:')
         logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
         for v in vars_idx:
             v = v.tolist()
@@ -866,9 +868,11 @@ class TDS(BaseRoutine):
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
         logger.debug('Max. correction is for variable %s [%d]', self.system.dae.xy_name[xy_idx], xy_idx)
-        logger.debug('Associated equation rhs is %20g', self.system.dae.fg[xy_idx])
+        logger.debug('Associated equation RHS is %20g', self.system.dae.fg[xy_idx])
         logger.debug('')
 
+        logger.debug('Related Jacobian elements:')
+        logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
         logger.debug(f'{"xy_index":<10} {"Equation (row)":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
         for eq in eqns_idx:
             eq = eq.tolist()
