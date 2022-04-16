@@ -34,6 +34,7 @@ class BaseRoutine:
                               )
 
         self.solver = Solver(sparselib=self.config.sparselib)
+        self.exec_time = 0.0  # recorded time to execute the routine in seconds
 
     @property
     def class_name(self):

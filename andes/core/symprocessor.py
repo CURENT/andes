@@ -66,6 +66,7 @@ class SymProcessor:
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
         self.vars_list = list()
+        self.substitution_map = {}    # mapping of ``SubsService`` to its expression
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
@@ -161,6 +162,21 @@ class SymProcessor:
         fs = sorted(fs, key=lambda s: s.name)
         return fs
 
+    def generate_subs_expr(self):
+        """
+        Generate expressions for substituting ``SubsService``.
+        """
+        for name, instance in self.parent.services_subs.items():
+            if instance.v_str is not None:
+                expr = sp.sympify(instance.v_str, locals=self.inputs_dict)
+                self.substitution_map[self.inputs_dict[name]] = expr
+
+    def _do_substitute(self, input_expr):
+        """
+        Helper function to substitute ``SubsService`` with its expression.
+        """
+        return input_expr.subs(self.substitution_map)
+
     def generate_equations(self):
         """
         Generate equations.
@@ -193,6 +209,7 @@ class SymProcessor:
                 else:
                     try:
                         expr = sp.sympify(instance.e_str, locals=self.inputs_dict)
+                        expr = self._do_substitute(expr)
                     except (sp.SympifyError, TypeError) as e:
                         logger.error('Error parsing equation "%s "for %s.%s',
                                      instance.e_str, instance.owner.class_name, name)
@@ -251,6 +268,7 @@ class SymProcessor:
             v_str = '0' if instance.v_str is None else instance.v_str
             try:
                 expr = sp.sympify(v_str, locals=self.inputs_dict)
+                expr = self._do_substitute(expr)
             except (sp.SympifyError, TypeError) as e:
                 logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                 raise e
@@ -567,6 +585,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
         for name, instance in self.cache.all_vars.items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
+                sympified = self._do_substitute(sympified)
                 self._check_expr_symbols(sympified)
                 self.v_str_syms[name] = sympified
             else:
@@ -576,6 +595,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
             if instance.v_iter is not None:
                 sympified = sp.sympify(instance.v_iter, locals=self.inputs_dict)
+                sympified = self._do_substitute(sympified)
                 self._check_expr_symbols(sympified)
                 self.v_iter_syms[name] = sympified
 

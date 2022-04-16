@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 import time
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import dill
@@ -144,6 +144,7 @@ class System:
                                      ('numba_parallel', 0),
                                      ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
+                                     ('call_stats', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
                                      ('pickle_path', get_pkl_path())
@@ -160,6 +161,7 @@ class System:
                               numba_parallel='enable parallel for numba.jit',
                               numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
+                              call_stats='store statistics of function calls',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
                               pickle_path='path models should be (un)dilled to/from',
@@ -175,6 +177,7 @@ class System:
                               numba_parallel=(0, 1),
                               numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
+                              call_stats=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
@@ -198,6 +201,7 @@ class System:
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
         self.antiwindups = list()
         self.no_check_init = list()  # states for which initialization check is omitted
+        self.call_stats = defaultdict(dict)  # call statistics storage
 
         # internal flags
         self.is_setup = False        # if system has been setup
@@ -371,11 +375,11 @@ class System:
         model_names = list(models.keys())
         model_list = list()
 
-        for file, cls_list in file_classes.items():
+        for fname, cls_list in file_classes:
             for model_name in cls_list:
                 if model_name not in model_names:
                     continue
-                the_module = importlib.import_module('andes.models.' + file)
+                the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
                 model_list.append(the_class(system=None, config=self._config_object))
 
@@ -1697,6 +1701,12 @@ class System:
         for name, mdl in models.items():
             ret[name] = getattr(mdl, method)(*args, **kwargs)
 
+            if self.config.call_stats:
+                if method not in self.call_stats[name]:
+                    self.call_stats[name][method] = 1
+                else:
+                    self.call_stats[name][method] += 1
+
         return ret
 
     def _check_group_common(self):
@@ -1811,9 +1821,9 @@ class System:
 
         ``system.models['Bus']`` points the same instance as ``system.Bus``.
         """
-        for file, cls_list in file_classes.items():
+        for fname, cls_list in file_classes:
             for model_name in cls_list:
-                the_module = importlib.import_module('andes.models.' + file)
+                the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
                 self.__dict__[model_name] = the_class(system=self, config=self._config_object)
                 self.models[model_name] = self.__dict__[model_name]
@@ -1953,8 +1963,8 @@ class System:
 
     def _list2array(self):
         """
-        Helper function to call models' ``list2array`` method, which
-        usually performs memory preallocation.
+        Helper function to call models' ``list2array`` method, which usually
+        performs memory preallocation.
         """
         self.call_models('list2array', self.models)
 
@@ -1962,7 +1972,8 @@ class System:
         """
         Set configuration for the System object.
 
-        Config for models are routines are passed directly to their constructors.
+        Config for models are routines are passed directly to their
+        constructors.
         """
         if config is not None:
             # set config for system
@@ -1977,7 +1988,8 @@ class System:
         Returns
         -------
         dict
-            a dict containing the config from devices; class names are keys and configs in a dict are values.
+            a dict containing the config from devices; class names are keys and
+            configs in a dict are values.
         """
         config_dict = configparser.ConfigParser()
         config_dict[self.__class__.__name__] = self.config.as_dict()
@@ -1999,8 +2011,8 @@ class System:
         Parameters
         ----------
         conf_path : None or str
-            Path to the config file. If is `None`, the function body
-            will not run.
+            Path to the config file. If is `None`, the function body will not
+            run.
 
         Returns
         -------
@@ -2016,20 +2028,22 @@ class System:
 
     def save_config(self, file_path=None, overwrite=False):
         """
-        Save all system, model, and routine configurations to an rc-formatted file.
+        Save all system, model, and routine configurations to an rc-formatted
+        file.
 
         Parameters
         ----------
         file_path : str, optional
             path to the configuration file default to `~/andes/andes.rc`.
         overwrite : bool, optional
-            If file exists, True to overwrite without confirmation.
-            Otherwise prompt for confirmation.
+            If file exists, True to overwrite without confirmation. Otherwise
+            prompt for confirmation.
 
         Warnings
         --------
-        Saved config is loaded back and populated *at system instance creation time*.
-        Configs from the config file takes precedence over default config values.
+        Saved config is loaded back and populated *at system instance creation
+        time*. Configs from the config file takes precedence over default config
+        values.
         """
         if file_path is None:
             andes_path = os.path.join(os.path.expanduser('~'), '.andes')
@@ -2086,9 +2100,9 @@ class System:
 
     def as_dict(self, vin=False, skip_empty=True):
         """
-        Return system data as a dict where the keys are model names
-        and values are dicts. Each dict has parameter names as keys
-        and corresponding data in an array as values.
+        Return system data as a dict where the keys are model names and values
+        are dicts. Each dict has parameter names as keys and corresponding data
+        in an array as values.
 
         Returns
         -------
@@ -2108,8 +2122,8 @@ class System:
         """
         Fixes addressing issues after loading a snapshot.
 
-        This function properly sets ``v`` and ``e`` of internal
-        variables as views of the corresponding DAE arrays.
+        This function properly sets ``v`` and ``e`` of internal variables as
+        views of the corresponding DAE arrays.
 
         Inputs will be refreshed for each model.
         """

@@ -654,8 +654,8 @@ def sort_psse_models(dyr_yaml, system):
     list
         The sequence of model names for loading parameters.
     """
-
-    andes_models = list_flatten(list(file_classes.values()))
+    _, andes_models = map(list, zip(*file_classes))
+    andes_models = list_flatten(andes_models)
     graph = defaultdict(list)
 
     for psse_model in dyr_yaml:

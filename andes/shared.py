@@ -111,3 +111,22 @@ def set_latex():
         return True
 
     return False
+
+
+def set_font(family='serif', size=12, style='normal', weight='normal'):
+    """
+    Sets the font for matplotlib.
+
+    Parameters
+    ----------
+    family : str
+        Font family.
+    size : int
+        Font size.
+    style : str
+        Font style.
+    weight : str
+        Font weight.
+    """
+
+    mpl.rc('font', family=family, size=size, style=style, weight=weight)

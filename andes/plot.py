@@ -10,10 +10,10 @@ import re
 import numpy as np
 
 from andes.core.var import BaseVar
-from andes.shared import mpl, plt, set_latex
+from andes.shared import plt, set_font, set_latex
 
 logger = logging.getLogger(__name__)
-DPI = 100
+DPI = 80
 
 
 class TDSData:
@@ -549,7 +549,7 @@ class TDSData:
         >>>                      ylabel='Ipcmd [pu]')
 
         """
-        mpl.rc('font', family='serif', size=font_size)
+        set_font(family='serif', size=font_size)
 
         if not isinstance(ydata, np.ndarray):
             raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
