@@ -446,6 +446,7 @@ class Limiter(Discrete):
                   allow_adjust=True,  # allow flag from model
                   adjust_lower=False,
                   adjust_upper=False,
+                  is_init: bool = False,
                   *args, **kwargs):
         """
         Check the input variable and set flags.
@@ -458,7 +459,7 @@ class Limiter(Discrete):
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
 
             # FIXME: adjust will not be successful when sign is -1
-            if self.allow_adjust:
+            if self.allow_adjust and is_init:
                 self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
 
             if self.equal:
@@ -470,7 +471,7 @@ class Limiter(Discrete):
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
 
             # FIXME: adjust will not be successful when sign is -1
-            if self.allow_adjust:
+            if self.allow_adjust and is_init:
                 self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
 
             if self.equal:

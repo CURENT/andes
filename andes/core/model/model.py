@@ -1632,7 +1632,9 @@ def _eval_discrete(instance, allow_adjust=True,
     for d in dlist:
         d.check_var(allow_adjust=allow_adjust,
                     adjust_lower=adjust_lower,
-                    adjust_upper=adjust_upper)
+                    adjust_upper=adjust_upper,
+                    is_init=True,
+                    )
 
 
 def to_jit(func: Union[Callable, None],
