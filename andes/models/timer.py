@@ -192,7 +192,6 @@ class Fault(ModelData, Model):
 
                 if self.config.restore:
                     if self.config.mode == 1:
-                        nbus = self.system.Bus.n
                         self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
                         logger.debug("All algebraic variables restored after fault clearance at t=%.6f",
                                      self.system.dae.t)
