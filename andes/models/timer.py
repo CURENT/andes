@@ -121,7 +121,7 @@ class Fault(ModelData, Model):
                                      )))
         self.config.add_extra('_alt',
                               restore=(0, 1),
-                              mode=(1, 2),
+                              mode=(1, 2, 3),
                               )
         self.config.add_extra('_help',
                               restore='restore algebraic variables to pre-fault values',
