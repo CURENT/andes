@@ -837,9 +837,11 @@ class TDS(BaseRoutine):
             Index of the equation into the `g` array. Diff. eqns. are not counted in.
         """
         y_idx = y_idx.tolist()
+        logger.debug('--> Iteration Number: niter = %d', self.niter)
         logger.debug('Max. algebraic equation mismatch:')
         logger.debug('  <%s> [y_idx=%d]', self.system.dae.y_name[y_idx], y_idx)
-        logger.debug('  Mismatch value = %.4g', self.system.dae.y[y_idx])
+        logger.debug('  Variable value = %.4f', self.system.dae.y[y_idx])
+        logger.debug('  Mismatch value = %.4f', self.system.dae.g[y_idx])
 
         assoc_vars = self.system.dae.gy[y_idx, :]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
@@ -867,7 +869,8 @@ class TDS(BaseRoutine):
         eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
-        logger.debug('Max. correction is for variable %s [%d]', self.system.dae.xy_name[xy_idx], xy_idx)
+        logger.debug('Max. correction=%.4f for variable %s [%d]', self.inc[xy_idx],
+                     self.system.dae.xy_name[xy_idx], xy_idx)
         logger.debug('Associated equation RHS is %20g', self.system.dae.fg[xy_idx])
         logger.debug('')
 
