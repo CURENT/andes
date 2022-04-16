@@ -33,7 +33,6 @@ file_classes = list([
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REGCP1']),
-    ('experimental', ['REECA1OS']),
     ('renewable', ['REECA1', 'REECA1E', 'REECA1G']),
     ('renewable', ['REPCA1']),
     ('renewable', ['WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
