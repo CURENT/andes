@@ -29,6 +29,10 @@ Operator splitting for internal algebraic variables:
 - ``VarService`` takes an argument ``sequential``, which is ``True`` by default.
   Non-sequential ``VarService`` shall not depend on other ``VarService``
   calculated at the same step as they will be evaluated simultaneously.
+- ``to_pandapower()`` set all generators as controllable by default, the name
+  of generators in converted pandapower case are named with the ``idx`` of
+  ``StaticGen``.
+- Bug fixes of ``make_link_table``.
 
 Other changes:
 
