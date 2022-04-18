@@ -42,6 +42,7 @@ Other changes:
   ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
   the rotor speed and angles of the 0-th and the 1-st generator.
 - Added :ref:`REGCP1` model for generic converters with PLL support.
+- Fixed PSS/E parser for :ref:`HYGOV`.
 
 v1.6.3 (2022-04-06)
 -------------------
