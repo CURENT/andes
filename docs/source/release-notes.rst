@@ -20,24 +20,26 @@ Breaking change:
 
 Operator splitting for internal algebraic variables:
 
-- ``VarService`` can be evaluate model-internal algebraic variables outside the
-  DAE system. This is known as operator splitting and commonly used in other
-  simulation tools.
+- ``VarService`` can be evaluated model-internal algebraic variables outside the
+  DAE system. This approach is known as operator splitting and is commonly used
+  in other simulation tools.
 - Operator splitting reduces the size of the DAE system but introduces a
-  one-iteration lag betweent the internal algebraic variables and others in the
+  one-iteration lag between the internal algebraic variables and others in the
   DAE system.
 - ``VarService`` shall be avoided for singular functions (non-continuous) and
   shall not be adopted to circumvent initializing algebraic equations.
 - ``VarService`` takes an argument ``sequential``, which is ``True`` by default.
   Non-sequential ``VarService`` shall not depend on other ``VarService``
   calculated at the same step as they will be evaluated simultaneously.
-- ``to_pandapower()`` set all generators as controllable by default, the name
-  of generators in converted pandapower case are named with the ``idx`` of
-  ``StaticGen``.
-- Bug fixes of ``make_link_table``.
+- :py:func:`andes.interop.pandapower.to_pandapower` set all generators as
+  controllable by default. Generators in converted the pandapower case are named
+  using the ``idx`` of ``StaticGen``.
+- Bug fixes in ``interop.pandapower.make_link_table()``.
 
 Other changes:
 
+- Added a new service type :py:class:`andes.core.service.SubsService` for
+  temporary symbols that will be substituted at code generation time.
 - ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
   ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
   the rotor speed and angles of the 0-th and the 1-st generator.
