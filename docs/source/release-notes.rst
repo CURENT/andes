@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
-v1.6.4 (2022-04-xx)
+v1.6.4 (2022-04-17)
 -------------------
 Breaking change:
 
