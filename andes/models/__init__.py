@@ -32,6 +32,7 @@ file_classes = list([
     ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
+    ('experimental', ['REGCA1OS']),
     ('renewable', ['REGCA1', 'REGCP1']),
     ('renewable', ['REECA1', 'REECA1E', 'REECA1G']),
     ('renewable', ['REPCA1']),
