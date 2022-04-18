@@ -1388,7 +1388,7 @@ class Model:
         if self.system.options.get("init") is True:
             logger.debug(*args)
 
-    def init(self, routine, debug=False):
+    def init(self, routine):
         """
         Numerical initialization of a model.
 
