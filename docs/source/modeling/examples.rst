@@ -384,14 +384,13 @@ Assemble ``IEEESTData`` and ``IEEESTModel`` into ``IEEEST``:
             IEEESTData.__init__(self)
             IEEESTModel.__init__(self, system, config)
 
-Locate ``andes/models/__init__.py``, in ``file_classes``,
-find the key ``pss`` and add ``IEEEST`` to its value list.
-In ``file_classes``, keys are the ``.py`` file names under the folder ``models``,
-and values are class names to be imported from that file.
-If the file name does not exist as a key in ``file_classes``,
-add it after all prerequisite models.
-For example, PSS should be added after exciters (and generators,
-of course).
+Locate ``andes/models/__init__.py``, in ``file_classes``. In ``file_classes``,
+the first element of each sublist is the ``.py`` file names in ``models``
+folder, and the second element contains class names to be imported from that
+file. Find the line with ``pss`` and add ``IEEEST`` to the corresponding list of
+model names. If the file name does not exist in any element of ``file_classes``,
+add it after all prerequisite models. For example, PSS should be added after
+exciters (and generators, of course).
 
 Finally, locate ``andes/models/group.py``, check if the class
 with ``PSS`` exist.

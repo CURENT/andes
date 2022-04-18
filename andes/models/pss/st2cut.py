@@ -96,7 +96,8 @@ class ST2CUTModel(PSSBase):
         # retrieve indices of bus and bus freq
         self.buss2 = DataSelect(self.busr2, self.bus, info='selected bus (bus or busr)')
 
-        self.busfreq2 = DeviceFinder(self.busf2, link=self.buss2, idx_name='bus')
+        self.busfreq2 = DeviceFinder(self.busf2, link=self.buss2, idx_name='bus',
+                                     default_model='BusFreq', info='bus frequency idx')
 
         # from Bus
         self.v2 = ExtAlgeb(model='Bus', src='v', indexer=self.buss2, tex_name=r'V',

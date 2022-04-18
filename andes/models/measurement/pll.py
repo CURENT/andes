@@ -51,6 +51,8 @@ class PLL1Model(Model):
         super().__init__(system, config)
 
         self.flags.tds = True
+        self.group = 'PLL'
+
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,

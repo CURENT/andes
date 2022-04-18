@@ -115,7 +115,7 @@ Equation Generation
 equation generation is a multi-step process with symbol preparation, equation generation, Jacobian generation,
 initializer generation, and pretty print generation.
 
-.. autoclass:: andes.core.model.SymProcessor
+.. autoclass:: andes.core.SymProcessor
     :members: generate_symbols, generate_equations, generate_jacobians, generate_init
     :noindex:
 

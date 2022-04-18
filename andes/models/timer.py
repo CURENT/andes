@@ -121,11 +121,11 @@ class Fault(ModelData, Model):
                                      )))
         self.config.add_extra('_alt',
                               restore=(0, 1),
-                              mode=(1, 2),
+                              mode=(1, 2, 3),
                               )
         self.config.add_extra('_help',
                               restore='restore algebraic variables to pre-fault values',
-                              mode='1 - restore voltages on all buses, 2 - fault bus only',
+                              mode='1. restore all algeb variables, 2. fault bus only',
                               scale='scaling factor of restored algebraic values',
                               )
 
@@ -163,7 +163,8 @@ class Fault(ModelData, Model):
 
     def apply_fault(self, is_time: np.ndarray):
         """
-        Apply fault and store pre-fault algebraic variables (voltages and other algebs) to `self._vstore`.
+        Apply fault and store pre-fault algebraic variables (voltages and other
+        algebs) to `self._vstore`.
         """
         action = False
         for i in range(self.n):
@@ -172,6 +173,7 @@ class Fault(ModelData, Model):
 
             self.uf.v[i] = 1
             self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
+            logger.debug("Pre-fault algebraic variables:\n" + str(self._vstore))
             tqdm.write(f'<Fault {self.idx.v[i]}>: '
                        f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
 
@@ -180,24 +182,32 @@ class Fault(ModelData, Model):
 
     def clear_fault(self, is_time: np.ndarray):
         """
-        Clear fault and restore pre-fault bus algebraic variables (voltages and others).
+        Clear fault and restore pre-fault bus algebraic variables (voltages and
+        others).
         """
         action = False
         for i in range(self.n):
             if is_time[i] and (self.u.v[i] == 1):
                 self.uf.v[i] = 0
-                v_addr = self.system.Bus.get(src='v', idx=self.bus.v[i], attr='a')
-                bus_uid = self.system.Bus.idx2uid(self.bus.v[i])
 
                 if self.config.restore:
                     if self.config.mode == 1:
                         self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
-                        logger.debug("All voltage restored after clearance at t=%.6f",
+                        logger.debug("All algebraic variables restored after fault clearance at t=%.6f",
                                      self.system.dae.t)
+
+                    # TODO: neither mode 2 or 3 works. Pending further investigation.
                     elif self.config.mode == 2:
+                        v_addr = self.system.Bus.get(src='v', idx=self.bus.v[i], attr='a')
+                        bus_uid = self.system.Bus.idx2uid(self.bus.v[i])
                         self.system.dae.y[v_addr] = self._vstore[bus_uid] * self.config.scale
-                        logger.debug("Voltage on bus %s restored after clearance at t=%.6f",
+                        logger.debug("Voltage on bus %s restored after fault clearance at t=%.6f",
                                      self.bus.v[i], self.system.dae.t)
+                    elif self.config.mode == 3:
+                        nbus = self.system.Bus.n
+                        self.system.dae.y[nbus:2*nbus] = self._vstore[:nbus] * self.config.scale
+                        logger.debug("All bus voltages restored after fault clearance at t=%.6f",
+                                     self.system.dae.t)
                     else:
                         logger.error("Unsupport fault voltage restoration mode")
 

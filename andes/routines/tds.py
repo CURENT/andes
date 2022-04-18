@@ -2,20 +2,18 @@
 ANDES module for time-domain simulation.
 """
 
-import sys
-import os
-import time
 import importlib
 import logging
+import os
+import sys
+import time
 from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
-from andes.routines.daeint import method_map, Trapezoid
-
-from andes.utils.misc import elapsed, is_notebook, is_interactive
+from andes.routines.daeint import Trapezoid, method_map
+from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
+from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
-from andes.shared import tqdm, tqdm_nb, np, pd
-from andes.shared import matrix, spdiag
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +115,7 @@ class TDS(BaseRoutine):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
-        self.next_pc = 0
+        self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
         self.tol_zero = self.config.tol / 1e6
@@ -140,6 +138,7 @@ class TDS(BaseRoutine):
         self.test_ok = None
         self.qrt_start = None
         self.headroom = 0.0
+        self.call_stats = list()
 
         # internal storage for iterations
         self.x0 = None
@@ -331,8 +330,8 @@ class TDS(BaseRoutine):
                              file=sys.stdout, disable=self.config.no_tqdm)
 
         if resume:
-            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 0)
-            self.next_pc = perc + 1
+            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 2)
+            self.last_pc = perc
             self.pbar.update(perc)
 
         self.qrt_start = time.time()
@@ -351,6 +350,10 @@ class TDS(BaseRoutine):
             else:
                 step_status = self._csv_step()
 
+            # record number of iterations and success flag
+            if system.config.call_stats:
+                self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
+
             if step_status:
                 dae.store()
 
@@ -363,9 +366,12 @@ class TDS(BaseRoutine):
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
-                if perc >= self.next_pc:
-                    self.pbar.update(1)
-                    self.next_pc += 1
+                perc = round(perc, 2)
+
+                perc_diff = perc - self.last_pc
+                if perc_diff >= 1:
+                    self.pbar.update(perc_diff)
+                    self.last_pc = self.last_pc + perc_diff
 
                 # quasi-real-time check and wait (except for the last step)
                 if config.qrt and self.h > 0:
@@ -388,9 +394,6 @@ class TDS(BaseRoutine):
                     self.busted = True
                     break
 
-        self.pbar.close()
-        self.pbar = None  # removed `pbar` so that System object can be serialized
-
         if self.busted:
             logger.error(self.err_msg)
             logger.error("Simulation terminated at t=%.4f s.", system.dae.t)
@@ -398,10 +401,15 @@ class TDS(BaseRoutine):
         elif system.dae.t == self.config.tf:
             succeed = True   # success flag
             system.exit_code += 0
+            self.pbar.update(100 - self.last_pc)
         else:
             system.exit_code += 1
 
-        _, s1 = elapsed(t0)
+        self.pbar.close()
+        self.pbar = None  # removed `pbar` so that System object can be serialized
+
+        t1, s1 = elapsed(t0)
+        self.exec_time = t1 - t0
         logger.info('Simulation completed in %s.', s1)
 
         if config.qrt:
@@ -717,8 +725,8 @@ class TDS(BaseRoutine):
         Perform one round of evaluation for one iteration step.
         The following operations are performed in order:
 
-        - discrete flags updating through ``l_update_var``
         - variable service updating through ``s_update_var``
+        - discrete flags updating through ``l_update_var``
         - evaluation of the right-hand-side of ``f``
         - equation-dependent discrete flags updating through ``l_update_eq``
         - evaluation of the right-hand-side of ``g``
@@ -729,12 +737,11 @@ class TDS(BaseRoutine):
         system = self.system
         system.dae.clear_fg()
 
+        system.s_update_var(models=models)  # update VarService
         system.l_update_var(models=models,
                             niter=self.niter,
                             err=self.mis[-1],
                             )
-
-        system.s_update_var(models=models)  # update VarService
 
         # evalute the RHS of `f` and check the limiters (anti-windup)
         # 12/08/2020: Moved `l_update_eq` to before `g_update`
@@ -830,12 +837,16 @@ class TDS(BaseRoutine):
             Index of the equation into the `g` array. Diff. eqns. are not counted in.
         """
         y_idx = y_idx.tolist()
-        logger.debug('Max. algebraic mismatch associated with <%s> [y_idx=%d]',
-                     self.system.dae.y_name[y_idx], y_idx)
+        logger.debug('--> Iteration Number: niter = %d', self.niter)
+        logger.debug('Max. algebraic equation mismatch:')
+        logger.debug('  <%s> [y_idx=%d]', self.system.dae.y_name[y_idx], y_idx)
+        logger.debug('  Variable value = %.4f', self.system.dae.y[y_idx])
+        logger.debug('  Mismatch value = %.4f', self.system.dae.g[y_idx])
+
         assoc_vars = self.system.dae.gy[y_idx, :]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
-        logger.debug('')
+        logger.debug('Related variable values:')
         logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
         for v in vars_idx:
             v = v.tolist()
@@ -858,10 +869,13 @@ class TDS(BaseRoutine):
         eqns_idx = np.where(np.ravel(matrix(assoc_eqns)))[0]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
 
-        logger.debug('Max. correction is for variable %s [%d]', self.system.dae.xy_name[xy_idx], xy_idx)
-        logger.debug('Associated equation rhs is %20g', self.system.dae.fg[xy_idx])
+        logger.debug('Max. correction=%.4f for variable %s [%d]', self.inc[xy_idx],
+                     self.system.dae.xy_name[xy_idx], xy_idx)
+        logger.debug('Associated equation RHS is %20g', self.system.dae.fg[xy_idx])
         logger.debug('')
 
+        logger.debug('Related Jacobian elements:')
+        logger.debug(f'{"y_index":<10} {"Variable":<20} {"Derivative":<20}')
         logger.debug(f'{"xy_index":<10} {"Equation (row)":<20} {"Derivative":<20} {"Eq. Mismatch":<20}')
         for eq in eqns_idx:
             eq = eq.tolist()
@@ -883,7 +897,7 @@ class TDS(BaseRoutine):
         self.deltatmin = 0
         self.deltatmax = 0
         self.h = 0
-        self.next_pc = 0.1
+        self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
 

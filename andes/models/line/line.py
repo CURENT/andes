@@ -105,6 +105,24 @@ class LineData(ModelData):
                             unit='radian',
                             )
 
+        self.rate_a = NumParam(default=0.0,
+                               info="long-term flow limit (placeholder)",
+                               tex_name='R_{ATEA}',
+                               unit='MVA',
+                               )
+
+        self.rate_b = NumParam(default=0.0,
+                               info="short-term flow limit (placeholder)",
+                               tex_name='R_{ATEB}',
+                               unit='MVA',
+                               )
+
+        self.rate_c = NumParam(default=0.0,
+                               info="emergency flow limit (placeholder)",
+                               tex_name='R_{ATEC}',
+                               unit='MVA',
+                               )
+
         self.owner = IdxParam(model='Owner', info="owner code")
 
         self.xcoord = DataParam(info="x coordinates")
@@ -115,8 +133,11 @@ class Line(LineData, Model):
     """
     AC transmission line model.
 
-    To reduce the number of variables, line injections are summed at bus equations
-    and are not stored. Current injections are not computed.
+    The model is also used for two-winding transformer. Transformers can set the
+    tap ratio in ``tap`` and/or phase shift angle ``phi``.
+
+    To reduce the number of variables, line injections are summed at bus
+    equations and are not stored. Current injections are not computed.
     """
 
     def __init__(self, system=None, config=None):

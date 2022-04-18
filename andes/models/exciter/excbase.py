@@ -32,13 +32,14 @@ class ExcBase(Model):
 
     Notes
     -----
-    As of v1.4.5, the input voltage Eterm (variable ``self.v``)
-    is converted to type ``Algeb``.
-    Since variables are evaluated after services,
+    As of v1.4.5, the input voltage Eterm (variable ``self.v``) is converted to
+    type ``Algeb``. Since variables are evaluated after services,
     ``ConstService`` of exciters can no longer depend on ``v``.
 
-    TODO: programmatically disallow ``ConstService`` use uninitialized variables.
+    TODO: programmatically disallow ``ConstService`` use uninitialized
+    variables.
     """
+
     def __init__(self, system, config):
         Model.__init__(self, system, config)
         self.group = 'Exciter'
@@ -94,6 +95,7 @@ class ExcBase(Model):
                               indexer=self.syn,
                               tex_name=r'\omega',
                               info='Generator speed',
+                              is_input=True,
                               )
         self.vf = ExtAlgeb(src='vf',
                            model='SynGen',
@@ -103,12 +105,14 @@ class ExcBase(Model):
                            info='Excitation field voltage to generator',
                            ename='vf',
                            tex_ename='v_f',
+                           is_input=False,
                            )
         self.XadIfd = ExtAlgeb(src='XadIfd',
                                model='SynGen',
                                indexer=self.syn,
                                tex_name=r'X_{ad}I_{fd}',
                                info='Armature excitation current',
+                               is_input=True,
                                )
         # from bus, get a and v
         self.a = ExtAlgeb(model='Bus',
@@ -116,12 +120,14 @@ class ExcBase(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage phase angle',
+                          is_input=True,
                           )
         self.vbus = ExtAlgeb(model='Bus',
                              src='v',
                              indexer=self.bus,
                              tex_name='V',
                              info='Bus voltage magnitude',
+                             is_input=True
                              )
 
         # `self.v` is actually `ETERM` in other software
@@ -140,6 +146,7 @@ class ExcBase(Model):
                           tex_name='v_{out}',
                           v_str='ue * vf0',
                           diag_eps=True,
+                          is_output=True,
                           )
 
         # Note:

@@ -231,10 +231,7 @@ def get_log_dir():
     str
         The path to the temporary logging directory
     """
-    tempdir = os.path.join(tempfile.gettempdir(), 'andes')
-    if not os.path.exists(tempdir):
-        os.mkdir(tempdir)
-
+    tempdir = tempfile.gettempdir()
     path = tempfile.mkdtemp(prefix='andes-', dir=tempdir)
     return path
 

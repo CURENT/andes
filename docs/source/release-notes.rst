@@ -9,10 +9,48 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.4 (2022-04-17)
+-------------------
+Breaking change:
+
+- ``PV`` model no longer has ``p`` as a variable in the DAE. ``p`` copies the
+  value of ``p0``. This change affects the addresses of variables.
+- Changed ``models.file_classes`` to a list to improve the control over
+  the class initialization sequence in the same package.
+
+Operator splitting for internal algebraic variables:
+
+- ``VarService`` can be evaluated model-internal algebraic variables outside the
+  DAE system. This approach is known as operator splitting and is commonly used
+  in other simulation tools.
+- Operator splitting reduces the size of the DAE system but introduces a
+  one-iteration lag between the internal algebraic variables and others in the
+  DAE system.
+- ``VarService`` shall be avoided for singular functions (non-continuous) and
+  shall not be adopted to circumvent initializing algebraic equations.
+- ``VarService`` takes an argument ``sequential``, which is ``True`` by default.
+  Non-sequential ``VarService`` shall not depend on other ``VarService``
+  calculated at the same step as they will be evaluated simultaneously.
+- :py:func:`andes.interop.pandapower.to_pandapower` set all generators as
+  controllable by default. Generators in converted the pandapower case are named
+  using the ``idx`` of ``StaticGen``.
+- Bug fixes in ``interop.pandapower.make_link_table()``.
+
+Other changes:
+
+- Added a new service type :py:class:`andes.core.service.SubsService` for
+  temporary symbols that will be substituted at code generation time.
+- ``TDS.plt.plot()`` now accepts a list of variable objects. For example,
+  ``ss.TDS.plt.plot([ss.GENROU.omega, ss.GENROU.delta], a=[0, 1])`` will plot
+  the rotor speed and angles of the 0-th and the 1-st generator.
+- Added :ref:`REGCP1` model for generic converters with PLL support.
+- Fixed PSS/E parser for :ref:`HYGOV`.
+
 v1.6.3 (2022-04-06)
 -------------------
-- Adjustments in the Pandapower interface. Added make generation shift factor.
-- Reduced import overhead for command-line tool.
+- Adjustments in the Pandapower interface. Added ``make_GSF()`` for the
+  generation shift factor matrix.
+- Reduced import overhead for the command-line tool.
 
 v1.6.2 (2022-03-27)
 -------------------

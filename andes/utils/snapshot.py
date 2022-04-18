@@ -1,5 +1,34 @@
 """
 Utility functions for saving and loading snapshots.
+
+Code Examples:
+
+1. Setup base case and save the snapshot for once:
+
+.. code:: python
+
+    import andes
+
+    ss = andes.run(andes.get_case("ieee14/ieee14_linetrip.xlsx"))
+    ss.Toggler.u.v[:] = 0  # turn off line trips for the base case
+    xy = ss.TDS.init()
+
+    andes.utils.snapshot.save_ss("ieee14_snapshot.pkl", ss)
+
+2.  For every scenario afterwards, load the snapshot and apply
+disturbances:
+
+.. code:: python
+
+    import andes
+
+    ss = andes.utils.snapshot.load_ss("ieee14_snapshot.pkl")
+
+    # apply specific disturbances
+    ss.GENROU.omega.v[0] = 1.02
+
+    ss.TDS.run()
+
 """
 
 import dill
@@ -32,6 +61,16 @@ def save_ss(path, system):
 def load_ss(path):
     """
     Load an ANDES snapshot and return a System object.
+
+    Parameters
+    ----------
+    path : str
+        Path to the snapshot file.
+
+    Returns
+    -------
+    andes.system.System
+        The loaded system object
     """
 
     # the line below is needed to properly import `pycode`.

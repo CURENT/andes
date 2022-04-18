@@ -1,4 +1,4 @@
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -77,6 +77,7 @@ class BaseVar:
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
                  deps: Optional[List] = None,
+                 is_output: Optional[bool] = False,
                  ):
 
         self.name = name
@@ -100,6 +101,8 @@ class BaseVar:
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
         self.deps = deps          # a list of variable names this BaseVar depends on for initialization
+        self.is_output = is_output      # indicate if this variable is an output terminal
+        self.is_input = False     # internal variables are never inputs
 
         # --- attributes assigned by `set_address` begins ---
         self.n = 0
@@ -366,6 +369,7 @@ class ExtVar(BaseVar):
                  addressable: Optional[bool] = True,
                  export: Optional[bool] = True,
                  diag_eps: Optional[float] = 0.0,
+                 is_input: Optional[bool] = False,
                  ):
         super().__init__(name=name,
                          tex_name=tex_name,
@@ -387,6 +391,9 @@ class ExtVar(BaseVar):
         self.src = src
         self.indexer = indexer
         self.allow_none = allow_none
+        self.is_input = is_input  # if this ExtVar is an input terminal
+        self.is_output = False    # external variables are never outputs
+
         self.parent = None
         self._idx = None
         self._n = []
@@ -533,6 +540,7 @@ class ExtState(ExtVar):
     source ``State`` variable. In fact, one should not set ``e_str`` for ``ExtState``.
     """
     e_code = 'f'
+    r_code = 'h'
     v_code = 'x'
     t_const = None
 
@@ -542,6 +550,7 @@ class ExtAlgeb(ExtVar):
     External algebraic variable type.
     """
     e_code = 'g'
+    r_code = 'i'
     v_code = 'y'
 
 
@@ -550,12 +559,14 @@ class AliasAlgeb(ExtAlgeb):
     Alias algebraic variable. Essentially ``ExtAlgeb`` that links to a a model's
     own variable.
 
-    ``AliasAlgeb`` is useful when the final output of a model is from a block, but
-    the model must provide the final output in a pre-defined name.
-    Using ``AliasAlgeb``, A model can avoid adding an additional variable with a dummy equations.
+    ``AliasAlgeb`` is useful when the final output of a model is from a block,
+    but the model must provide the final output in a pre-defined name. Using
+    ``AliasAlgeb``, A model can avoid adding an additional variable with a dummy
+    equations.
 
-    Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final output.
-    When plotting from file, one need to look up the original variable name.
+    Like ``ExtVar``, labels of ``AliasAlgeb`` will not be saved in the final
+    output. When plotting from file, one need to look up the original variable
+    name.
     """
 
     def __init__(self, var, **kwargs):
@@ -564,6 +575,7 @@ class AliasAlgeb(ExtAlgeb):
                           src=var.name,
                           indexer=var.owner.idx,
                           info=f'Alias of {var.name}',
+                          is_input=False,
                           **kwargs,
                           )
 
@@ -581,5 +593,6 @@ class AliasState(ExtState):
                           src=var.name,
                           indexer=var.owner.idx,
                           info=f'Alias of {var.name}',
+                          is_input=False,
                           **kwargs,
                           )

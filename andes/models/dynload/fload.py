@@ -70,6 +70,7 @@ class FLoadModel(Model):
 
         self.busfreq = DeviceFinder(u=self.busf, link=self.bus, idx_name='bus',
                                     info='found idx of BusFreq',
+                                    default_model='BusFreq',
                                     )
 
         self.f = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq,

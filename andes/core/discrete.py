@@ -1,4 +1,4 @@
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -446,6 +446,7 @@ class Limiter(Discrete):
                   allow_adjust=True,  # allow flag from model
                   adjust_lower=False,
                   adjust_upper=False,
+                  is_init: bool = False,
                   *args, **kwargs):
         """
         Check the input variable and set flags.
@@ -458,7 +459,7 @@ class Limiter(Discrete):
             upper_v = -self.upper.v if self.sign_upper.v == -1 else self.upper.v
 
             # FIXME: adjust will not be successful when sign is -1
-            if self.allow_adjust and allow_adjust and adjust_upper:
+            if self.allow_adjust and is_init:
                 self.do_adjust_upper(self.u.v, upper_v, allow_adjust, adjust_upper)
 
             if self.equal:
@@ -470,7 +471,7 @@ class Limiter(Discrete):
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
 
             # FIXME: adjust will not be successful when sign is -1
-            if self.allow_adjust and allow_adjust and adjust_lower:
+            if self.allow_adjust and is_init:
                 self.do_adjust_lower(self.u.v, lower_v, allow_adjust, adjust_lower)
 
             if self.equal:
@@ -507,9 +508,14 @@ class Limiter(Discrete):
         """
         Helper function to show a table of the adjusted limits.
         """
-        idxes = np.array(self.owner.idx.v)[mask]
 
-        adjust_or_not = 'adjusted' if adjusted else 'unadjusted'
+        idxes = np.array(self.owner.idx.v)[mask]
+        if isinstance(val, (int, float)):
+            val = np.array([val])
+        if isinstance(old_limit, (int, float)):
+            old_limit = np.array([old_limit])
+
+        adjust_or_not = 'adjusted' if adjusted else '*not adjusted*'
 
         tab = Tab(title=f"{self.owner.class_name}.{self.name}: {adjust_or_not} limit <{limit_name}>",
                   header=['Idx', 'Input', 'Old Limit'],

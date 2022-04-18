@@ -7,7 +7,7 @@ import numpy as np
 
 import andes
 from andes.shared import deg2rad
-from andes.interop.pandapower import to_pandapower, make_link_table
+from andes.interop.pandapower import to_pandapower, make_link_table, make_GSF
 
 try:
     import pandapower as pp
@@ -60,6 +60,19 @@ class TestPandapower(unittest.TestCase):
         c_gov = link_table['gov_idx'].iloc[ridx].astype(str) == 'TGOV1_1'
         c = c_bus.values[0] and c_exc.values[0] and c_stg.values[0] and c_gov.values[0]
         return c
+
+    def test_make_GSF(self):
+        """
+        Test `andes.interop.pandapower.make_GSF with ieee39`
+        """
+
+        sa39 = andes.load(andes.get_case('ieee39/ieee39.xlsx'),
+                          setup=True,
+                          no_output=True,
+                          default_config=True)
+        sp39 = to_pandapower(sa39)
+        make_GSF(sp39)
+        return True
 
 
 def _test_to_pandapower_single(case, **kwargs):

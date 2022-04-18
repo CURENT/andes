@@ -75,7 +75,7 @@ class REECA1Data(ModelData):
         self.Kqv = NumParam(default=1.0,
                             vrange=(0, 10),
                             tex_name='K_{qv}',
-                            info='Gain to compute Iqinj from V error',
+                            info='Gain to compute Iqinj from V error (caution!!)',
                             )
         self.Iqh1 = NumParam(default=999.0,
                              tex_name='I_{qh1}',

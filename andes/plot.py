@@ -10,10 +10,10 @@ import re
 import numpy as np
 
 from andes.core.var import BaseVar
-from andes.shared import mpl, plt, set_latex
+from andes.shared import plt, set_font, set_latex
 
 logger = logging.getLogger(__name__)
-DPI = 100
+DPI = 80
 
 
 class TDSData:
@@ -262,6 +262,39 @@ class TDSData:
 
         logger.info(f'CSV data saved to "{path}".')
 
+    def _process_yidx(self, yidx, a):
+        """
+        Helper function for processing ``yidx`` if it is a ``BaseVar`` or a list
+        of BaseVars.
+
+        Indexing by ``a`` is considered.
+        """
+        if isinstance(yidx, BaseVar):
+            yidx = [yidx]
+
+        if isinstance(yidx, list) and isinstance(yidx[0], BaseVar):
+            all_yidx = np.array([], dtype=int)
+            for item in yidx:
+                if item.n == 0:
+                    logger.warning("Variable <%s> contains no values, ignored.", item.name)
+                    continue
+                if item.v_code == 'y':
+                    offs = self.dae.n + 1
+                else:
+                    offs = 1
+
+                new_yidx = item.a + offs
+
+                if a is not None:
+                    new_yidx = np.take(new_yidx, a)
+                all_yidx = np.append(all_yidx, new_yidx)
+
+            yidx = all_yidx
+
+        # a list of integers will remain unchanged
+
+        return yidx
+
     def plot(self, yidx, xidx=(0,), *, a=None, ytimes=None, ycalc=None,
              left=None, right=None, ymin=None, ymax=None,
              xlabel=None, ylabel=None, xheader=None, yheader=None,
@@ -370,19 +403,17 @@ class TDSData:
             Figure object for bqplot backend.
 
         """
+
         if self._mode == 'memory':
-            if isinstance(yidx, BaseVar):
-                if yidx.n == 0:
-                    logger.error(f"Variable <{yidx.name}> contains no values.")
-                    return
-                offs = 1
-                if yidx.v_code == 'y':
-                    offs += self.dae.n
+            yidx = self._process_yidx(yidx, a)
 
-                yidx = yidx.a + offs
+        else:  # file mode
+            if a is not None:
+                yidx = np.take(yidx, a)
 
-        if a is not None:
-            yidx = np.take(yidx, a)
+        if len(yidx) == 0:
+            logger.error("No variables to plot.")
+            return
 
         xvalue = self.get_values(xidx)
         yvalue = self.get_values(yidx)
@@ -398,7 +429,7 @@ class TDSData:
         if ytimes is not None:
             ytimes = float(ytimes)
             if ytimes != 1.0:
-                yvalue = scale_func(ytimes)(yvalue)
+                yvalue = _scale_func(ytimes)(yvalue)
 
         # call `ycalc` on `yvalue`
         if ycalc is not None:
@@ -518,7 +549,7 @@ class TDSData:
         >>>                      ylabel='Ipcmd [pu]')
 
         """
-        mpl.rc('font', family='serif', size=font_size)
+        set_font(family='serif', size=font_size)
 
         if not isinstance(ydata, np.ndarray):
             raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
@@ -868,7 +899,7 @@ def parse_y(y, upper, lower=0):
             return []
 
         elif y[0].count(':') == 0:
-            if isint(y[0]):
+            if _isint(y[0]):
                 y[0] = int(y[0])
                 return y
         elif y[0].count(':') == 1:
@@ -997,15 +1028,11 @@ def tdsplot(filename, y, x=(0,),
         raise NotImplementedError("Plotting multiple data files are not supported yet")
 
 
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
+def _isint(value):
+    """
+    Helper function to tell if ``value`` is convertable to an integer.
+    """
 
-
-def isint(value):
     try:
         int(value)
         return True
@@ -1013,7 +1040,7 @@ def isint(value):
         return False
 
 
-def scale_func(k):
+def _scale_func(k):
     """
     Return a lambda function that scales its input by k
 
@@ -1029,7 +1056,7 @@ def scale_func(k):
     return lambda y_values_input: k * y_values_input
 
 
-def label_latexify(label):
+def _label_latexify(label):
     """
     Convert a label to latex format by appending surrounding $ and escaping spaces
 

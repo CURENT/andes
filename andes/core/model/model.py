@@ -1,472 +1,41 @@
-"""
-Base class for building ANDES models.
-"""
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  File name: model.py
+
+"""
+Module for ANDES models.
+"""
 
 import logging
 import pprint
 from collections import OrderedDict
-from typing import Iterable, Sized, Union, Callable
+from typing import Callable, Iterable, Union
 
+import numpy as np
 import scipy as sp
-
 from andes.core.block import Block
 from andes.core.common import Config, JacTriplet, ModelFlags
 from andes.core.discrete import Discrete
 from andes.core.documenter import Documenter
-from andes.core.param import (BaseParam, DataParam, ExtParam, IdxParam,
-                              NumParam, TimerParam, )
+from andes.core.model.modelcache import ModelCache
+from andes.core.model.modelcall import ModelCall
+from andes.core.param import ExtParam
 from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
                                 DeviceFinder, ExtService, FlagValue,
                                 InitChecker, NumReduce, NumRepeat, NumSelect,
                                 ParamCalc, PostInitService, RandomService,
-                                Replace, SwBlock, VarService, )
+                                Replace, SubsService, SwBlock, VarService)
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
-from andes.shared import jac_full_names, jac_names, jac_types, np, pd, numba
+from andes.shared import jac_full_names, numba
 from andes.utils.func import list_flatten
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
-
-
-class ModelCache:
-    """
-    Class for caching the return value of callback functions.
-
-    Check ``ModelCache.__dict__.keys()`` for fields.
-    """
-
-    def __init__(self):
-        self._callbacks = {}
-
-    def __getattr__(self, item):
-        if item == "_callbacks":
-            return self.__getattribute__(item)
-
-        if item not in self.__dict__:
-            if item in self._callbacks:
-                self.__dict__[item] = self._call(item)
-
-        return self.__getattribute__(item)
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def add_callback(self, name: str, callback):
-        """
-        Add a cache attribute and a callback function for updating the attribute.
-
-        Parameters
-        ----------
-        name : str
-            name of the cached function return value
-        callback : callable
-            callback function for updating the cached attribute
-        """
-        self._callbacks[name] = callback
-
-    def refresh(self, name=None):
-        """
-        Refresh the cached values
-
-        Parameters
-        ----------
-        name : str, list, optional
-            name or list of cached to refresh, by default None for refreshing all
-
-        """
-        if name is None:
-            for name in self._callbacks.keys():
-                self.__dict__[name] = self._call(name)
-        elif isinstance(name, str):
-            self.__dict__[name] = self._call(name)
-        elif isinstance(name, list):
-            for n in name:
-                self.__dict__[n] = self._call(n)
-
-    def _call(self, name):
-        """
-        Helper function for calling callback functions.
-
-        Parameters
-        ----------
-        name : str
-            attribute name to be updated
-
-        Returns
-        -------
-        callback result
-        """
-        if name not in self._callbacks:
-            return None
-        else:
-            if callable(self._callbacks[name]):
-                return self._callbacks[name]()
-            else:
-                return self._callbacks[name]
-
-
-class ModelData:
-    r"""
-    Class for holding parameter data for a model.
-
-    This class is designed to hold the parameter data separately from model equations.
-    Models should inherit this class to define the parameters from input files.
-
-    Inherit this class to create the specific class for holding input parameters for a new model.
-    The recommended name for the derived class is the model name with ``Data``. For example, data for `GENROU`
-    should be named `GENROUData`.
-
-    Parameters should be defined in the ``__init__`` function of the derived class.
-
-    Refer to :py:mod:`andes.core.param` for available parameter types.
-
-    Attributes
-    ----------
-    cache
-        A cache instance for different views of the internal data.
-
-    flags : dict
-        Flags to control the routine and functions that get called. If the model is using user-defined
-        numerical calls, set `f_num`, `g_num` and `j_num` properly.
-
-    Notes
-    -----
-    Three default parameters are pre-defined in ``ModelData``
-    and will be inherited by all models. They are
-
-    - ``idx``, unique device idx of type :py:class:`andes.core.param.DataParam`
-    - ``u``, connection status of type :py:class:`andes.core.param.NumParam`
-    - ``name``, (device name of type :py:class:`andes.core.param.DataParam`
-
-    In rare cases one does not want to define these three parameters,
-    one can pass `three_params=True` to the constructor of ``ModelData``.
-
-    Examples
-    --------
-    If we want to build a class ``PQData`` (for static PQ load) with three parameters, `Vn`, `p0`
-    and `q0`, we can use the following ::
-
-        from andes.core.model import ModelData, Model
-        from andes.core.param import IdxParam, NumParam
-
-        class PQData(ModelData):
-            super().__init__()
-            self.Vn = NumParam(default=110,
-                               info="AC voltage rating",
-                               unit='kV', non_zero=True,
-                               tex_name=r'V_n')
-            self.p0 = NumParam(default=0,
-                               info='active power load in system base',
-                               tex_name=r'p_0', unit='p.u.')
-            self.q0 = NumParam(default=0,
-                               info='reactive power load in system base',
-                               tex_name=r'q_0', unit='p.u.')
-
-    In this example, all the three parameters are defined as
-    :py:class:`andes.core.param.NumParam`.
-    In the full `PQData` class, other types of parameters also exist.
-    For example, to store the idx of `owner`, `PQData` uses ::
-
-        self.owner = IdxParam(model='Owner', info="owner idx")
-
-    """
-
-    def __init__(self, *args, three_params=True, **kwargs):
-        self.params = OrderedDict()
-        self.num_params = OrderedDict()
-        self.idx_params = OrderedDict()
-        self.timer_params = OrderedDict()
-        self.n = 0
-        self.uid = {}
-
-        if not hasattr(self, 'cache'):
-            self.cache = ModelCache()
-        self.cache.add_callback('dict', self.as_dict)
-        self.cache.add_callback('df', lambda: self.as_df())
-        self.cache.add_callback('dict_in', lambda: self.as_dict(True))
-        self.cache.add_callback('df_in', lambda: self.as_df(vin=True))
-
-        if three_params is True:
-            self.idx = DataParam(info='unique device idx')
-            self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
-            self.name = DataParam(info='device name')
-
-    def __len__(self):
-        return self.n
-
-    def __setattr__(self, key, value):
-        if isinstance(value, BaseParam):
-            value.owner = self
-            if not value.name:
-                value.name = key
-
-            if key in self.__dict__:
-                logger.warning("%s: redefining <%s>. This is likely a modeling error.",
-                               self.class_name, key)
-
-            self.params[key] = value
-
-        if isinstance(value, NumParam):
-            self.num_params[key] = value
-        elif isinstance(value, IdxParam):
-            self.idx_params[key] = value
-
-        # `TimerParam` is a subclass of `NumParam` and thus tested separately
-        if isinstance(value, TimerParam):
-            self.timer_params[key] = value
-
-        super(ModelData, self).__setattr__(key, value)
-
-    def add(self, **kwargs):
-        """
-        Add a device (an instance) to this model.
-
-        Warnings
-        --------
-        This function is not intended to be used directly.
-        Use the ``add`` method from System so that the index
-        can be registered correctly.
-
-        Parameters
-        ----------
-        kwargs
-            model parameters are collected into the kwargs dictionary
-        """
-        idx = kwargs['idx']
-        self.uid[idx] = self.n
-        self.n += 1
-        if "name" in self.params:
-            name = kwargs.get("name")
-            if (name is None) or (not isinstance(name, str) and np.isnan(name)):
-                kwargs["name"] = idx
-
-        if "idx" not in self.params:
-            kwargs.pop("idx")
-
-        for name, instance in self.params.items():
-            value = kwargs.pop(name, None)
-            instance.add(value)
-        if len(kwargs) > 0:
-            logger.warning("%s: unused data %s", self.class_name, str(kwargs))
-
-    def as_dict(self, vin=False):
-        """
-        Export all parameters as a dict.
-
-        Returns
-        -------
-        dict
-            a dict with the keys being the `ModelData` parameter names
-            and the values being an array-like of data in the order of adding.
-            An additional `uid` key is added with the value default to range(n).
-        """
-        out = dict()
-        out['uid'] = np.arange(self.n)
-
-        for name, instance in self.params.items():
-            # skip non-exported parameters
-            if instance.export is False:
-                continue
-
-            out[name] = instance.v
-
-            # use the original input if `vin` is True
-            if (vin is True) and hasattr(instance, 'vin') and (instance.vin is not None):
-                out[name] = instance.vin
-
-            conv = instance.oconvert
-            if conv is not None:
-                out[name] = np.array([conv(item) for item in out[name]])
-
-        return out
-
-    def as_df(self, vin=False):
-        """
-        Export all parameters as a `pandas.DataFrame` object.
-        This function utilizes `as_dict` for preparing data.
-
-        Returns
-        -------
-        DataFrame
-            A dataframe containing all model data. An `uid` column is added.
-        vin : bool
-            If True, export all parameters from original input (``vin``).
-        """
-        if vin is False:
-            out = pd.DataFrame(self.as_dict()).set_index('uid')
-        else:
-            out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
-
-        return out
-
-    def update_from_df(self, df, vin=False):
-        """
-        Update parameter values from a DataFrame.
-
-        Adding devices are not allowed.
-        """
-        if vin is False:
-            for name, instance in self.params.items():
-                if instance.export is False:
-                    continue
-                instance.set_all('v', df[name])
-        else:
-            for name, instance in self.params.items():
-                if instance.export is False:
-                    continue
-                try:
-                    instance.set_all('vin', df[name])
-                    instance.v[:] = instance.vin * instance.pu_coeff
-                except KeyError:
-                    # fall back to `v`
-                    instance.set_all('v', df[name])
-
-        return True
-
-    def find_param(self, prop):
-        """
-        Find params with the given property and return in an OrderedDict.
-
-        Parameters
-        ----------
-        prop : str
-            Property name
-
-        Returns
-        -------
-        OrderedDict
-        """
-        out = OrderedDict()
-        for name, instance in self.params.items():
-            if instance.get_property(prop) is True:
-                out[name] = instance
-
-        return out
-
-    def find_idx(self, keys, values, allow_none=False, default=False):
-        """
-        Find `idx` of devices whose values match the given pattern.
-
-        Parameters
-        ----------
-        keys : str, array-like, Sized
-            A string or an array-like of strings containing the names of parameters for the search criteria
-        values : array, array of arrays, Sized
-            Values for the corresponding key to search for. If keys is a str, values should be an array of
-            elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_none : bool, Sized
-            Allow key, value to be not found. Used by groups.
-        default : bool
-            Default idx to return if not found (missing)
-
-        Returns
-        -------
-        list
-            indices of devices
-        """
-        if isinstance(keys, str):
-            keys = (keys,)
-            if not isinstance(values, (int, float, str, np.floating)) and not isinstance(values, Iterable):
-                raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
-
-            if len(values) > 0 and not isinstance(values[0], (list, tuple, np.ndarray)):
-                values = (values,)
-
-        elif isinstance(keys, Sized):
-            if not isinstance(values, Iterable):
-                raise ValueError(f"value must be an iterable, got {values}")
-
-            if len(values) > 0 and not isinstance(values[0], Iterable):
-                raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
-
-            if len(keys) != len(values):
-                raise ValueError("keys and values must have the same length")
-
-        v_attrs = [self.__dict__[key].v for key in keys]
-
-        idxes = []
-        for v_search in zip(*values):
-            v_idx = None
-            for pos, v_attr in enumerate(zip(*v_attrs)):
-                if all([i == j for i, j in zip(v_search, v_attr)]):
-                    v_idx = self.idx.v[pos]
-                    break
-            if v_idx is None:
-                if allow_none is False:
-                    raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
-                else:
-                    v_idx = default
-
-            idxes.append(v_idx)
-
-        return idxes
-
-
-class ModelCall:
-    """
-    Class for storing generated function calls, Jacobian calls, and arguments.
-    """
-
-    def __init__(self):
-        self.md5 = ''
-
-        # `f` and `g` are callables generated by lambdify that take positional args
-        self.f = None
-        self.g = None
-        self.j = dict()
-        self.s = OrderedDict()
-
-        # `f_args` and `g_args` are the arg names
-        self.f_args = list()
-        self.g_args = list()
-        self.j_args = dict()
-        self.ia = OrderedDict()
-        self.ii = OrderedDict()
-        self.ij = OrderedDict()
-        self.s_args = OrderedDict()
-        self.ia_args = OrderedDict()  # assignment initialization
-        self.ii_args = OrderedDict()  # iterative initialization
-        self.ij_args = OrderedDict()
-
-        self.ijac = OrderedDict()
-        self.jjac = OrderedDict()
-        self.vjac = OrderedDict()
-
-    def clear_ijv(self):
-        for jname in jac_names:
-            for jtype in jac_types:
-                self.ijac[jname + jtype] = list()
-                self.jjac[jname + jtype] = list()
-                self.vjac[jname + jtype] = list()
-
-    def append_ijv(self, j_full_name, ii, jj, vv):
-        if not isinstance(ii, int):
-            raise ValueError("i index must be an integer")
-        if not isinstance(jj, int):
-            raise ValueError("j index must be an integer")
-        if not isinstance(vv, (int, float)) and (not callable(vv)):
-            raise ValueError("v must be a number or a callable")
-
-        self.ijac[j_full_name].append(ii)
-        self.jjac[j_full_name].append(jj)
-        self.vjac[j_full_name].append(vv)
-
-    def zip_ijv(self, j_full_name):
-        """
-        Return a zipped iterator for the rows, cols and vals for the specified matrix name.
-        """
-        return zip(self.ijac[j_full_name],
-                   self.jjac[j_full_name],
-                   self.vjac[j_full_name])
 
 
 class Model:
@@ -624,7 +193,10 @@ class Model:
 
         self.services = OrderedDict()  # service/temporary variables
         self.services_var = OrderedDict()  # variable services updated each step/iter
+        self.services_var_seq = OrderedDict()
+        self.services_var_nonseq = OrderedDict()
         self.services_post = OrderedDict()  # post-initialization storage services
+        self.services_subs = OrderedDict()  # to-be-substituted services
         self.services_icheck = OrderedDict()  # post-initialization check services
         self.services_ref = OrderedDict()  # BackRef
         self.services_fnd = OrderedDict()  # services to find/add devices
@@ -634,10 +206,6 @@ class Model:
         self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
                                       ('sys_f', 'f_{sys}'),
                                       ('sys_mva', 'S_{b,sys}'),
-                                      ('__zeros', '0'),
-                                      ('__ones', '1'),
-                                      ('__falses', '0'),
-                                      ('__trues', '1'),
                                       ))
 
         # Model behavior flags
@@ -676,6 +244,9 @@ class Model:
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
         self.cache.add_callback('iter_vars', self._iter_vars)
+        self.cache.add_callback('input_vars', self._input_vars)
+        self.cache.add_callback('output_vars', self._output_vars)
+
         self.cache.add_callback('all_vars_names', self._all_vars_names)
         self.cache.add_callback('all_params', self._all_params)
         self.cache.add_callback('all_params_names', self._all_params_names)
@@ -731,8 +302,14 @@ class Model:
             # store VarService in an additional dict
             if isinstance(value, VarService):
                 self.services_var[key] = value
+                if value.sequential:
+                    self.services_var_seq[key] = value
+                else:
+                    self.services_var_nonseq[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
+        elif isinstance(value, SubsService):
+            self.services_subs[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
         elif isinstance(value, BackRef):
@@ -1062,6 +639,9 @@ class Model:
 
         self.f_args = [self._input[arg] for arg in self.calls.f_args]
         self.g_args = [self._input[arg] for arg in self.calls.g_args]
+        self.sns_args = [self._input[arg] for arg in self.calls.sns_args]
+
+        # each value below is a dict
         mapping = {
             'j_args': self.j_args,
             's_args': self.s_args,
@@ -1116,17 +696,18 @@ class Model:
         """
         Update service equation values.
 
-        This function is only evaluated at initialization.
-        Service values are updated sequentially.
-        The ``v`` attribute of services will be assigned at a new memory address.
+        This function is only evaluated at initialization. Service values are
+        updated sequentially. The ``v`` attribute of services will be assigned
+        at a new memory address.
         """
         for name, instance in self.services.items():
             if name in self.calls.s:
                 func = self.calls.s[name]
                 if callable(func):
                     self.get_inputs(refresh=True)
-                    # NOTE: use new assignment due to possible size change
-                    #   Always make a copy and make the RHS a 1-d array
+                    # NOTE:
+                    # Use new assignment due to possible size change.
+                    # Always make a copy and make the RHS a 1-d array
                     instance.v = np.ravel(np.array(func(*self.s_args[name]), dtype=instance.vtype))
                 else:
                     instance.v = np.ravel(np.array(func, dtype=instance.vtype))
@@ -1154,20 +735,30 @@ class Model:
 
     def s_update_var(self):
         """
-        Update VarService.
+        Update values of :py:class:`andes.core.service.VarService`.
         """
+
         if len(self.services_var):
             kwargs = self.get_inputs()
-            for name, instance in self.services_var.items():
+            # evaluate `v_str` functions for sequential VarService
+            for name, instance in self.services_var_seq.items():
                 if instance.v_str is not None:
                     func = self.calls.s[name]
                     if callable(func):
                         instance.v[:] = func(*self.s_args[name])
 
-                # Apply individual `v_numeric`
-                func = instance.v_numeric
-                if func is not None and callable(func):
-                    instance.v[:] = func(**kwargs)
+            # apply non-sequential services from ``v_str``:w
+            if callable(self.calls.sns):
+                ret = self.calls.sns(*self.sns_args)
+                for idx, instance in enumerate(self.services_var_nonseq.values()):
+                    instance.v[:] = ret[idx]
+
+            # Apply individual `v_numeric`
+            for instance in self.services_var.values():
+                if instance.v_numeric is None:
+                    continue
+                if callable(instance.v_numeric):
+                    instance.v[:] = instance.v_numeric(**kwargs)
 
         if self.flags.sv_num is True:
             kwargs = self.get_inputs()
@@ -1448,6 +1039,7 @@ class Model:
                            list(self.services.items()) +
                            list(self.services_ext.items()) +
                            list(self.services_ops.items()) +
+                           list(self.services_subs.items()) +
                            list(self.discrete.items())
                            )
 
@@ -1535,6 +1127,20 @@ class Model:
                 continue
 
             out[name] = var
+        return out
+
+    def _input_vars(self):
+        out = list()
+        for name, var in self.cache.all_vars.items():
+            if var.is_input:
+                out.append(name)
+        return out
+
+    def _output_vars(self):
+        out = list()
+        for name, var in self.cache.all_vars.items():
+            if var.is_output:
+                out.append(name)
         return out
 
     def set_in_use(self):
@@ -1642,6 +1248,7 @@ class Model:
         self.calls.md5 = self.get_md5()
 
         self.syms.generate_symbols()
+        self.syms.generate_subs_expr()
         self.syms.generate_equations()
         self.syms.generate_services()
         self.syms.generate_jacobians()
@@ -1683,6 +1290,8 @@ class Model:
 
             if item.v_str is not None:
                 md5.update(str(item.v_str).encode())
+
+            md5.update(str(int(item.sequential)).encode())
 
         for name, item in self.discrete.items():
             md5.update(str(name).encode())
@@ -1726,11 +1335,12 @@ class Model:
 
         self.calls.f = to_jit(self.calls.f, **kwargs)
         self.calls.g = to_jit(self.calls.g, **kwargs)
+        self.calls.sns = to_jit(self.calls.sns, **kwargs)
 
         for jname in self.calls.j:
             self.calls.j[jname] = to_jit(self.calls.j[jname], **kwargs)
 
-        for name, instance in self.services_var.items():
+        for name, instance in self.services_var_seq.items():
             if instance.v_str is not None:
                 self.calls.s[name] = to_jit(self.calls.s[name], **kwargs)
 
@@ -1755,10 +1365,13 @@ class Model:
         if callable(self.calls.g):
             self.calls.g(*self.g_args)
 
+        if callable(self.calls.sns):
+            self.calls.sns(*self.sns_args)
+
         for jname, jfunc in self.calls.j.items():
             jfunc(*self.j_args[jname])
 
-        for name, instance in self.services_var.items():
+        for name, instance in self.services_var_seq.items():
             if instance.v_str is not None:
                 self.calls.s[name](*self.s_args[name])
 
@@ -1775,7 +1388,7 @@ class Model:
         if self.system.options.get("init") is True:
             logger.debug(*args)
 
-    def init(self, routine, debug=False):
+    def init(self, routine):
         """
         Numerical initialization of a model.
 
@@ -1787,6 +1400,7 @@ class Model:
 
         # evaluate `ConstService` and `VarService`
         self.s_update()
+        self.s_update_var()
 
         # find out if variables need to be initialized for `routine`
         flag_name = routine + '_init'
@@ -2018,7 +1632,9 @@ def _eval_discrete(instance, allow_adjust=True,
     for d in dlist:
         d.check_var(allow_adjust=allow_adjust,
                     adjust_lower=adjust_lower,
-                    adjust_upper=adjust_upper)
+                    adjust_upper=adjust_upper,
+                    is_init=True,
+                    )
 
 
 def to_jit(func: Union[Callable, None],

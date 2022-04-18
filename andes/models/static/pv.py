@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from andes.core import (ModelData, NumParam, ExtParam, DataParam, IdxParam, Model,
                         BackRef, ExtAlgeb, Algeb, SortedLimiter)
+from andes.core.service import ConstService
 
 
 class PVData(ModelData):
@@ -85,17 +86,18 @@ class PVModel(Model):
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta',
                           ename='P',
                           tex_ename='P',
+                          is_input=True,
                           )
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus, v_setter=True, tex_name=r'V',
                           ename='dV',
                           tex_ename=r'\Delta V',
+                          is_input=True,
                           )
 
-        self.p = Algeb(info='actual active power generation',
-                       unit='p.u.',
-                       tex_name=r'p',
-                       diag_eps=True,
-                       )
+        self.p = ConstService(v_str='p0',
+                              info='copy of p0 used for power flow',
+                              tex_name='p',)
+
         self.q = Algeb(info='actual reactive power generation',
                        unit='p.u.',
                        tex_name='q',
@@ -112,7 +114,6 @@ class PVModel(Model):
 
         # variable initialization equations
         self.v.v_str = 'u * v0 + (1-u) * busv0'
-        self.p.v_str = 'u * p0'
         self.q.v_str = 'u * q0'
 
         # injections into buses have negative values
@@ -120,7 +121,6 @@ class PVModel(Model):
         self.v.e_str = "-u * q"
 
         # power injection equations g(y) = 0
-        self.p.e_str = "u * (p0 - p)"
         self.q.e_str = "u*(qlim_zi * (v0-v) + " \
                        "qlim_zl * (qmin-q) + " \
                        "qlim_zu * (qmax-q))"

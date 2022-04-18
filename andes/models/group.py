@@ -495,7 +495,7 @@ class StaticGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
-        self.common_vars.extend(('p', 'q', 'a', 'v'))
+        self.common_vars.extend(('q', 'a', 'v'))
 
         self.SynGen = BackRef()
 
@@ -543,8 +543,7 @@ class SynGen(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D', 'subidx'))
-        self.common_vars.extend(('omega', 'delta', 'tm', 'te', 'vf', 'XadIfd', 'vd', 'vq', 'Id', 'Iq',
-                                 'a', 'v'))
+        self.common_vars.extend(('omega', 'delta', ))
 
         self.TurbineGov = BackRef()
         self.Exciter = BackRef()
@@ -718,6 +717,14 @@ class PhasorMeasurement(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('am', 'vm'))
+
+
+class PLL(GroupBase):
+    """Phase-locked loop models."""
+
+    def __init__(self):
+        super().__init__()
+        self.common_vars.extend(('am',))
 
 
 class Motor(GroupBase):

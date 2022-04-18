@@ -41,6 +41,7 @@ class REECA1EModel(REECA1Model):
         self.busrocof = DeviceFinder(self.busroc,
                                      link=self.bus,
                                      idx_name='bus',
+                                     default_model='BusROCOF',
                                      )
 
         self.df = ExtAlgeb(model='FreqMeasurement',

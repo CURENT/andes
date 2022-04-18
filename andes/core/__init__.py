@@ -16,3 +16,4 @@ from andes.core.service import (BackRef, BaseService, ConstService,  # NOQA
                                 OperationService, RandomService,)
 from andes.core.var import (Algeb, BaseVar, ExtAlgeb, ExtState, ExtVar,  # NOQA
                             State,)
+from andes.core.symprocessor import SymProcessor  # NOQA

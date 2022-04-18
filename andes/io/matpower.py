@@ -260,6 +260,10 @@ def mpc2system(mpc: dict, system) -> bool:
         r = data[2]
         x = data[3]
         b = data[4]
+        rate_a = data[5]
+        rate_b = data[6]
+        rate_c = data[7]
+
         status = int(data[10])
 
         if (data[8] == 0.0) or (data[8] == 1.0 and data[9] == 0.0):
@@ -278,7 +282,8 @@ def mpc2system(mpc: dict, system) -> bool:
                    Vn1=vf, Vn2=vt,
                    bus1=fbus, bus2=tbus,
                    r=r, x=x, b=b,
-                   trans=tf, tap=ratio, phi=angle)
+                   trans=tf, tap=ratio, phi=angle,
+                   rate_a=rate_a, rate_b=rate_b, rate_c=rate_c)
 
     if ('bus_name' in mpc) and (len(mpc['bus_name']) == len(system.Bus.name.v)):
         system.Bus.name.v[:] = mpc['bus_name']
@@ -392,7 +397,9 @@ def system2mpc(system) -> dict:
         branch[:, 2] = system.Line.r.v
         branch[:, 3] = system.Line.x.v
         branch[:, 4] = system.Line.b.v
-
+        branch[:, 5] = system.Line.rate_a.v
+        branch[:, 6] = system.Line.rate_b.v
+        branch[:, 7] = system.Line.rate_c.v
         branch[:, 8] = system.Line.tap.v
         branch[:, 9] = system.Line.phi.v * rad2deg
         branch[:, 10] = system.Line.u.v

@@ -16,7 +16,7 @@ from andes.variables.report import report_info
 
 from andes.plot import set_latex
 
-from andes.shared import matrix, spmatrix, sparse, plt, mpl
+from andes.shared import matrix, set_font, spmatrix, sparse, plt
 from andes.shared import div, spdiag
 
 
@@ -301,7 +301,8 @@ class EIG(BaseRoutine):
         self.calc_As()
         self.mu, self.pfactors, self.N, self.W = self.calc_pfactor()
         self._store_stats()
-        _, s = elapsed(t1)
+        t2, s = elapsed(t1)
+        self.exec_time = t2 - t1
 
         logger.info('  Positive  %6g', self.n_positive)
         logger.info('  Zeros     %6g', self.n_zeros)
@@ -370,7 +371,7 @@ class EIG(BaseRoutine):
 
         """
 
-        mpl.rc('font', family='Times New Roman', size=12)
+        set_font(family='Times New Roman', size=12)
 
         if mu is None:
             mu = self.mu

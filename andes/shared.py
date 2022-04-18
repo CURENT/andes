@@ -28,7 +28,6 @@ printing.options['dformat'] = '%.1f'
 printing.options['width'] = -1
 
 from andes.utils.paths import get_dot_andes_path  # NOQA
-from andes.utils.texttable import Texttable  # NOQA
 
 # --- SYSTEM INFO ---
 NCPUS_PHYSICAL = psutil.cpu_count(logical=False)
@@ -44,7 +43,8 @@ isqrt3 = math.sqrt(1/3)
 jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 
-dilled_vars = ['f_args', 'g_args', 'j_args', 's_args',
+dilled_vars = ['f_args', 'g_args', 'j_args',
+               's_args', 'sns_args',
                'ia_args', 'ii_args', 'ij_args',
                'ijac', 'jjac', 'vjac', 'j_names',
                'init_seq']
@@ -111,3 +111,22 @@ def set_latex():
         return True
 
     return False
+
+
+def set_font(family='serif', size=12, style='normal', weight='normal'):
+    """
+    Sets the font for matplotlib.
+
+    Parameters
+    ----------
+    family : str
+        Font family.
+    size : int
+        Font size.
+    style : str
+        Font style.
+    weight : str
+        Font weight.
+    """
+
+    mpl.rc('font', family=family, size=size, style=style, weight=weight)

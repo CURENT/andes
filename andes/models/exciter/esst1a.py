@@ -243,10 +243,12 @@ class ESST1AModel(ExcBase, ExcVsum):
         self.efdu = VarService(info='Output exciter voltage upper bound',
                                tex_name=r'efd_{u}',
                                v_str='Abs(vd + 1j*vq) * VRMAX - KC * XadIfd',
+                               sequential=False,
                                )
         self.efdl = VarService(info='Output exciter voltage lower bound',
                                tex_name=r'efd_{l}',
-                               v_str='Abs(vd + 1j*vq) * VRMIN'
+                               v_str='Abs(vd + 1j*vq) * VRMIN',
+                               sequential=False,
                                )
 
         self.vol = GainLimiter(u=self.LVG_y,
@@ -280,6 +282,7 @@ class ESST1A(ESST1AData, ESST1AModel):
 
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
+
     def __init__(self, system, config):
         ESST1AData.__init__(self)
         ESST1AModel.__init__(self, system, config)

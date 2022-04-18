@@ -233,7 +233,8 @@ class PVD1Model(Model):
                                info='selected bus (bus or igreg)',
                                )
 
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus')
+        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus',
+                                    default_model='BusFreq')
 
         # --- initial values from power flow ---
         # a : bus voltage angle

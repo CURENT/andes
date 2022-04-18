@@ -5,7 +5,7 @@ from typing import List, Union
 import numpy as np
 
 from andes.core import JacTriplet
-from andes.core.var import BaseVar
+from andes.core.var import BaseVar, ExtVar
 from andes.shared import jac_names, pd, spmatrix
 
 logger = logging.getLogger(__name__)
@@ -101,20 +101,23 @@ class DAETimeSeries:
 
         return True
 
-    def get_data(self, base_vars: Union[BaseVar, List[BaseVar]], a=None):
+    def get_data(self, base_vars: Union[BaseVar, List[BaseVar]], *,
+                 a=None, rhs: bool = False,):
         """
-        Get time-series data for a variable instance.
+        Get time-series data, either for a variable or for the equation
+        associated with the variable.
 
-        Values for different variables will be stacked horizontally.
+        Each row correspond to a timestamp. Values for different variables will
+        be appended horizontally.
 
         Parameters
         ----------
         base_var : BaseVar or a sequence of BaseVar(s)
-            The variable types and internal addresses
-            are used for looking up the data.
+            The variable types and internal addresses are used for looking up
+            the data.
         a : an array/list of int or None
-            Sub-indices into the address of `base_var`.
-            Applied to each variable.
+            Sub-indices into the address of `base_var`. Applied to each
+            variable.
 
         """
         out = np.zeros((len(self.t), 0))
@@ -127,13 +130,46 @@ class DAETimeSeries:
                             base_var.owner.class_name, base_var.name)
                 continue
 
-            indices = base_var.a
-            if a is not None:
-                indices = indices[a]
+            if rhs is True and (base_var.e_code == 'g') and \
+                    not isinstance(base_var, ExtVar):
+                logger.warning("RHS of an internal algebraic variable <%s.%s> is always zero. Ignored",
+                               base_var.owner.class_name, base_var.name)
+                continue
 
-            out = np.hstack((out, self.__dict__[base_var.v_code][:, indices]))
+            if rhs is False:
+                indices = base_var.a
+                array_code = base_var.v_code
+            else:
+                if isinstance(base_var, ExtVar):
+                    # external algebraic variables
+                    indices = base_var.r
+                    array_code = base_var.r_code
+                else:
+                    # internal differential variables
+                    indices = base_var.a
+                    array_code = base_var.e_code
+
+            indices = indices[a] if a is not None else indices
+            out = np.hstack((out, self._access_array(array_code, indices)))
 
         return out
+
+    def _access_array(self, array_name, indices=None):
+        """
+        Helper function to access an existing array in TimeSeries.
+
+        The function checks for empty arrays and shows warnings.
+        """
+        if np.count_nonzero(self.__dict__[array_name]) == 0:
+            logger.error("TimeSeries matrix <%s> contains no element. Check if `[TDS] store_%s = 1`",
+                         array_name, array_name)
+
+            return None
+
+        if indices is None:
+            return self.__dict__[array_name][:, :]
+        else:
+            return self.__dict__[array_name][:, indices]
 
     @property
     def df(self):
@@ -205,11 +241,20 @@ class DAE:
 
     def __init__(self, system):
         self.system = system
-        self.t = np.array(0, dtype=float)
+        self.t = np.array(0.0, dtype=float)
         self.ts = DAETimeSeries(self)
 
-        self.m, self.n, self.o = 0, 0, 0
-        self.p, self.q = 0, 0
+        self._array_and_counter = {
+            'f': 'n',  # differential equation RHS
+            'x': 'n',  # differential variables
+            'g': 'm',  # algebraic equation residual
+            'y': 'm',  # algebraic variables
+            'z': 'o',  # limiter flags
+            'h': 'p',  # RHS of external states
+            'i': 'q',  # RHS of external algebraic variables
+            }
+
+        self.m, self.n, self.o, self.p, self.q = 0, 0, 0, 0, 0
 
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])  # RHS of equations
@@ -222,17 +267,40 @@ class DAE:
         self.gx, self.gy = None, None
         self.rx, self.tx = None, None
 
-        self.h_name, self.h_tex_name = [], []
-        self.i_name, self.i_tex_name = [], []
         self.x_name, self.x_tex_name = [], []
         self.y_name, self.y_tex_name = [], []
         self.z_name, self.z_tex_name = [], []
+        self.h_name, self.h_tex_name = [], []
+        self.i_name, self.i_tex_name = [], []
 
         self.triplets = JacTriplet()
 
         self.tpl = dict()  # sparsity templates with constants
 
+    def request_address(self, array_name: str, ndevice, nvar, collate=False):
+
+        out = []
+        counter_name = self._array_and_counter[array_name]
+
+        idx_begin = self.__dict__[counter_name]
+        idx_end = idx_begin + ndevice * nvar
+
+        if not collate:
+            for idx in range(nvar):
+                out.append(np.arange(idx_begin + idx * ndevice, idx_begin + (idx + 1) * ndevice))
+        else:
+            for idx in range(nvar):
+                out.append(np.arange(idx_begin + idx, idx_end, nvar))
+
+        self.__dict__[counter_name] = idx_end
+
+        return out
+
     def clear_ts(self):
+        """
+        Drop the TimeSeries data and create a new one.
+        """
+
         self.ts = DAETimeSeries(self)
 
     def clear_arrays(self):
@@ -303,7 +371,10 @@ class DAE:
         self.clear_ts()
 
     def set_t(self, t):
-        """Helper function for setting time in-place"""
+        """
+        Helper function for setting time in-place.
+        """
+
         self.t.itemset(t)
 
     def get_size(self, name):
@@ -322,9 +393,9 @@ class DAE:
         """
         ret = []
         for char in name:
-            if char in ('f', 'x', 't'):
+            if char in ('f', 'x'):
                 ret.append(self.n)
-            elif char in ('g', 'y', 'r'):
+            elif char in ('g', 'y'):
                 ret.append(self.m)
             elif char == 'z':
                 ret.append(self.o)

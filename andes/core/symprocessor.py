@@ -10,10 +10,9 @@ from collections import OrderedDict, defaultdict
 
 import numpy as np
 import sympy as sp
-
-from andes.thirdparty.sympymod import FixPiecewise
-from andes.core.npfunc import safe_div
 from andes.shared import dilled_vars
+from andes.thirdparty.npfunc import safe_div
+from andes.thirdparty.sympymod import FixPiecewise
 from andes.utils.paths import get_pycode_path
 
 logger = logging.getLogger(__name__)
@@ -67,6 +66,7 @@ class SymProcessor:
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
         self.vars_list = list()
+        self.substitution_map = {}    # mapping of ``SubsService`` to its expression
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
@@ -141,10 +141,6 @@ class SymProcessor:
         self.inputs_dict['dae_t'] = sp.Symbol('dae_t')
         self.inputs_dict['sys_f'] = sp.Symbol('sys_f')
         self.inputs_dict['sys_mva'] = sp.Symbol('sys_mva')
-        self.inputs_dict['__zeros'] = sp.Symbol('__zeros')
-        self.inputs_dict['__ones'] = sp.Symbol('__ones')
-        self.inputs_dict['__falses'] = sp.Symbol('__falses')
-        self.inputs_dict['__trues'] = sp.Symbol('__trues')
 
         # custom functions
         self.lambdify_func[0]['Indicator'] = lambda x: x
@@ -165,6 +161,21 @@ class SymProcessor:
 
         fs = sorted(fs, key=lambda s: s.name)
         return fs
+
+    def generate_subs_expr(self):
+        """
+        Generate expressions for substituting ``SubsService``.
+        """
+        for name, instance in self.parent.services_subs.items():
+            if instance.v_str is not None:
+                expr = sp.sympify(instance.v_str, locals=self.inputs_dict)
+                self.substitution_map[self.inputs_dict[name]] = expr
+
+    def _do_substitute(self, input_expr):
+        """
+        Helper function to substitute ``SubsService`` with its expression.
+        """
+        return input_expr.subs(self.substitution_map)
 
     def generate_equations(self):
         """
@@ -198,6 +209,7 @@ class SymProcessor:
                 else:
                     try:
                         expr = sp.sympify(instance.e_str, locals=self.inputs_dict)
+                        expr = self._do_substitute(expr)
                     except (sp.SympifyError, TypeError) as e:
                         logger.error('Error parsing equation "%s "for %s.%s',
                                      instance.e_str, instance.owner.class_name, name)
@@ -231,39 +243,60 @@ class SymProcessor:
     def generate_services(self):
         """
         Generate calls for services, including ``ConstService`` and
-        ``VarService`` among others.
-        Sequence is preserved due to possible dependency.
+        ``VarService`` among others. Sequence is preserved due to possible
+        dependency.
 
-        Since SymPy 1.9, ``Matrix`` no longer supports non-Expr
-        objects. Due to the use of logical conditions in services,
-        service expressions will not be converted to SymPy Matrix.
-        The dictionary to look up service name and expression
-        is in ``self.s_syms``.
+        All ``VarService`` with ``sequential = False`` are generated into one
+        function, ``calls.sns``.
+
+        Starting from SymPy 1.9, ``Matrix`` no longer supports non-Expr objects.
+        Due to the use of logical conditions in services, service expressions
+        will not be converted to SymPy Matrix. The dictionary to look up service
+        name and expression is in ``self.s_syms``.
         """
 
-        s_args = OrderedDict()
         s_syms = OrderedDict()
+        s_args = OrderedDict()
         s_calls = OrderedDict()
+        sns_args = list()   # ``sns`` means services that are non-sequential
+        sns_calls = None
+
+        s_calls_nonseq = list()
+        s_calls_nonseq_args = list()
 
         for name, instance in self.parent.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
             try:
                 expr = sp.sympify(v_str, locals=self.inputs_dict)
+                expr = self._do_substitute(expr)
             except (sp.SympifyError, TypeError) as e:
                 logger.error(f'Error parsing equation for {instance.owner.class_name}.{name}')
                 raise e
 
             fs = self._check_expr_symbols(expr)
             s_syms[name] = expr
-            s_args[name] = [str(i) for i in fs]
-            s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+            args_expr = [str(i) for i in fs]
 
-            if 'select' in inspect.getsource(s_calls[name]):
-                s_args[name].extend(select_args_add)
+            if instance.sequential is True:
+                s_args[name] = args_expr
+                s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+                if 'select' in inspect.getsource(s_calls[name]):
+                    s_args[name].extend(select_args_add)
+            else:
+                s_calls_nonseq.append(expr)
+                s_calls_nonseq_args.extend(args_expr)
+
+        if len(s_calls_nonseq) > 0:
+            sns_args = sorted(list(set(s_calls_nonseq_args)))
+            sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonseq), modules=self.lambdify_func)
+            if 'select' in inspect.getsource(sns_calls):
+                sns_args.extend(select_args_add)
 
         self.s_syms = s_syms
         self.calls.s = s_calls
         self.calls.s_args = s_args
+        self.calls.sns = sns_calls
+        self.calls.sns_args = sns_args
 
     def generate_jacobians(self, diag_eps=1e-8):
         """
@@ -444,7 +477,7 @@ from numpy import real, imag, conj, angle, radians, abs             # NOQA
 from numpy import arcsin, arccos, arctan, arctan2                   # NOQA
 from numpy import log                                               # NOQA
 
-from andes.core.npfunc import *                                     # NOQA
+from andes.thirdparty.npfunc import *                               # NOQA
 
 """
         # header goes first
@@ -473,6 +506,9 @@ from andes.core.npfunc import *                                     # NOQA
         for name in self.calls.s:
             out.append(self._rename_func(self.calls.s[name], f'{name}_svc', yf))
 
+        # non-sequential services
+        out.append(self._rename_func(self.calls.sns, 'sns_update', yf))
+
         # variables
         for name in dilled_vars:
             out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]))
@@ -500,8 +536,15 @@ from andes.core.npfunc import *                                     # NOQA
         """
         Rename the function name and return source code.
 
-        This function does not check for name conflicts.
-        Install `yapf` for optional code reformatting (takes extra processing time).
+        This function performs these tasks:
+
+        1. rename ``_lambdifygenerated`` to the given ``func_name``.
+        2. append four arguments if ``select`` is used to pass numba
+           compilation.
+        3. remove ``Indicator`` for wrappers of logic expressions.
+
+        This function does not check for name conflicts. Install `yapf` for
+        optional code reformatting (takes extra processing time).
 
         It also patches function argument list for select.
         """
@@ -517,7 +560,8 @@ from andes.core.npfunc import *                                     # NOQA
 
         # append additional arguments for select
         if 'select' in src:
-            src = src.replace("):", ", __zeros, __ones, __falses, __trues):")
+            right_parenthesis = ", " + ', '.join(select_args_add) + "):"
+            src = src.replace("):", right_parenthesis)
 
         if yapf_pycode:
             try:
@@ -541,6 +585,7 @@ from andes.core.npfunc import *                                     # NOQA
         for name, instance in self.cache.all_vars.items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
+                sympified = self._do_substitute(sympified)
                 self._check_expr_symbols(sympified)
                 self.v_str_syms[name] = sympified
             else:
@@ -550,6 +595,7 @@ from andes.core.npfunc import *                                     # NOQA
 
             if instance.v_iter is not None:
                 sympified = sp.sympify(instance.v_iter, locals=self.inputs_dict)
+                sympified = self._do_substitute(sympified)
                 self._check_expr_symbols(sympified)
                 self.v_iter_syms[name] = sympified
 
