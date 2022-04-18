@@ -2,7 +2,7 @@
 Module for parameters used for describing models.
 """
 
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

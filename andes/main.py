@@ -4,7 +4,7 @@
 Main entry point for the ANDES CLI and scripting interfaces.
 """
 
-#  [ANDES] (C)2015-2021 Hantao Cui
+#  [ANDES] (C)2015-2022 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -255,7 +255,7 @@ def print_license():
     print(f"""
     ANDES version {andes.__version__}
 
-    Copyright (c) 2015-2021 Hantao Cui
+    Copyright (c) 2015-2022 Hantao Cui
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
