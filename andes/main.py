@@ -542,6 +542,10 @@ def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     print('\n'.join([f'"{name}"' for name in cases]))
     ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
 
+    # fix address for in-place arrays
+    for ss in ret:
+        ss.fix_address()
+
     return ret
 
 
