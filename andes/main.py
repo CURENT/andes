@@ -585,8 +585,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
     if is_interactive():
         config_logger(verbose, file=False)
 
-    # put `input_path` back to `kwargs`
+    # put some args back to `kwargs`
     kwargs['input_path'] = input_path
+    kwargs['verbose'] = verbose
+
     cases = _find_cases(filename, input_path)
 
     system = None
