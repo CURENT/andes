@@ -496,7 +496,7 @@ def find_log_path(lg):
     return out
 
 
-def _run_multiprocess_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
+def _run_mp_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     """
     Run multiprocessing with `Process`.
 
@@ -521,7 +521,7 @@ def _run_multiprocess_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     return True
 
 
-def _run_multiprocess_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
+def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     """
     Run multiprocessing jobs using Pool.
 
@@ -609,9 +609,15 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
         kwargs['no_pbar'] = True
         if pool is True:
-            system = _run_multiprocess_pool(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+            system = _run_mp_pool(cases,
+                                  ncpu=ncpu,
+                                  mp_verbose=mp_verbose,
+                                  **kwargs)
         else:
-            system = _run_multiprocess_proc(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+            system = _run_mp_proc(cases,
+                                  ncpu=ncpu,
+                                  mp_verbose=mp_verbose,
+                                  **kwargs)
 
         # restore command line output when all jobs are done
         set_logger_level(logger, logging.StreamHandler, verbose)
