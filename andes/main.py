@@ -586,7 +586,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
     """
 
-    if is_interactive():
+    if is_interactive() and len(logger.handlers) == 0:
         config_logger(verbose, file=False)
 
     # put some args back to `kwargs`
