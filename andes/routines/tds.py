@@ -11,6 +11,7 @@ from collections import OrderedDict
 
 from andes.routines.base import BaseRoutine
 from andes.routines.daeint import Trapezoid, method_map
+from andes.routines.criteria import deltadelta
 from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
 from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
@@ -40,6 +41,9 @@ class TDS(BaseRoutine):
                                      ('refresh_event', 0),
                                      ('test_init', 1),
                                      ('check_conn', 1),
+                                     ('check_conn', 1),
+                                     ('criteria', 1),
+                                     ('ddelta_limit', 180),
                                      ('g_scale', 1),
                                      ('reset_tiny', 1),
                                      ('qrt', 0),
@@ -63,6 +67,8 @@ class TDS(BaseRoutine):
                               refresh_event='refresh events at each step',
                               test_init='test if initialization passes',
                               check_conn='re-check connectivity after event',
+                              criteria='use criteria to stop simulation if unstable',
+                              ddelta_limit='delta diff. limit to be considered unstable, in degree',
                               g_scale='scale algebraic residuals with time step size',
                               reset_tiny='reset tiny residuals to zero to avoid chattering',
                               qrt='quasi-real-time stepping',
@@ -86,6 +92,7 @@ class TDS(BaseRoutine):
                               refresh_event=(0, 1),
                               test_init=(0, 1),
                               check_conn=(0, 1),
+                              criteria=(0, 1),
                               g_scale='positive',
                               reset_tiny=(0, 1),
                               qrt=(0, 1),
@@ -358,6 +365,9 @@ class TDS(BaseRoutine):
                 dae.store()
 
                 self.streaming_step()
+                if self.check_criteria() is False:
+                    self.err_msg = 'Violated stability criteria.'
+                    self.busted = True
 
                 # check if the next step is critical time
                 self.do_switch()
@@ -965,3 +975,12 @@ class TDS(BaseRoutine):
             name = 'trapezoid'
 
         self.method = method_map[name]()
+
+    def check_criteria(self):
+        """
+        Check stability criteria.
+        """
+
+        res = deltadelta(self.system.dae.x[self.system.SynGen.delta_addr],
+                         self.config.ddelta_limit)
+        return res
