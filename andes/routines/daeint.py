@@ -150,8 +150,9 @@ class ImplicitIter:
 
             # non-convergence cases
             if tds.niter > tds.config.max_iter:
-                tqdm.write(f'* Max. iter. {tds.config.max_iter} reached for t={dae.t:.6f}s, '
-                           f'h={tds.h:.6f}s, max inc={mis:.4g} ')
+                if system.options.get("verbose", 20) <= 10:
+                    tqdm.write(f'* Max. iter. {tds.config.max_iter} reached for t={dae.t:.6f}s, '
+                               f'h={tds.h:.6f}s, max inc={mis:.4g} ')
 
                 # debug helpers
                 g_max = np.argmax(abs(dae.g))

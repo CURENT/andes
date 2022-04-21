@@ -544,9 +544,38 @@ class SynGen(GroupBase):
         super().__init__()
         self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D', 'subidx'))
         self.common_vars.extend(('omega', 'delta', ))
+        self.idx_island = []
+        self.uid_island = []
+        self.delta_addr = []
 
         self.TurbineGov = BackRef()
         self.Exciter = BackRef()
+
+    def store_idx_island(self, bus_idx):
+        """
+        Get ``idx`` of generators in the given islanded. Also store the
+        addresses of the ``delta`` variable in the largest island.
+
+        This function can only be called after initializing dynamic devices.
+
+        Parameters
+        ----------
+        bus_idx : list
+            A list of bus idx in the largest island
+        """
+
+        idx_gen = list(self.uid.keys())
+        bus_gen = self.get(src='bus', idx=idx_gen, attr='v')
+
+        def intersect(lst1, lst2):
+            return list(set(lst1) & set(lst2))
+
+        bus_gen_island = intersect(bus_idx, bus_gen)
+        self.idx_island = self.find_idx(keys='bus',
+                                        values=bus_gen_island)
+        self.uid_island = self.idx2uid(self.idx_island)
+
+        self.delta_addr = self.get('delta', self.idx_island, 'a').astype(int)
 
 
 class RenGen(GroupBase):

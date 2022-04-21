@@ -496,7 +496,7 @@ def find_log_path(lg):
     return out
 
 
-def _run_multiprocess_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
+def _run_mp_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     """
     Run multiprocessing with `Process`.
 
@@ -521,7 +521,7 @@ def _run_multiprocess_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     return True
 
 
-def _run_multiprocess_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
+def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     """
     Run multiprocessing jobs using Pool.
 
@@ -541,6 +541,10 @@ def _run_multiprocess_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **k
     print("Cases are processed in the following order:")
     print('\n'.join([f'"{name}"' for name in cases]))
     ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
+
+    # fix address for in-place arrays
+    for ss in ret:
+        ss.fix_address()
 
     return ret
 
@@ -582,11 +586,13 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
     """
 
-    if is_interactive():
+    if is_interactive() and len(logger.handlers) == 0:
         config_logger(verbose, file=False)
 
-    # put `input_path` back to `kwargs`
+    # put some args back to `kwargs`
     kwargs['input_path'] = input_path
+    kwargs['verbose'] = verbose
+
     cases = _find_cases(filename, input_path)
 
     system = None
@@ -607,9 +613,15 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
         kwargs['no_pbar'] = True
         if pool is True:
-            system = _run_multiprocess_pool(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+            system = _run_mp_pool(cases,
+                                  ncpu=ncpu,
+                                  mp_verbose=mp_verbose,
+                                  **kwargs)
         else:
-            system = _run_multiprocess_proc(cases, ncpu=ncpu, verbose=verbose, mp_verbose=mp_verbose, **kwargs)
+            system = _run_mp_proc(cases,
+                                  ncpu=ncpu,
+                                  mp_verbose=mp_verbose,
+                                  **kwargs)
 
         # restore command line output when all jobs are done
         set_logger_level(logger, logging.StreamHandler, verbose)
