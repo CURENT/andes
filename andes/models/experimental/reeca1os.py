@@ -14,15 +14,16 @@ class REECA1OSModel(REECA1Model):
     def __init__(self, system, config):
         super().__init__(system, config)
 
-        delattr(self, 'Iqinj')
+        # --- split `Verr`` ---
         delattr(self, 'Verr')
-        self.algebs.pop('Iqinj')
         self.algebs.pop('Verr')
-
         self.Verr = VarService(v_str='Vref0 - s0_y')
         self.dbV.u = self.Verr
         self.dbV.db.u = self.Verr
 
+        # --- split `Iqinj` ---
+        delattr(self, 'Iqinj')
+        self.algebs.pop('Iqinj')
         # Gain after dbB
         Iqv = "(dbV_y * Kqv)"
         Iqinj = f'{Iqv} * Volt_dip + ' \
