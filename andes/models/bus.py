@@ -14,6 +14,7 @@ class BusData(ModelData):
     """
     Class for Bus data
     """
+
     def __init__(self):
         super().__init__()
         self.Vn = NumParam(default=110,
@@ -80,9 +81,9 @@ class Bus(Model, BusData):
 
         # island information
         self.n_islanded_buses = 0
-        self.islanded_buses = list()
         self.island_sets = list()
-        self.islands = list()
+        self.islanded_buses = list()  # list of lists containing bus uid of islands
+        self.islands = list()         # same as the above
         self.islanded_a = np.array([])
         self.islanded_v = np.array([])
 

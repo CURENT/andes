@@ -9,6 +9,14 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.5 (2022-04-19)
+-------------------
+- Added a TDS stop criteria based on rotor angle separation with reference to
+  Power Systen Analysis Toolbox.
+- Bug fix for `REGCV2`.
+- Bug fix for snapshot save and load. It now supports writing to and reading
+  from ``io.BytesIO()``.
+
 v1.6.4 (2022-04-17)
 -------------------
 Breaking change:

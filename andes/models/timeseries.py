@@ -201,7 +201,6 @@ class TimeSeriesModel(Model):
             if t not in df[tkey].values:
                 continue
 
-            print("here 2")
             fields = self.fields.v[ii]
             dests = self.dests.v[ii]
 

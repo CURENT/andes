@@ -52,8 +52,11 @@ def save_ss(path, system):
 
     system.remove_pycapsule()
 
-    with open(path, 'wb') as file:
-        dill.dump(system, file, recurse=True)
+    if hasattr(path, 'write'):
+        dill.dump(system, path, recurse=True)
+    else:
+        with open(path, 'wb') as file:
+            dill.dump(system, file, recurse=True)
 
     return path
 
@@ -77,8 +80,11 @@ def load_ss(path):
     # TODO: properly import `pycode` beforehand
     system = andes.System()
 
-    with open(path, 'rb') as file:
-        system = dill.load(file)
+    if hasattr(path, 'read'):
+        system = dill.load(path)
+    else:
+        with open(path, 'rb') as file:
+            system = dill.load(file)
 
     system.fix_address()
 

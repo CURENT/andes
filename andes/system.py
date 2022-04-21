@@ -1269,7 +1269,7 @@ class System:
                     self.Bus.msw_island.append(idx)
 
         # --- Post processing ---
-        # extend islanded buses, each in a list
+        # 1. extend islanded buses, each in a list
         if len(self.Bus.islanded_buses) > 0:
             self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
 
@@ -1277,6 +1277,19 @@ class System:
             self.Bus.islands.append(list(range(n)))
         else:
             self.Bus.islands.extend(self.Bus.island_sets)
+
+        # 2. find generators in the largest island
+        if self.TDS.config.criteria and self.TDS.initialized:
+            lg_island = None
+            for item in self.Bus.islands:
+                if lg_island is None:
+                    lg_island = item
+                    continue
+                if len(item) > len(lg_island):
+                    lg_island = item
+
+            lg_bus_idx = [self.Bus.idx.v[ii] for ii in lg_island]
+            self.SynGen.store_idx_island(lg_bus_idx)
 
         if info is True:
             self.summary()
