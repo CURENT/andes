@@ -426,8 +426,8 @@ class ExtendedEvent(VarService):
                 self.n_ext += len(ending)
 
                 # TODO: insert extended event end times to a model-level list
-                logger.debug("Extended Event ending time set at t=%.4f sec.",
-                             final_times)
+                logger.debug("Extended Event ending time set at t=%s sec.",
+                             str(final_times))
 
         # final time of the extended event
         if self.n_ext and np.any(self.t_final <= dae_t):
