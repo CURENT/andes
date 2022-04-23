@@ -36,6 +36,31 @@ class PVData(ModelData):
         self.ra = NumParam(default=0.0, info='armature resistance', tex_name='r_a')
         self.xs = NumParam(default=0.3, info='armature reactance', tex_name='x_s')
 
+        self.ramp_agc = NumParam(default=0.0,
+                                 info="ramp rate for load following/AGC (MW/min) (placeholder)",
+                                 tex_name='ramp_{AGC}',
+                                 unit='MVA',
+                                 )
+        self.ramp_10 = NumParam(default=0.0,
+                                info="ramp rate for 10 minute reserves (MW) (placeholder)",
+                                tex_name='ramp_{10}',
+                                unit='MVA',
+                                )
+        self.ramp_30 = NumParam(default=0.0,
+                                info="ramp rate for 30 minute reserves (MW) (placeholder)",
+                                tex_name='ramp_{30}',
+                                unit='MVA',
+                                )
+        self.ramp_q = NumParam(default=0.0,
+                               info=" 20 ramp rate for reactive power (2 sec timescale)  (MVAr/min) (placeholder)",
+                               tex_name='ramp_{1}',
+                               unit='MVA',
+                               )
+        self.apf = NumParam(default=0.0,
+                            info="area participation factor (placeholder)",
+                            tex_name='apf',
+                            )
+
 
 class PVModel(Model):
     """

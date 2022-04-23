@@ -230,6 +230,10 @@ def mpc2system(mpc: dict, system) -> bool:
         qmin = data[4] / mbase
         pmax = data[8] / mbase
         pmin = data[9] / mbase
+        ramp_agc = data[16]
+        ramp_10 = data[17]
+        ramp_30 = data[18]
+        apf = data[20]
 
         uid = system.Bus.idx2uid(bus_idx)
         vn = system.Bus.Vn.v[uid]
