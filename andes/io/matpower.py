@@ -245,14 +245,18 @@ def mpc2system(mpc: dict, system) -> bool:
                        u=status,
                        Vn=vn, v0=vg, p0=pg, q0=qg, a0=a0,
                        pmax=pmax, pmin=pmin,
-                       qmax=qmax, qmin=qmin)
+                       qmax=qmax, qmin=qmin,
+                       ramp_agc=ramp_agc, ramp_10=ramp_10, ramp_30=ramp_30,
+                       apf=apf)
         else:
             system.add('PV', idx=gen_idx, bus=bus_idx, busr=bus_idx,
                        name='PV ' + str(bus_idx),
                        u=status,
                        Vn=vn, v0=vg, p0=pg, q0=qg,
                        pmax=pmax, pmin=pmin,
-                       qmax=qmax, qmin=qmin)
+                       qmax=qmax, qmin=qmin,
+                       ramp_agc=ramp_agc, ramp_10=ramp_10, ramp_30=ramp_30,
+                       apf=apf)
 
     for data in mpc['branch']:
         # fbus	tbus	r	x	b	rateA	rateB	rateC	ratio	angle

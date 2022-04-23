@@ -51,11 +51,6 @@ class PVData(ModelData):
                                 tex_name='ramp_{30}',
                                 unit='MVA',
                                 )
-        self.ramp_q = NumParam(default=0.0,
-                               info=" 20 ramp rate for reactive power (2 sec timescale)  (MVAr/min) (placeholder)",
-                               tex_name='ramp_{1}',
-                               unit='MVA',
-                               )
         self.apf = NumParam(default=0.0,
                             info="area participation factor (placeholder)",
                             tex_name='apf',
