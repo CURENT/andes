@@ -11,6 +11,7 @@ class GASTData(TGBaseData):
     """
     Data for governor GAST.
     """
+
     def __init__(self):
         super().__init__()
         self.R = NumParam(info='Speed regulation gain (mach. base default)',

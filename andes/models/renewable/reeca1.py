@@ -671,10 +671,19 @@ class REECA1(REECA1Data, REECA1Model):
 
     There are two user-defined voltages: `Vref0` and `Vref1`.
 
-    - The difference between the initial bus voltage and `Vref0`
-      should be within the voltage deadbands `dbd1` and `dbd2`.
-    - If `VFLAG=0`, the input to the second PI controller will
-      be `Vref1`.
+    - The difference between the initial bus voltage and `Vref0` should be
+      within the voltage deadbands `dbd1` and `dbd2`.
+    - If `VFLAG=0`, the input to the second PI controller will be `Vref1`.
+
+    Regarding the additional reactive current injection during voltage dip:
+
+    - Exercise caution when coordinating the parameters ``dbd1``, ``dbd2``,
+      ``Vdip``, and ``Vup`` to avoid unintended responses.
+    - ``Kqv`` in ``pu current / pu voltage deviation`` controls the intensity of
+      reactive power injection. The parameter needs to tuned properly to avoid
+      voltage overshoot.
+    - When multiple renewable generators are connected to the same bus, ``Kqv``
+      shall be reduced accordingly to avoid excessive reactive power injection.
 
     """
 

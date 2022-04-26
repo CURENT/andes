@@ -68,7 +68,7 @@ class ImplicitIter:
             elif not tds.last_converged:
                 reason = 'non-convergence in the last step'
             elif tds.niter > 4 and (tds.niter + 1) % 3 == 0:
-                reason = 'update every 6 iterations'
+                reason = 'every 3 iterations beyond 4 iterations'
             elif dae.t - tds._last_switch_t < 0.1:
                 reason = 'within 0.1s of event'
 

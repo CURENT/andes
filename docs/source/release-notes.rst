@@ -9,10 +9,18 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.6 (2022-04-xx)
+-------------------
+- Renamed ``[System] call_stats`` to ``[System] save_stats`` for clarity.
+- Fix parsing issues with :ref:`GAST`.
+- Allow adjusting limits for state variables during initialization. Like for
+  algebraic variables, the default setting automatically adjusts the upper limit
+  but not the lower.
+
 v1.6.5 (2022-04-19)
 -------------------
 - Added a TDS stop criteria based on rotor angle separation with reference to
-  Power Systen Analysis Toolbox.
+  Power System Analysis Toolbox.
 - Bug fix for `REGCV2`.
 - Bug fix for snapshot save and load. It now supports writing to and reading
   from ``io.BytesIO()``.
