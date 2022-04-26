@@ -752,13 +752,13 @@ GAST:
         - BUS
         - ID
         - R
-        - VMAX
-        - VMIN
-        - KT
-        - AT
         - T1
         - T2
         - T3
+        - AT
+        - KT
+        - VMAX
+        - VMIN
         - Dt
     destination: GAST
     find:
