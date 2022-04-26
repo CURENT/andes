@@ -12,6 +12,10 @@ v1.6 Notes
 v1.6.6 (2022-04-xx)
 -------------------
 - Renamed ``[System] call_stats`` to ``[System] save_stats`` for clarity.
+- Fix parsing issues with :ref:`GAST`.
+- Allow adjusting limits for state variables during initialization. Like for
+  algebraic variables, the default setting automatically adjusts the upper limit
+  but not the lower.
 
 v1.6.5 (2022-04-19)
 -------------------
