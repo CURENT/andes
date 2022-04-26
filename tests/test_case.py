@@ -80,8 +80,9 @@ class TestKundur2AreaPSSE(unittest.TestCase):
                                  no_output=True,
                                  )
 
-    def test_psse_tds_run(self):
-        self.ss_psse.TDS.config.tf = 10
+    def test_psse_tds_run_with_stats(self):
+        self.ss_psse.config.save_stats = 1
+        self.ss_psse.TDS.config.tf = 3
         self.ss_psse.TDS.run()
 
         self.assertEqual(self.ss_psse.exit_code, 0, "Exit code is not 0.")

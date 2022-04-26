@@ -144,7 +144,7 @@ class System:
                                      ('numba_parallel', 0),
                                      ('numba_nopython', 0),
                                      ('yapf_pycode', 0),
-                                     ('call_stats', 0),
+                                     ('save_stats', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
                                      ('pickle_path', get_pkl_path())
@@ -161,7 +161,7 @@ class System:
                               numba_parallel='enable parallel for numba.jit',
                               numba_nopython='nopython mode for numba',
                               yapf_pycode='format generated code with yapf',
-                              call_stats='store statistics of function calls',
+                              save_stats='store statistics of function calls',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
                               pickle_path='path models should be (un)dilled to/from',
@@ -177,7 +177,7 @@ class System:
                               numba_parallel=(0, 1),
                               numba_nopython=(0, 1),
                               yapf_pycode=(0, 1),
-                              call_stats=(0, 1),
+                              save_stats=(0, 1),
                               np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                               )
@@ -1714,7 +1714,7 @@ class System:
         for name, mdl in models.items():
             ret[name] = getattr(mdl, method)(*args, **kwargs)
 
-            if self.config.call_stats:
+            if self.config.save_stats:
                 if method not in self.call_stats[name]:
                     self.call_stats[name][method] = 1
                 else:

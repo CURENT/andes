@@ -358,7 +358,7 @@ class TDS(BaseRoutine):
                 step_status = self._csv_step()
 
             # record number of iterations and success flag
-            if system.config.call_stats:
+            if system.config.save_stats:
                 self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
