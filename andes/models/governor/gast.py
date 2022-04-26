@@ -4,7 +4,6 @@ Governor GAST.
 
 from andes.core import Algeb, ConstService, LagAntiWindup, NumParam
 from andes.core.block import Lag, LVGate
-from andes.core.discrete import Limiter
 from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
@@ -67,6 +66,7 @@ class GASTModel(TGBase):
 
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
+        self.config.adjust_lower = True
 
         self.gain = ConstService(v_str='ue/R',
                                  tex_name='G',
@@ -107,16 +107,7 @@ class GASTModel(TGBase):
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
-        self.LL = Limiter(u=self.LVG_y,
-                            lower=self.VMIN, upper=self.VMAX,
-                            equal=False, no_warn=False,
-                            )
-        self.LAW = Algeb(info='LAG output',
-                            tex_name='LAW')
-        self.LAW.v_str = 'LVG_y * LL_zi + VMAX * LL_zu + VMIN * LL_zl'
-        self.LAW.e_str = 'LAG_y - LAW'
-
-        self.LG2 = Lag(u=self.LAW,
+        self.LG2 = Lag(u=self.LVG_y,
                        T=self.T2, K=1,
                        info='Lag T2')
 
