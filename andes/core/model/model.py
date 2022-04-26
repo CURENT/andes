@@ -1382,14 +1382,6 @@ class Model:
 
         return f'{self.class_name} ({self.n} {dev_text}) at {hex(id(self))}'
 
-    def _log_init_debug(self, debug_flag, *args):
-        """
-        Helper function to log initialization debug message.
-        """
-
-        if debug_flag is True:
-            logger.debug(*args)
-
     def init(self, routine):
         """
         Numerical initialization of a model.
@@ -1430,13 +1422,13 @@ class Model:
 
                 # single variable - do assignment
                 if isinstance(name, str):
-                    self._log_init_debug(debug_flag,
-                                         "%s: entering <%s> assignment init",
-                                         self.class_name, name)
+                    _log_init_debug(debug_flag,
+                                    "%s: entering <%s> assignment init",
+                                    self.class_name, name)
 
                     instance = self.__dict__[name]
                     if instance.discrete is not None:
-                        self._log_init_debug(debug_flag, "%s: evaluate discrete <%s>", name, instance.discrete)
+                        _log_init_debug(debug_flag, "%s: evaluate discrete <%s>", name, instance.discrete)
                         _eval_discrete(instance, self.config.allow_adjust,
                                        self.config.adjust_lower, self.config.adjust_upper)
 
@@ -1448,14 +1440,14 @@ class Model:
 
                         if not instance.v_str_add:
                             # assignment is for most variable initialization
-                            self._log_init_debug(debug_flag, "%s: new values will be assigned (=)", name)
+                            _log_init_debug(debug_flag, "%s: new values will be assigned (=)", name)
                             instance.v[:] = self.calls.ia[name](*self.ia_args[name])
 
                         else:
                             # in-place add initial values.
                             # Voltage compensators can set part of the `v` of exciters.
                             # Exciters will then set the bus voltage part.
-                            self._log_init_debug(debug_flag, "%s: new values will be in-place added (+=)", name)
+                            _log_init_debug(debug_flag, "%s: new values will be in-place added (+=)", name)
                             instance.v[:] += self.calls.ia[name](*self.ia_args[name])
 
                         arg_print[name] = instance.v
@@ -1473,52 +1465,52 @@ class Model:
                                       header=["idx", *self.calls.ia_args[name], name],
                                       data=list(zip(self.idx.v, *arg_print.values())),
                                       )
-                            self._log_init_debug(debug_flag, tab.draw())
+                            _log_init_debug(debug_flag, tab.draw())
 
                     # single variable iterative solution
                     if name in self.calls.ii:
-                        self._log_init_debug(debug_flag,
-                                             "\n%s: entering <%s> iterative init",
-                                             self.class_name,
-                                             pprint.pformat(name))
+                        _log_init_debug(debug_flag,
+                                        "\n%s: entering <%s> iterative init",
+                                        self.class_name,
+                                        pprint.pformat(name))
 
                         self.solve_iter(name, kwargs)
 
-                        self._log_init_debug(debug_flag,
-                                             "%s new values are %s", name, self.__dict__[name].v)
+                        _log_init_debug(debug_flag,
+                                        "%s new values are %s", name, self.__dict__[name].v)
 
                 # multiple variables, iterative
                 else:
-                    self._log_init_debug(debug_flag, "\n%s: entering <%s> iterative init",
-                                         self.class_name, name)
+                    _log_init_debug(debug_flag, "\n%s: entering <%s> iterative init",
+                                    self.class_name, name)
 
                     for vv in name:
                         instance = self.__dict__[vv]
 
                         if instance.discrete is not None:
-                            self._log_init_debug(debug_flag, "%s: evaluate discrete <%s>",
-                                                 name, instance.discrete)
+                            _log_init_debug(debug_flag, "%s: evaluate discrete <%s>",
+                                            name, instance.discrete)
 
                             _eval_discrete(instance, self.config.allow_adjust,
                                            self.config.adjust_lower, self.config.adjust_upper)
                         if instance.v_str is not None:
-                            self._log_init_debug(debug_flag, "%s: v_str = %s", vv, instance.v_str)
+                            _log_init_debug(debug_flag, "%s: v_str = %s", vv, instance.v_str)
 
                             arg_print = OrderedDict()
                             if debug_flag:
                                 for a, b in zip(self.calls.ia_args[vv], self.ia_args[vv]):
                                     arg_print[a] = b
-                                self._log_init_debug(debug_flag, pprint.pformat(arg_print))
+                                _log_init_debug(debug_flag, pprint.pformat(arg_print))
 
                             instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
 
-                    self._log_init_debug(debug_flag, "\n%s: entering <%s> iterative init", self.class_name,
-                                         pprint.pformat(name))
+                    _log_init_debug(debug_flag, "\n%s: entering <%s> iterative init", self.class_name,
+                                    pprint.pformat(name))
                     self.solve_iter(name, kwargs)
 
                     for vv in name:
                         instance = self.__dict__[vv]
-                        self._log_init_debug(debug_flag, "%s new values are %s", vv, instance.v)
+                        _log_init_debug(debug_flag, "%s new values are %s", vv, instance.v)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1616,6 +1608,13 @@ class Model:
         pass
 
     def register_debug_equation(self, var_name):
+        """
+        Helper function to register a variable for debugging the initialization.
+
+        This function needs to be called before calling ``TDS.init()``, and
+        logging level needs to be set to ``DEBUG``.
+        """
+
         self.debug_equations.append(var_name)
 
 
@@ -1679,3 +1678,12 @@ def to_jit(func: Union[Callable, None],
                          )
 
     return func
+
+
+def _log_init_debug(debug_flag, *args):
+    """
+    Helper function to log initialization debug message.
+    """
+
+    if debug_flag is True:
+        logger.debug(*args)
