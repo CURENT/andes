@@ -11,8 +11,11 @@ v1.6 Notes
 
 v1.6.6 (2022-04-30)
 -------------------
-- Renamed ``[System] call_stats`` to ``[System] save_stats`` for clarity.
-- Fix parsing issues with :ref:`GAST`.
+- Rename ``[System] call_stats`` to ``[System] save_stats`` for clarity. If
+  turned on, one can retrieve statistics of function calls in
+  ``TDS.call_stats``.
+- Store routine execution time to routine member ``execution_time``.
+- Fix PSS/E parsing issues with :ref:`GAST`.
 - Fix issues and update default parameters for `REGCV1` and `REGCV2`.
 - Allow adjusting limits for state variables during initialization. Like for
   algebraic variables, the default setting automatically adjusts the upper limit
