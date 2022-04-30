@@ -465,9 +465,9 @@ class EIG(BaseRoutine):
 
         numeral = [''] * n_states
         for idx, item in enumerate(range(n_states)):
-            if mu_real[idx] == 0:
+            if abs(mu_real[idx]) <= self.config.tol:
                 marker = '*'
-            elif mu_real[idx] > 0:
+            elif mu_real[idx] > self.config.tol:
                 marker = '**'
             else:
                 marker = ''
