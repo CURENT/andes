@@ -282,13 +282,13 @@ class VSGOuterPIModel:
     Outer PI controllers for REGCV1
     """
 
-    def __init__(self):
-        self.PIvd = PIController(u='vref2 - vd',
+    def __init__(self, vderr: str = 'vref2-vd', vqerr: str = 'vq'):
+        self.PIvd = PIController(u=vderr,
                                  kp=self.Kpvd,
                                  ki=self.Kivd,
                                  x0='Id0',
                                  )
-        self.PIvq = PIController(u='vq',
+        self.PIvq = PIController(u=vqerr,
                                  kp=self.Kpvq,
                                  ki=self.Kivq,
                                  x0='Iq0',
