@@ -15,9 +15,13 @@ If you are using JupyterLab, do
 """
 
 from collections import OrderedDict
-import ipywidgets as widgets
-from ipywidgets import HBox, VBox
-from IPython.display import display, HTML
+
+try:
+    import ipywidgets as widgets
+    from ipywidgets import HBox, VBox
+    from IPython.display import display, HTML
+except ImportError:
+    pass
 
 
 def edit_system(system):
