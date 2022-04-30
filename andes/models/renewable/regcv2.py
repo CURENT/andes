@@ -28,7 +28,15 @@ class REGCV2(REGCV1Data, VSGOuterPIData, VSGInnerLagData,
     """
     Voltage-controlled VSC with VSG control.
 
-    The inner-loop current PI controllers are replaced with lag transfer functions.
+    The inner-loop current PI controllers are replaced with lag transfer
+    functions.
+
+    Notes
+    -----
+    To avoid small-signal stability issues, one take extreme care in setting the
+    PI control gains ``Kpvd``, ``Kivd``, ``Kpvq``, and ``Kivq``, and the emulated
+    inertia ``M`` and damping ``D``.
+
     """
 
     def __init__(self, system, config):
