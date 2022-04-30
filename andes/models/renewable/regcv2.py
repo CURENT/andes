@@ -1,5 +1,4 @@
 from andes.core.block import Lag
-from andes.core.common import dummify
 from andes.core.param import NumParam
 from andes.models.renewable.regcv1 import (REGCV1Data, REGCV1ModelBase,
                                            VSGOuterPIData, VSGOuterPIModel,)
