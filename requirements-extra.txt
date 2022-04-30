@@ -20,3 +20,5 @@ myst-nb#                      dev, doc
 pre-commit#                   dev
 
 pandapower#                   interop
+
+ipywidgets#                   web
