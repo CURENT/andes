@@ -282,7 +282,7 @@ class VSGOuterPIModel:
     Outer PI controllers for REGCV1
     """
 
-    def __init__(self, vderr: str = 'vref2-vd', vqerr: str = 'vq'):
+    def __init__(self, vderr: str = 'vd-vref2', vqerr: str = 'vq'):
         self.PIvd = PIController(u=vderr,
                                  kp=self.Kpvd,
                                  ki=self.Kivd,
@@ -312,11 +312,11 @@ class VSGInnerPIModel:
                                    )
 
         # PIvd_y, PIvq_y are Idref, Iqref
-        self.PIId = PIController(u='PIvd_y - Id',
+        self.PIId = PIController(u='Id - PIvd_y',
                                  kp=self.KpId,
                                  ki=self.KiId,
                                  )
-        self.PIIq = PIController(u='PIvq_y - Iq',
+        self.PIIq = PIController(u='Iq - PIvq_y',
                                  kp=self.KpIq,
                                  ki=self.KiIq,
                                  )
