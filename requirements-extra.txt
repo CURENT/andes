@@ -15,8 +15,10 @@ numpydoc#                     dev, doc
 sphinx-copybutton#            dev, doc
 sphinx-panels#                dev, doc
 pydata-sphinx-theme#          dev, doc
-myst-parser#                  dev, doc
-myst-nb#                      dev, doc
+myst-parser==0.15.2#          dev, doc
+myst-nb==0.13.2#              dev, doc
 pre-commit#                   dev
 
 pandapower#                   interop
+
+ipywidgets#                   web

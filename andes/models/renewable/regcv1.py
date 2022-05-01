@@ -46,6 +46,7 @@ class REGCV1Data(ModelData):
                            info='speed droop on active power (reciprocal of droop)',
                            unit='p.u.',
                            ipower=True,
+                           non_negative=True,
                            )
         self.kv = NumParam(default=0, tex_name='k_v',
                            info='reactive power droop on voltage',
@@ -91,22 +92,22 @@ class VSGOuterPIData:
     """
 
     def __init__(self) -> None:
-        self.Kpvd = NumParam(default=20, tex_name=r'kp_{vd}',
+        self.Kpvd = NumParam(default=0.5, tex_name=r'kp_{vd}',
                              info='vd controller proportional gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.Kivd = NumParam(default=0.001, tex_name=r'ki_{vd}',
+        self.Kivd = NumParam(default=0.02, tex_name=r'ki_{vd}',
                              info='vd controller integral gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.Kpvq = NumParam(default=20, tex_name=r'kp_{vq}',
+        self.Kpvq = NumParam(default=0.5, tex_name=r'kp_{vq}',
                              info='vq controller proportional gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.Kivq = NumParam(default=0.001, tex_name=r'ki_{vq}',
+        self.Kivq = NumParam(default=0.02, tex_name=r'ki_{vq}',
                              info='vq controller integral gain',
                              unit='p.u.',
                              power=True,
@@ -119,22 +120,22 @@ class VSGInnerPIData:
     """
 
     def __init__(self):
-        self.KpId = NumParam(default=500, tex_name=r'kp_{di}',
+        self.KpId = NumParam(default=0.2, tex_name=r'kp_{di}',
                              info='Id controller proportional gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.KiId = NumParam(default=0.2, tex_name=r'ki_{di}',
+        self.KiId = NumParam(default=0.01, tex_name=r'ki_{di}',
                              info='Id controller integral gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.KpIq = NumParam(default=500, tex_name=r'kp_{qi}',
+        self.KpIq = NumParam(default=0.2, tex_name=r'kp_{qi}',
                              info='Iq controller proportional gain',
                              unit='p.u.',
                              power=True,
                              )
-        self.KiIq = NumParam(default=0.2, tex_name=r'ki_{qi}',
+        self.KiIq = NumParam(default=0.01, tex_name=r'ki_{qi}',
                              info='Iq controller integral gain',
                              unit='p.u.',
                              power=True,
@@ -282,13 +283,13 @@ class VSGOuterPIModel:
     Outer PI controllers for REGCV1
     """
 
-    def __init__(self):
-        self.PIvd = PIController(u='vref2 - vd',
+    def __init__(self, vderr: str = 'vd-vref2', vqerr: str = 'vq'):
+        self.PIvd = PIController(u=vderr,
                                  kp=self.Kpvd,
                                  ki=self.Kivd,
                                  x0='Id0',
                                  )
-        self.PIvq = PIController(u='vq',
+        self.PIvq = PIController(u=vqerr,
                                  kp=self.Kpvq,
                                  ki=self.Kivq,
                                  x0='Iq0',
@@ -312,11 +313,11 @@ class VSGInnerPIModel:
                                    )
 
         # PIvd_y, PIvq_y are Idref, Iqref
-        self.PIId = PIController(u='PIvd_y - Id',
+        self.PIId = PIController(u='Id - PIvd_y',
                                  kp=self.KpId,
                                  ki=self.KiId,
                                  )
-        self.PIIq = PIController(u='PIvq_y - Iq',
+        self.PIIq = PIController(u='Iq - PIvq_y',
                                  kp=self.KpIq,
                                  ki=self.KiIq,
                                  )
@@ -356,6 +357,14 @@ class REGCV1(REGCV1Data, VSGOuterPIData, VSGInnerPIData,
 
     Includes double-loop PI control and swing equation based VSG control.
     Voltage measurement delays are ignored.
+
+    Notes
+    -----
+    - Extreme care needs to be taken when coordinating the PI controller
+      parameters.
+    - Setting the primary frequency control droop ``kw`` can improve
+      small-signal stability.
+
     """
 
     def __init__(self, system, config):

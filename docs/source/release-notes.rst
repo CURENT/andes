@@ -9,20 +9,23 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
-v1.6.6 (2022-04-xx)
+v1.6.6 (2022-04-30)
 -------------------
-- Renamed ``[System] call_stats`` to ``[System] save_stats`` for clarity.
-- Fix parsing issues with :ref:`GAST`.
+- Rename ``[System] call_stats`` to ``[System] save_stats`` for clarity. If
+  turned on, one can retrieve statistics of function calls in
+  ``TDS.call_stats``.
+- Store routine execution time to routine member ``execution_time``.
+- Fix PSS/E parsing issues with :ref:`GAST`.
+- Fix issues and update default parameters for `REGCV1` and `REGCV2`.
 - Allow adjusting limits for state variables during initialization. Like for
   algebraic variables, the default setting automatically adjusts the upper limit
-  but not the lower.
+  but not the lower one.
 
 v1.6.5 (2022-04-19)
 -------------------
 - Added a TDS stop criteria based on rotor angle separation with reference to
   Power System Analysis Toolbox.
-- Bug fix for `REGCV2`.
-- Bug fix for snapshot save and load. It now supports writing to and reading
+- Fix a bug for snapshot save and load. It now supports writing to and reading
   from ``io.BytesIO()``.
 
 v1.6.4 (2022-04-17)

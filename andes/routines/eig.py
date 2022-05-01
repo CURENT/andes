@@ -304,10 +304,7 @@ class EIG(BaseRoutine):
         t2, s = elapsed(t1)
         self.exec_time = t2 - t1
 
-        logger.info('  Positive  %6g', self.n_positive)
-        logger.info('  Zeros     %6g', self.n_zeros)
-        logger.info('  Negative  %6g', self.n_negative)
-
+        logger.info(self.stats())
         logger.info('Eigenvalue analysis finished in {:s}.'.format(s))
 
         if not self.system.files.no_output:
@@ -323,6 +320,17 @@ class EIG(BaseRoutine):
         if not succeed:
             system.exit_code += 1
         return succeed
+
+    def stats(self):
+        """
+        Return statistics of results in a string.
+        """
+        out = list()
+        out.append('  Positive  %6g' % self.n_positive)
+        out.append('  Zeros     %6g' % self.n_zeros)
+        out.append('  Negative  %6g' % self.n_negative)
+
+        return '\n'.join(out)
 
     def plot(self, mu=None, fig=None, ax=None,
              left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
@@ -465,9 +473,9 @@ class EIG(BaseRoutine):
 
         numeral = [''] * n_states
         for idx, item in enumerate(range(n_states)):
-            if mu_real[idx] == 0:
+            if abs(mu_real[idx]) <= self.config.tol:
                 marker = '*'
-            elif mu_real[idx] > 0:
+            elif mu_real[idx] > self.config.tol:
                 marker = '**'
             else:
                 marker = ''

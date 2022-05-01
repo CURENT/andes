@@ -770,7 +770,7 @@ class TDSData:
 
         return fig, axes
 
-    def panoview(self, mdl, *, ncols=3, vars=None, idx=None, a=None, figsize=None, **kwargs):
+    def panoview(self, mdl, vars, *, ncols=3, idx=None, a=None, figsize=None, **kwargs):
         """
         Panoramic view of variables of a given model instance.
 
@@ -783,10 +783,10 @@ class TDSData:
         ----------
         mdl : ModelBase
             Model instance
-        ncol : int
-            Number of columns
         var : list of str
             A list of variable names to display
+        ncol : int
+            Number of columns
         idx : list
             A list of device idx-es for showing
         a : list of int
