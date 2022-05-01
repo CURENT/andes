@@ -26,7 +26,7 @@ class GENROUData(GENBaseData):
                            tex_name='x_q',
                            z=True,
                            )
-        self.xd2 = NumParam(default=0.204, info='d-axis sub-transient reactance',
+        self.xd2 = NumParam(default=0.3, info='d-axis sub-transient reactance',
                             tex_name=r"x''_d", z=True)
 
         self.xq1 = NumParam(default=0.5, info='q-axis transient reactance',
@@ -223,6 +223,13 @@ class GENROUModel:
 class GENROU(GENROUData, GENBase, GENROUModel, Flux0):
     """
     Round rotor generator with quadratic saturation.
+
+    Notes
+    -----
+    Parameters:
+
+    - ``xd2`` and ``xq2`` must be equal to pass initialization.
+
     """
 
     def __init__(self, system, config):
