@@ -8,6 +8,7 @@ def tsat_to_df(file):
     """
     Convert a TSAT XLS export to DataFrame.
     """
+
     return excel_to_df(file, offset_row=6)
 
 
@@ -15,6 +16,7 @@ def psse_to_df(file):
     """
     Convert a PSS/E xlsx export to DataFrame.
     """
+
     return excel_to_df(file, offset_row=1, offset_col=0, )
 
 
@@ -24,6 +26,7 @@ def excel_to_df(file, offset_row=6, offset_col=0):
 
     TSAT offset is 6, PSS/E offset is 1
     """
+
     wb = pd.read_excel(file)
 
     df = wb.iloc[offset_row:, offset_col:]
@@ -42,6 +45,7 @@ def plot_comparison(system, variable, tsat_data, ylabel, a=None,
     """
     Plot and compare ANDES, TSAT and PSS/E results.
     """
+
     plot = system.TDS.plotter.plot
     plot_data = system.TDS.plotter.plot_data
     a_tsat = list(a) if a_tsat is None else a_tsat
@@ -98,6 +102,7 @@ def run_cmp(raw, dyr, fault_line, t1=1, t2=1.1, tf=20, tstep=1/60, no_output=Tru
     """
     Run a case study with a line trip and reconnect event.
     """
+
     ss = andes.main.load(raw, addfile=dyr, routine='TDS',
                          tf=tf, setup=False, no_output=no_output)
 
