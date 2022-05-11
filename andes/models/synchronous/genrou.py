@@ -152,7 +152,7 @@ class GENROUModel:
 
         # begin variables and equations
         self.psi2q = Algeb(tex_name=r"\psi_{aq}", info='q-axis air gap flux',
-                           v_str='psi2q0',
+                           v_str='u * psi2q0',
                            e_str='gq1*e1d + (1-gq1)*e2q - psi2q',
                            )
 
@@ -196,7 +196,7 @@ class GENROUModel:
 
         self.e1d = State(info='d-axis transient voltage',
                          tex_name=r"e'_d",
-                         v_str='e1d0',
+                         v_str='u * e1d0',
                          e_str='-XaqI1q',
                          t_const=self.Tq10,
                          )
@@ -210,7 +210,7 @@ class GENROUModel:
 
         self.e2q = State(info='q-axis sub-transient voltage',
                          tex_name=r"e''_q",
-                         v_str='e2q0',
+                         v_str='u * e2q0',
                          e_str='(-e2q + e1d + (xq1 - xl) * Iq)',
                          t_const=self.Tq20,
                          )
