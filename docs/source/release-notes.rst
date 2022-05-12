@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.6 Notes
 ==========
 
+v1.6.7 (2022-05-xx)
+-------------------
+- Fix the initialization of offline synchronous generators.
+
 v1.6.6 (2022-04-30)
 -------------------
 - Rename ``[System] call_stats`` to ``[System] save_stats`` for clarity. If
