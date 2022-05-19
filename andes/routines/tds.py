@@ -105,6 +105,7 @@ class TDS(BaseRoutine):
                               store_f=(0, 1),
                               store_h=(0, 1),
                               store_i=(0, 1),
+                              limit_store=(0, 1),
                               max_store='positive integer',
                               no_tqdm=(0, 1),
                               )
