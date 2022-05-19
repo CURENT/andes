@@ -47,7 +47,11 @@ class DAETimeSeries:
             """
             Helper function to convert data stord in a dict to an array.
             """
-            nx = len(self.__dict__[src][0]) if len(self.__dict__[src]) else 0
+            if len(self.__dict__[src]):
+                nx = len(self.__dict__[src][self.t[0]])
+            else:
+                nx = 0
+
             self.__dict__[dest] = np.zeros((n_steps, nx))
 
             if len(self.__dict__[src]) > 0:
@@ -317,6 +321,9 @@ class DAE:
         self.triplets = JacTriplet()
 
         self.tpl = dict()  # sparsity templates with constants
+
+        self._write_append = False  # True if data should be appended when writing to output
+        self._idx_ptr = 0  # index pointer to the beginning of data that should be written
 
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
         """
@@ -764,7 +771,32 @@ class DAE:
     def write_npz(self, file_path):
         """
         Write TDS data into NumPy compressed format.
+
+        The function supports writing out all values at once or writing them out
+        incrementally.
         """
 
-        txyz_data = self.ts.txyz
-        np.savez_compressed(file_path, data=txyz_data)
+        tds = self.system.TDS
+
+        if tds.config.limit_store is False:
+            # write the whole TimeSeries in one step
+            txyz_data = self.ts.txyz
+            np.savez_compressed(file_path, data=txyz_data)
+
+        else:
+            # create a new npz file and write for the first time
+            if self._write_append is False:
+                txyz_data = self.ts.txyz
+                np.savez_compressed(file_path, data=txyz_data)
+                self._write_append = True
+
+            # write and append to an existing npz file
+            else:
+                self.ts.unpack()
+                txyz_data = self.ts.txyz
+
+                data = np.load(file_path)['data']
+                data = np.vstack((data, txyz_data))
+                np.savez_compressed(file_path, data=data)
+
+            self.ts.reset()

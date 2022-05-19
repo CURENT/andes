@@ -49,10 +49,12 @@ class TDS(BaseRoutine):
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
                                      ('store_z', 0),
-                                     ('store_f', 0.0),
-                                     ('store_h', 0.0),
-                                     ('store_i', 0.0),
-                                     ('no_tqdm', 0.0),
+                                     ('store_f', 0),
+                                     ('store_h', 0),
+                                     ('store_i', 0),
+                                     ('limit_store', 0),
+                                     ('max_store', 900),
+                                     ('no_tqdm', 0),
                                      )))
         self.config.add_extra("_help",
                               method='DAE solution method',
@@ -77,6 +79,8 @@ class TDS(BaseRoutine):
                               store_f='store RHS of diff. equations',
                               store_h='store RHS of external diff. equations',
                               store_i='store RHS of external algeb. equations',
+                              limit_store='limit in-memory timeseries storage',
+                              max_store='maximum steps of data stored in memory before offloading',
                               no_tqdm='disable tqdm progressbar and outputs',
                               )
         self.config.add_extra("_alt",
@@ -101,6 +105,7 @@ class TDS(BaseRoutine):
                               store_f=(0, 1),
                               store_h=(0, 1),
                               store_i=(0, 1),
+                              max_store='positive integer',
                               no_tqdm=(0, 1),
                               )
 
@@ -364,6 +369,10 @@ class TDS(BaseRoutine):
             if step_status:
                 dae.store()
 
+                # offload if exceeds `max_store`
+                if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:
+                    dae.write_npz(system.files.npz)
+
                 self.streaming_step()
                 if self.check_criteria() is False:
                     self.err_msg = 'Violated stability criteria.'
@@ -425,8 +434,10 @@ class TDS(BaseRoutine):
         if config.qrt:
             logger.debug('QRT headroom time: %.4g s.', self.headroom)
 
-        # need to unpack data in case of resumed simulations.
+        # in case of resumed simulations,
+        # manually unpack data to update arrays in `dae.ts`
         system.dae.ts.unpack()
+
         if not system.files.no_output:
             self.save_output()
 
