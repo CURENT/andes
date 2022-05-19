@@ -33,16 +33,20 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
-    def unpack_np(self):
+    def unpack_np(self, attr, warn_empty=True):
         """
         Unpack dict data into numpy arrays.
         """
 
         n_steps = len(self._ys)
 
-        self.t = np.array(list(self._ys.keys()))
+        if attr is None or 't' in attr:
+            self.t = np.array(list(self._ys.keys()))
 
         def _dict2array(src, dest):
+            """
+            Helper function to convert data stord in a dict to an array.
+            """
             nx = len(self.__dict__[src][0]) if len(self.__dict__[src]) else 0
             self.__dict__[dest] = np.zeros((n_steps, nx))
 
@@ -54,51 +58,68 @@ class DAETimeSeries:
                  ('_fs', 'f'), ('_hs', 'h'), ('_is', 'i'))
 
         for a, b in pairs:
-            _dict2array(a, b)
+            if attr is None or b in attr:
+                _dict2array(a, b)
 
-        self.xy = np.hstack((self.x, self.y))
-        self.txy = np.hstack((self.t.reshape((-1, 1)), self.xy))
-        self.txyz = np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
+        if attr is None or attr == 'xy':
+            self.xy = np.hstack((self.x, self.y))
+        if attr is None or attr == 'txy':
+            self.txy = np.hstack((self.t.reshape((-1, 1)), self.x, self.y))
+        if attr is None or attr == 'txyz':
+            self.txyz = np.hstack((self.t.reshape((-1, 1)), self.x, self.y, self.z))
 
         if n_steps == 0:
-            logger.warning("TimeSeries does not contain any time stamp.")
+            if warn_empty:
+                logger.warning("TimeSeries does not contain any time stamp.")
             return False
+
         return True
 
-    def unpack(self, df=False):
+    def unpack(self, df=False, attr=None):
         """
         Unpack dict-stored data into arrays and/or dataframes.
 
         Parameters
         ----------
         df : bool
-            True to construct DataFrames `self.df` and `self.df_z` (time-consuming).
+            True to construct DataFrames `self.df` and `self.df_z`
+            (time-consuming).
+        attr : str, optional
+            Attribute name to unpack. If None, unpack all.
 
         Returns
         -------
         True when done.
         """
 
-        self.unpack_np()
+        self.unpack_np(attr=attr)
         if df is True:
-            self.unpack_df()
+            self.unpack_df(attr=attr)
 
         return True
 
-    def unpack_df(self):
+    def unpack_df(self, attr):
         """
         Construct pandas dataframes.
         """
 
-        self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
-                                           columns=self.dae.x_name)
-        self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
-                                           columns=self.dae.y_name)
-        self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
-                                           columns=self.dae.z_name)
+        if attr is None or 'x' in attr:
+            self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
+                                               columns=self.dae.x_name)
 
-        self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
-        self.df_xyz = pd.concat((self.df_xy, self.df_z), axis=1)
+        if attr is None or 'y' in attr:
+            self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
+                                               columns=self.dae.y_name)
+
+        if attr is None or 'z' in attr:
+            self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
+                                               columns=self.dae.z_name)
+
+        if attr is None or attr == 'df_xy':
+            self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
+
+        if attr is None or attr == 'df_xyz':
+            self.df_xyz = pd.concat((self.df_x, self.df_y, self.df_z), axis=1)
 
         return True
 
@@ -161,6 +182,7 @@ class DAETimeSeries:
 
         The function checks for empty arrays and shows warnings.
         """
+
         if np.count_nonzero(self.__dict__[array_name]) == 0:
             logger.error("TimeSeries matrix <%s> contains no element. Check if `[TDS] store_%s = 1`",
                          array_name, array_name)
@@ -174,17 +196,35 @@ class DAETimeSeries:
 
     @property
     def df(self):
+        """
+        Short-hand for the xy dataframe.
+        """
+
         return self.df_xy
 
     def __getattr__(self, attr):
         if attr in super().__getattribute__('_public'):
             df = True if attr.startswith("df") else False
-            self.unpack(df=df)
+            self.unpack(df=df, attr=attr)
 
         return super().__getattribute__(attr)
 
     def __getstate__(self):
         return self.__dict__
+
+    def reset(self):
+        """
+        Reset the internal storage and erase all data.
+        """
+        self._xs = OrderedDict()
+        self._ys = OrderedDict()
+        self._zs = OrderedDict()
+        self._fs = OrderedDict()
+        self._hs = OrderedDict()
+        self._is = OrderedDict()
+
+        self.unpack_np(attr=None, warn_empty=False)
+        self.unpack_df(attr=None)
 
 
 class DAE:
