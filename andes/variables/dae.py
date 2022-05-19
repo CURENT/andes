@@ -778,7 +778,7 @@ class DAE:
 
         tds = self.system.TDS
 
-        if tds.config.limit_store is False:
+        if not tds.config.limit_store:
             # write the whole TimeSeries in one step
             txyz_data = self.ts.txyz
             np.savez_compressed(file_path, data=txyz_data)
@@ -798,5 +798,3 @@ class DAE:
                 data = np.load(file_path)['data']
                 data = np.vstack((data, txyz_data))
                 np.savez_compressed(file_path, data=data)
-
-            self.ts.reset()

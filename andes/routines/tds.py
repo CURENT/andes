@@ -376,6 +376,7 @@ class TDS(BaseRoutine):
                         len(dae.ts._ys) >= self.config.max_store:
 
                     self.save_output()
+                    self.ts.reset()
 
                 self.streaming_step()
                 if self.check_criteria() is False:
