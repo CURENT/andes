@@ -370,12 +370,15 @@ class TDS(BaseRoutine):
                 dae.store()
 
                 # offload if exceeds `max_store`
-                if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:
-                    dae.write_npz(system.files.npz)
+                if (not system.files.no_output) and \
+                        self.config.limit_store and \
+                        len(dae.ts._ys) >= self.config.max_store:
+
+                    self.save_output()
 
                 self.streaming_step()
                 if self.check_criteria() is False:
-                    self.err_msg = 'Violated stability criteria.'
+                    self.err_msg = 'Violated stability criteria. To turn off, set [TDS].criteria = 0.'
                     self.busted = True
 
                 # check if the next step is critical time
@@ -439,7 +442,14 @@ class TDS(BaseRoutine):
         system.dae.ts.unpack()
 
         if not system.files.no_output:
+            t0, _ = elapsed()
+            self.system.dae.write_lst(self.system.files.lst)
             self.save_output()
+            _, s1 = elapsed(t0)
+
+            np_file = self.system.files.npz
+            logger.info('Outputs to "%s" and "%s".', self.system.files.lst, np_file)
+            logger.info('Outputs written in %s.', s1)
 
         # end data streaming
         if system.config.dime_enabled:
@@ -679,21 +689,11 @@ class TDS(BaseRoutine):
             True if files are written. False otherwise.
         """
 
-        t0, _ = elapsed()
-
-        self.system.dae.write_lst(self.system.files.lst)
-
         if npz is True:
-            np_file = self.system.files.npz
             self.system.dae.write_npz(self.system.files.npz)
         else:
-            np_file = self.system.files.npy
             self.system.dae.write_npy(self.system.files.npy)
 
-        _, s1 = elapsed(t0)
-
-        logger.info('Outputs to "%s" and "%s".', self.system.files.lst, np_file)
-        logger.info('Outputs written in %s.', s1)
         return True
 
     def do_switch(self):
