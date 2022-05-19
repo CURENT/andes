@@ -11,7 +11,7 @@ v1.6 Notes
 
 v1.6.7 (2022-05-xx)
 -------------------
-Allow incrementally offloading simulation data from memory to the output file.
+Allow incrementally offloading simulation data from memory to the output file:
 
 - ``[TDS].limit_store`` is a boolean value to enable the limit for in-memory
   time-series storage. If set to ``1``, data will be offloaded to the ``npz``
@@ -19,6 +19,8 @@ Allow incrementally offloading simulation data from memory to the output file.
   memory.
 - If you need to interact with the time-series data in memory, you need to keep
   ``[TDS].limit_store`` to ``0``.
+
+Other changes:
 
 - Fix the initialization of offline synchronous generators.
 - Allow styles to be set for plots using the argument ``style``. To generate
