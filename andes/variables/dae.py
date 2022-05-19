@@ -37,6 +37,7 @@ class DAETimeSeries:
         """
         Unpack dict data into numpy arrays.
         """
+
         n_steps = len(self._ys)
 
         self.t = np.array(list(self._ys.keys()))
@@ -252,7 +253,7 @@ class DAE:
             'z': 'o',  # limiter flags
             'h': 'p',  # RHS of external states
             'i': 'q',  # RHS of external algebraic variables
-            }
+        }
 
         self.m, self.n, self.o, self.p, self.q = 0, 0, 0, 0, 0
 
@@ -278,6 +279,27 @@ class DAE:
         self.tpl = dict()  # sparsity templates with constants
 
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
+        """
+        Interface for requesting addresses for a model.
+
+        Parameters
+        ----------
+        array_name : str
+            array name in 'x' and 'y'
+        ndevice : int
+            number of devices
+        nvar : int
+            number of variables
+        collate : bool, optional
+            False if the same variable for different devices are contiguous.
+            True if variables for the same devices should collate. Note: setting
+            ``collate`` to True will degrade the performance.
+
+        Returns
+        -------
+        list
+            A list of arrays for each variable.
+        """
 
         out = []
         counter_name = self._array_and_counter[array_name]
@@ -307,13 +329,16 @@ class DAE:
         """
         Reset equation and variable arrays to empty.
         """
+
         self.clear_fg()
         self.clear_xy()
         self.clear_z()
 
     def clear_fg(self):
-        """Resets equation arrays to empty
         """
+        Resets equation arrays to empty.
+        """
+
         self.f[:] = 0
         self.g[:] = 0
 
@@ -321,6 +346,7 @@ class DAE:
         """
         Reset variable arrays to empty.
         """
+
         self.x[:] = 0
         self.y[:] = 0
 
@@ -328,12 +354,14 @@ class DAE:
         """
         Reset status arrays to empty
         """
+
         self.z[:] = 0
 
     def clear_ijv(self):
         """
         Clear stored triplets.
         """
+
         self.triplets.clear_ijv()
 
     def restore_sparse(self, names=None):
@@ -347,6 +375,7 @@ class DAE:
         names : None or list
             List of Jacobian names to restore sparsity pattern
         """
+
         if names is None:
             names = jac_names
         elif isinstance(names, str):
@@ -362,6 +391,7 @@ class DAE:
         """
         Reset array sizes to zero and clear all arrays.
         """
+
         self.set_t(0.0)
         self.m = 0
         self.n = 0
@@ -467,41 +497,41 @@ class DAE:
 
     def store(self):
         """
-        Store values and equations to in internal TimeSeries storage.
+        Store values for the current time step to the TimeSeries storage. Values
+        include variables, equation RHS and discrete states.
         """
+
+        tds = self.system.TDS
         ts = self.ts
         t = self.t.tolist()
-        tds = self.system.TDS
-
-        z_vals = self.system.get_z(self.system.exist.pflow_tds) if tds.config.store_z else None
-        f_vals = self.f if tds.config.store_f else None
-        h_vals = self.h if tds.config.store_h else None
-        i_vals = self.i if tds.config.store_i else None
 
         ts._xs[t] = np.array(self.x)
         ts._ys[t] = np.array(self.y)
 
-        if z_vals is not None:
+        if tds.config.store_z:
+            z_vals = self.system.get_z(self.system.exist.pflow_tds)
             ts._zs[t] = np.array(z_vals)
-        if f_vals is not None:
-            ts._fs[t] = np.array(f_vals)
-        if h_vals is not None:
-            ts._hs[t] = np.array(h_vals)
-        if i_vals is not None:
-            ts._is[t] = np.array(i_vals)
+
+        if tds.config.store_f:
+            ts._fs[t] = np.array(self.f)
+        if tds.config.store_h:
+            ts._hs[t] = np.array(self.h)
+        if tds.config.store_i:
+            ts._is[t] = np.array(self.i)
 
     def resize_arrays(self):
         """
         Resize arrays to the new sizes `m` and `n`, and `o`.
 
         If ``m > len(self.y)`` or ``n > len(self.x``, arrays will be extended.
-        Otherwise, new empty arrays will be sliced, starting from 0 to the given size.
+        Otherwise, new empty arrays will be sliced, starting from 0 to the given
+        size.
 
         Warnings
         --------
         This function should not be called directly. Instead, it is called in
-        ``System.set_address`` which re-points variables used in power flow
-        to the new array for dynamic analyses.
+        ``System.set_address`` which re-points variables used in power flow to
+        the new array for dynamic analyses.
         """
         self.x = self._extend_or_slice(self.x, self.n)
         self.y = self._extend_or_slice(self.y, self.m)
@@ -549,44 +579,88 @@ class DAE:
 
     @property
     def xy(self):
-        """Return a concatenated array of [x, y]."""
+        """
+        Return a concatenated array of [x, y].
+        """
+
         return np.hstack((self.x, self.y))
 
     @property
     def xyz(self):
-        """Return a concatenated array of [x, y]."""
+        """
+        Return a concatenated array of [x, y].
+        """
+
         return np.hstack((self.x, self.y, self.z))
 
     @property
     def fg(self):
-        """Return a concatenated array of [f, g]."""
+        """
+        Return a concatenated array of [f, g].
+        """
+
         return np.hstack((self.f, self.g))
 
     @property
     def xy_name(self):
-        """Return a concatenated list of all variable names without format."""
+        """
+        Return a concatenated list of all variable names without format.
+        """
+
         return self.x_name + self.y_name
 
     @property
     def xyz_name(self):
-        """Return a concatenated list of all variable names without format."""
+        """
+        Return a concatenated list of all variable names without format.
+        """
+
         return self.x_name + self.y_name + self.z_name
 
     @property
     def xy_tex_name(self):
-        """Return a concatenated list of all variable names in LaTeX format."""
+        """
+        Return a concatenated list of all variable names in LaTeX format.
+        """
+
         return self.x_tex_name + self.y_tex_name
 
     @property
     def xyz_tex_name(self):
-        """Return a concatenated list of all variable names in LaTeX format."""
+        """
+        Return a concatenated list of all variable names in LaTeX format.
+        """
+
         return self.x_tex_name + self.y_tex_name + self.z_tex_name
 
     def get_name(self, arr):
+        """
+        Helper function for geting the list of variable names based on the
+        array name.
+
+        Parameters
+        ----------
+        arr : str
+            Array name in 'f', 'g', 'x', 'y', 'z'.
+        """
+
         mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y', 'z': 'z'}
         return self.__dict__[mapping[arr] + '_name']
 
     def print_array(self, name, values=None, tol=None):
+        """
+        Debug helper to print array values and names.
+
+        Parameters
+        ----------
+        name : str
+            array name in 'f', 'g', 'x', 'y'
+        values : array-like, optional
+            substitute array values to use
+        tol : float, optional
+            tolerance value to use. Values below `tol` will not be displayed
+        """
+
         if values is None:
             values = self.__dict__[name]
 
@@ -643,6 +717,7 @@ class DAE:
         """
         Write TDS data into NumPy uncompressed format.
         """
+
         txyz_data = self.ts.txyz
         np.save(file_path, txyz_data)
 
@@ -650,5 +725,6 @@ class DAE:
         """
         Write TDS data into NumPy compressed format.
         """
+
         txyz_data = self.ts.txyz
         np.savez_compressed(file_path, data=txyz_data)
