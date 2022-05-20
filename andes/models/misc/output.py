@@ -17,6 +17,7 @@ class OutputData(ModelData):
 
         self.model = DataParam(info='Name of the model', mandatory=True)
         self.varname = DataParam(info='Variable name', )
+        self.dev = DataParam(info='Device name', )
 
 
 class Output(OutputData, Model):

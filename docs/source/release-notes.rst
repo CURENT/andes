@@ -20,9 +20,13 @@ Allow incrementally offloading simulation data from memory to the output file:
 - If you need to interact with the time-series data in memory, you need to keep
   ``[TDS].limit_store`` to ``0``.
 
-Other changes:
+Allow specifying models, variables, and/or devices to output:
 
 - Support specifying models and/or variables to output. See :ref:`Output`.
+- Plot tool works with in-memory time-series data specified by Output.
+
+Other changes:
+
 - Fix the initialization of offline synchronous generators.
 - Allow styles to be set for plots using the argument ``style``. To generate
   figures for IEEE publications, use ``style=ieee`` (require package
