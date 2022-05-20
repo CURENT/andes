@@ -390,7 +390,7 @@ class TDSData:
                     nx = len(system.Output.xidx)
                 else:
                     output_addr = item.a
-                    nx = len(dae.n)
+                    nx = dae.n
 
                 # states are offset by 1 for Time. Algebs are offset by 1 + nx
                 if item.v_code == 'y':
