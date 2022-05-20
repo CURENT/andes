@@ -234,6 +234,8 @@ class DAETimeSeries:
         self.unpack_np(attr=None, warn_empty=False)
         self.unpack_df(attr=None)
 
+        self._idx_ptr = 0
+
 
 class DAE:
     r"""
@@ -832,15 +834,23 @@ class DAE:
         else:
             # create a new npz file and write for the first time
             if self._write_append is False:
-                txyz_data = self.ts.txyz
+                txyz_data = self.ts.txyz[self._idx_ptr:, :]
                 np.savez_compressed(file_path, data=txyz_data)
                 self._write_append = True
+                self._idx_ptr = len(self.ts.t)
 
             # write and append to an existing npz file
             else:
                 self.ts.unpack()
-                txyz_data = self.ts.txyz
+                txyz_data = self.ts.txyz[self._idx_ptr:, :]
 
                 data = np.load(file_path)['data']
-                data = np.vstack((data, txyz_data))
+                if len(data) > 0:
+                    # in case the previous step stopped at tf=0
+                    data = np.vstack((data, txyz_data))
+                else:
+                    # in most cases, append new data to the existing
+                    data = txyz_data
+
                 np.savez_compressed(file_path, data=data)
+                self._idx_ptr = len(self.ts.t)
