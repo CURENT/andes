@@ -22,6 +22,7 @@ Allow incrementally offloading simulation data from memory to the output file:
 
 Other changes:
 
+- Support specifying models and/or variables to output. See :ref:`Output`.
 - Fix the initialization of offline synchronous generators.
 - Allow styles to be set for plots using the argument ``style``. To generate
   figures for IEEE publications, use ``style=ieee`` (require package
