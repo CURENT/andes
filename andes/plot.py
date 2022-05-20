@@ -130,6 +130,12 @@ class TDSData:
         self._process_names()
 
     def _process_names(self):
+        """
+        Helper function to process the file names.
+
+        Use "Untitled" if name is not set for case file.
+        """
+
         if self.full_name is None:
             logger.info("Input file name not detected. Using `Untitled`.")
             self.full_name = 'Untitled'
@@ -148,14 +154,23 @@ class TDSData:
         self._csv_file = os.path.join(self._path, self.file_name + '.csv')
 
     def load_dae(self):
-        """Load from DAE time series"""
-        dae = self.dae
-        self.t = dae.ts.t
-        self.nvars = dae.n + dae.m + dae.o + 1
+        """
+        Load from DAE time series.
+        """
 
+        dae = self.dae
+        system = self.dae.system
+
+        self.t = dae.ts.t
+
+        if system.Output.n == 0:
+            self.nvars = dae.n + dae.m + dae.o + 1
+        else:
+            self.nvars = len(system.Output.xidx) + len(system.Output.yidx) + dae.o + 1
+
+        self._uname = ['Time [s]'] + dae.x_name_output + dae.y_name_output + dae.z_name
+        self._fname = ['Time [s]'] + dae.x_tex_name_output + dae.y_tex_name_output + dae.z_tex_name
         self._idx = list(range(self.nvars))
-        self._uname = ['Time [s]'] + dae.x_name + dae.y_name + dae.z_name
-        self._fname = ['Time [s]'] + dae.x_tex_name + dae.y_tex_name + dae.z_tex_name
 
         if dae.system.files.lst is not None:
             self.full_name = dae.system.files.lst
@@ -346,27 +361,53 @@ class TDSData:
 
         Indexing by ``a`` is considered.
         """
+
+        dae = self.dae
+        system = self.dae.system
+
         if isinstance(yidx, BaseVar):
             yidx = [yidx]
 
         if isinstance(yidx, list) and isinstance(yidx[0], BaseVar):
             all_yidx = np.array([], dtype=int)
+
             for item in yidx:
                 if item.n == 0:
-                    logger.warning("Variable <%s> contains no values, ignored.", item.name)
+                    logger.info("Parent model <%s> of variable <%s> contains no device, ignored.",
+                                item.owner.class_name, item.name)
                     continue
-                if item.v_code == 'y':
-                    offs = self.dae.n + 1
-                else:
-                    offs = 1
 
-                new_yidx = item.a + offs
+                if system.Output.n > 0:
+                    output_addr = system.Output.to_output_addr(item.a, item.v_code)[0]
+                    if len(output_addr) == 0:
+                        logger.info("<%s.%s> contains no saved data, skipped.", item.owner.class_name, item.name)
+                        continue
+
+                    elif len(output_addr) != len(item.a):
+                        logger.info("<%s.%s> is partially stored as set in <Output>. Showing all saved data.",
+                                    item.owner.class_name, item.name)
+
+                    nx = len(system.Output.xidx)
+                else:
+                    output_addr = item.a
+                    nx = len(dae.n)
+
+                # states are offset by 1 for Time. Algebs are offset by 1 + nx
+                if item.v_code == 'y':
+                    offset = nx + 1
+                else:
+                    offset = 1
+
+                new_yidx = output_addr + offset
 
                 if a is not None:
                     new_yidx = np.take(new_yidx, a)
                 all_yidx = np.append(all_yidx, new_yidx)
 
             yidx = all_yidx
+
+        elif isinstance(yidx, int):
+            yidx = [yidx]
 
         # a list of integers will remain unchanged
 

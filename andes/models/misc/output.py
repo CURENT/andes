@@ -2,6 +2,7 @@
 Module for specifying output variables as part of the data file.
 """
 
+import numpy as np
 from andes.core.model import ModelData, Model
 from andes.core.param import DataParam
 
@@ -30,3 +31,30 @@ class Output(OutputData, Model):
         self.group = 'OutputSelect'
         self.xidx = []
         self.yidx = []
+
+    def in1d(self, addr, v_code):
+        """
+        Helper function for finding boolean flags to indicate intersections.
+
+        Parameters
+        ----------
+        idx : array-like
+            indices to find
+        v_code : str
+            variable code in 'x' and 'y'
+        """
+
+        if v_code == 'x':
+            return np.in1d(self.xidx, addr)
+        if v_code == 'y':
+            return np.in1d(self.yidx, addr)
+
+        raise NotImplementedError("v_code <%s> not recognized" % v_code)
+
+    def to_output_addr(self, addr, v_code):
+        """
+        Convert DAE-based variable address to relative output addresses.
+        """
+
+        bool_intersect = self.in1d(addr, v_code)
+        return np.where(bool_intersect)
