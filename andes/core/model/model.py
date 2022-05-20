@@ -45,7 +45,7 @@ class Model:
 
 
     After subclassing `ModelData`, subclass `Model`` to complete a DAE model.
-    Subclasses of `Model` defines DAE variables, services, and other types of parameters,
+    Subclasses of `Model` define DAE variables, services, and other types of parameters,
     in the constructor ``__init__``.
 
     Attributes
@@ -56,7 +56,7 @@ class Model:
 
     Examples
     --------
-    Take the static PQ as an example, the subclass of `Model`, `PQ`, should looks like ::
+    Take the static PQ as an example, the subclass of `Model`, `PQ`, should look like ::
 
         class PQ(PQData, Model):
             def __init__(self, system, config):
@@ -77,7 +77,7 @@ class Model:
     neither used in power flow nor time-domain simulation. **A very common pitfall is forgetting to set the flag**.
 
     Next, the group name can be provided. A group is a collection of models with common parameters and variables.
-    Devices idx of all models in the same group must be unique. To provide a group name, use ::
+    Devices' idx of all models in the same group must be unique. To provide a group name, use ::
 
         self.group = 'StaticLoad'
 
@@ -87,15 +87,15 @@ class Model:
     If not provided with a group class name, the model will be placed in the `Undefined` group.
 
     Next, additional configuration flags can be added.
-    Configuration flags for models are load-time variables specifying the behavior of a model.
-    It can be exported to an `andes.rc` file and automatically loaded when creating the `System`.
+    Configuration flags for models are load-time variables, specifying the behavior of a model.
+    They can be exported to an `andes.rc` file and automatically loaded when creating the `System`.
     Configuration flags can be used in equation strings, as long as they are numerical values.
     To add config flags, use ::
 
         self.config.add(OrderedDict((('pq2z', 1), )))
 
     It is recommended to use `OrderedDict` instead of `dict`, although the syntax is verbose.
-    Note that booleans should be provided as integers (1, or 0), since `True` or `False` is interpreted as
+    Note that booleans should be provided as integers (1 or 0), since `True` or `False` is interpreted as
     a string when loaded from the `rc` file and will cause an error.
 
     Next, it's time for variables and equations! The `PQ` class does not have internal variables itself.
@@ -117,17 +117,17 @@ class Model:
             self.v.e_str = "u * q"
 
     where the `e_str` attribute is the equation string attribute. `u` is the connectivity status.
-    Any parameter, config, service or variables can be used in equation strings.
+    Any parameter, config, service or variable can be used in equation strings.
 
     Three additional scalars can be used in equations:
-    - ``dae_t`` for the current simulation time can be used if the model has flag `tds`.
+    - ``dae_t`` for the current simulation time (can be used if the model has flag `tds`).
     - ``sys_f`` for system frequency (from ``system.config.freq``).
     - ``sys_mva`` for system base mva (from ``system.config.mva``).
 
     The above example is overly simplified. Our `PQ` model wants a feature to switch itself to
     a constant impedance if the voltage is out of the range `(vmin, vmax)`.
     To implement this, we need to introduce a discrete component called `Limiter`, which yields three arrays
-    of binary flags, `zi`, `zl`, and `zu` indicating in range, below lower limit, and above upper limit,
+    of binary flags, `zi`, `zl`, and `zu` indicating in-range, below lower-limit, and above upper-limit,
     respectively.
 
     First, create an attribute `vcmp` as a `Limiter` instance ::
@@ -149,7 +149,7 @@ class Model:
     Note that `PQ.a.e_str` can use the three variables from `vcmp` even before defining `PQ.vcmp`, as long as
     `PQ.vcmp` is defined, because `vcmp_zi` is just a string literal in `e_str`.
 
-    The two equations above implements a piecewise power injection equation. It selects the original power demand
+    The two equations above implement a piece-wise power injection equation. It selects the original power demand
     if within range, and uses the calculated power when out of range.
 
     Finally, to let ANDES pick up the model, the model name needs to be added to `models/__init__.py`.
@@ -408,7 +408,7 @@ class Model:
 
     def _one_idx2uid(self, idx):
         """
-        Helper function for checking if an idx exist and
+        Helper function for checking if an idx exists and
         converting it to uid.
         """
 
@@ -526,8 +526,8 @@ class Model:
         ----------
         refresh : bool
             Refresh the values in the dictionary.
-            This is only used when the memory address of arrays changed.
-            After initialization, all array assignments are inplace.
+            This is only used when the memory addresses of arrays change.
+            After initialization, all array assignments are in place.
             To avoid overhead, refresh should not be used after initialization.
 
         Returns
@@ -898,7 +898,7 @@ class Model:
         Notes
         -----
         In-place equations: added to the corresponding DAE array.
-        Non-inplace equations: in-place set to internal array to
+        Non-in-place equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
         if callable(self.calls.f):
@@ -1153,7 +1153,7 @@ class Model:
         Models with no back references will have internal variable addresses assigned but external addresses
         being empty.
 
-        For internal equations that has external variables, the row indices will be non-zeros, while the col
+        For internal equations that have external variables, the row indices will be non-zeros, while the col
         indices will be empty, which causes an error when updating Jacobians.
 
         Setting `self.in_use` to False when `len(back_ref_instance.v) == 0` avoids this error. See COI.
@@ -1322,7 +1322,7 @@ class Model:
         Warnings
         --------
         This feature is experimental and does not guarantee a speed up.
-        In fact, the program will likely end up slower due to compilation.
+        In fact, the program will likely end up being slower due to compilation.
         """
         if self.system.config.numba != 1:
             return
