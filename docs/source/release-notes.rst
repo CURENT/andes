@@ -22,8 +22,18 @@ Allow incrementally offloading simulation data from memory to the output file:
 
 Allow specifying models, variables, and/or devices to output:
 
-- Support specifying models and/or variables to output. See :ref:`Output`.
+- See :ref:`Output`. The `model` field is mandatory. Leaving `varname` or `dev`
+  blank indicates the selection of all applicable elements. For example,
+  specifying `model` and `varname` without `dev` means that the variable for all
+  devices will be exported.
 - Plot tool works with in-memory time-series data specified by Output.
+
+- Allow controlling the save frequency for output data in ``[TDS].save_every``.
+  The default value is ``1``, which means that every step will be saved. Setting
+  it to ``4``, for example, will save data every four steps. This setting
+  applies to the in-memory storage and the output data file.
+- Setting ``save_every = 0`` will immediately discard all data after each
+  simulation step.
 
 Other changes:
 
