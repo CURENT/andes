@@ -107,14 +107,8 @@ class DAETimeSeries:
         Construct pandas dataframes.
         """
 
-        system = self.dae.system
-        if system.Output.n > 0:
-            uxname = [self.dae.x_name[i] for i in system.Output.xidx]
-            uyname = [self.dae.y_name[i] for i in system.Output.yidx]
-        else:
-            uxname = self.dae.x_name
-            uyname = self.dae.y_name
-
+        uxname = self.dae.x_name_output
+        uyname = self.dae.y_name_output
         uzname = self.dae.z_name
 
         if attr is None or 'x' in attr:
@@ -665,6 +659,34 @@ class DAE:
         return np.hstack((self.f, self.g))
 
     @property
+    def x_name_output(self):
+        if self.system.Output.n == 0:
+            return self.x_name
+        else:
+            return [self.x_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_name_output(self):
+        if self.system.Output.n == 0:
+            return self.y_name
+        else:
+            return [self.y_name[i] for i in self.system.Output.yidx]
+
+    @property
+    def x_tex_name_output(self):
+        if self.system.Output.n == 0:
+            return self.x_tex_name
+        else:
+            return [self.x_tex_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_tex_name_output(self):
+        if self.system.Output.n == 0:
+            return self.y_tex_name
+        else:
+            return [self.y_tex_name[i] for i in self.system.Output.yidx]
+
+    @property
     def xy_name(self):
         """
         Return a concatenated list of all variable names without format.
@@ -772,12 +794,8 @@ class DAE:
             fname = self.xyz_tex_name
         else:
             idx = list(range(len(system.Output.xidx) + len(system.Output.yidx) + self.o))
-            uxname = [self.x_name[i] for i in system.Output.xidx]
-            uyname = [self.y_name[i] for i in system.Output.yidx]
-            fxname = [self.x_tex_name[i] for i in system.Output.xidx]
-            fyname = [self.y_tex_name[i] for i in system.Output.yidx]
-            uname = uxname + uyname + self.z_name
-            fname = fxname + fyname + self.z_tex_name
+            uname = self.x_name_output + self.y_name_output + self.z_name
+            fname = self.x_tex_name_output + self.y_tex_name_output + self.z_tex_name
 
         for e, i in enumerate(idx):
             # `idx` in the lst file is always consecutive
