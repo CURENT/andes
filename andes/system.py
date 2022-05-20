@@ -2161,7 +2161,6 @@ class System:
 
         export_vars = dict(x=list(), y=list())
         for model, var in zip(self.Output.model.v, self.Output.varname.v):
-            print(f"{model} {var}")
             if model not in models:
                 logger.info("Output model <%s> invalid or contains no device. Skipped.",
                             model)
