@@ -54,6 +54,7 @@ class TDS(BaseRoutine):
                                      ('store_i', 0),
                                      ('limit_store', 0),
                                      ('max_store', 900),
+                                     ('save_every', 1),
                                      ('no_tqdm', 0),
                                      )))
         self.config.add_extra("_help",
@@ -81,6 +82,7 @@ class TDS(BaseRoutine):
                               store_i='store RHS of external algeb. equations',
                               limit_store='limit in-memory timeseries storage',
                               max_store='maximum steps of data stored in memory before offloading',
+                              save_every='save results for one step every "save_every" steps',
                               no_tqdm='disable tqdm progressbar and outputs',
                               )
         self.config.add_extra("_alt",
@@ -107,6 +109,7 @@ class TDS(BaseRoutine):
                               store_i=(0, 1),
                               limit_store=(0, 1),
                               max_store='positive integer',
+                              save_every='integer',
                               no_tqdm=(0, 1),
                               )
 
@@ -369,7 +372,13 @@ class TDS(BaseRoutine):
                 self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
-                dae.store()
+                if config.save_every == 0:
+                    pass
+                elif config.save_every == 1:
+                    dae.store()
+                else:
+                    if dae.kcount % config.save_every == 0:
+                        dae.store()
 
                 # offload if exceeds `max_store`
                 if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:
@@ -390,6 +399,7 @@ class TDS(BaseRoutine):
                 self.do_switch()
                 self.calc_h()
                 dae.t += self.h
+                dae.kcount += 1
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)

@@ -294,6 +294,7 @@ class DAE:
         self.system = system
         self.t = np.array(0.0, dtype=float)
         self.ts = DAETimeSeries(self)
+        self.kcount = 0  # time step count
 
         self._array_and_counter = {
             'f': 'n',  # differential equation RHS
