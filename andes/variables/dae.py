@@ -107,17 +107,27 @@ class DAETimeSeries:
         Construct pandas dataframes.
         """
 
+        system = self.dae.system
+        if system.Output.n > 0:
+            uxname = [self.dae.x_name[i] for i in system.Output.xidx]
+            uyname = [self.dae.y_name[i] for i in system.Output.yidx]
+        else:
+            uxname = self.dae.x_name
+            uyname = self.dae.y_name
+
+        uzname = self.dae.z_name
+
         if attr is None or 'x' in attr:
             self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
-                                               columns=self.dae.x_name)
+                                               columns=uxname)
 
         if attr is None or 'y' in attr:
             self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
-                                               columns=self.dae.y_name)
+                                               columns=uyname)
 
         if attr is None or 'z' in attr:
             self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
-                                               columns=self.dae.z_name)
+                                               columns=uzname)
 
         if attr is None or attr == 'df_xy':
             self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
@@ -548,15 +558,21 @@ class DAE:
         include variables, equation RHS and discrete states.
         """
 
+        system = self.system
         tds = self.system.TDS
         ts = self.ts
         t = self.t.tolist()
 
-        ts._xs[t] = np.array(self.x)
-        ts._ys[t] = np.array(self.y)
+        if system.Output.n > 0:
+            # select variables based on `Output`
+            ts._xs[t] = self.x[system.Output.xidx]
+            ts._ys[t] = self.y[system.Output.yidx]
+        else:
+            ts._xs[t] = np.array(self.x)
+            ts._ys[t] = np.array(self.y)
 
         if tds.config.store_z:
-            z_vals = self.system.get_z(self.system.exist.pflow_tds)
+            z_vals = system.get_z(system.exist.pflow_tds)
             ts._zs[t] = np.array(z_vals)
 
         if tds.config.store_f:
@@ -739,18 +755,29 @@ class DAE:
             succeed flag
         """
 
+        system = self.system
+
         out = ''
         template = '{:>6g}, {:>25s}, {:>35s}\n'
 
         # header line
         out += template.format(0, 'Time [s]', 'Time [s]')
 
-        # output variable indices
-        idx = list(range(self.m + self.n + self.o))
+        if system.Output.n == 0:
+            # output variable indices
+            idx = list(range(self.m + self.n + self.o))
 
-        # variable names concatenated
-        uname = self.xyz_name
-        fname = self.xyz_tex_name
+            # variable names concatenated
+            uname = self.xyz_name
+            fname = self.xyz_tex_name
+        else:
+            idx = list(range(len(system.Output.xidx) + len(system.Output.yidx) + self.o))
+            uxname = [self.x_name[i] for i in system.Output.xidx]
+            uyname = [self.y_name[i] for i in system.Output.yidx]
+            fxname = [self.x_tex_name[i] for i in system.Output.xidx]
+            fyname = [self.y_tex_name[i] for i in system.Output.yidx]
+            uname = uxname + uyname + self.z_name
+            fname = fxname + fyname + self.z_tex_name
 
         for e, i in enumerate(idx):
             # `idx` in the lst file is always consecutive
@@ -758,6 +785,7 @@ class DAE:
 
         with open(lst_path, 'w') as f:
             f.write(out)
+
         return True
 
     def write_npy(self, file_path):
