@@ -55,6 +55,7 @@ class TDS(BaseRoutine):
                                      ('limit_store', 0),
                                      ('max_store', 900),
                                      ('save_every', 1),
+                                     ('save_mode', 'auto'),
                                      ('no_tqdm', 0),
                                      )))
         self.config.add_extra("_help",
@@ -83,6 +84,7 @@ class TDS(BaseRoutine):
                               limit_store='limit in-memory timeseries storage',
                               max_store='maximum steps of data stored in memory before offloading',
                               save_every='save results for one step every "save_every" steps',
+                              save_mode='automatically or manually save output data when done',
                               no_tqdm='disable tqdm progressbar and outputs',
                               )
         self.config.add_extra("_alt",
@@ -110,6 +112,7 @@ class TDS(BaseRoutine):
                               limit_store=(0, 1),
                               max_store='positive integer',
                               save_every='integer',
+                              save_mode=('auto', 'manual'),
                               no_tqdm=(0, 1),
                               )
 
@@ -354,6 +357,9 @@ class TDS(BaseRoutine):
         self.qrt_start = time.time()
         self.headroom = 0.0
 
+        # write variable list file at the beginning
+        self.system.dae.write_lst(self.system.files.lst)
+
         t0, _ = elapsed()
 
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
@@ -386,11 +392,14 @@ class TDS(BaseRoutine):
                     # write to file if enabled
                     if not system.files.no_output:
                         self.save_output()
+                        logger.info("Offload data from memory to file for t=%.2f - %.2f sec",
+                                    dae.ts.t[0], dae.ts.t[-1])
 
                     # clear storage in memory anyway
                     dae.ts.reset()
 
                 self.streaming_step()
+
                 if self.check_criteria() is False:
                     self.err_msg = 'Violated stability criteria. To turn off, set [TDS].criteria = 0.'
                     self.busted = True
@@ -447,7 +456,7 @@ class TDS(BaseRoutine):
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
-        logger.info('Simulation completed in %s.', s1)
+        logger.info('Simulation to t=%.2f sec completed in %s.', config.tf, s1)
 
         if config.qrt:
             logger.debug('QRT headroom time: %.4g s.', self.headroom)
@@ -456,9 +465,8 @@ class TDS(BaseRoutine):
         # manually unpack data to update arrays in `dae.ts`
         system.dae.ts.unpack()
 
-        if not system.files.no_output:
+        if (not system.files.no_output) and (config.save_mode == 'auto'):
             t0, _ = elapsed()
-            self.system.dae.write_lst(self.system.files.lst)
             self.save_output()
             _, s1 = elapsed(t0)
 

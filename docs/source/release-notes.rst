@@ -28,12 +28,18 @@ Allow specifying models, variables, and/or devices to output:
   devices will be exported.
 - Plot tool works with in-memory time-series data specified by Output.
 
+Simulation output control:
+
 - Allow controlling the save frequency for output data in ``[TDS].save_every``.
   The default value is ``1``, which means that every step will be saved. Setting
   it to ``4``, for example, will save data every four steps. This setting
   applies to the in-memory storage and the output data file.
 - Setting ``save_every = 0`` will immediately discard all data after each
   simulation step.
+- Added the option ``[TDS].save_mode`` to change the automatic simulation data
+  dumping to manual. This option shall only be set to ``manual`` when one is
+  manually stepping the simulation. One will need to call ``TDS.save_output()``
+  when stepping concludes. Otherwise, unsaved data will be lost.
 
 Other changes:
 
@@ -41,6 +47,7 @@ Other changes:
 - Allow styles to be set for plots using the argument ``style``. To generate
   figures for IEEE publications, use ``style=ieee`` (require package
   ``scienceplots``).
+- Moved the writing of the ``lst`` file to the first step of simulation.
 
 v1.6.6 (2022-04-30)
 -------------------

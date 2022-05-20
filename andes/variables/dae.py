@@ -331,6 +331,7 @@ class DAE:
 
         self._write_append = False  # True if data should be appended when writing to output
         self._idx_ptr = 0  # index pointer to the beginning of data that should be written
+        self._lst_written = False
 
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
         """
@@ -780,6 +781,9 @@ class DAE:
             succeed flag
         """
 
+        if self._lst_written is True:
+            return
+
         system = self.system
 
         out = ''
@@ -806,6 +810,8 @@ class DAE:
 
         with open(lst_path, 'w') as f:
             f.write(out)
+
+        self._lst_written = True
 
         return True
 
