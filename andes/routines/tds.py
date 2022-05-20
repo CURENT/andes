@@ -372,11 +372,13 @@ class TDS(BaseRoutine):
                 dae.store()
 
                 # offload if exceeds `max_store`
-                if (not system.files.no_output) and \
-                        self.config.limit_store and \
-                        len(dae.ts._ys) >= self.config.max_store:
+                if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:
 
-                    self.save_output()
+                    # write to file if enabled
+                    if not system.files.no_output:
+                        self.save_output()
+
+                    # clear storage in memory anyway
                     dae.ts.reset()
 
                 self.streaming_step()
