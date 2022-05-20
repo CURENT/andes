@@ -853,12 +853,20 @@ class DAE:
                 self.ts.unpack()
                 txyz_data = self.ts.txyz[ts._idx_ptr:, :]
 
+                # skip if no new data
+                if len(txyz_data) == 0:
+                    logger.debug("No new data to write to file. Skipped.")
+                    return
+
                 data = np.load(file_path)['data']
+
+                # in most cases, append new data to the existing
                 if len(data) > 0:
-                    # in case the previous step stopped at tf=0
                     data = np.vstack((data, txyz_data))
+                    logger.debug("Appended new data to output file.")
+
+                # in case the previous step stopped at tf=0
                 else:
-                    # in most cases, append new data to the existing
                     data = txyz_data
 
                 np.savez_compressed(file_path, data=data)
