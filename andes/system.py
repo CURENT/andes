@@ -2148,6 +2148,41 @@ class System:
 
         return True
 
+    def set_output_subidx(self, models):
+        """
+        Process :py:class:`andes.models.misc.Output` data and store the
+        sub-indices into ``dae.xy``.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            Models currently in use for the routine
+        """
+
+        export_vars = dict(x=list(), y=list())
+        for model, var in zip(self.Output.model.v, self.Output.varname.v):
+            print(f"{model} {var}")
+            if model not in models:
+                logger.info("Output model <%s> invalid or contains no device. Skipped.",
+                            model)
+                continue
+
+            mdl_instance = models[model]
+            if var is None:
+                for item in mdl_instance.cache.all_vars.values():
+                    export_vars[item.v_code].extend(item.a)
+            else:
+                if var not in mdl_instance.cache.all_vars:
+                    logger.info("Output model <%s> contains no variable <%s>. Skipped.",
+                                model, var)
+                    continue
+
+                item = mdl_instance.cache.all_vars[var]
+                export_vars[item.v_code].extend(item.a)
+
+        self.Output.xidx = np.array(sorted(list(set(export_vars['x']))))
+        self.Output.yidx = np.array(sorted(list(set(export_vars['y']))))
+
 
 def load_pycode_from_path(pycode_path):
     """

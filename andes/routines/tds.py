@@ -192,6 +192,7 @@ class TDS(BaseRoutine):
         #   to the new array after extending `dae.y`.
         system.set_address(models=system.exist.pflow_tds)
         system.set_dae_names(models=system.exist.tds)
+        system.set_output_subidx(models=system.exist.pflow_tds)
 
         system.dae.clear_ts()
         system.store_sparse_pattern(models=system.exist.pflow_tds)
@@ -376,7 +377,7 @@ class TDS(BaseRoutine):
                         len(dae.ts._ys) >= self.config.max_store:
 
                     self.save_output()
-                    self.ts.reset()
+                    dae.ts.reset()
 
                 self.streaming_step()
                 if self.check_criteria() is False:
