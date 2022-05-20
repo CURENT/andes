@@ -33,6 +33,8 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
+        self._idx_ptr = 0  # index pointer to the beginning of data that should be written
+
     def unpack_np(self, attr, warn_empty=True):
         """
         Unpack dict data into numpy arrays.
@@ -330,7 +332,6 @@ class DAE:
         self.tpl = dict()  # sparsity templates with constants
 
         self._write_append = False  # True if data should be appended when writing to output
-        self._idx_ptr = 0  # index pointer to the beginning of data that should be written
         self._lst_written = False
 
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
@@ -832,6 +833,7 @@ class DAE:
         """
 
         tds = self.system.TDS
+        ts = self.ts
 
         if not tds.config.limit_store:
             # write the whole TimeSeries in one step
@@ -841,15 +843,15 @@ class DAE:
         else:
             # create a new npz file and write for the first time
             if self._write_append is False:
-                txyz_data = self.ts.txyz[self._idx_ptr:, :]
+                txyz_data = self.ts.txyz[ts._idx_ptr:, :]
                 np.savez_compressed(file_path, data=txyz_data)
                 self._write_append = True
-                self._idx_ptr = len(self.ts.t)
+                ts._idx_ptr = len(self.ts.t)
 
             # write and append to an existing npz file
             else:
                 self.ts.unpack()
-                txyz_data = self.ts.txyz[self._idx_ptr:, :]
+                txyz_data = self.ts.txyz[ts._idx_ptr:, :]
 
                 data = np.load(file_path)['data']
                 if len(data) > 0:
@@ -860,4 +862,4 @@ class DAE:
                     data = txyz_data
 
                 np.savez_compressed(file_path, data=data)
-                self._idx_ptr = len(self.ts.t)
+                ts._idx_ptr = len(self.ts.t)
