@@ -238,6 +238,8 @@ class DAETimeSeries:
 
         self._idx_ptr = 0
 
+        logger.debug("TimeSeries storage is cleared.")
+
 
 class DAE:
     r"""
