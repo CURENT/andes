@@ -81,7 +81,7 @@ class DAETimeSeries:
 
         return True
 
-    def unpack(self, df=False, attr=None):
+    def unpack(self, df=False, attr=None, warn_empty=True):
         """
         Unpack dict-stored data into arrays and/or dataframes.
 
@@ -98,7 +98,7 @@ class DAETimeSeries:
         True when done.
         """
 
-        self.unpack_np(attr=attr)
+        self.unpack_np(attr=attr, warn_empty=warn_empty)
         if df is True:
             self.unpack_df(attr=attr)
 
