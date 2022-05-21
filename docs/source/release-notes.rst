@@ -6,10 +6,10 @@ Release notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
-v1.6 Notes
+v1.7 Notes
 ==========
 
-v1.6.7 (2022-05-xx)
+v1.7.0 (2022-05-22)
 -------------------
 Allow incrementally offloading simulation data from memory to the output file:
 
@@ -37,9 +37,11 @@ Simulation output control:
 - Setting ``save_every = 0`` will immediately discard all data after each
   simulation step.
 - Added the option ``[TDS].save_mode`` to change the automatic simulation data
-  dumping to manual. This option shall only be set to ``manual`` when one is
-  manually stepping the simulation. One will need to call ``TDS.save_output()``
-  when stepping concludes. Otherwise, unsaved data will be lost.
+  dumping to manual. Accepted values are ``auto`` and ``manual``. This option
+  shall only be adjusted to ``manual`` when one is manually stepping the
+  simulation and wants to avoid writing to the output file when the simulation
+  reaches ``TDS.config.tf``. One will need to call ``TDS.save_output()`` when
+  the full simulation concludes to avoid losing unsaved data.
 
 Other changes:
 
@@ -50,6 +52,9 @@ Other changes:
 - Moved the writing of the ``lst`` file to the first step of simulation.
 - ``andes misc -C`` will not remove ``_out.csv`` file as it is considered data
   for post-processing just like exported figures.
+
+v1.6 Notes
+==========
 
 v1.6.6 (2022-04-30)
 -------------------
