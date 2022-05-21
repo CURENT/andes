@@ -33,7 +33,7 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
-        self._idx_ptr = 0  # index pointer to the beginning of data that should be written
+        self.idx_ptr = 0  # index pointer to the beginning of data that should be written
 
     def unpack_np(self, attr, warn_empty=True):
         """
@@ -236,7 +236,7 @@ class DAETimeSeries:
         self.unpack_np(attr=None, warn_empty=False)
         self.unpack_df(attr=None)
 
-        self._idx_ptr = 0
+        self.idx_ptr = 0
 
         logger.debug("TimeSeries storage is cleared.")
 
@@ -667,6 +667,9 @@ class DAE:
 
     @property
     def x_name_output(self):
+        """
+        Return a list of state var names selected by Output.
+        """
         if self.system.Output.n == 0:
             return self.x_name
         else:
@@ -674,6 +677,10 @@ class DAE:
 
     @property
     def y_name_output(self):
+        """
+        Return a list of algeb var names selected by Output.
+        """
+
         if self.system.Output.n == 0:
             return self.y_name
         else:
@@ -681,6 +688,10 @@ class DAE:
 
     @property
     def x_tex_name_output(self):
+        """
+        Return a list of state var LaTeX names selected by Output.
+        """
+
         if self.system.Output.n == 0:
             return self.x_tex_name
         else:
@@ -688,6 +699,10 @@ class DAE:
 
     @property
     def y_tex_name_output(self):
+        """
+        Return a list of algeb var LaTeX names selected by Output.
+        """
+
         if self.system.Output.n == 0:
             return self.y_tex_name
         else:
@@ -845,15 +860,15 @@ class DAE:
         else:
             # create a new npz file and write for the first time
             if self._write_append is False:
-                txyz_data = self.ts.txyz[ts._idx_ptr:, :]
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
                 np.savez_compressed(file_path, data=txyz_data)
                 self._write_append = True
-                ts._idx_ptr = len(self.ts.t)
+                ts.idx_ptr = len(self.ts.t)
 
             # write and append to an existing npz file
             else:
                 self.ts.unpack()
-                txyz_data = self.ts.txyz[ts._idx_ptr:, :]
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
 
                 # skip if no new data
                 if len(txyz_data) == 0:
@@ -872,4 +887,4 @@ class DAE:
                     data = txyz_data
 
                 np.savez_compressed(file_path, data=data)
-                ts._idx_ptr = len(self.ts.t)
+                ts.idx_ptr = len(self.ts.t)

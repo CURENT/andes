@@ -2,10 +2,10 @@
 Test output selection.
 """
 
+import numpy as np
 import unittest
 
 import andes
-import numpy as np
 
 
 class TestOutput(unittest.TestCase):

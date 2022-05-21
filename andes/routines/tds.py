@@ -718,7 +718,7 @@ class TDS(BaseRoutine):
         else:
             self.system.dae.write_npy(self.system.files.npy)
 
-        self.system.dae.ts._idx_ptr = len(self.system.dae.ts.t)
+        self.system.dae.ts.idx_ptr = len(self.system.dae.ts.t)
 
         return True
 
