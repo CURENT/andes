@@ -48,6 +48,8 @@ Other changes:
   figures for IEEE publications, use ``style=ieee`` (require package
   ``scienceplots``).
 - Moved the writing of the ``lst`` file to the first step of simulation.
+- ``andes misc -C`` will not remove ``_out.csv`` file as it is considered data
+  for post-processing just like exported figures.
 
 v1.6.6 (2022-04-30)
 -------------------
