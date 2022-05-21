@@ -464,7 +464,8 @@ class TDS(BaseRoutine):
 
         # in case of resumed simulations,
         # manually unpack data to update arrays in `dae.ts`
-        system.dae.ts.unpack()
+        # disable warning in case data has just been dumped
+        system.dae.ts.unpack(warn_empty=False)
 
         if (not system.files.no_output) and (config.save_mode == 'auto'):
             t0, _ = elapsed()
