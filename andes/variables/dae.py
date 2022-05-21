@@ -33,16 +33,27 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
-    def unpack_np(self):
+        self.idx_ptr = 0  # index pointer to the beginning of data that should be written
+
+    def unpack_np(self, attr, warn_empty=True):
         """
         Unpack dict data into numpy arrays.
         """
+
         n_steps = len(self._ys)
 
-        self.t = np.array(list(self._ys.keys()))
+        if attr is None or 't' in attr:
+            self.t = np.array(list(self._ys.keys()))
 
         def _dict2array(src, dest):
-            nx = len(self.__dict__[src][0]) if len(self.__dict__[src]) else 0
+            """
+            Helper function to convert data stord in a dict to an array.
+            """
+            if len(self.__dict__[src]):
+                nx = len(self.__dict__[src][self.t[0]])
+            else:
+                nx = 0
+
             self.__dict__[dest] = np.zeros((n_steps, nx))
 
             if len(self.__dict__[src]) > 0:
@@ -53,51 +64,72 @@ class DAETimeSeries:
                  ('_fs', 'f'), ('_hs', 'h'), ('_is', 'i'))
 
         for a, b in pairs:
-            _dict2array(a, b)
+            if attr is None or b in attr:
+                _dict2array(a, b)
 
-        self.xy = np.hstack((self.x, self.y))
-        self.txy = np.hstack((self.t.reshape((-1, 1)), self.xy))
-        self.txyz = np.hstack((self.t.reshape((-1, 1)), self.xy, self.z))
+        if attr is None or attr == 'xy':
+            self.xy = np.hstack((self.x, self.y))
+        if attr is None or attr == 'txy':
+            self.txy = np.hstack((self.t.reshape((-1, 1)), self.x, self.y))
+        if attr is None or attr == 'txyz':
+            self.txyz = np.hstack((self.t.reshape((-1, 1)), self.x, self.y, self.z))
 
         if n_steps == 0:
-            logger.warning("TimeSeries does not contain any time stamp.")
+            if warn_empty:
+                logger.warning("TimeSeries does not contain any time stamp.")
             return False
+
         return True
 
-    def unpack(self, df=False):
+    def unpack(self, df=False, attr=None, warn_empty=True):
         """
         Unpack dict-stored data into arrays and/or dataframes.
 
         Parameters
         ----------
         df : bool
-            True to construct DataFrames `self.df` and `self.df_z` (time-consuming).
+            True to construct DataFrames `self.df` and `self.df_z`
+            (time-consuming).
+        attr : str, optional
+            Attribute name to unpack. If None, unpack all.
 
         Returns
         -------
         True when done.
         """
 
-        self.unpack_np()
+        self.unpack_np(attr=attr, warn_empty=warn_empty)
         if df is True:
-            self.unpack_df()
+            self.unpack_df(attr=attr)
 
         return True
 
-    def unpack_df(self):
+    def unpack_df(self, attr):
         """
         Construct pandas dataframes.
         """
 
-        self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
-                                           columns=self.dae.x_name)
-        self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
-                                           columns=self.dae.y_name)
-        self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
-                                           columns=self.dae.z_name)
+        uxname = self.dae.x_name_output
+        uyname = self.dae.y_name_output
+        uzname = self.dae.z_name
 
-        self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
-        self.df_xyz = pd.concat((self.df_xy, self.df_z), axis=1)
+        if attr is None or 'x' in attr:
+            self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
+                                               columns=uxname)
+
+        if attr is None or 'y' in attr:
+            self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
+                                               columns=uyname)
+
+        if attr is None or 'z' in attr:
+            self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
+                                               columns=uzname)
+
+        if attr is None or attr == 'df_xy':
+            self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
+
+        if attr is None or attr == 'df_xyz':
+            self.df_xyz = pd.concat((self.df_x, self.df_y, self.df_z), axis=1)
 
         return True
 
@@ -160,6 +192,7 @@ class DAETimeSeries:
 
         The function checks for empty arrays and shows warnings.
         """
+
         if np.count_nonzero(self.__dict__[array_name]) == 0:
             logger.error("TimeSeries matrix <%s> contains no element. Check if `[TDS] store_%s = 1`",
                          array_name, array_name)
@@ -173,17 +206,39 @@ class DAETimeSeries:
 
     @property
     def df(self):
+        """
+        Short-hand for the xy dataframe.
+        """
+
         return self.df_xy
 
     def __getattr__(self, attr):
         if attr in super().__getattribute__('_public'):
             df = True if attr.startswith("df") else False
-            self.unpack(df=df)
+            self.unpack(df=df, attr=attr)
 
         return super().__getattribute__(attr)
 
     def __getstate__(self):
         return self.__dict__
+
+    def reset(self):
+        """
+        Reset the internal storage and erase all data.
+        """
+        self._xs = OrderedDict()
+        self._ys = OrderedDict()
+        self._zs = OrderedDict()
+        self._fs = OrderedDict()
+        self._hs = OrderedDict()
+        self._is = OrderedDict()
+
+        self.unpack_np(attr=None, warn_empty=False)
+        self.unpack_df(attr=None)
+
+        self.idx_ptr = 0
+
+        logger.debug("TimeSeries storage is cleared.")
 
 
 class DAE:
@@ -243,6 +298,7 @@ class DAE:
         self.system = system
         self.t = np.array(0.0, dtype=float)
         self.ts = DAETimeSeries(self)
+        self.kcount = 0  # time step count
 
         self._array_and_counter = {
             'f': 'n',  # differential equation RHS
@@ -252,7 +308,7 @@ class DAE:
             'z': 'o',  # limiter flags
             'h': 'p',  # RHS of external states
             'i': 'q',  # RHS of external algebraic variables
-            }
+        }
 
         self.m, self.n, self.o, self.p, self.q = 0, 0, 0, 0, 0
 
@@ -277,7 +333,31 @@ class DAE:
 
         self.tpl = dict()  # sparsity templates with constants
 
+        self._write_append = False  # True if data should be appended when writing to output
+        self._lst_written = False
+
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
+        """
+        Interface for requesting addresses for a model.
+
+        Parameters
+        ----------
+        array_name : str
+            array name in 'x' and 'y'
+        ndevice : int
+            number of devices
+        nvar : int
+            number of variables
+        collate : bool, optional
+            False if the same variable for different devices are contiguous.
+            True if variables for the same devices should collate. Note: setting
+            ``collate`` to True will degrade the performance.
+
+        Returns
+        -------
+        list
+            A list of arrays for each variable.
+        """
 
         out = []
         counter_name = self._array_and_counter[array_name]
@@ -307,13 +387,16 @@ class DAE:
         """
         Reset equation and variable arrays to empty.
         """
+
         self.clear_fg()
         self.clear_xy()
         self.clear_z()
 
     def clear_fg(self):
-        """Resets equation arrays to empty
         """
+        Resets equation arrays to empty.
+        """
+
         self.f[:] = 0
         self.g[:] = 0
 
@@ -321,6 +404,7 @@ class DAE:
         """
         Reset variable arrays to empty.
         """
+
         self.x[:] = 0
         self.y[:] = 0
 
@@ -328,12 +412,14 @@ class DAE:
         """
         Reset status arrays to empty
         """
+
         self.z[:] = 0
 
     def clear_ijv(self):
         """
         Clear stored triplets.
         """
+
         self.triplets.clear_ijv()
 
     def restore_sparse(self, names=None):
@@ -347,6 +433,7 @@ class DAE:
         names : None or list
             List of Jacobian names to restore sparsity pattern
         """
+
         if names is None:
             names = jac_names
         elif isinstance(names, str):
@@ -362,6 +449,7 @@ class DAE:
         """
         Reset array sizes to zero and clear all arrays.
         """
+
         self.set_t(0.0)
         self.m = 0
         self.n = 0
@@ -467,41 +555,47 @@ class DAE:
 
     def store(self):
         """
-        Store values and equations to in internal TimeSeries storage.
+        Store values for the current time step to the TimeSeries storage. Values
+        include variables, equation RHS and discrete states.
         """
+
+        system = self.system
+        tds = self.system.TDS
         ts = self.ts
         t = self.t.tolist()
-        tds = self.system.TDS
 
-        z_vals = self.system.get_z(self.system.exist.pflow_tds) if tds.config.store_z else None
-        f_vals = self.f if tds.config.store_f else None
-        h_vals = self.h if tds.config.store_h else None
-        i_vals = self.i if tds.config.store_i else None
+        if system.Output.n > 0:
+            # select variables based on `Output`
+            ts._xs[t] = self.x[system.Output.xidx]
+            ts._ys[t] = self.y[system.Output.yidx]
+        else:
+            ts._xs[t] = np.array(self.x)
+            ts._ys[t] = np.array(self.y)
 
-        ts._xs[t] = np.array(self.x)
-        ts._ys[t] = np.array(self.y)
-
-        if z_vals is not None:
+        if tds.config.store_z:
+            z_vals = system.get_z(system.exist.pflow_tds)
             ts._zs[t] = np.array(z_vals)
-        if f_vals is not None:
-            ts._fs[t] = np.array(f_vals)
-        if h_vals is not None:
-            ts._hs[t] = np.array(h_vals)
-        if i_vals is not None:
-            ts._is[t] = np.array(i_vals)
+
+        if tds.config.store_f:
+            ts._fs[t] = np.array(self.f)
+        if tds.config.store_h:
+            ts._hs[t] = np.array(self.h)
+        if tds.config.store_i:
+            ts._is[t] = np.array(self.i)
 
     def resize_arrays(self):
         """
         Resize arrays to the new sizes `m` and `n`, and `o`.
 
         If ``m > len(self.y)`` or ``n > len(self.x``, arrays will be extended.
-        Otherwise, new empty arrays will be sliced, starting from 0 to the given size.
+        Otherwise, new empty arrays will be sliced, starting from 0 to the given
+        size.
 
         Warnings
         --------
         This function should not be called directly. Instead, it is called in
-        ``System.set_address`` which re-points variables used in power flow
-        to the new array for dynamic analyses.
+        ``System.set_address`` which re-points variables used in power flow to
+        the new array for dynamic analyses.
         """
         self.x = self._extend_or_slice(self.x, self.n)
         self.y = self._extend_or_slice(self.y, self.m)
@@ -549,44 +643,131 @@ class DAE:
 
     @property
     def xy(self):
-        """Return a concatenated array of [x, y]."""
+        """
+        Return a concatenated array of [x, y].
+        """
+
         return np.hstack((self.x, self.y))
 
     @property
     def xyz(self):
-        """Return a concatenated array of [x, y]."""
+        """
+        Return a concatenated array of [x, y].
+        """
+
         return np.hstack((self.x, self.y, self.z))
 
     @property
     def fg(self):
-        """Return a concatenated array of [f, g]."""
+        """
+        Return a concatenated array of [f, g].
+        """
+
         return np.hstack((self.f, self.g))
 
     @property
+    def x_name_output(self):
+        """
+        Return a list of state var names selected by Output.
+        """
+        if self.system.Output.n == 0:
+            return self.x_name
+        else:
+            return [self.x_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_name_output(self):
+        """
+        Return a list of algeb var names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.y_name
+        else:
+            return [self.y_name[i] for i in self.system.Output.yidx]
+
+    @property
+    def x_tex_name_output(self):
+        """
+        Return a list of state var LaTeX names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.x_tex_name
+        else:
+            return [self.x_tex_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_tex_name_output(self):
+        """
+        Return a list of algeb var LaTeX names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.y_tex_name
+        else:
+            return [self.y_tex_name[i] for i in self.system.Output.yidx]
+
+    @property
     def xy_name(self):
-        """Return a concatenated list of all variable names without format."""
+        """
+        Return a concatenated list of all variable names without format.
+        """
+
         return self.x_name + self.y_name
 
     @property
     def xyz_name(self):
-        """Return a concatenated list of all variable names without format."""
+        """
+        Return a concatenated list of all variable names without format.
+        """
+
         return self.x_name + self.y_name + self.z_name
 
     @property
     def xy_tex_name(self):
-        """Return a concatenated list of all variable names in LaTeX format."""
+        """
+        Return a concatenated list of all variable names in LaTeX format.
+        """
+
         return self.x_tex_name + self.y_tex_name
 
     @property
     def xyz_tex_name(self):
-        """Return a concatenated list of all variable names in LaTeX format."""
+        """
+        Return a concatenated list of all variable names in LaTeX format.
+        """
+
         return self.x_tex_name + self.y_tex_name + self.z_tex_name
 
     def get_name(self, arr):
+        """
+        Helper function for geting the list of variable names based on the
+        array name.
+
+        Parameters
+        ----------
+        arr : str
+            Array name in 'f', 'g', 'x', 'y', 'z'.
+        """
+
         mapping = {'f': 'x', 'g': 'y', 'x': 'x', 'y': 'y', 'z': 'z'}
         return self.__dict__[mapping[arr] + '_name']
 
     def print_array(self, name, values=None, tol=None):
+        """
+        Debug helper to print array values and names.
+
+        Parameters
+        ----------
+        name : str
+            array name in 'f', 'g', 'x', 'y'
+        values : array-like, optional
+            substitute array values to use
+        tol : float, optional
+            tolerance value to use. Values below `tol` will not be displayed
+        """
+
         if values is None:
             values = self.__dict__[name]
 
@@ -618,18 +799,28 @@ class DAE:
             succeed flag
         """
 
+        if self._lst_written is True:
+            return
+
+        system = self.system
+
         out = ''
         template = '{:>6g}, {:>25s}, {:>35s}\n'
 
         # header line
         out += template.format(0, 'Time [s]', 'Time [s]')
 
-        # output variable indices
-        idx = list(range(self.m + self.n + self.o))
+        if system.Output.n == 0:
+            # output variable indices
+            idx = list(range(self.m + self.n + self.o))
 
-        # variable names concatenated
-        uname = self.xyz_name
-        fname = self.xyz_tex_name
+            # variable names concatenated
+            uname = self.xyz_name
+            fname = self.xyz_tex_name
+        else:
+            idx = list(range(len(system.Output.xidx) + len(system.Output.yidx) + self.o))
+            uname = self.x_name_output + self.y_name_output + self.z_name
+            fname = self.x_tex_name_output + self.y_tex_name_output + self.z_tex_name
 
         for e, i in enumerate(idx):
             # `idx` in the lst file is always consecutive
@@ -637,18 +828,63 @@ class DAE:
 
         with open(lst_path, 'w') as f:
             f.write(out)
+
+        self._lst_written = True
+
         return True
 
     def write_npy(self, file_path):
         """
         Write TDS data into NumPy uncompressed format.
         """
+
         txyz_data = self.ts.txyz
         np.save(file_path, txyz_data)
 
     def write_npz(self, file_path):
         """
         Write TDS data into NumPy compressed format.
+
+        The function supports writing out all values at once or writing them out
+        incrementally.
         """
-        txyz_data = self.ts.txyz
-        np.savez_compressed(file_path, data=txyz_data)
+
+        tds = self.system.TDS
+        ts = self.ts
+
+        if not tds.config.limit_store:
+            # write the whole TimeSeries in one step
+            txyz_data = self.ts.txyz
+            np.savez_compressed(file_path, data=txyz_data)
+
+        else:
+            # create a new npz file and write for the first time
+            if self._write_append is False:
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
+                np.savez_compressed(file_path, data=txyz_data)
+                self._write_append = True
+                ts.idx_ptr = len(self.ts.t)
+
+            # write and append to an existing npz file
+            else:
+                self.ts.unpack()
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
+
+                # skip if no new data
+                if len(txyz_data) == 0:
+                    logger.debug("No new data to write to file. Skipped.")
+                    return
+
+                data = np.load(file_path)['data']
+
+                # in most cases, append new data to the existing
+                if len(data) > 0:
+                    data = np.vstack((data, txyz_data))
+                    logger.debug("Appended new data to output file.")
+
+                # in case the previous step stopped at tf=0
+                else:
+                    data = txyz_data
+
+                np.savez_compressed(file_path, data=data)
+                ts.idx_ptr = len(self.ts.t)

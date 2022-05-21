@@ -6,6 +6,53 @@ Release notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.7 Notes
+==========
+
+v1.7.0 (2022-05-22)
+-------------------
+Allow incrementally offloading simulation data from memory to the output file:
+
+- ``[TDS].limit_store`` is a boolean value to enable the limit for in-memory
+  time-series storage. If set to ``1``, data will be offloaded to the ``npz``
+  file every ``[TDS].max_store`` steps. Offloaded data will then be erased from
+  memory.
+- If you need to interact with the time-series data in memory, you need to keep
+  ``[TDS].limit_store`` to ``0``.
+
+Allow specifying models, variables, and/or devices to output:
+
+- See :ref:`Output`. The `model` field is mandatory. Leaving `varname` or `dev`
+  blank indicates the selection of all applicable elements. For example,
+  specifying `model` and `varname` without `dev` means that the variable for all
+  devices will be exported.
+- Plot tool works with in-memory time-series data specified by Output.
+
+Simulation output control:
+
+- Allow controlling the save frequency for output data in ``[TDS].save_every``.
+  The default value is ``1``, which means that every step will be saved. Setting
+  it to ``4``, for example, will save data every four steps. This setting
+  applies to the in-memory storage and the output data file.
+- Setting ``save_every = 0`` will immediately discard all data after each
+  simulation step.
+- Added the option ``[TDS].save_mode`` to change the automatic simulation data
+  dumping to manual. Accepted values are ``auto`` and ``manual``. This option
+  shall only be adjusted to ``manual`` when one is manually stepping the
+  simulation and wants to avoid writing to the output file when the simulation
+  reaches ``TDS.config.tf``. One will need to call ``TDS.save_output()`` when
+  the full simulation concludes to avoid losing unsaved data.
+
+Other changes:
+
+- Fix the initialization of offline synchronous generators.
+- Allow styles to be set for plots using the argument ``style``. To generate
+  figures for IEEE publications, use ``style=ieee`` (require package
+  ``scienceplots``).
+- Moved the writing of the ``lst`` file to the first step of simulation.
+- ``andes misc -C`` will not remove ``_out.csv`` file as it is considered data
+  for post-processing just like exported figures.
+
 v1.6 Notes
 ==========
 

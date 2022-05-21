@@ -11,15 +11,13 @@ This module imports shared libraries either directly or with `LazyImport`.
 #     For example, NumPy must not be imported with LazyImport.
 
 import math
-import os
-import psutil
-
 
 import coloredlogs  # NOQA
 import numpy as np  # NOQA
+import psutil
 from kvxopt import printing  # NOQA
 from kvxopt import (div, klu, matrix, mul, sparse, spdiag, spmatrix,  # NOQA
-                    umfpack,)
+                    umfpack)
 from kvxopt.lapack import gesv  # NOQA
 
 from andes.utils.lazyimport import LazyImport
@@ -27,7 +25,6 @@ from andes.utils.lazyimport import LazyImport
 printing.options['dformat'] = '%.1f'
 printing.options['width'] = -1
 
-from andes.utils.paths import get_dot_andes_path  # NOQA
 
 # --- SYSTEM INFO ---
 NCPUS_PHYSICAL = psutil.cpu_count(logical=False)
@@ -81,52 +78,3 @@ Oct2PyError = LazyImport('from oct2py import Oct2PyError')
 
 # --- Shared functions ---
 find_executable = LazyImport('from distutils.spawn import find_executable')
-
-
-def set_latex():
-    """
-    Enables LaTeX for matplotlib based on the `with_latex` option and `dvipng` availability.
-
-    Returns
-    -------
-    bool
-        True for LaTeX on, False for off
-    """
-
-    if find_executable('dvipng'):
-        mpl.rc('text', usetex=True)
-
-        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
-        if not os.path.isfile(no_warn_file):
-            print('Using LaTeX for rendering. If an error occurs:')
-            print('a) If you are using `andes plot`, disable with option "-d",')
-            print('b) If you are using `plot()`, set "latex=False".')
-
-            try:
-                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w') as f:
-                    f.write('0')
-            except OSError:
-                pass
-
-        return True
-
-    return False
-
-
-def set_font(family='serif', size=12, style='normal', weight='normal'):
-    """
-    Sets the font for matplotlib.
-
-    Parameters
-    ----------
-    family : str
-        Font family.
-    size : int
-        Font size.
-    style : str
-        Font style.
-    weight : str
-        Font weight.
-    """
-
-    mpl.rc('font', family=family, size=size, style=style, weight=weight)

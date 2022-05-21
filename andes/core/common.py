@@ -209,18 +209,18 @@ class Config:
 
         Existing configs will NOT be overwritten.
         """
-        def warn_upper(s):
+        def warn_upper_case(s):
             if any(x.isupper() for x in s):
                 logger.warning("Config fields must be in lower case, found %s", s)
 
         if dct is not None:
             for s in dct.keys():
-                warn_upper(s)
+                warn_upper_case(s)
 
             self._add(**dct)
 
         for s in kwargs.keys():
-            warn_upper(s)
+            warn_upper_case(s)
 
         self._add(**kwargs)
 
@@ -245,21 +245,37 @@ class Config:
             self.__dict__[dest][key] = value
 
     def _add(self, **kwargs):
+        """
+        Internal function for adding new config keys.
+
+        This function does not perform input data consistency check.
+        """
+
         for key, val in kwargs.items():
             # skip existing entries that are already loaded (from config files)
             if key in self.__dict__:
                 continue
 
-            if isinstance(val, str):
-                try:
-                    val = int(val)
-                except ValueError:
-                    try:
-                        val = float(val)
-                    except ValueError:
-                        pass
+            self._set(key, val)
 
-            self.__dict__[key] = val
+    def _set(self, key, val):
+        """
+        Set a pair of key and value to the config dict.
+
+        This function does not perform consistency check on input data and will
+        not warn of non-existent fields.
+        """
+
+        if isinstance(val, str):
+            try:
+                val = int(val)
+            except ValueError:
+                try:
+                    val = float(val)
+                except ValueError:
+                    pass
+
+        self.__dict__[key] = val
 
     def as_dict(self, refresh=False):
         """
@@ -343,3 +359,18 @@ class Config:
     @property
     def tex_names(self):
         return self._tex
+
+    def update(self, dct: dict = None, **kwargs):
+        """
+        Update existing configuration fields.
+
+        Values are checked after the update.
+        """
+
+        if dct is not None:
+            kwargs.update(dct)
+
+        for key, val in kwargs.items():
+            self._set(key, val)
+
+        self.check()

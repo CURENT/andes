@@ -10,10 +10,85 @@ import re
 import numpy as np
 
 from andes.core.var import BaseVar
-from andes.shared import plt, set_font, set_latex
+from andes.shared import find_executable, mpl, plt
+from andes.utils.paths import get_dot_andes_path  # NOQA
 
 logger = logging.getLogger(__name__)
-DPI = 80
+DPI = None
+
+
+def set_latex():
+    """
+    Enables LaTeX for matplotlib based on the `with_latex` option and `dvipng` availability.
+
+    Returns
+    -------
+    bool
+        True for LaTeX on, False for off
+    """
+
+    if find_executable('dvipng'):
+        mpl.rc('text', usetex=True)
+
+        no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')
+        if not os.path.isfile(no_warn_file):
+            print('Using LaTeX for rendering. If an error occurs:')
+            print('a) If you are using `andes plot`, disable with option "-d",')
+            print('b) If you are using `plot()`, set "latex=False".')
+
+            try:
+                with open(os.path.join(get_dot_andes_path(), '.no_warn_latex'), 'w') as f:
+                    f.write('0')
+            except OSError:
+                pass
+
+        return True
+
+    return False
+
+
+def set_font(family='serif', size=12, style='normal', weight='normal'):
+    """
+    Sets the font for matplotlib.
+
+    Parameters
+    ----------
+    family : str
+        Font family.
+    size : int
+        Font size.
+    style : str
+        Font style.
+    weight : str
+        Font weight.
+    """
+
+    mpl.rc('font', family=family, size=size, style=style, weight=weight)
+
+
+def set_style(style='default'):
+    """
+    Set matplotlib style.
+
+    Parameters
+    ----------
+    style : str
+        `default`, `ieee` (require `scienceplots`), or other available styles
+        (see `matplotlib.pyplot.style.available`).
+    """
+
+    if style is None:
+        style = 'default'
+
+    if style == 'ieee':
+        try:
+            plt.style.use(['science', 'ieee'])
+        except (NameError, OSError):
+            logger.error("Please install `scienceplots` with `pip` to use the 'ieee' style.")
+
+    else:
+        plt.style.use(style)
+        set_font()
 
 
 class TDSData:
@@ -55,6 +130,12 @@ class TDSData:
         self._process_names()
 
     def _process_names(self):
+        """
+        Helper function to process the file names.
+
+        Use "Untitled" if name is not set for case file.
+        """
+
         if self.full_name is None:
             logger.info("Input file name not detected. Using `Untitled`.")
             self.full_name = 'Untitled'
@@ -73,20 +154,31 @@ class TDSData:
         self._csv_file = os.path.join(self._path, self.file_name + '.csv')
 
     def load_dae(self):
-        """Load from DAE time series"""
-        dae = self.dae
-        self.t = dae.ts.t
-        self.nvars = dae.n + dae.m + dae.o + 1
+        """
+        Load from DAE time series.
+        """
 
+        dae = self.dae
+        system = self.dae.system
+
+        self.t = dae.ts.t
+
+        if system.Output.n == 0:
+            self.nvars = dae.n + dae.m + dae.o + 1
+        else:
+            self.nvars = len(system.Output.xidx) + len(system.Output.yidx) + dae.o + 1
+
+        self._uname = ['Time [s]'] + dae.x_name_output + dae.y_name_output + dae.z_name
+        self._fname = ['Time [s]'] + dae.x_tex_name_output + dae.y_tex_name_output + dae.z_tex_name
         self._idx = list(range(self.nvars))
-        self._uname = ['Time [s]'] + dae.x_name + dae.y_name + dae.z_name
-        self._fname = ['Time [s]'] + dae.x_tex_name + dae.y_tex_name + dae.z_tex_name
-        self._data = dae.ts.txyz
 
         if dae.system.files.lst is not None:
             self.full_name = dae.system.files.lst
         else:
             self.full_name = dae.system.files.case
+
+        if len(self.t) > 0:
+            self._data = dae.ts.txyz
 
     def load_lst(self):
         """
@@ -269,27 +361,53 @@ class TDSData:
 
         Indexing by ``a`` is considered.
         """
+
+        dae = self.dae
+        system = self.dae.system
+
         if isinstance(yidx, BaseVar):
             yidx = [yidx]
 
         if isinstance(yidx, list) and isinstance(yidx[0], BaseVar):
             all_yidx = np.array([], dtype=int)
+
             for item in yidx:
                 if item.n == 0:
-                    logger.warning("Variable <%s> contains no values, ignored.", item.name)
+                    logger.info("Parent model <%s> of variable <%s> contains no device, ignored.",
+                                item.owner.class_name, item.name)
                     continue
-                if item.v_code == 'y':
-                    offs = self.dae.n + 1
-                else:
-                    offs = 1
 
-                new_yidx = item.a + offs
+                if system.Output.n > 0:
+                    output_addr = system.Output.to_output_addr(item.a, item.v_code)[0]
+                    if len(output_addr) == 0:
+                        logger.info("<%s.%s> contains no saved data, skipped.", item.owner.class_name, item.name)
+                        continue
+
+                    if len(output_addr) != len(item.a):
+                        logger.info("<%s.%s> is partially stored as set in <Output>. Showing all saved data.",
+                                    item.owner.class_name, item.name)
+
+                    nx = len(system.Output.xidx)
+                else:
+                    output_addr = item.a
+                    nx = dae.n
+
+                # states are offset by 1 for Time. Algebs are offset by 1 + nx
+                if item.v_code == 'y':
+                    offset = nx + 1
+                else:
+                    offset = 1
+
+                new_yidx = output_addr + offset
 
                 if a is not None:
                     new_yidx = np.take(new_yidx, a)
                 all_yidx = np.append(all_yidx, new_yidx)
 
             yidx = all_yidx
+
+        elif isinstance(yidx, int):
+            yidx = [yidx]
 
         # a list of integers will remain unchanged
 
@@ -508,7 +626,7 @@ class TDSData:
                   hline1=None, hline2=None, vline1=None, hline=None, vline=None,
                   vline2=None, set_xlim=True, set_ylim=True, autoscale=False, figsize=None,
                   legend_bbox=None, legend_loc=None, legend_ncol=1,
-                  mask=True, color=None,
+                  mask=True, color=None, style='default',
                   **kwargs):
         """
         Plot lines for the supplied data and options.
@@ -549,7 +667,8 @@ class TDSData:
         >>>                      ylabel='Ipcmd [pu]')
 
         """
-        set_font(family='serif', size=font_size)
+
+        set_style(style)
 
         if not isinstance(ydata, np.ndarray):
             raise TypeError("ydata must be a numpy array. Retrieve with get_values().")

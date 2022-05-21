@@ -231,7 +231,6 @@ def remove_output(recursive=False):
                     file.endswith('_out.lst') or \
                     file.endswith('_out.npy') or \
                     file.endswith('_out.npz') or \
-                    file.endswith('_out.csv') or \
                     file.endswith('_prof.prof') or \
                     file.endswith('_prof.txt'):
                 found = True

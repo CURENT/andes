@@ -3,24 +3,21 @@ Module for eigenvalue analysis.
 """
 
 import logging
-import scipy.io
-import numpy as np
-
 from math import ceil, pi
+
+import numpy as np
+import scipy.io
 from scipy.linalg import solve
 
 from andes.io.txt import dump_data
-from andes.utils.misc import elapsed
+from andes.plot import set_latex, set_style
 from andes.routines.base import BaseRoutine
+from andes.shared import div, matrix, plt, sparse, spdiag, spmatrix
+from andes.utils.misc import elapsed
 from andes.variables.report import report_info
 
-from andes.plot import set_latex
-
-from andes.shared import matrix, set_font, spmatrix, sparse, plt
-from andes.shared import div, spdiag
-
-
 logger = logging.getLogger(__name__)
+DPI = None
 
 
 class EIG(BaseRoutine):
@@ -334,8 +331,8 @@ class EIG(BaseRoutine):
 
     def plot(self, mu=None, fig=None, ax=None,
              left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=100, figsize=None, base_color='black',
-             show=True, latex=True):
+             line_width=0.5, dpi=DPI, figsize=None, base_color='black',
+             show=True, latex=True, style='default'):
         """
         Plot utility for eigenvalues in the S domain.
 
@@ -360,7 +357,7 @@ class EIG(BaseRoutine):
         line_width : float, optional
             default line width, by default 0.5
         dpi : int, optional
-            figure dpi, by default 100
+            figure dpi
         figsize : [type], optional
             default figure size, by default None
         base_color : str, optional
@@ -379,7 +376,7 @@ class EIG(BaseRoutine):
 
         """
 
-        set_font(family='Times New Roman', size=12)
+        set_style(style)
 
         if mu is None:
             mu = self.mu

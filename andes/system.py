@@ -2148,6 +2148,64 @@ class System:
 
         return True
 
+    def set_output_subidx(self, models):
+        """
+        Process :py:class:`andes.models.misc.Output` data and store the
+        sub-indices into ``dae.xy``.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            Models currently in use for the routine
+        """
+
+        export_vars = dict(x=list(), y=list())  # indices of export x and y
+
+        for model, var, dev in zip(self.Output.model.v,
+                                   self.Output.varname.v,
+                                   self.Output.dev.v):
+
+            # check validity of model name
+            if model not in models:
+                logger.info("Output model <%s> invalid or contains no device. Skipped.",
+                            model)
+                continue
+            mdl_instance = models[model]
+            mdl_all_vars = mdl_instance.cache.all_vars
+
+            # check validity of var name
+            if var is not None and (var not in mdl_all_vars):
+                logger.info("Output model <%s> contains no variable <%s>. Skipped.",
+                            model, var)
+                continue
+
+            # check validity of dev idx
+            if (dev is not None) and (dev not in mdl_instance.idx.v):
+                logger.info("Output model <%s> contains no device <%s>. Skipped.",
+                            model, dev)
+                continue
+
+            # TODO: dev-based indexing is not fully supported
+            # for multi-index variables, such as those in COI.
+
+            if var is None:
+                for item in mdl_all_vars.values():
+                    if dev is None:
+                        export_vars[item.v_code].extend(item.a)
+                    else:
+                        uid = mdl_instance.idx2uid(dev)
+                        export_vars[item.v_code].append(item.a[uid])
+            else:  # with variable name
+                item = mdl_all_vars[var]
+                if dev is None:
+                    export_vars[item.v_code].extend(item.a)
+                else:  # with exact index
+                    uid = mdl_instance.idx2uid(dev)
+                    export_vars[item.v_code].append(item.a[uid])
+
+        self.Output.xidx = sorted(np.unique(export_vars['x']))
+        self.Output.yidx = sorted(np.unique(export_vars['y']))
+
 
 def load_pycode_from_path(pycode_path):
     """
