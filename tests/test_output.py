@@ -3,7 +3,9 @@ Test output selection.
 """
 
 import unittest
+
 import andes
+import numpy as np
 
 
 class TestOutput(unittest.TestCase):
@@ -33,7 +35,9 @@ class TestOutput(unittest.TestCase):
         ss.PFlow.run()
         ss.TDS.config.tf = 0.1
         ss.TDS.run()
+        ss.TDS.load_plotter()
 
+        nt = len(ss.dae.ts.t)
         nx = 5
         ny = 10
 
@@ -42,3 +46,15 @@ class TestOutput(unittest.TestCase):
 
         self.assertEqual(ss.dae.ts.x.shape[1], nx)
         self.assertEqual(ss.dae.ts.y.shape[1], ny)
+
+        np.testing.assert_array_equal(ss.Output.xidx, [1, 4, 5, 6, 7])
+        np.testing.assert_array_equal(ss.Output.yidx, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        # test loaded data by plot
+        self.assertEqual(ss.TDS.plt._data.shape, (nt, nx + ny + 1))
+        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.GENCLS.omega, a=None),
+                                      [2, 3, 4, 5])
+        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.GENCLS.delta, a=None),
+                                      [1])
+        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.TG2.pout, a=None),
+                                      [])
