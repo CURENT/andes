@@ -358,7 +358,8 @@ class TDS(BaseRoutine):
         self.headroom = 0.0
 
         # write variable list file at the beginning
-        self.system.dae.write_lst(self.system.files.lst)
+        if not system.files.no_output:
+            system.dae.write_lst(self.system.files.lst)
 
         t0, _ = elapsed()
 
