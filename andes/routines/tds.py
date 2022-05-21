@@ -379,13 +379,12 @@ class TDS(BaseRoutine):
                 self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
-                if config.save_every == 0:
-                    pass
-                elif config.save_every == 1:
-                    dae.store()
-                else:
-                    if dae.kcount % config.save_every == 0:
+                if not config.save_every == 0:
+                    if config.save_every == 1:
                         dae.store()
+                    else:
+                        if dae.kcount % config.save_every == 0:
+                            dae.store()
 
                 # offload if exceeds `max_store`
                 if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:

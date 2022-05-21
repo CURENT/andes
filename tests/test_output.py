@@ -13,9 +13,6 @@ class TestOutput(unittest.TestCase):
     Class for Output test.
     """
 
-    def setUp(self):
-        pass
-
     def test_output_xyname(self):
         """
         Test x_name and y_name for Output

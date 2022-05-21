@@ -383,7 +383,7 @@ class TDSData:
                         logger.info("<%s.%s> contains no saved data, skipped.", item.owner.class_name, item.name)
                         continue
 
-                    elif len(output_addr) != len(item.a):
+                    if len(output_addr) != len(item.a):
                         logger.info("<%s.%s> is partially stored as set in <Output>. Showing all saved data.",
                                     item.owner.class_name, item.name)
 
