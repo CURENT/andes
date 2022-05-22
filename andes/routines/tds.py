@@ -424,8 +424,10 @@ class TDS(BaseRoutine):
                     rt_end = self.qrt_start + self.h * config.kqrt
 
                     # if the ending time has passed
-                    if time.time() - rt_end > 0:
-                        logger.debug('Simulation over-run at t=%4.4g s.', dae.t)
+                    t_overrun = time.time() - rt_end
+                    if t_overrun > 0:
+                        logger.debug('Simulation over-run for %4.4g msec at t=%4.4g s.',
+                                     1000 * t_overrun, dae.t)
                     else:
                         self.headroom += (rt_end - time.time())
 
@@ -451,8 +453,9 @@ class TDS(BaseRoutine):
         else:
             system.exit_code += 1
 
+        # removed `pbar` so that System object can be serialized
         self.pbar.close()
-        self.pbar = None  # removed `pbar` so that System object can be serialized
+        self.pbar = None
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
