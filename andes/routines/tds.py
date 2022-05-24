@@ -45,7 +45,7 @@ class TDS(BaseRoutine):
                                      ('criteria', 1),
                                      ('ddelta_limit', 180),
                                      ('g_scale', 1),
-                                     ('reset_tiny', 1),
+                                     ('reset_tiny', 0),
                                      ('qrt', 0),
                                      ('kqrt', 1.0),
                                      ('store_z', 0),
@@ -180,7 +180,7 @@ class TDS(BaseRoutine):
             The initial values of xy.
 
         """
-        
+
         t0, _ = elapsed()
         system = self.system
 
