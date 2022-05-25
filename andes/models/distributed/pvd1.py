@@ -71,7 +71,7 @@ class PVD1Data(ModelData):
                             power=True,
                             unit='pu',
                             )
-        self.pmx = NumParam(default=999.0, info='maximum power limit',
+        self.pmx = NumParam(default=9999.0, info='maximum power limit',
                             tex_name='p_{mx}',
                             power=True,
                             unit='pu',
@@ -214,7 +214,7 @@ class PVD1Model(Model):
         self.flags.tds = True
         self.group = 'DG'
 
-        self.config.add(OrderedDict((('plim', 0),
+        self.config.add(OrderedDict((('plim', 1),
                                      )))
 
         self.config.add_extra('_help',
@@ -541,8 +541,8 @@ class PVD1(PVD1Data, PVD1Model):
     write to `pref0.v` and `qref0.v` in place.
     AGC signals should write to `pext0.v` in place.
 
-    Maximum power limit `pmx` can be enabled by editing the configuration
-    file by setting `plim=1`. It cannot be modified in runtime.
+    Maximum power limit `pmx` can be disabled by editing the configuration
+    file by setting `plim=0`. It cannot be modified in runtime.
 
     Reference:
     [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
