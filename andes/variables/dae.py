@@ -33,6 +33,8 @@ class DAETimeSeries:
         self._hs = OrderedDict()
         self._is = OrderedDict()
 
+        self.idx_ptr = 0  # index pointer to the beginning of data that should be written
+
     def unpack_np(self, attr, warn_empty=True):
         """
         Unpack dict data into numpy arrays.
@@ -79,7 +81,7 @@ class DAETimeSeries:
 
         return True
 
-    def unpack(self, df=False, attr=None):
+    def unpack(self, df=False, attr=None, warn_empty=True):
         """
         Unpack dict-stored data into arrays and/or dataframes.
 
@@ -96,7 +98,7 @@ class DAETimeSeries:
         True when done.
         """
 
-        self.unpack_np(attr=attr)
+        self.unpack_np(attr=attr, warn_empty=warn_empty)
         if df is True:
             self.unpack_df(attr=attr)
 
@@ -107,17 +109,21 @@ class DAETimeSeries:
         Construct pandas dataframes.
         """
 
+        uxname = self.dae.x_name_output
+        uyname = self.dae.y_name_output
+        uzname = self.dae.z_name
+
         if attr is None or 'x' in attr:
             self.df_x = pd.DataFrame.from_dict(self._xs, orient='index',
-                                               columns=self.dae.x_name)
+                                               columns=uxname)
 
         if attr is None or 'y' in attr:
             self.df_y = pd.DataFrame.from_dict(self._ys, orient='index',
-                                               columns=self.dae.y_name)
+                                               columns=uyname)
 
         if attr is None or 'z' in attr:
             self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
-                                               columns=self.dae.z_name)
+                                               columns=uzname)
 
         if attr is None or attr == 'df_xy':
             self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
@@ -230,6 +236,10 @@ class DAETimeSeries:
         self.unpack_np(attr=None, warn_empty=False)
         self.unpack_df(attr=None)
 
+        self.idx_ptr = 0
+
+        logger.debug("TimeSeries storage is cleared.")
+
 
 class DAE:
     r"""
@@ -288,6 +298,7 @@ class DAE:
         self.system = system
         self.t = np.array(0.0, dtype=float)
         self.ts = DAETimeSeries(self)
+        self.kcount = 0  # time step count
 
         self._array_and_counter = {
             'f': 'n',  # differential equation RHS
@@ -323,7 +334,7 @@ class DAE:
         self.tpl = dict()  # sparsity templates with constants
 
         self._write_append = False  # True if data should be appended when writing to output
-        self._idx_ptr = 0  # index pointer to the beginning of data that should be written
+        self._lst_written = False
 
     def request_address(self, array_name: str, ndevice, nvar, collate=False):
         """
@@ -548,15 +559,21 @@ class DAE:
         include variables, equation RHS and discrete states.
         """
 
+        system = self.system
         tds = self.system.TDS
         ts = self.ts
         t = self.t.tolist()
 
-        ts._xs[t] = np.array(self.x)
-        ts._ys[t] = np.array(self.y)
+        if system.Output.n > 0:
+            # select variables based on `Output`
+            ts._xs[t] = self.x[system.Output.xidx]
+            ts._ys[t] = self.y[system.Output.yidx]
+        else:
+            ts._xs[t] = np.array(self.x)
+            ts._ys[t] = np.array(self.y)
 
         if tds.config.store_z:
-            z_vals = self.system.get_z(self.system.exist.pflow_tds)
+            z_vals = system.get_z(system.exist.pflow_tds)
             ts._zs[t] = np.array(z_vals)
 
         if tds.config.store_f:
@@ -649,6 +666,49 @@ class DAE:
         return np.hstack((self.f, self.g))
 
     @property
+    def x_name_output(self):
+        """
+        Return a list of state var names selected by Output.
+        """
+        if self.system.Output.n == 0:
+            return self.x_name
+        else:
+            return [self.x_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_name_output(self):
+        """
+        Return a list of algeb var names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.y_name
+        else:
+            return [self.y_name[i] for i in self.system.Output.yidx]
+
+    @property
+    def x_tex_name_output(self):
+        """
+        Return a list of state var LaTeX names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.x_tex_name
+        else:
+            return [self.x_tex_name[i] for i in self.system.Output.xidx]
+
+    @property
+    def y_tex_name_output(self):
+        """
+        Return a list of algeb var LaTeX names selected by Output.
+        """
+
+        if self.system.Output.n == 0:
+            return self.y_tex_name
+        else:
+            return [self.y_tex_name[i] for i in self.system.Output.yidx]
+
+    @property
     def xy_name(self):
         """
         Return a concatenated list of all variable names without format.
@@ -739,18 +799,28 @@ class DAE:
             succeed flag
         """
 
+        if self._lst_written is True:
+            return
+
+        system = self.system
+
         out = ''
         template = '{:>6g}, {:>25s}, {:>35s}\n'
 
         # header line
         out += template.format(0, 'Time [s]', 'Time [s]')
 
-        # output variable indices
-        idx = list(range(self.m + self.n + self.o))
+        if system.Output.n == 0:
+            # output variable indices
+            idx = list(range(self.m + self.n + self.o))
 
-        # variable names concatenated
-        uname = self.xyz_name
-        fname = self.xyz_tex_name
+            # variable names concatenated
+            uname = self.xyz_name
+            fname = self.xyz_tex_name
+        else:
+            idx = list(range(len(system.Output.xidx) + len(system.Output.yidx) + self.o))
+            uname = self.x_name_output + self.y_name_output + self.z_name
+            fname = self.x_tex_name_output + self.y_tex_name_output + self.z_tex_name
 
         for e, i in enumerate(idx):
             # `idx` in the lst file is always consecutive
@@ -758,6 +828,9 @@ class DAE:
 
         with open(lst_path, 'w') as f:
             f.write(out)
+
+        self._lst_written = True
+
         return True
 
     def write_npy(self, file_path):
@@ -777,8 +850,9 @@ class DAE:
         """
 
         tds = self.system.TDS
+        ts = self.ts
 
-        if tds.config.limit_store is False:
+        if not tds.config.limit_store:
             # write the whole TimeSeries in one step
             txyz_data = self.ts.txyz
             np.savez_compressed(file_path, data=txyz_data)
@@ -786,17 +860,31 @@ class DAE:
         else:
             # create a new npz file and write for the first time
             if self._write_append is False:
-                txyz_data = self.ts.txyz
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
                 np.savez_compressed(file_path, data=txyz_data)
                 self._write_append = True
+                ts.idx_ptr = len(self.ts.t)
 
             # write and append to an existing npz file
             else:
                 self.ts.unpack()
-                txyz_data = self.ts.txyz
+                txyz_data = self.ts.txyz[ts.idx_ptr:, :]
+
+                # skip if no new data
+                if len(txyz_data) == 0:
+                    logger.debug("No new data to write to file. Skipped.")
+                    return
 
                 data = np.load(file_path)['data']
-                data = np.vstack((data, txyz_data))
-                np.savez_compressed(file_path, data=data)
 
-            self.ts.reset()
+                # in most cases, append new data to the existing
+                if len(data) > 0:
+                    data = np.vstack((data, txyz_data))
+                    logger.debug("Appended new data to output file.")
+
+                # in case the previous step stopped at tf=0
+                else:
+                    data = txyz_data
+
+                np.savez_compressed(file_path, data=data)
+                ts.idx_ptr = len(self.ts.t)

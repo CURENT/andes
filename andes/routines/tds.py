@@ -54,6 +54,8 @@ class TDS(BaseRoutine):
                                      ('store_i', 0),
                                      ('limit_store', 0),
                                      ('max_store', 900),
+                                     ('save_every', 1),
+                                     ('save_mode', 'auto'),
                                      ('no_tqdm', 0),
                                      )))
         self.config.add_extra("_help",
@@ -81,6 +83,8 @@ class TDS(BaseRoutine):
                               store_i='store RHS of external algeb. equations',
                               limit_store='limit in-memory timeseries storage',
                               max_store='maximum steps of data stored in memory before offloading',
+                              save_every='save results for one step every "save_every" steps',
+                              save_mode='automatically or manually save output data when done',
                               no_tqdm='disable tqdm progressbar and outputs',
                               )
         self.config.add_extra("_alt",
@@ -107,6 +111,8 @@ class TDS(BaseRoutine):
                               store_i=(0, 1),
                               limit_store=(0, 1),
                               max_store='positive integer',
+                              save_every='integer',
+                              save_mode=('auto', 'manual'),
                               no_tqdm=(0, 1),
                               )
 
@@ -174,6 +180,7 @@ class TDS(BaseRoutine):
             The initial values of xy.
 
         """
+
         t0, _ = elapsed()
         system = self.system
 
@@ -192,6 +199,7 @@ class TDS(BaseRoutine):
         #   to the new array after extending `dae.y`.
         system.set_address(models=system.exist.pflow_tds)
         system.set_dae_names(models=system.exist.tds)
+        system.set_output_subidx(models=system.exist.pflow_tds)
 
         system.dae.clear_ts()
         system.store_sparse_pattern(models=system.exist.pflow_tds)
@@ -271,6 +279,7 @@ class TDS(BaseRoutine):
         -------
         None
         """
+
         out = list()
         out.append('')
         out.append('-> Time Domain Simulation Summary:')
@@ -350,6 +359,10 @@ class TDS(BaseRoutine):
         self.qrt_start = time.time()
         self.headroom = 0.0
 
+        # write variable list file at the beginning
+        if not system.files.no_output:
+            system.dae.write_lst(self.system.files.lst)
+
         t0, _ = elapsed()
 
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
@@ -368,16 +381,27 @@ class TDS(BaseRoutine):
                 self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
-                dae.store()
+                if config.save_every != 0:
+                    if config.save_every == 1:
+                        dae.store()
+                    else:
+                        if dae.kcount % config.save_every == 0:
+                            dae.store()
 
                 # offload if exceeds `max_store`
-                if (not system.files.no_output) and \
-                        self.config.limit_store and \
-                        len(dae.ts._ys) >= self.config.max_store:
+                if self.config.limit_store and len(dae.ts._ys) >= self.config.max_store:
 
-                    self.save_output()
+                    # write to file if enabled
+                    if not system.files.no_output:
+                        self.save_output()
+                        logger.info("Offload data from memory to file for t=%.2f - %.2f sec",
+                                    dae.ts.t[0], dae.ts.t[-1])
+
+                    # clear storage in memory anyway
+                    dae.ts.reset()
 
                 self.streaming_step()
+
                 if self.check_criteria() is False:
                     self.err_msg = 'Violated stability criteria. To turn off, set [TDS].criteria = 0.'
                     self.busted = True
@@ -386,6 +410,7 @@ class TDS(BaseRoutine):
                 self.do_switch()
                 self.calc_h()
                 dae.t += self.h
+                dae.kcount += 1
 
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
@@ -401,8 +426,10 @@ class TDS(BaseRoutine):
                     rt_end = self.qrt_start + self.h * config.kqrt
 
                     # if the ending time has passed
-                    if time.time() - rt_end > 0:
-                        logger.debug('Simulation over-run at t=%4.4g s.', dae.t)
+                    t_overrun = time.time() - rt_end
+                    if t_overrun > 0:
+                        logger.debug('Simulation over-run for %4.4g msec at t=%4.4g s.',
+                                     1000 * t_overrun, dae.t)
                     else:
                         self.headroom += (rt_end - time.time())
 
@@ -428,23 +455,24 @@ class TDS(BaseRoutine):
         else:
             system.exit_code += 1
 
+        # removed `pbar` so that System object can be serialized
         self.pbar.close()
-        self.pbar = None  # removed `pbar` so that System object can be serialized
+        self.pbar = None
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
-        logger.info('Simulation completed in %s.', s1)
+        logger.info('Simulation to t=%.2f sec completed in %s.', config.tf, s1)
 
         if config.qrt:
             logger.debug('QRT headroom time: %.4g s.', self.headroom)
 
         # in case of resumed simulations,
         # manually unpack data to update arrays in `dae.ts`
-        system.dae.ts.unpack()
+        # disable warning in case data has just been dumped
+        system.dae.ts.unpack(warn_empty=False)
 
-        if not system.files.no_output:
+        if (not system.files.no_output) and (config.save_mode == 'auto'):
             t0, _ = elapsed()
-            self.system.dae.write_lst(self.system.files.lst)
             self.save_output()
             _, s1 = elapsed(t0)
 
@@ -478,6 +506,7 @@ class TDS(BaseRoutine):
         """
         Fetch data for the next step from ``data_csv``.
         """
+
         system = self.system
         if self.data_csv is not None:
             system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
@@ -509,6 +538,7 @@ class TDS(BaseRoutine):
         float
             computed time step size stored in ``self.h``
         """
+
         system = self.system
         config = self.config
 
@@ -565,6 +595,7 @@ class TDS(BaseRoutine):
         """
         Compute the first time step and save to ``self.h``.
         """
+
         system = self.system
         config = self.config
 
@@ -620,14 +651,19 @@ class TDS(BaseRoutine):
         """
         Manually load a plotter into ``TDS.plotter``.
         """
+
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
         self.plt = self.plotter
 
     def test_init(self):
         """
-        Update f and g to see if initialization is successful.
+        Test if the TDS initialization is successful.
+
+        This function update ``dae.f`` and ``dae.g` and checks if the residuals
+        are zeros.
         """
+
         system = self.system
         # fg_update is called in TDS.init()
         system.j_update(models=system.exist.pflow_tds)
@@ -684,6 +720,7 @@ class TDS(BaseRoutine):
         ----------
         npz : bool
             True to save in npz format; False to save in npy format.
+
         Returns
         -------
         bool
@@ -695,14 +732,15 @@ class TDS(BaseRoutine):
         else:
             self.system.dae.write_npy(self.system.files.npy)
 
+        self.system.dae.ts.idx_ptr = len(self.system.dae.ts.t)
+
         return True
 
     def do_switch(self):
         """
         Checks if is an event time and perform switch if true.
-
-        Time is approximated with a tolerance of 1e-8.
         """
+
         ret = False
         system = self.system
 
@@ -802,6 +840,7 @@ class TDS(BaseRoutine):
         """
         Load perturbation files to ``self.callpert``.
         """
+
         system = self.system
         if not system.files.pert:
             return False
@@ -824,7 +863,13 @@ class TDS(BaseRoutine):
     def _load_csv(self, csv_file):
         """
         Load simulation data from CSV file and return a numpy array.
+
+        Parameters
+        ----------
+        csv_file : str
+            Path to the CSV file.
         """
+
         if csv_file is None:
             return None
 
@@ -977,7 +1022,9 @@ class TDS(BaseRoutine):
         """
         Set DAE solution method.
 
-        name : str, optional, default: trapezoid
+        Parameters
+        ----------
+        name : str, optional, default: 'trapezoid'
             DAE solver name
         """
 

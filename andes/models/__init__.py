@@ -11,6 +11,7 @@ The package for DAE models in ANDES.
 
 file_classes = list([
     ('info', ['Summary']),
+    ('misc', ['Output']),
     ('timer', ['Toggler', 'Fault', 'Alter']),
     ('timeseries', ['TimeSeries']),
     ('bus', ['Bus']),
