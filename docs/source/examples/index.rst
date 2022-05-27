@@ -24,6 +24,7 @@ can run the examples in a live Jupyter Notebook online using
    ../_examples/ex8.ipynb
    ../_examples/ex9.ipynb
    ../_examples/ex10.ipynb
+   ../_examples/ex11.ipynb
 
 .. toctree::
    :maxdepth: 2
