@@ -678,13 +678,14 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
     return system
 
 
-def plot(**kwargs):
+def plot(*args, **kwargs):
     """
     Wrapper for the plot tool.
     """
 
     from andes.plot import tdsplot
-    tdsplot(**kwargs)
+
+    return tdsplot(*args, **kwargs)
 
 
 def misc(edit_config='', save_config='', show_license=False, clean=True, recursive=False,
