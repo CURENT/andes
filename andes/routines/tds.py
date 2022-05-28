@@ -660,7 +660,7 @@ class TDS(BaseRoutine):
         """
         Test if the TDS initialization is successful.
 
-        This function update ``dae.f`` and ``dae.g` and checks if the residuals
+        This function update ``dae.f`` and ``dae.g`` and checks if the residuals
         are zeros.
         """
 
