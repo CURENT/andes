@@ -17,7 +17,7 @@ class ST2CUTData(PSSBaseData):
     def __init__(self):
         PSSBaseData.__init__(self)
         self.MODE = NumParam(info='Input signal 1', mandatory=True)
-        self.busr = NumParam(info='Remote bus 1')
+        self.busr = IdxParam(info='Remote bus 1')
         self.busf = IdxParam(info='BusFreq idx for signal 1 mode 2',
                              model='BusFreq', )
 
