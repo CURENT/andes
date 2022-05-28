@@ -335,7 +335,13 @@ class TDSData:
             Sort by idx or not, # TODO: implement sort
         fmt : str
             cell formatter
+
+        Returns
+        -------
+        str
+            The path of the exported csv file
         """
+
         if not path:
             path = self._csv_file
         if not idx:
@@ -353,6 +359,8 @@ class TDSData:
             np.savetxt(fd, body, fmt=fmt, delimiter=',')
 
         logger.info(f'CSV data saved to "{path}".')
+
+        return path
 
     def _process_yidx(self, yidx, a):
         """
@@ -1126,23 +1134,29 @@ def tdsplot(filename, y, x=(0,),
     if len(filename) == 1:
         tds_data = TDSData(filename[0])
         if to_csv is True:
-            tds_data.export_csv()
-            return
+            return tds_data.export_csv()
+
         if find is not None:
             out = tds_data.find(query=find, exclude=exclude)
             print(out)
-            return
+            return out
+
         if xargs is not None:
             out = tds_data.find(query=xargs, exclude=exclude, idx_only=True)
             out = [str(i) for i in out]
-            print(filename[0] + ' 0 ' + ' '.join(out))
-            return
+            xargs_out = filename[0] + ' 0 ' + ' '.join(out)
+            print(xargs_out)
+            return xargs_out
+
         if len(y) == 0:
             logger.error('Must specify Y indices to plot.')
-            return
+            return tds_data
+
         y_num = parse_y(y, lower=0, upper=tds_data.nvars)
         tds_data.plot(xidx=x, yidx=y_num, **kwargs)
+
         return tds_data
+
     else:
         raise NotImplementedError("Plotting multiple data files are not supported yet")
 
