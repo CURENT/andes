@@ -22,7 +22,7 @@ class ST2CUTData(PSSBaseData):
                              model='BusFreq', )
 
         self.MODE2 = NumParam(info='Input signal 2')
-        self.busr2 = NumParam(info='Remote bus 2')
+        self.busr2 = IdxParam(info='Remote bus 2')
         self.busf2 = IdxParam(info='BusFreq idx for signal 2 mode 2', model='BusFreq')
 
         self.K1 = NumParam(default=1, tex_name='K_1',
