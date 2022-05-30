@@ -36,11 +36,11 @@ To adjust config on the fly when scripting, there are two cases:
 - Update the config for an existing System object
 
 To update the config when creating a new System object, one can pass a list of
-strings to ``config_options`` for :py:mod:`andes.main.run`:
+strings to ``config_option`` for :py:mod:`andes.main.run`:
 
 .. code:: python
 
-    >>> ss = andes.run("kundur_full.json", config_options=["PV.pv2pq=1"])
+    >>> ss = andes.run("kundur_full.json", config_option=["PV.pv2pq=1"])
 
 which directly calls the backend API for the CLI. To update multiple configs,
 one can do
@@ -48,7 +48,7 @@ one can do
 .. code:: python
 
     >>> ss = andes.run("kundur_full.json",
-                       config_options=["PV.pv2pq=1", "PFlow.sparselib=umfpack"])
+                       config_option=["PV.pv2pq=1", "PFlow.sparselib=umfpack"])
 
 When the System object gets created, the config values will be distributed to
 member attributes of the System object. Therefore, the config for a System object

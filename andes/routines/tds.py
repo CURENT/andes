@@ -180,6 +180,7 @@ class TDS(BaseRoutine):
             The initial values of xy.
 
         """
+
         t0, _ = elapsed()
         system = self.system
 
@@ -278,6 +279,7 @@ class TDS(BaseRoutine):
         -------
         None
         """
+
         out = list()
         out.append('')
         out.append('-> Time Domain Simulation Summary:')
@@ -424,8 +426,10 @@ class TDS(BaseRoutine):
                     rt_end = self.qrt_start + self.h * config.kqrt
 
                     # if the ending time has passed
-                    if time.time() - rt_end > 0:
-                        logger.debug('Simulation over-run at t=%4.4g s.', dae.t)
+                    t_overrun = time.time() - rt_end
+                    if t_overrun > 0:
+                        logger.debug('Simulation over-run for %4.4g msec at t=%4.4g s.',
+                                     1000 * t_overrun, dae.t)
                     else:
                         self.headroom += (rt_end - time.time())
 
@@ -451,8 +455,9 @@ class TDS(BaseRoutine):
         else:
             system.exit_code += 1
 
+        # removed `pbar` so that System object can be serialized
         self.pbar.close()
-        self.pbar = None  # removed `pbar` so that System object can be serialized
+        self.pbar = None
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
@@ -501,6 +506,7 @@ class TDS(BaseRoutine):
         """
         Fetch data for the next step from ``data_csv``.
         """
+
         system = self.system
         if self.data_csv is not None:
             system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
@@ -532,6 +538,7 @@ class TDS(BaseRoutine):
         float
             computed time step size stored in ``self.h``
         """
+
         system = self.system
         config = self.config
 
@@ -588,6 +595,7 @@ class TDS(BaseRoutine):
         """
         Compute the first time step and save to ``self.h``.
         """
+
         system = self.system
         config = self.config
 
@@ -643,14 +651,19 @@ class TDS(BaseRoutine):
         """
         Manually load a plotter into ``TDS.plotter``.
         """
+
         from andes.plot import TDSData  # NOQA
         self.plotter = TDSData(mode='memory', dae=self.system.dae)
         self.plt = self.plotter
 
     def test_init(self):
         """
-        Update f and g to see if initialization is successful.
+        Test if the TDS initialization is successful.
+
+        This function update ``dae.f`` and ``dae.g`` and checks if the residuals
+        are zeros.
         """
+
         system = self.system
         # fg_update is called in TDS.init()
         system.j_update(models=system.exist.pflow_tds)
@@ -707,6 +720,7 @@ class TDS(BaseRoutine):
         ----------
         npz : bool
             True to save in npz format; False to save in npy format.
+
         Returns
         -------
         bool
@@ -725,9 +739,8 @@ class TDS(BaseRoutine):
     def do_switch(self):
         """
         Checks if is an event time and perform switch if true.
-
-        Time is approximated with a tolerance of 1e-8.
         """
+
         ret = False
         system = self.system
 
@@ -827,6 +840,7 @@ class TDS(BaseRoutine):
         """
         Load perturbation files to ``self.callpert``.
         """
+
         system = self.system
         if not system.files.pert:
             return False
@@ -849,7 +863,13 @@ class TDS(BaseRoutine):
     def _load_csv(self, csv_file):
         """
         Load simulation data from CSV file and return a numpy array.
+
+        Parameters
+        ----------
+        csv_file : str
+            Path to the CSV file.
         """
+
         if csv_file is None:
             return None
 
@@ -1002,7 +1022,9 @@ class TDS(BaseRoutine):
         """
         Set DAE solution method.
 
-        name : str, optional, default: trapezoid
+        Parameters
+        ----------
+        name : str, optional, default: 'trapezoid'
             DAE solver name
         """
 

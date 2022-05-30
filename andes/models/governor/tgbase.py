@@ -1,3 +1,7 @@
+"""
+Base class for Turbine Governor models.
+"""
+
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         ExtState, IdxParam, Model, ModelData, NumParam,)
 from andes.core.service import NumSelect
@@ -18,7 +22,7 @@ class TGBaseData(ModelData):
         self.Tn = NumParam(info='Turbine power rating. Equal to `Sn` if not provided.',
                            tex_name='T_n',
                            unit='MVA',
-                           default=None,
+                           default=0.0,
                            )
         self.wref0 = NumParam(info='Base speed reference',
                               tex_name=r'\omega_{ref0}',

@@ -8,6 +8,14 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.7 Notes
 ==========
+v1.7.1 (2022-05-31)
+-------------------
+This release contains minor fixes to the documentation.
+
+Other changes:
+
+- In ``PVD1``, Enable `pmx` limiting by default.
+- In ``ST2CUT``, fix the type of ``busr2`` and ``busr`` to ``IdxParam``.
 
 v1.7.0 (2022-05-22)
 -------------------
