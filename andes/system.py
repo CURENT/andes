@@ -245,24 +245,26 @@ class System:
             # each field follows the format `SECTION.FIELD = VALUE`
 
             if item.count('=') != 1:
-                logger.error('config_option "{}" must be an assignment expression'.format(item))
-                continue
+                raise ValueError('config_option "{}" must be an assignment expression'.format(item))
 
             field, value = item.split("=")
 
             if field.count('.') != 1:
-                logger.error('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
-                continue
+                raise ValueError('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
 
             section, key = field.split(".")
 
+            section = section.strip()
+            key = key.strip()
+            value = value.strip()
+
             if not newobj:
                 self._config_object.set(section, key, value)
-                logger.debug("Config option set: {}={}".format(field, value))
+                logger.debug("Config option set: {}.{}={}".format(section, key, value))
             else:
                 self._config_object.add_section(section)
                 self._config_object.set(section, key, value)
-                logger.debug("Config option added: [{}] {}={}".format(section, field, value))
+                logger.debug("Config option added: {}.{}={}".format(section, key, value))
 
     def reload(self, case, **kwargs):
         """
