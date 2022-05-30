@@ -240,11 +240,20 @@ class System:
             newobj = True
 
         for item in config_option:
-            if item.count('=') != 1 or item.count('.') != 1:
-                logger.error("Invalid config_option option: {}".format(item))
+
+            # check the validity of the config field
+            # each field follows the format `SECTION.FIELD = VALUE`
+
+            if item.count('=') != 1:
+                logger.error('config_option "{}" must be an assignment expression'.format(item))
                 continue
 
             field, value = item.split("=")
+
+            if field.count('.') != 1:
+                logger.error('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
+                continue
+
             section, key = field.split(".")
 
             if not newobj:
