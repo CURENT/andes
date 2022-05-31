@@ -196,9 +196,9 @@ example, to view the system-base per unit value of ``GENROU``, use
 
 Parameter in the table is the same as that in the input file without any
 conversion. Some input data, by convention, are given as per unit in the device
-base; see :ref:`_per_unit_system` for details.
+base; see :ref:`per_unit_system` for details.
 
-Note that :py:method:`andes.core.model.as_df` returns a *view*. Modifying the
+Note that :py:meth:`andes.core.model.as_df` returns a *view*. Modifying the
 returned dataframe *will not* affect the original data used for simulation. To
 modify the data, see Example "Working with Data".
 
