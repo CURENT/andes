@@ -6,6 +6,7 @@ Miscellaneous
 
 Per Unit System
 ===============
+.. _per_unit_system:
 
 The bases for AC system are
 

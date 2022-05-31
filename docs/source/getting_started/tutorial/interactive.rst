@@ -173,27 +173,32 @@ DataFrame
 Parameters for the loaded system can be readily inspected in Jupyter Notebook
 using Pandas.
 
-Input parameters for each model instance is returned by the ``as_df()``
-function. For example, to view the input parameters for ``Bus``, use
+Parameters for a model instance can be retrieved in a DataFrame using the
+``as_df()`` method on the model instance. For example, to view the parameters of
+``Bus``, use
 
 .. code:: python
 
     >>> ss.Bus.as_df()
 
-A table will be printed with the columns being each parameter and the rows being
-Bus instances. Parameter in the table is the same as the input file without
-per-unit conversion.
+A table will be printed with the columns being parameters and the rows being Bus
+devices/instances. For a system that has been setup, parameters have been
+converted to per unit values in the system base specified by ``ss.config.mva``.
+The per-unit values in the system base will be used in computation as all
+computation in ANDES uses system-base per-unit data.
 
-For a system that has been setup, parameters have been converted to per unit
-values under system base. To view the per unit values, use the
-``as_df(vin=True)`` method. For example, to view the system-base per unit value
-of ``GENROU``, use
+To view the original input values, use the ``as_df(vin=True)`` method. For
+example, to view the system-base per unit value of ``GENROU``, use
 
 .. code:: python
 
     >>> ss.GENROU.as_df(vin=True)
 
-Note that what :py:mod:`andes.core.model.as_df` returns is a view. Modifying the
+Parameter in the table is the same as that in the input file without any
+conversion. Some input data, by convention, are given as per unit in the device
+base; see :ref:`_per_unit_system` for details.
+
+Note that :py:method:`andes.core.model.as_df` returns a *view*. Modifying the
 returned dataframe *will not* affect the original data used for simulation. To
 modify the data, see Example "Working with Data".
 
