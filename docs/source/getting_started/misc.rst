@@ -4,6 +4,8 @@
 Miscellaneous
 **********************
 
+.. _per_unit_system:
+
 Per Unit System
 ===============
 

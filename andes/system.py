@@ -240,20 +240,31 @@ class System:
             newobj = True
 
         for item in config_option:
-            if item.count('=') != 1 or item.count('.') != 1:
-                logger.error("Invalid config_option option: {}".format(item))
-                continue
+
+            # check the validity of the config field
+            # each field follows the format `SECTION.FIELD = VALUE`
+
+            if item.count('=') != 1:
+                raise ValueError('config_option "{}" must be an assignment expression'.format(item))
 
             field, value = item.split("=")
+
+            if field.count('.') != 1:
+                raise ValueError('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
+
             section, key = field.split(".")
+
+            section = section.strip()
+            key = key.strip()
+            value = value.strip()
 
             if not newobj:
                 self._config_object.set(section, key, value)
-                logger.debug("Config option set: {}={}".format(field, value))
+                logger.debug("Config option set: {}.{}={}".format(section, key, value))
             else:
                 self._config_object.add_section(section)
                 self._config_object.set(section, key, value)
-                logger.debug("Config option added: [{}] {}={}".format(section, field, value))
+                logger.debug("Config option added: {}.{}={}".format(section, key, value))
 
     def reload(self, case, **kwargs):
         """

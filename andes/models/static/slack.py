@@ -43,6 +43,8 @@ class Slack(SlackData, PVModel):
         self.a.v_str = 'u * a0 + (1-u) * busa0'
 
         delattr(self, 'p')
+        self.services.pop('p')
+
         self.p = Algeb(info='actual active power generation',
                        unit='p.u.',
                        tex_name=r'p',
