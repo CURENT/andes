@@ -8,6 +8,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.7 Notes
 ==========
+v1.7.2 (2022-06-07)
+-------------------
+- Improved documentation and examples.
+
 v1.7.1 (2022-05-31)
 -------------------
 This release contains minor fixes to the documentation.
