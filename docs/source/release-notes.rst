@@ -11,6 +11,8 @@ v1.7 Notes
 v1.7.2 (2022-06-07)
 -------------------
 - Improved documentation and examples.
+- Improved ``to_pandapower`` performance with vectorized conversion.
+- Fixed ``make_link_table``, now group RenGen is included.
 
 v1.7.1 (2022-05-31)
 -------------------
