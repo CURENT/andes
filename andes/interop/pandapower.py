@@ -80,8 +80,8 @@ def make_link_table(ssa):
     DataFrame
 
         Each column in the output Dataframe contains the ``idx`` of linked
-        ``StaticGen``, ``Bus``, ``DG``, ``SynGen``, ``Exciter``, and ``TurbineGov``,
-        ``gammap``, ``gammaq``.
+        ``StaticGen``, ``Bus``, ``DG``, `RenGen`, ``RenExciter``, ``SynGen``,
+        ``Exciter``, and ``TurbineGov``, ``gammap``, ``gammaq``.
     """
     # build StaticGen df
     ssa_stg = build_group_table(ssa, 'StaticGen', ['u', 'name', 'idx', 'bus'])
@@ -135,8 +135,7 @@ def make_link_table(ssa):
                        right=ssa_rexc.rename(columns={'idx': 'rexc_idx', 'reg': 'rg_idx'}))
 
     cols = ['stg_name', 'stg_u', 'stg_idx', 'bus_idx', 'dg_idx', 'rg_idx', 'rexc_idx',
-            'syg_idx', 'exc_idx',
-            'gov_idx', 'bus_name', 'gammap', 'gammaq']
+            'syg_idx', 'exc_idx', 'gov_idx', 'bus_name', 'gammap', 'gammaq']
     return ssa_key[cols].reset_index(drop=True)
 
 
@@ -457,6 +456,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
         number of ``StaticGen``.
         If not given, controllability of generators will be assigned by default.
         Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
+    verify : bool
+        If True, the converted network will be verified with the source ANDES system
+        using AC power flow.
+    tol : float
+        The tolerance of error.
 
     Returns
     -------
