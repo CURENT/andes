@@ -6,7 +6,6 @@ import logging
 import numpy as np
 from functools import wraps
 
-from numpy import NaN, pi
 from andes.shared import pd, rad2deg, deg2rad
 from andes.shared import pandapower as pp
 
@@ -80,7 +79,7 @@ def make_link_table(ssa):
     DataFrame
 
         Each column in the output Dataframe contains the ``idx`` of linked
-        ``StaticGen``, ``Bus``, ``DG``, `RenGen`, ``RenExciter``, ``SynGen``,
+        ``StaticGen``, ``Bus``, ``DG``, ``RenGen``, ``RenExciter``, ``SynGen``,
         ``Exciter``, and ``TurbineGov``, ``gammap``, ``gammaq``.
     """
     # build StaticGen df
@@ -243,7 +242,7 @@ def _to_pp_bus(ssp, ssa_bus):
 def _to_pp_line(ssa, ssp, ssa_bus):
     """Create line in pandapower net"""
     # TODO: 1) from- and to- sides `Y`; 2)`g`
-    omega = 2 * pi * ssp.f_hz
+    omega = 2 * np.pi * ssp.f_hz
 
     ssa_bus_slice = ssa.Bus.as_df()[['idx', 'Vn']].rename(columns={"idx": "bus1", "Vn": "Vb"})
     ssa_line = ssa.Line.as_df().merge(ssa_bus_slice, on='bus1', how='left')
@@ -256,7 +255,7 @@ def _to_pp_line(ssa, ssp, ssa_bus):
     ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
     # default rate_a is 2000 MVA
     ssa_line['rate_a'] = ssa_line['rate_a'].replace(0, 2000)
-    ssa_line['max_i_ka'] = ssa_line["rate_a"] / ssa_line['Vb'] / 1.73205080757  # kA
+    ssa_line['max_i_ka'] = ssa_line["rate_a"] / ssa_line['Vb'] / np.sqrt(3)  # kA
 
     ssa_bus1 = ssa_bus[['idx']]
     ssa_bus1['from_bus'] = ssa_bus.index
@@ -315,7 +314,7 @@ def _to_pp_line(ssa, ssp, ssa_bus):
         tf_df['parallel'] = 1
         tf_df['oltc'] = False
         tf_df['tap_phase_shifter'] = False
-        tf_df['tap_step_degree'] = NaN
+        tf_df['tap_step_degree'] = np.NaN
         tf_df['df'] = 1
         tf_df['std_type'] = None
 
