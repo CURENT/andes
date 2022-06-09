@@ -186,7 +186,7 @@ def runopp_map(ssp, link_table, **kwargs):
     ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq'] / ssp.sn_mva
     col = ['stg_idx', 'p', 'q', 'vm_pu', 'bus_idx', 'controllable',
-           'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx']
+           'dg_idx', 'rg_idx', 'syg_idx', 'gov_idx', 'exc_idx']
     return ssp_res[col]
 
 
