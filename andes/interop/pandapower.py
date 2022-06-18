@@ -6,7 +6,6 @@ import logging
 import numpy as np
 from functools import wraps
 
-from numpy import pi
 from andes.shared import pd, rad2deg, deg2rad
 from andes.shared import pandapower as pp
 
@@ -62,7 +61,7 @@ def build_group_table(ssa, group, columns, mdl_name=[]):
         for key in mdl_name:
             mdl = getattr(ssa, key)
             group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
-    return group_df
+    return group_df.reset_index(drop=True)
 
 
 def make_link_table(ssa):
@@ -80,8 +79,8 @@ def make_link_table(ssa):
     DataFrame
 
         Each column in the output Dataframe contains the ``idx`` of linked
-        ``StaticGen``, ``Bus``, ``DG``, ``SynGen``, ``Exciter``, and ``TurbineGov``,
-        ``gammap``, ``gammaq``.
+        ``StaticGen``, ``Bus``, ``DG``, ``RenGen``, ``RenExciter``, ``SynGen``,
+        ``Exciter``, and ``TurbineGov``, ``gammap``, ``gammaq``.
     """
     # build StaticGen df
     ssa_stg = build_group_table(ssa, 'StaticGen', ['u', 'name', 'idx', 'bus'])
@@ -93,6 +92,10 @@ def make_link_table(ssa):
     ssa_syg = build_group_table(ssa, 'SynGen', ['idx', 'bus', 'gen', 'gammap', 'gammaq'], ['GENCLS', 'GENROU'])
     # build DG df
     ssa_dg = build_group_table(ssa, 'DG', ['idx', 'bus', 'gen', 'gammap', 'gammaq'])
+    # build RenGen df
+    ssa_rg = build_group_table(ssa, 'RenGen', ['idx', 'bus', 'gen', 'gammap', 'gammaq'])
+    # build RenExciter df
+    ssa_rexc = build_group_table(ssa, 'RenExciter', ['idx', 'reg'])
 
     # output
     ssa_bus = ssa.Bus.as_df()[['name', 'idx']]
@@ -104,17 +107,35 @@ def make_link_table(ssa):
                        right=ssa_syg.rename(columns={'idx': 'syg_idx', 'gen': 'stg_idx'}))
     ssa_dg = pd.merge(left=ssa_key, how='right', on='stg_idx',
                       right=ssa_dg.rename(columns={'idx': 'dg_idx', 'gen': 'stg_idx'}))
-    # TODO: Add RenGen
-    ssa_key = pd.concat([ssa_syg, ssa_dg], axis=0)
+    ssa_rg = pd.merge(left=ssa_key, how='right', on='stg_idx',
+                      right=ssa_rg.rename(columns={'idx': 'rg_idx', 'gen': 'stg_idx'}))
+    ssa_key0 = pd.merge(left=ssa_key, how='left', on='stg_idx',
+                        right=ssa_syg[['stg_idx', 'syg_idx']])
+    ssa_key0 = pd.merge(left=ssa_key0, how='left', on='stg_idx',
+                        right=ssa_dg[['stg_idx', 'dg_idx']])
+    ssa_key0 = pd.merge(left=ssa_key0, how='left', on='stg_idx',
+                        right=ssa_rg[['stg_idx', 'rg_idx']])
+    ssa_key0.fillna(False, inplace=True)
+    ssa_key0['dyr'] = ssa_key0['syg_idx'].astype(
+        bool) + ssa_key0['dg_idx'].astype(bool) + ssa_key0['rg_idx'].astype(bool)
+    ssa_key0['dyr'] = 1 - ssa_key0['dyr'].astype(int)
+    ssa_key0['dyr'] = ssa_key0['dyr'].astype(bool)
+    ssa_dyr0 = ssa_key0[ssa_key0.dyr].drop(['dyr'], axis=1)
+    ssa_dyr0['gammap'] = 1
+    ssa_dyr0['gammaq'] = 1
+    ssa_key = pd.concat([ssa_syg, ssa_dg, ssa_rg, ssa_dyr0], axis=0)
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_exc.rename(columns={'idx': 'exc_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_gov.rename(columns={'idx': 'gov_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
-    cols = ['stg_name', 'stg_u', 'stg_idx', 'bus_idx', 'dg_idx', 'syg_idx', 'exc_idx',
-            'gov_idx', 'bus_name', 'gammap', 'gammaq']
-    return ssa_key[cols]
+    ssa_key = pd.merge(left=ssa_key, how='left', on='rg_idx',
+                       right=ssa_rexc.rename(columns={'idx': 'rexc_idx', 'reg': 'rg_idx'}))
+
+    cols = ['stg_name', 'stg_u', 'stg_idx', 'bus_idx', 'dg_idx', 'rg_idx', 'rexc_idx',
+            'syg_idx', 'exc_idx', 'gov_idx', 'bus_name', 'gammap', 'gammaq']
+    return ssa_key[cols].reset_index(drop=True)
 
 
 @require_pandapower
@@ -146,7 +167,11 @@ def runopp_map(ssp, link_table, **kwargs):
         The power is dispatched to each ``DG`` by the power ratio ``gammap``
     """
 
-    pp.runopp(ssp, **kwargs)
+    try:
+        pp.runopp(ssp, **kwargs)
+    except:
+        pp.rundcopp(ssp, **kwargs)
+        logger.warning("ACOPF failed, DCOPF is used instead.")
 
     # take dispatch results from pp
     ssp_gen = ssp.gen.rename(columns={'name': 'stg_idx'})
@@ -161,7 +186,7 @@ def runopp_map(ssp, link_table, **kwargs):
     ssp_res['p'] = ssp_res['p_mw'] * ssp_res['gammap'] / ssp.sn_mva
     ssp_res['q'] = ssp_res['q_mvar'] * ssp_res['gammaq'] / ssp.sn_mva
     col = ['stg_idx', 'p', 'q', 'vm_pu', 'bus_idx', 'controllable',
-           'dg_idx', 'syg_idx', 'gov_idx', 'exc_idx']
+           'dg_idx', 'rg_idx', 'syg_idx', 'gov_idx', 'exc_idx']
     return ssp_res[col]
 
 
@@ -204,23 +229,20 @@ def add_gencost(ssp, gen_cost):
 
 def _to_pp_bus(ssp, ssa_bus):
     """Create bus in pandapower net"""
-    for uid in ssa_bus.index:
-        pp.create_bus(net=ssp,
-                      vn_kv=ssa_bus["Vn"].iloc[uid],
-                      name=ssa_bus["name"].iloc[uid],
-                      in_service=ssa_bus["u"].iloc[uid],
-                      max_vm_pu=ssa_bus["vmax"].iloc[uid],
-                      min_vm_pu=ssa_bus["vmin"].iloc[uid],
-                      zone=ssa_bus["zone"].iloc[uid],
-                      index=uid,
-                      )
+    bus_cols = ['Vn', 'name', 'u', 'vmax', 'vmin', 'zone']
+    bus_df = ssa_bus[bus_cols]
+    bus_df.columns = ['vn_kv', 'name', 'in_service', 'max_vm_pu', 'min_vm_pu', 'zone']
+    bus_df['type'] = 'b'
+    bus_df['in_service'] = bus_df['in_service'].astype('bool')
+    bus_df.reset_index(inplace=True, drop=True)
+    setattr(ssp, 'bus', bus_df)
     return ssp
 
 
 def _to_pp_line(ssa, ssp, ssa_bus):
     """Create line in pandapower net"""
     # TODO: 1) from- and to- sides `Y`; 2)`g`
-    omega = 2 * pi * ssp.f_hz
+    omega = 2 * np.pi * ssp.f_hz
 
     ssa_bus_slice = ssa.Bus.as_df()[['idx', 'Vn']].rename(columns={"idx": "bus1", "Vn": "Vb"})
     ssa_line = ssa.Line.as_df().merge(ssa_bus_slice, on='bus1', how='left')
@@ -233,83 +255,78 @@ def _to_pp_line(ssa, ssp, ssa_bus):
     ssa_line['G'] = ssa_line["g"] * ssa_line['Yb'] * 1e6  # mS
     # default rate_a is 2000 MVA
     ssa_line['rate_a'] = ssa_line['rate_a'].replace(0, 2000)
-    ssa_line['max_i_ka'] = ssa_line["rate_a"] / ssa_line['Vb']  # kA
+    ssa_line['max_i_ka'] = ssa_line["rate_a"] / ssa_line['Vb'] / np.sqrt(3)  # kA
 
-    # find index for transmission lines (i.e., non-transformers)
-    ssl = ssa_line
-    ssl['uidx'] = ssl.index
-    index_line = ssl['uidx'][ssl['Vn1'] == ssl['Vn2']][ssl['trans'] == 0]
+    ssa_bus1 = ssa_bus[['idx']]
+    ssa_bus1['from_bus'] = ssa_bus.index
+    ssa_bus1.rename(columns={'uid': 'from_bus', 'idx': 'bus1'}, inplace=True)
+    ssa_bus1 = ssa_bus1.reset_index(drop=True)
+    ssa_bus2 = ssa_bus1.copy()
+    ssa_bus2.rename(columns={'from_bus': 'to_bus', 'bus1': 'bus2'}, inplace=True)
+    ssa_line = ssa_line.merge(ssa_bus1, on='bus1', how='left')
+    ssa_line = ssa_line.merge(ssa_bus2, on='bus2', how='left')
 
     ssa_line['name'] = _rename(ssa_line['name'])
-    # --- 2a. transmission lines ---
-    for num, uid in enumerate(index_line):
-        from_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus1"].iloc[uid]].values[0]
-        to_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus2"].iloc[uid]].values[0]
-        from_bus = pp.get_element_index(ssp, 'bus', name=from_bus_name)
-        to_bus = pp.get_element_index(ssp, 'bus', name=to_bus_name)
 
-        pp.create_line_from_parameters(
-            net=ssp,
-            name=ssa_line["name"].iloc[uid],
-            from_bus=from_bus,
-            to_bus=to_bus,
-            in_service=ssa_line["u"].iloc[uid],
-            length_km=1,
-            r_ohm_per_km=ssa_line['R'].iloc[uid],
-            x_ohm_per_km=ssa_line['X'].iloc[uid],
-            c_nf_per_km=ssa_line['C'].iloc[uid],
-            #    g_us_per_km = ssa_line['R'].iloc[uid],
-            max_i_ka=ssa_line['max_i_ka'].iloc[uid],
-            type='ol',
-            max_loading_percent=100,
-            index=num,
-        )
+    line_cols = ['name', 'from_bus', 'to_bus', 'u', 'R', 'X', 'C', 'G', 'max_i_ka']
+    line_df = ssa_line[line_cols][ssa_line['trans'] == 0].reset_index(drop=True)
+    line_df['length_km'] = 1
+    line_df['type'] = 'ol'
+    line_df['parallel'] = 1
+    line_df['max_loading_percent'] = 100
+    line_df['df'] = 1
+    line_df['std_type'] = None
+    line_df.rename(columns={'R': 'r_ohm_per_km', 'X': 'x_ohm_per_km',
+                            'C': 'c_nf_per_km', 'G': 'g_us_per_km',
+                            'u': 'in_service'}, inplace=True)
+    line_df['in_service'] = line_df['in_service'].astype('bool')
+    setattr(ssp, 'line', line_df)
 
-    # --- 2b. transformer ---
-    for num, uid in enumerate(ssa_line[~ssa_line.index.isin(index_line)].index):
-        from_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus1"].iloc[uid]].values[0]
-        to_bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_line["bus2"].iloc[uid]].values[0]
-        from_bus = pp.get_element_index(ssp, 'bus', name=from_bus_name)
-        to_bus = pp.get_element_index(ssp, 'bus', name=to_bus_name)
-        from_vn_kv = ssp.bus['vn_kv'].iloc[from_bus]
-        to_vn_kv = ssp.bus['vn_kv'].iloc[to_bus]
-        if from_vn_kv >= to_vn_kv:
-            hv_bus = from_bus
-            vn_hv_kv = from_vn_kv
-            lv_bus = to_bus
-            vn_lv_kv = to_vn_kv
-            tap_side = 'hv'
-        else:
-            hv_bus = to_bus
-            vn_hv_kv = to_vn_kv
-            lv_bus = from_bus
-            vn_lv_kv = from_vn_kv
-            tap_side = 'lv'
+    tf_df = ssa_line[ssa_line['trans'] == 1].reset_index(drop=True)
+    if tf_df.shape[0] > 1:
+        tf_df.rename(columns={'R': 'r_ohm_per_km', 'X': 'x_ohm_per_km',
+                              'C': 'c_nf_per_km', 'G': 'g_us_per_km',
+                              'u': 'in_service'}, inplace=True)
+        tf_df['in_service'] = tf_df['in_service'].astype('bool')
 
-        rk = ssa_line['r'].iloc[uid]
-        xk = ssa_line['x'].iloc[uid]
-        zk = (rk ** 2 + xk ** 2) ** 0.5
-        sn = 99999.0
-        baseMVA = ssp.sn_mva
+        tf_df['hv_bus'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
+            lambda x: x[0] if x[2] >= x[3] else x[1], axis=1)
+        tf_df['lv_bus'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
+            lambda x: x[0] if x[2] < x[3] else x[1], axis=1)
+        tf_df[['hv_bus', 'lv_bus']] = tf_df[['hv_bus', 'lv_bus']].astype('int')
+        tf_df['vn_hv_kv'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
+            lambda x: x[2] if x[2] >= x[3] else x[3], axis=1)
+        tf_df['vn_lv_kv'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
+            lambda x: x[2] if x[2] < x[3] else x[3], axis=1)
+        tf_df['tap_side'] = tf_df[['Vn1', 'Vn2']].apply(lambda x: 'hv' if x[0] >= x[1] else 'lv', axis=1)
 
-        ratio_1 = (ssa_line['tap'].iloc[uid] - 1) * 100
-        i0_percent = -ssa_line['b'].iloc[uid] * 100 * baseMVA / sn
+        tf_df['zk'] = (tf_df['r'] ** 2 + tf_df['x'] ** 2) ** 0.5
+        tf_df['sn_mva'] = 99999
+        tf_df['vk_percent'] = np.sign(tf_df['x']) * tf_df['zk'] * tf_df['sn_mva'] * 100 / ssp.sn_mva
+        tf_df['vkr_percent'] = tf_df['r'] * tf_df['sn_mva'] * 100 / ssp.sn_mva
+        tf_df['max_loading_percent'] = 100
+        tf_df['pfe_kw'] = 0
+        tf_df['i0_percent'] = -tf_df['b'] * 100 * ssp.sn_mva / tf_df['sn_mva']
+        tf_df['shift_degree'] = tf_df['phi'] * rad2deg
+        tf_df['tap_step_percent'] = abs((tf_df['tap'] - 1) * 100)
+        tf_df['tap_pos'] = np.sign((tf_df['tap'] - 1) * 100)
+        tf_df['tap_neutral'] = 0
+        tf_df['parallel'] = 1
+        tf_df['oltc'] = False
+        tf_df['tap_phase_shifter'] = False
+        tf_df['tap_step_degree'] = np.NaN
+        tf_df['df'] = 1
+        tf_df['std_type'] = None
 
-        pp.create_transformer_from_parameters(
-            net=ssp,
-            hv_bus=hv_bus,
-            lv_bus=lv_bus,
-            sn_mva=sn,
-            vn_hv_kv=vn_hv_kv,
-            vn_lv_kv=vn_lv_kv,
-            vk_percent=np.sign(xk) * zk * sn * 100 / baseMVA,
-            vkr_percent=rk * sn * 100 / baseMVA,
-            max_loading_percent=100,
-            pfe_kw=0, i0_percent=i0_percent,
-            shift_degree=ssa_line['phi'].iloc[uid] * rad2deg,
-            tap_step_percent=abs(ratio_1), tap_pos=np.sign(ratio_1),
-            tap_side=tap_side, tap_neutral=0,
-            index=num)
+        trafo_cols = ['name', 'hv_bus', 'lv_bus', 'sn_mva', 'vn_hv_kv',
+                      'vn_lv_kv', 'vk_percent', 'vkr_percent', 'pfe_kw', 'i0_percent',
+                      'shift_degree', 'tap_side', 'tap_neutral',
+                      'tap_step_percent', 'tap_pos', 'in_service',
+                      'max_loading_percent', 'parallel', 'tap_phase_shifter',
+                      'tap_step_degree', 'df', 'std_type']
+
+        tf_df[trafo_cols].reset_index(drop=True)
+        setattr(ssp, 'trafo', tf_df[trafo_cols].reset_index(drop=True))
     return ssp
 
 
@@ -320,20 +337,19 @@ def _to_pp_load(ssa, ssp, ssa_bus):
     ssa_pq['q_mvar'] = ssa_pq["q0"] * ssp.sn_mva
 
     ssa_pq['name'] = _rename(ssa_pq['name'])
-    for uid in ssa_pq.index:
-        bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_pq["bus"].iloc[uid]].values[0]
-        bus = pp.get_element_index(ssp, 'bus', name=bus_name)
-        pp.create_load(net=ssp,
-                       name=ssa_pq["name"].iloc[uid],
-                       bus=bus,
-                       sn_mva=ssp.sn_mva,
-                       p_mw=ssa_pq['p_mw'].iloc[uid],
-                       q_mvar=ssa_pq['q_mvar'].iloc[uid],
-                       in_service=ssa_pq["u"].iloc[uid],
-                       controllable=False,
-                       index=uid,
-                       type=None,
-                       )
+    pq_cols = ['name', 'u', 'p_mw', 'q_mvar', 'bus']
+    load_df = ssa_pq[pq_cols].reset_index(drop=True)
+    load_df.rename(columns={'u': 'in_service', 'bus': 'idx'}, inplace=True)
+    load_df['in_service'] = load_df['in_service'].astype('bool')
+    load_df = load_df.merge(ssa_bus[['idx', 'bus']], on='idx', how='left')
+    load_df['sn_mva'] = ssp.sn_mva
+    load_df['controllable'] = False
+    load_df['type'] = None
+    load_df['const_i_percent'] = 0
+    load_df['const_z_percent'] = 0
+    load_df['scaling'] = 1
+    load_df.drop(['idx'], axis=1, inplace=True)
+    setattr(ssp, 'load', load_df)
     return ssp
 
 
@@ -344,20 +360,17 @@ def _to_pp_shunt(ssa, ssp, ssa_bus):
     ssa_shunt['q_mvar'] = ssa_shunt["b"] * (-1) * ssp.sn_mva
 
     ssa_shunt['name'] = _rename(ssa_shunt['name'])
-    for uid in ssa_shunt.index:
-        bus_name = ssa_bus["name"][ssa_bus["idx"] == ssa_shunt["bus"].iloc[uid]].values[0]
-        bus = pp.get_element_index(ssp, 'bus', name=bus_name)
-        pp.create_shunt(net=ssp,
-                        bus=bus,
-                        p_mw=ssa_shunt['p_mw'].iloc[uid],
-                        q_mvar=ssa_shunt['q_mvar'].iloc[uid],
-                        vn_kv=ssa_shunt["Vn"].iloc[uid],
-                        step=1,
-                        max_step=1,
-                        name=ssa_shunt["name"].iloc[uid],
-                        in_service=ssa_shunt["u"].iloc[uid],
-                        index=uid,
-                        )
+    shunt_cols = ['name', 'u', 'p_mw', 'q_mvar', 'bus', 'Vn']
+    shunt_df = ssa_shunt[shunt_cols].reset_index(drop=True)
+    shunt_df.rename(inplace=True,
+                    columns={'u': 'in_service', 'bus': 'idx',
+                             'Vn': 'vn_kv'})
+    shunt_df['in_service'] = shunt_df['in_service'].astype('bool')
+    shunt_df = shunt_df.merge(ssa_bus[['idx', 'bus']], on='idx', how='left')
+    shunt_df['step'] = 1
+    shunt_df['max_step'] = 1
+    shunt_df.drop(['idx'], axis=1, inplace=True)
+    setattr(ssp, 'shunt', shunt_df)
     return ssp
 
 
@@ -410,23 +423,21 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
     ssa_sg["ctrl"] = [bool(x) for x in ctrl]
 
     ssa_sg['name'] = _rename(ssa_sg['name'])
-    # conversion
-    for uid in ssa_sg.index:
-        pp.create_gen(net=ssp,
-                      slack=ssa_sg["slack"].iloc[uid],
-                      bus=ssa_sg["pp_bus"].iloc[uid],
-                      p_mw=ssa_sg["p0"].iloc[uid],
-                      vm_pu=ssa_sg["v0"].iloc[uid],
-                      sn_mva=ssp.sn_mva,
-                      name=ssa_sg['name'].iloc[uid],
-                      controllable=ssa_sg["ctrl"].iloc[uid],
-                      in_service=ssa_sg["stg_u"].iloc[uid],
-                      max_p_mw=ssa_sg["pmax"].iloc[uid],
-                      min_p_mw=ssa_sg["pmin"].iloc[uid],
-                      max_q_mvar=ssa_sg["qmax"].iloc[uid],
-                      min_q_mvar=ssa_sg["qmin"].iloc[uid],
-                      index=uid,
-                      )
+    gen_cols = ['name', 'slack', 'pp_bus', 'p0', 'v0', 'ctrl',
+                'stg_u', 'pmax', 'pmin', 'qmax', 'qmin']
+    gen_df = ssa_sg[gen_cols].copy()
+    gen_df.rename(inplace=True,
+                  columns={'pp_bus': 'bus', 'p0': 'p_mw',
+                           'v0': 'vm_pu', 'ctrl': 'controllable',
+                           'stg_u': 'in_service', 'pmax': 'max_p_mw',
+                           'pmin': 'min_p_mw', 'qmax': 'max_q_mvar',
+                           'qmin': 'min_q_mvar'})
+    gen_df['in_service'] = gen_df['in_service'].astype('bool')
+    gen_df['controllable'] = gen_df['controllable'].astype('bool')
+    gen_df['slack_weight'] = gen_df['slack'].astype('float')
+    gen_df['scaling'] = 1
+    gen_df['sn_mva'] = ssp.sn_mva
+    setattr(ssp, 'gen', gen_df)
     return ssp
 
 
@@ -444,6 +455,11 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
         number of ``StaticGen``.
         If not given, controllability of generators will be assigned by default.
         Example input: [1, 0, 1, ...]; ``PV`` first, then ``Slack``.
+    verify : bool
+        If True, the converted network will be verified with the source ANDES system
+        using AC power flow.
+    tol : float
+        The tolerance of error.
 
     Returns
     -------
@@ -472,6 +488,7 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     # build bus table
     ssa_bus = ssa.Bus.as_df()
     ssa_bus['name'] = _rename(ssa_bus['name'])
+    ssa_bus['bus'] = ssa_bus.index
 
     # --- 1. convert buses ---
     ssp = _to_pp_bus(ssp, ssa_bus)
@@ -597,14 +614,20 @@ def _verifyGSF(ppn, gsf, tol=1e-4):
 
 def _sumPF_ppn(ppn):
     """Summarize PF results of a pandapower net"""
-    rg = pd.concat([ppn.res_gen[['p_mw']], ppn.gen[['bus']]], axis=1).rename(columns={'p_mw': 'gen'})
-    rd = pd.concat([ppn.res_load[['p_mw']], ppn.load[['bus']]], axis=1).rename(columns={'p_mw': 'demand'})
+    rg = pd.DataFrame()
+    rg['gen'] = ppn.res_gen['p_mw']
+    rg['bus'] = ppn.gen['bus']
+    rg = rg.groupby('bus').sum()
+    rg.reset_index(inplace=True)
+    rd = pd.DataFrame()
+    rd['demand'] = ppn.res_load['p_mw']
+    rd['bus'] = ppn.load['bus']
+    rd = rd.groupby('bus').sum()
+    rd.reset_index(inplace=True)
     rp = pd.DataFrame()
     rp['bus'] = ppn.bus.index
-    rp = rp.merge(rg, on='bus', how='left')
-    rp = rp.merge(rd, on='bus', how='left')
+    rp = pd.merge(rp, rg, how='left', on='bus')
+    rp = pd.merge(rp, rd, how='left', on='bus')
     rp.fillna(0, inplace=True)
     rp['ngen'] = rp['gen'] - rp['demand']
-    rp = rp.groupby('bus').sum().reset_index(drop=True)
-    rp['bus'] = rp.index
     return rp
