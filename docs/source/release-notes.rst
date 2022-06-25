@@ -8,6 +8,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.7 Notes
 ==========
+v1.7.3 (2022-06-08)
+-------------------
+- Improved ``to_pandapower`` performance using vectorized conversion.
+- Enhanced ``make_link_table`` to include group RenGen.
+
 v1.7.2 (2022-06-07)
 -------------------
 - Improved documentation and examples.
