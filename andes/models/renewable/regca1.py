@@ -5,6 +5,7 @@ Module for renewable energy generator (converter) model A.
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Model, ModelData, NumParam, Piecewise,)
 from andes.core.block import GainLimiter, LagAntiWindupRate
+from andes.core.service import PostInitService
 
 
 class REGCA1Data(ModelData):
@@ -191,10 +192,13 @@ class REGCA1Model(Model):
         # `Ipcmd` is not defined when the initial `LVG_y` is zero
         self.Ipcmd = Algeb(tex_name='I_{pcmd}',
                            info='current component for active power',
-                           e_str='Ipcmd0 - Ipcmd * LVG_y',
+                           e_str='Ipcmd0_LVG - Ipcmd',
                            v_str='Indicator(LVG_y>0) * Ipcmd0 / LVG_y + Indicator(LVG_y<=0) * 1',
                            diag_eps=True,
                            )
+
+        self.Ipcmd0_LVG = PostInitService(v_str='Ipcmd',
+                                          info='initial Ipcmd considering initial LVG output')
 
         self.Iqcmd = Algeb(tex_name='I_{qcmd}',
                            info='current component for reactive power',
