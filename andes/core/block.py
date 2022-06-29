@@ -1437,10 +1437,12 @@ class LeadLag2ndOrd(Block):
              │ 1 + sT1 + s^2 T2 │
              └──────────────────┘
 
-    Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
+    Exports two internal states (`x1` and `x2`) and output algebraic variable
+    `y`.
 
-    # TODO: instead of implementing `zero_out` using `LessThan` and an additional
-    term, consider correcting all parameters to 1 if all are 0.
+    The current implementation allows any or all parameters to be zero.  Four
+    ``LessThan`` blocks are used to check if the parameter values are all zero.
+    If yes, ``y = u`` will be imposed in the algebraic equation.
 
     """
 
@@ -1459,6 +1461,9 @@ class LeadLag2ndOrd(Block):
         self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=True)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+        # TODO: instead of implementing `zero_out` using `LessThan` and an
+        #   additional term, consider correcting all parameters to 1 if all are 0.
 
         if self.zero_out is True:
             self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
