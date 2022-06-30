@@ -8,6 +8,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 v1.7 Notes
 ==========
+
+v1.7.4 (2022-07-XX)
+-------------------
+
+- New model: ESAC5A. (Contributed by Ahmad Ali).
+
 v1.7.3 (2022-06-25)
 -------------------
 
