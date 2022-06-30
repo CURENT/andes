@@ -76,20 +76,20 @@ Instead of converting ``raw`` and ``dyr`` to ``xlsx`` before adding
 disturbances, one can edit the ``.dyr`` file with a planin-text editor (such as
 Notepad) and append lines customized for ANDES models. This is for advanced
 users after referring to ``andes/io/psse-dyr.yaml``, at the end of which one can
-find the format of ``Toggler``: ::
+find the format of ``Toggle``: ::
 
     # === Custom Models ===
-    Toggler:
+    Toggle:
         inputs:
             - model
             - dev
             - t
 
-To define two Togglers in the ``.dyr`` file, one can append lines to the end of
+To define two Toggles in the ``.dyr`` file, one can append lines to the end of
 the file using, for example, ::
 
-    Line   'Toggler'  Line_2  1 /
-    Line   'Toggler'  Line_2  1.1 /
+    Line   'Toggle'  Line_2  1 /
+    Line   'Toggle'  Line_2  1.1 /
 
 which is separated by spaces and ended with a slash. The second parameter is
 fixed to the model name quoted by a pair of single quotation marks, and the

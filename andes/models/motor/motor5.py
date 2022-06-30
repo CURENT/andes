@@ -61,7 +61,7 @@ class Motor5(MotorBaseData, Motor5Model):
     See "Power System Modelling and Scripting" by F. Milano.
 
     To simulate motor startup, set the motor status ``u`` to ``0``
-    and use a ``Toggler`` to control the model.
+    and use a ``Toggle`` to control the model.
     """
 
     def __init__(self, system, config):

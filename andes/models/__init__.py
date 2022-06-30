@@ -12,7 +12,7 @@ The package for DAE models in ANDES.
 file_classes = list([
     ('info', ['Summary']),
     ('misc', ['Output']),
-    ('timer', ['Toggler', 'Fault', 'Alter']),
+    ('timer', ['Toggle', 'Fault', 'Alter']),
     ('timeseries', ['TimeSeries']),
     ('bus', ['Bus']),
     ('static', ['PQ', 'PV', 'Slack']),
@@ -43,4 +43,4 @@ file_classes = list([
 ])
 
 
-model_aliases = {"REGCVSG": "REGCV1", "REGCVSG2": "REGCV2"}
+model_aliases = {"REGCVSG": "REGCV1", "REGCVSG2": "REGCV2", "Toggler": "Toggle"}

@@ -40,10 +40,10 @@ generalizes line as a power injection model.
 
 Q: Without admittance matrix, how to switch out lines?
 
-A: Lines can be switched out and in by using ``Toggler``.
+A: Lines can be switched out and in by using ``Toggle``.
 See the example in ``cases/kundur/kundur_full.xlsx``.
 One does not need to manually trigger a Jacobian matrix rebuild
-because ``Toggler`` automatically triggers it using the new
+because ``Toggle`` automatically triggers it using the new
 connectivity status.
 
 Reference of the existing model

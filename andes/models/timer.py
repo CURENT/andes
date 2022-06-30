@@ -13,9 +13,9 @@ from andes.shared import tqdm
 logger = logging.getLogger(__name__)
 
 
-class TogglerData(ModelData):
+class ToggleData(ModelData):
     def __init__(self):
-        super(TogglerData, self).__init__()
+        super(ToggleData, self).__init__()
         self.model = DataParam(info='model or group name of the device',
                                mandatory=True,
                                )
@@ -27,18 +27,17 @@ class TogglerData(ModelData):
                             )
 
 
-class Toggler(TogglerData, Model):
+class Toggle(ToggleData, Model):
     """
-    Time-based connectivity status toggler.
+    Time-based connectivity status toggle.
 
-    Toggler is used to toggle the connection status
-    of a device at a predefined time.
-    Both the model name (or group name) and the device
-    idx need to be provided.
+    Toggle is used to toggle the connection status of a device at a predefined
+    time. Both the model name (or group name) and the device idx need to be
+    provided.
     """
 
     def __init__(self, system, config):
-        TogglerData.__init__(self)
+        ToggleData.__init__(self)
         Model.__init__(self, system, config)
         self.flags.update({'tds': True})
         self.group = 'TimedEvent'
@@ -71,7 +70,7 @@ class Toggler(TogglerData, Model):
             u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
             instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
             action = True
-            tqdm.write(f'<Toggler {self.idx.v[i]}>: '
+            tqdm.write(f'<Toggle {self.idx.v[i]}>: '
                        f'{self.model.v[i]}.{self.dev.v[i]} status '
                        f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
         return action

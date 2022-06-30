@@ -1465,12 +1465,12 @@ WTTQA1:
         TRATE: Tn
 
 # === Custom Models ===
-Toggler:
+Toggle:
     inputs:
         - model
         - dev
         - t
-    destination: Toggler
+    destination: Toggle
     outputs:
         model: model
         dev: dev
