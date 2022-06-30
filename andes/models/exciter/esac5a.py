@@ -1,3 +1,7 @@
+"""
+Module for ESAC5A exciter model.
+"""
+
 from andes.core.block import Lag, LagAntiWindup, LeadLag, Washout
 from andes.core.param import NumParam
 from andes.core.service import PostInitService, ConstService
@@ -98,7 +102,7 @@ class ESAC5AData(ExcBaseData):
                             )
 
 
-class ESAC5AModel(ExcBase, ExcVsum):
+class ESAC5AModel(ExcBase, ExcVsum, ExcACSat):
     """
     ESAC5A model implementation.
     """
