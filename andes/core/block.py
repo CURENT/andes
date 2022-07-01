@@ -1057,7 +1057,9 @@ class Lag(Block):
 
 class LagFreeze(Lag):
     """
-    Lag with a state freeze input.
+    Lag with an input to freeze the state.
+
+    During the period when the freeze signal is 1, the LagFreeze output will be frozen.
     """
 
     def __init__(self, u, T, K, freeze, D=1, name=None, tex_name=None, info=None):
@@ -1157,7 +1159,7 @@ class LagAWFreeze(LagAntiWindup):
     """
     Lag with anti-windup limiter and state freeze.
 
-    The output `y` is a state variable.
+    Note that the output `y` is a state variable.
     """
 
     def __init__(self, u, T, K, lower, upper, freeze, D=1,
@@ -1182,6 +1184,8 @@ class LagAWFreeze(LagAntiWindup):
             T \dot{y} &= (1 - freeze) (Ku - y) \\
             y^{(0)} &= K u
 
+        ``y`` undergoes an anti-windup limiter.
+
         """
         LagAntiWindup.define(self)
         self.y.e_str = f'(1 - {self.freeze.name}) * ({self.K.name} * {self.u.name} - {self.name}_y)'
@@ -1189,20 +1193,17 @@ class LagAWFreeze(LagAntiWindup):
 
 class LagRate(Block):
     r"""
-    Lag (low pass filter) transfer function block with a rate limiter and an
-    anti-windup limiter.
+    Lag (low pass filter) transfer function block with a rate limiter.
 
     ::
 
-                    rate_upper
-                   /
-             ┌────────┐
-             │    K   │
-        u -> │ ────── │ -> y
-             │ D + sT │
-             └────────┘
-                 /
-        rate_lower
+                     / rate_upper
+               ┌────────┐
+               │    K   │
+          u -> │ ────── │ -> y
+               │ D + sT │
+               └────────┘
+        rate_lower /
 
     Exports one state variable `y` as the output and one AntiWindupRate instance `lim`.
 
@@ -1243,6 +1244,8 @@ class LagRate(Block):
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
+        # TODO: check if the rate is correct when `t_const` is not 1
+
     def define(self):
         r"""
 
@@ -1267,15 +1270,15 @@ class LagAntiWindupRate(Block):
 
     ::
 
-                     upper && rate_upper
-                   /¯¯¯¯¯¯
+                     upper
+        rate_upper /¯¯¯¯¯¯
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
              │ D + sT │
              └────────┘
-           ______/
-           lower & rate_lower
+           ______/ rate_lower
+           lower
 
     Exports one state variable `y` as the output and one AntiWindupRate instance `lim`.
 
