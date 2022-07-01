@@ -31,9 +31,20 @@ class Toggle(ToggleData, Model):
     """
     Time-based connectivity status toggle.
 
-    Toggle is used to toggle the connection status of a device at a predefined
-    time. Both the model name (or group name) and the device idx need to be
-    provided.
+    Toggle is used to toggle the connection status (online/offline) of a device
+    at the predefined time. Both the model name (or group name) and the device
+    idx need to be specified. It effectively negates the ``u`` field of the
+    connected device.
+
+    Toggle can be useful to implement disconnection, connection, and
+    reconnection of devices. For example, a line trip can be implemented by
+    setting ``Line`` to the ``model`` field and the corresponding line's ``idx``
+    to the ``dev`` field.
+
+    Multiple Toggles can be added to the same device at different times. Adding
+    two Toggles for an initially connected line with ``t=0.1`` and ``t=0.2``,
+    for instance, will disconnect the line at t=0.1 sec and reconnect it at
+    t=0.2 sec.
     """
 
     def __init__(self, system, config):
@@ -78,10 +89,25 @@ class Toggle(ToggleData, Model):
 
 class Fault(ModelData, Model):
     """
-    Three-phase to ground fault.
+    Three-phase-to-ground fault.
 
-    Two times, `tf` and `tc`, can be defined for fault on
-    for fault clearance.
+    A Fault device is used to apply and clear three-phase-to-ground fault to the
+    given bus. One can set two time parameters, ``tf`` and ``tc``, for the
+    fault-on and fault-clearance time, respectively, although only ``tf`` is
+    mandatory.
+
+    A fault is implemented by a very small internal shunt impedance to be
+    connected at the fault-on time. Its reactance and resistance are specified
+    by the parameters ``xf`` and ``rf``.
+
+    To implement a fault and its clearance by tripping a line, one can combine
+    ``Fault`` and ``Toggle``. That is, clear a fault in concurrence with a
+    Toggle. The user needs to ensure data consistency so that the line trip
+    actually clears the fault.
+
+    Non-convergence can occur in the proximity of a fault due to various reasons,
+    including network power transfer capability limitation and parameter issues
+    of controllers.
     """
 
     def __init__(self, system, config):
@@ -99,7 +125,7 @@ class Fault(ModelData, Model):
                              unit='second',
                              callback=self.clear_fault,
                              )
-        self.xf = NumParam(info='Fault to ground impedance (positive)',
+        self.xf = NumParam(info='Fault to ground reactance (positive)',
                            unit='p.u.(sys)',
                            default=1e-4,
                            tex_name='x_f',
@@ -320,8 +346,27 @@ class AlterModel(Model):
 
 class Alter(AlterData, AlterModel):
     """
-    Model for altering device internal data (service or param)
-    at a given time.
+    Model for altering device internal data at predefined time.
+
+    Alter is useful to apply load changing, tap changing, step response, etc.
+    can be applied to parameters and constant services but cannot be used to
+    update variables.
+
+    Alter is implemented by applying the given calculation to the ``v`` field of
+    the linked parameter or constsnt. Alter will not affect other parameters or
+    constants that depend on the altered variable.
+
+    It is not uncommon for equations to depend on intermediate constants rather
+    than the input parameters. Therefore, one will need to inspect model
+    equations to determine the parameter/service to be altered.
+
+    Examples
+    --------
+    To apply a PQ load change, according to :ref:`PQ`, one needs to set the load
+    model to constant power and alter ``Ppf`` and ``Qpf``. Altering ``p0`` and
+    ``q0`` will have no impact as they are not used in the equations for
+    time-domain simulation.
+
     """
 
     def __init__(self, system, config):
