@@ -772,3 +772,13 @@ class Information(GroupBase):
     def __init__(self):
         GroupBase.__init__(self)
         self.common_params = []
+
+
+class OutputSelect(GroupBase):
+    """
+    Group for selecting outputs.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params = []

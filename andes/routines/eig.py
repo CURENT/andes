@@ -7,13 +7,14 @@ from math import ceil, pi
 
 import numpy as np
 import scipy.io
+from scipy.linalg import solve
+
 from andes.io.txt import dump_data
 from andes.plot import set_latex, set_style
 from andes.routines.base import BaseRoutine
 from andes.shared import div, matrix, plt, sparse, spdiag, spmatrix
 from andes.utils.misc import elapsed
 from andes.variables.report import report_info
-from scipy.linalg import solve
 
 logger = logging.getLogger(__name__)
 DPI = None

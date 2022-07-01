@@ -8,6 +8,7 @@
 #  File name: service.py
 #  Last modified: 8/16/20, 7:28 PM
 
+from functools import partial
 import logging
 from collections import OrderedDict
 from typing import Callable, Optional, Type, Union
@@ -1060,6 +1061,11 @@ class NumSelect(OperationService):
 
     NumSelect works with internal and external parameters.
 
+    Any values equal to ``np.nan`` will always be ignored. If one needs to
+    ignore values based on additional conditions, pass it through
+    ``ignore_cond``. For example, to ignore zero values, use
+    ``ignore_cond = partial(np.equal, 0)``.
+
     Examples
     --------
     One use case is to allow an optional turbine rating. One can do
@@ -1078,19 +1084,31 @@ class NumSelect(OperationService):
                  name: Optional[str] = None,
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
+                 ignore_cond: Optional[Callable] = partial(np.equal, 0),
                  ):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.optional = optional
         self.fallback = fallback
+        self.ignore_cond = ignore_cond
         self._v = None
 
     @property
     def v(self):
         if self._v is None:
-            self._v = [v1 if not np.isnan(v1)
-                       else v2
-                       for v1, v2 in zip(self.optional.v, self.fallback.v)]
+            self._v = list()
 
+            for v1, v2 in zip(self.optional.v, self.fallback.v):
+                if np.isnan(v1):
+                    self._v.append(v2)
+
+                elif self.ignore_cond is not None and \
+                        self.ignore_cond(v1):
+                    self._v.append(v2)
+
+                else:
+                    self._v.append(v1)
+
+            # when done, convert `self._v` to an array
             self._v = np.array(self._v)
 
         return self._v

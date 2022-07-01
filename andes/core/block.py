@@ -22,19 +22,23 @@ class Block:
     r"""
     Base class for control blocks.
 
-    Blocks are meant to be instantiated as Model attributes to provide pre-defined equation sets. Subclasses
-    must overload the `__init__` method to take custom inputs.
-    Subclasses of Block must overload the `define` method to provide initialization and equation strings.
-    Exported variables, services and blocks must be constructed into a dictionary ``self.vars`` at the end of
+    Blocks are meant to be instantiated as Model attributes to provide
+    pre-defined equation sets. Subclasses must overload the `__init__` method to
+    take custom inputs. Subclasses of Block must overload the `define` method to
+    provide initialization and equation strings. Exported variables, services
+    and blocks must be constructed into a dictionary ``self.vars`` at the end of
     the constructor.
 
-    Blocks can be nested. A block can have blocks but itself as attributes and therefore reuse equations. When a
-    block has sub-blocks, the outer block must be constructed with a``name``.
+    Blocks can be nested. A block can have blocks but itself as attributes and
+    therefore reuse equations. When a block has sub-blocks, the outer block must
+    be constructed with a``name``.
 
-    Nested block works in the following way: the parent block modifies the sub-block's ``name`` attribute by
-    prepending the parent block's name at the construction phase. The parent block then exports the sub-block
-    as a whole. When the parent Model class picks up the block, it will recursively import the variables in the
-    block and the sub-blocks correctly. See the example section for details.
+    Nested block works in the following way: the parent block modifies the
+    sub-block's ``name`` attribute by prepending the parent block's name at the
+    construction phase. The parent block then exports the sub-block as a whole.
+    When the parent Model class picks up the block, it will recursively import
+    the variables in the block and the sub-blocks correctly. See the example
+    section for details.
 
     Parameters
     ----------
@@ -45,16 +49,20 @@ class Block:
     info : str, optional
         Block description.
     namespace : str, local or parent
-        Namespace of the exported elements. If 'local', the block name will be prepended by the parent.
-        If 'parent', the original element name will be used when exporting.
+        Namespace of the exported elements. If 'local', the block name will be
+        prepended by the parent. If 'parent', the original element name will be
+        used when exporting.
 
     Warnings
     --------
-    It is a good practice to avoid more than one level of nesting, to avoid multi-underscore variable names.
+    It is a good practice to avoid more than one level of nesting, to avoid
+    multi-underscore variable names.
 
     Examples
     --------
-    Example for two-level nested blocks. Suppose we have the following hierarchy ::
+    Example for two-level nested blocks. Suppose we have the following hierarchy
+
+    .. code-block
 
         SomeModel  instance M
            |
@@ -62,45 +70,60 @@ class Block:
            |
         Lag B      exports (x, y)
 
-    SomeModel instance M contains an instance of LeadLag block named A, which contains an instance of a Lag block
-    named B. Both A and B exports two variables ``x`` and ``y``.
+    SomeModel instance M contains an instance of LeadLag block named A, which
+    contains a Lag instance named B. Both A and B exports two variables ``x``
+    and ``y``.
 
-    In the code of Model, the following code is used to instantiate LeadLag ::
+    In the code for SomeModel, the following code is used to instantiate LeadLag
+
+    .. code-block:: python
 
         class SomeModel:
             def __init__(...)
-                ...
-                self.A = LeadLag(name='A',
-                                 u=self.foo1,
-                                 T1=self.foo2,
-                                 T2=self.foo3)
+                ... self.A = LeadLag(name='A',
+                                 u=self.foo1, T1=self.foo2, T2=self.foo3)
 
-    To use Lag in the LeadLag code, the following lines are found in the constructor of LeadLag ::
+    To use Lag in the LeadLag code, the following lines are found in the
+    constructor of LeadLag
+
+    .. code-block:: python
 
         class LeadLag:
             def __init__(name, ...)
-                ...
-                self.B = Lag(u=self.y, K=self.K, T=self.T)
-                self.vars = {..., 'A': self.A}
+                ... self.B = Lag(u=self.y, K=self.K, T=self.T)
 
-    The ``__setattr__`` magic of LeadLag takes over the construction and assigns ``A_B`` to `B.name`,
-    given A's name provided at run time. `self.A` is exported with the internal name ``A`` at the end.
+                # register `self.B` with the name `A` self.vars = {..., 'B':
+                self.B}
 
-    Again, the LeadLag instance name (`A` in this example) MUST be provided in `SomeModel`'s constructor for the
-    name prepending to work correctly. If there is more than one level of nesting, other than the leaf-level
-    block, all parent blocks' names must be provided at instantiation.
+    When instantiating any block instance, its ``__setattr__`` function assigns
+    names to exported variables and blocks. For the LeadLag instance with the
+    name ``A``, its member attribute ``B`` is assigned the name ``A_B`` by
+    convention. That is, ``A_B`` will be set to `B.name`.
 
-    When A is picked up by `SomeModel.__setattr__`, B is captured from A's exports. Recursively, B's variables
-    are exported, Recall that `B.name` is now ``A_B``, following the naming rule (parent block's name + variable
-    name), B's internal variables become ``A_B_x`` and ``A_B_y``.
+    When A is picked up by ``SomeModel.__setattr__``, B is captured from A's
+    exports with the name ``A_B``. Recursively, B's variables are exported,
+    Recall that `B.name` is now ``A_B``, following the naming rule (parent
+    block's name + variable name), B's internal variables become ``A_B_x`` and
+    ``A_B_y``.
 
-    In this way, B's ``define()`` needs no modification since the naming rule is the same. For example,
-    B's internal y is always ``{self.name}_y``, although B has gotten a new name ``A_B``.
+    Again, the LeadLag instance name (``A.name`` in this example) must be given
+    when instantiating in `SomeModel`'s constructor to ensure correct name
+    propagation. If there is more than one level of nesting, other than the
+    terminal-level block, all names of the parent blocks must be provided at
+    instantiation.
+
+    In such a way, B's ``define()`` needs no modification since the naming rule is
+    the same. For example, B's internal y is always ``{self.name}_y``, although
+    the nested B has gotten a new name ``A_B``.
 
     """
 
-    def __init__(self, name: Optional[str] = None, tex_name: Optional[str] = None, info: Optional[str] = None,
+    def __init__(self,
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None,
                  namespace: str = 'local'):
+
         self.name = name
         self.tex_name = tex_name if tex_name else name
         self.info = info
@@ -116,7 +139,12 @@ class Block:
         self.flags = ModelFlags()  # f_num, g_num and j_num can be set
 
     def __setattr__(self, key, value):
-        # handle sub-blocks by prepending self.name
+        """
+        Set attribute of the block.
+
+        This function handles sub-blocks by prepending self.name to child block's name.
+        """
+
         if isinstance(value, Block):
             if self.name is None:
                 raise ValueError("Must specify `name` for %s instance "
@@ -147,32 +175,36 @@ class Block:
         """
         Helper function to clear the lists holding the numerical Jacobians.
 
-        This function should be only called once at the beginning of ``j_numeric`` in blocks.
+        This function should be only called once at the beginning of
+        ``j_numeric`` in blocks.
         """
         self.triplets.clear_ijv()
 
     def define(self):
         """
-        Function for setting the initialization and equation strings for internal variables. This method must be
-        implemented by subclasses.
+        Function for setting the initialization and equation strings for
+        internal variables. This method must be implemented by subclasses.
 
-        The equations should be written with the "final" variable names.
-        Let's say the block instance is named `blk` (kept at ``self.name`` of the block), and an internal
-        variable `v` is defined.
-        The internal variable will be captured as ``blk_v`` by the parent model. Therefore, all equations should
-        use ``{self.name}_v`` to represent variable ``v``, where ``{self.name}`` is the name of the block at
-        run time.
+        The equations should be written with the "final" variable names. Let's
+        say the block instance is named `blk` (kept at ``self.name`` of the
+        block), and an internal variable `v` is defined. The internal variable
+        will be captured as ``blk_v`` by the parent model. Therefore, all
+        equations should use ``{self.name}_v`` to represent variable ``v``,
+        where ``{self.name}`` is the name of the block at run time.
 
-        On the other hand, the names of externally provided parameters or variables are obtained by
-        directly accessing the ``name`` attribute. For example, if ``self.T`` is a parameter provided through
-        the block constructor, ``{self.T.name}`` should be used in the equation.
+        On the other hand, the names of externally provided parameters or
+        variables are obtained by directly accessing the ``name`` attribute. For
+        example, if ``self.T`` is a parameter provided through the block
+        constructor, ``{self.T.name}`` should be used in the equation.
 
         Examples
         --------
-        An internal variable ``v`` has a trivial equation ``T = v``, where T is a parameter provided to the block
-        constructor.
+        An internal variable ``v`` has a trivial equation ``T = v``, where T is
+        a parameter provided to the block constructor.
 
-        In the model, one has ::
+        In the model, one has
+
+        .. code-block :: python
 
             class SomeModel():
                 def __init__(...)
@@ -181,21 +213,28 @@ class Block:
 
                     self.blk = ExampleBlock(u=self.input, T=self.T)
 
-        In the ExampleBlock function, the internal variable is defined in the constructor as ::
+        In the ExampleBlock function, the internal variable is defined in the
+        constructor as
+
+        .. code-block :: python
 
             class ExampleBlock():
                 def __init__(...):
                     self.v = Algeb()
                     self.vars = {'v', self.v}
 
-        In the ``define``, the equation is provided as ::
+        In the ``define``, the equation is provided as
+
+        .. code-block :: python
 
             def define(self):
                 self.v.v_str = '{self.T.name}'
                 self.v.e_str = '{self.T.name} - {self.name}_v'
 
-        In the parent model, ``v`` from the block will be captured as ``blk_v``, and the equation will
-        evaluate into ::
+        In the parent model, ``v`` from the block will be captured as ``blk_v``,
+        and the equation will evaluate into
+
+        .. code-block :: python
 
             self.blk_v.v_str = 'T'
             self.blk_v.e_str = 'T - blk_v'
@@ -328,7 +367,9 @@ class PIController(Block):
 
 class PIDController(PIController):
     r"""
-    Proportional Integral Derivative Controller. ::
+    Proportional Integral Derivative Controller.
+
+    ::
 
             ┌────────────────────┐
             │      ki     skd    │
@@ -461,6 +502,7 @@ class PIDAWHardLimit(PIAWHardLimit):
     r"""
     PID controller with anti-windup limiter on the integrator and
     hard limit on the output.
+
     ::
 
                          upper
@@ -732,7 +774,9 @@ class PIControllerNumeric(Block):
 
 class Gain(Block):
     r"""
-    Gain block. ::
+    Gain block.
+
+    ::
 
              ┌───┐
         u -> │ K │ -> y
@@ -765,7 +809,9 @@ class Gain(Block):
 
 class Integrator(Block):
     r"""
-    Integrator block. ::
+    Integrator block.
+
+    ::
 
              ┌──────┐
         u -> │ K/sT │ -> y
@@ -805,7 +851,9 @@ class Integrator(Block):
 
 class IntegratorAntiWindup(Block):
     r"""
-    Integrator block with anti-windup limiter. ::
+    Integrator block with anti-windup limiter.
+
+    ::
 
                    upper
                   /¯¯¯¯¯
@@ -853,7 +901,9 @@ class IntegratorAntiWindup(Block):
 
 class Washout(Block):
     r"""
-    Washout filter (high pass) block. ::
+    Washout filter (high pass) block.
+
+    ::
 
              ┌────────┐
              │   sK   │
@@ -950,7 +1000,9 @@ class WashoutOrLag(Washout):
 
 class Lag(Block):
     r"""
-    Lag (low pass filter) transfer function. ::
+    Lag (low pass filter) transfer function.
+
+    ::
 
              ┌────────┐
              │    K   │
@@ -1005,7 +1057,9 @@ class Lag(Block):
 
 class LagFreeze(Lag):
     """
-    Lag with a state freeze input.
+    Lag with an input to freeze the state.
+
+    During the period when the freeze signal is 1, the LagFreeze output will be frozen.
     """
 
     def __init__(self, u, T, K, freeze, D=1, name=None, tex_name=None, info=None):
@@ -1035,7 +1089,9 @@ class LagFreeze(Lag):
 
 class LagAntiWindup(Block):
     r"""
-    Lag (low pass filter) transfer function block with an anti-windup limiter. ::
+    Lag (low pass filter) transfer function block with an anti-windup limiter.
+
+    ::
 
                      upper
                    /¯¯¯¯¯¯
@@ -1103,7 +1159,7 @@ class LagAWFreeze(LagAntiWindup):
     """
     Lag with anti-windup limiter and state freeze.
 
-    The output `y` is a state variable.
+    Note that the output `y` is a state variable.
     """
 
     def __init__(self, u, T, K, lower, upper, freeze, D=1,
@@ -1128,6 +1184,8 @@ class LagAWFreeze(LagAntiWindup):
             T \dot{y} &= (1 - freeze) (Ku - y) \\
             y^{(0)} &= K u
 
+        ``y`` undergoes an anti-windup limiter.
+
         """
         LagAntiWindup.define(self)
         self.y.e_str = f'(1 - {self.freeze.name}) * ({self.K.name} * {self.u.name} - {self.name}_y)'
@@ -1135,17 +1193,17 @@ class LagAWFreeze(LagAntiWindup):
 
 class LagRate(Block):
     r"""
-    Lag (low pass filter) transfer function block with a rate limiter and an anti-windup limiter. ::
+    Lag (low pass filter) transfer function block with a rate limiter.
 
-                    rate_upper
-                   /
-             ┌────────┐
-             │    K   │
-        u -> │ ────── │ -> y
-             │ D + sT │
-             └────────┘
-                 /
-        rate_lower
+    ::
+
+                     / rate_upper
+               ┌────────┐
+               │    K   │
+          u -> │ ────── │ -> y
+               │ D + sT │
+               └────────┘
+        rate_lower /
 
     Exports one state variable `y` as the output and one AntiWindupRate instance `lim`.
 
@@ -1186,6 +1244,8 @@ class LagRate(Block):
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
+        # TODO: check if the rate is correct when `t_const` is not 1
+
     def define(self):
         r"""
 
@@ -1205,17 +1265,20 @@ class LagRate(Block):
 
 class LagAntiWindupRate(Block):
     r"""
-    Lag (low pass filter) transfer function block with a rate limiter and an anti-windup limiter. ::
+    Lag (low pass filter) transfer function block with a rate limiter and an
+    anti-windup limiter.
 
-                     upper && rate_upper
-                   /¯¯¯¯¯¯
+    ::
+
+                     upper
+        rate_upper /¯¯¯¯¯¯
              ┌────────┐
              │    K   │
         u -> │ ────── │ -> y
              │ D + sT │
              └────────┘
-           ______/
-           lower & rate_lower
+           ______/ rate_lower
+           lower
 
     Exports one state variable `y` as the output and one AntiWindupRate instance `lim`.
 
@@ -1281,7 +1344,9 @@ class LagAntiWindupRate(Block):
 
 class Lag2ndOrd(Block):
     r"""
-    Second order lag transfer function (low-pass filter) ::
+    Second order lag transfer function (low-pass filter).
+
+    ::
 
              ┌──────────────────┐
              │         K        │
@@ -1344,7 +1409,9 @@ class Lag2ndOrd(Block):
 
 class LeadLag(Block):
     r"""
-    Lead-Lag transfer function block in series implementation ::
+    Lead-Lag transfer function block in series implementation.
+
+    ::
 
              ┌───────────┐
              │   1 + sT1 │
@@ -1429,7 +1496,9 @@ class LeadLag(Block):
 
 class LeadLag2ndOrd(Block):
     r"""
-    Second-order lead-lag transfer function block ::
+    Second-order lead-lag transfer function block.
+
+    ::
 
              ┌──────────────────┐
              │ 1 + sT3 + s^2 T4 │
@@ -1437,10 +1506,12 @@ class LeadLag2ndOrd(Block):
              │ 1 + sT1 + s^2 T2 │
              └──────────────────┘
 
-    Exports two internal states (`x1` and `x2`) and output algebraic variable `y`.
+    Exports two internal states (`x1` and `x2`) and output algebraic variable
+    `y`.
 
-    # TODO: instead of implementing `zero_out` using `LessThan` and an additional
-    term, consider correcting all parameters to 1 if all are 0.
+    The current implementation allows any or all parameters to be zero.  Four
+    ``LessThan`` blocks are used to check if the parameter values are all zero.
+    If yes, ``y = u`` will be imposed in the algebraic equation.
 
     """
 
@@ -1459,6 +1530,9 @@ class LeadLag2ndOrd(Block):
         self.y = Algeb(info='Output of 2nd order lead-lag', tex_name='y', diag_eps=True)
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
+
+        # TODO: instead of implementing `zero_out` using `LessThan` and an
+        #   additional term, consider correcting all parameters to 1 if all are 0.
 
         if self.zero_out is True:
             self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
@@ -1513,7 +1587,9 @@ class LeadLag2ndOrd(Block):
 
 class LeadLagLimit(Block):
     r"""
-    Lead-Lag transfer function block with hard limiter (series implementation) ::
+    Lead-Lag transfer function block with hard limiter (series implementation).
+
+    ::
 
              ┌─────────┐          upper
              │ 1 + sT1 │         /¯¯¯¯¯
@@ -1575,7 +1651,9 @@ class LeadLagLimit(Block):
 
 class HVGate(Block):
     """
-    High Value Gate. Outputs the maximum of two inputs. ::
+    High Value Gate. Outputs the maximum of two inputs.
+
+    ::
 
               ┌─────────┐
         u1 -> │ HV Gate │
@@ -1621,7 +1699,9 @@ class HVGate(Block):
 
 class LVGate(Block):
     """
-    Low Value Gate. Outputs the minimum of the two inputs. ::
+    Low Value Gate. Outputs the minimum of the two inputs.
+
+    ::
 
               ┌─────────┐
         u1 -> │ LV Gate |
@@ -1665,7 +1745,9 @@ class GainLimiter(Block):
     """
     Gain followed by a limiter and another gain.
 
-    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
+    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`.
+
+    ::
 
              ┌─────┐         upper  ┌─────┐
              │     │        /¯¯¯¯¯  │     │
@@ -1731,62 +1813,6 @@ class GainLimiter(Block):
         self.y.e_str += f' - {self.name}_y'
 
 
-class LimiterGain(Block):
-    """
-    Limiter followed by a gain.
-
-    Exports the limited output `y`, unlimited output `x`, and HardLimiter `lim`. ::
-
-                   upper ┌─────┐
-                  /¯¯¯¯¯ │     │
-        u  ->    /   ->  │  K  │ -> y
-           _____/        │     │
-           lower         └─────┘
-
-    .. deprecated:: 1.5.0
-          `LimiterGain` will be removed in ANDES 1.5.0. it is replaced by
-          `GainLimiter` because the latter supports pre- and post-gains.
-
-    """
-
-    def __init__(self, u, K, lower, upper, no_lower=False, no_upper=False,
-                 sign_lower=1, sign_upper=1,
-                 name=None, tex_name=None, info=None):
-        Block.__init__(self, name=name, tex_name=tex_name, info=info)
-        self.u = u
-        self.K = dummify(K)
-        self.upper = dummify(upper)
-        self.lower = dummify(lower)
-
-        if (no_upper and no_lower) is True:
-            raise ValueError("no_upper or no_lower cannot both be True")
-
-        self.no_lower = no_lower
-        self.no_upper = no_upper
-
-        self.lim = HardLimiter(u=self.u, lower=self.lower, upper=self.upper,
-                               no_upper=no_upper, no_lower=no_lower,
-                               sign_lower=sign_lower, sign_upper=sign_upper,
-                               tex_name='lim')
-
-        self.y = Algeb(info='Gain output after limiter', tex_name='y', discrete=self.lim)
-
-        self.vars = {'lim': self.lim, 'y': self.y}
-
-    def define(self):
-        self.y.e_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
-        self.y.v_str = f'{self.K.name} * {self.u.name} * {self.name}_lim_zi'
-
-        if not self.no_upper:
-            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name} * {self.lim.sign_upper.name}'
-            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zu*{self.upper.name} * {self.lim.sign_upper.name}'
-        if not self.no_lower:
-            self.y.e_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name} * {self.lim.sign_lower.name}'
-            self.y.v_str += f' + {self.K.name} * {self.name}_lim_zl*{self.lower.name} * {self.lim.sign_lower.name}'
-
-        self.y.e_str += f' - {self.name}_y'
-
-
 class Piecewise(Block):
     """
     Piecewise block. Outputs an algebraic variable `y`.
@@ -1840,7 +1866,7 @@ class Piecewise(Block):
 
 class DeadBand1(Block):
     """
-    Deadband type 1.
+    Deadband type 1 (linear, non-step).
 
     Parameters
     ----------

@@ -556,12 +556,12 @@ class TimerParam(NumParam):
 
     Examples
     --------
-    A connectivity status toggler class `Toggler` takes a parameter `t` for the toggle time.
-    Inside ``Toggler.__init__``, one would have ::
+    A connectivity status toggle class `Toggle` takes a parameter `t` for the toggle time.
+    Inside ``Toggle.__init__``, one would have ::
 
         self.t = TimerParam()
 
-    The `Toggler` class also needs to define a method for togging the connectivity status ::
+    The `Toggle` class also needs to define a method for togging the connectivity status ::
 
         def _u_switch(self, is_time: np.ndarray):
             action = False
@@ -577,7 +577,7 @@ class TimerParam(NumParam):
                     action = True
             return action
 
-    Finally, in ``Toggler.__init__``, assign the function as the callback for `self.t` ::
+    Finally, in ``Toggle.__init__``, assign the function as the callback for `self.t` ::
 
         self.t.callback = self._u_switch
 
