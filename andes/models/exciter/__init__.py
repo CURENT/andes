@@ -13,3 +13,4 @@ from andes.models.exciter.ieeet3 import IEEET3  # NOQA
 from andes.models.exciter.ieeex1 import IEEEX1  # NOQA
 from andes.models.exciter.saturation import ExcExpSat, ExcQuadSat  # NOQA
 from andes.models.exciter.sexs import SEXS  # NOQA
+from andes.models.exciter.esac5a import ESAC5A  # NOQA

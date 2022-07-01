@@ -366,6 +366,8 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
 
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
+
+            # call perturbation file if specified
             if self.callpert is not None:
                 self.callpert(dae.t, system)
 

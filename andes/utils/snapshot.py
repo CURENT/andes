@@ -10,7 +10,7 @@ Code Examples:
     import andes
 
     ss = andes.run(andes.get_case("ieee14/ieee14_linetrip.xlsx"))
-    ss.Toggler.u.v[:] = 0  # turn off line trips for the base case
+    ss.Toggle.u.v[:] = 0  # turn off line trips for the base case
     xy = ss.TDS.init()
 
     andes.utils.snapshot.save_ss("ieee14_snapshot.pkl", ss)

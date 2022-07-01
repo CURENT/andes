@@ -324,7 +324,7 @@ The output looks like::
     Numba compilation initiated with caching.
     Initialization for dynamics completed in 0.0626 seconds.
     Initialization was successful.
-    <Toggler 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
+    <Toggle 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
     100%|########################################| 100/100 [00:00<00:00, 241.53%/s]
     Simulation completed in 0.4141 seconds.
     Outputs to "kundur_full_out.lst" and "kundur_full_out.npz".
@@ -386,7 +386,7 @@ in memory, such as plotting. ANDES can exit to the IPython shell with
 Note the ``-n`` is optional to disable file output. The terminal output will
 look like ::
 
-    <Toggler 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
+    <Toggle 1>: Line.Line_8 status changed to 0 at t=2.0 sec.
     100%|#########################################| 100/100 [00:00<00:00, 246.07%/s]
     Simulation completed in 0.4064 seconds.
     Outputs to "kundur_full_out.lst" and "kundur_full_out.npz".
@@ -582,14 +582,14 @@ in the Config file.
 
     For full model documentation, visit :ref:`modelref`.
 
-For example, to check the parameters for model ``Toggler``, run
+For example, to check the parameters for model ``Toggle``, run
 
 .. code-block:: shell-session
 
-    $ andes doc Toggler
-    Model <Toggler> in Group <TimedEvent>
+    $ andes doc Toggle
+    Model <Toggle> in Group <TimedEvent>
 
-        Time-based connectivity status toggler.
+        Time-based connectivity status toggle.
 
     Parameters
 
@@ -625,7 +625,7 @@ To list all supported models, run
      StaticLoad      | PQ
      StaticShunt     | Shunt
      SynGen          | GENCLS, GENROU
-     TimedEvent      | Toggler, Fault
+     TimedEvent      | Toggle, Fault
      TurbineGov      | TG2, TGOV1
 
 To view the Config fields for a routine, run

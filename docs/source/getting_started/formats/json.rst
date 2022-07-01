@@ -44,16 +44,16 @@ The following shows the structure of a JSON file:
 .. code:: javascript
 
     {
-    "Toggler": [
+    "Toggle": [
         {
         "idx": 1,
         "u": 1.0,
-        "name": "Toggler_1",
+        "name": "Toggle_1",
         "model": "Line",
         "dev": "Line_8",
         "t": 2.0
-        }  //      <- Toggler_1 ends
-    ],     //      <- Toggler model ends
+        }  //      <- Toggle_1 ends
+    ],     //      <- Toggle model ends
     "Bus": [
         {
         "idx": 1,
