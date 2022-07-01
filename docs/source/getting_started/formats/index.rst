@@ -18,3 +18,4 @@ ANDES currently supports the following input formats:
    psse
    matpower
    json
+   disturbance
