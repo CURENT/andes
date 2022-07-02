@@ -489,7 +489,15 @@ class Calculation(GroupBase):
 
 class StaticGen(GroupBase):
     """
-    Static generator group for power flow calculation
+    Static generator group.
+
+    Static generators will be replaced by dynamic generators, either synchronous
+    generators or inverter-based resources upon the initialization for dynamics.
+    It is implemented by setting the connectivity status ``u`` of the replaced
+    StaticGen to 0.
+
+    See the notes in :ref:`SynGen` for replacing one StaticGen with multiple
+    dynamic ones.
     """
 
     def __init__(self):
@@ -538,6 +546,21 @@ class DynLoad(GroupBase):
 class SynGen(GroupBase):
     """
     Synchronous generator group.
+
+    SynGen replaces StaticGen upon the initialization of dynamic studies. SynGen
+    and inverter-based resources contain parameters ``gammap`` and ``gammaq``
+    for splitting the initial power of a StaticGen into multiple dynamic ones.
+
+    ``gammap``, for example, is the active power ratio of the dynamic generator
+    to the static one. If a StaticGen is supposed to be replaced by one SynGen,
+    the ``gammap`` and ``gammaq`` should both be ``1``.
+
+    It is critical to ensure that ``gammap`` and ``gammaq``, respectively, of
+    all dynamic power sources sum up to 1.0. Otherwise, the initial power
+    injections imposed by dynamic sources will differ from the static ones. The
+    initialization will then fail with mismatches power injection equations
+    corresponding to bus ``a`` and ``v``.
+
     """
 
     def __init__(self):
@@ -581,6 +604,9 @@ class SynGen(GroupBase):
 class RenGen(GroupBase):
     """
     Renewable generator (converter) group.
+
+    See :ref:`SynGen` for the notes on replacing StaticGen and setting the power
+    ratio parameters.
     """
 
     def __init__(self):
@@ -653,6 +679,9 @@ class RenTorque(GroupBase):
 class DG(GroupBase):
     """
     Distributed generation (small-scale).
+
+    See :ref:`SynGen` for the notes on replacing StaticGen and setting the power
+    ratio parameters.
     """
 
     def __init__(self):
