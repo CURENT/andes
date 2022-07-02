@@ -327,7 +327,8 @@ def load(case, codegen=False, setup=True,
 
 def run_case(case, *, routine='pflow', profile=False,
              convert='', convert_all='', add_book=None,
-             codegen=False, remove_pycapsule=False, **kwargs):
+             codegen=False, autogen_stale=True,
+             remove_pycapsule=False, **kwargs):
     """
     Run single simulation case for the given full path.
     Use ``run`` instead of ``run_case`` whenever possible.
@@ -354,6 +355,8 @@ def run_case(case, *, routine='pflow', profile=False,
         as a new sheet.
     codegen : bool, optional
         True to run codegen
+    autogen_stale : bool, optional
+        True to automatically generate code for stale models
     remove_pycapsule : bool, optional
         True to remove pycapsule from C libraries.
         Useful when dill serialization is needed.
@@ -368,6 +371,7 @@ def run_case(case, *, routine='pflow', profile=False,
     system = load(case,
                   codegen=codegen,
                   use_input_path=False,
+                  autogen_stale=autogen_stale,
                   **kwargs)
 
     if system is None:
@@ -539,7 +543,13 @@ def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     pool = Pool(ncpu)
     print("Cases are processed in the following order:")
     print('\n'.join([f'"{name}"' for name in cases]))
-    ret = pool.map(partial(run_case, verbose=verbose, remove_pycapsule=True, **kwargs), cases)
+
+    ret = pool.map(partial(run_case,
+                           verbose=verbose,
+                           remove_pycapsule=True,
+                           autogen_stale=False,
+                           **kwargs),
+                   cases)
 
     # fix address for in-place arrays
     for ss in ret:
