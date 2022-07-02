@@ -260,11 +260,11 @@ class System:
 
             if not newobj:
                 self._config_object.set(section, key, value)
-                logger.debug("Config option set: {}.{}={}".format(section, key, value))
+                logger.debug("Existing config option set: %s.%s=%s", section, key, value)
             else:
                 self._config_object.add_section(section)
                 self._config_object.set(section, key, value)
-                logger.debug("Config option added: {}.{}={}".format(section, key, value))
+                logger.debug("New config option added: %s.%s=%s", section, key, value)
 
     def reload(self, case, **kwargs):
         """

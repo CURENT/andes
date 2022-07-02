@@ -850,8 +850,8 @@ class TDSData:
 
         nyidxes = len(yidxes)
         if nyidxes > nrows * ncols:
-            raise ValueError("yidxes with length %d does not fit nrows=%d and ncols=%d",
-                             nyidxes, nrows, ncols)
+            raise ValueError("yidxes with length %d does not fit nrows=%d and ncols=%d" %
+                             (nyidxes, nrows, ncols))
 
         fig = plt.figure(figsize=figsize, dpi=dpi)
 

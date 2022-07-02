@@ -104,13 +104,13 @@ class TestNPCCRAW(unittest.TestCase):
     """
 
     def test_npcc_raw(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'),
+        ss = andes.run(get_case('npcc/npcc.raw'),
                             default_config=True,
                             no_output=True,
                             )
 
     def test_npcc_raw_tds(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'),
+        ss = andes.run(get_case('npcc/npcc.raw'),
                             verbose=50,
                             routine='tds',
                             no_output=True,
@@ -119,33 +119,33 @@ class TestNPCCRAW(unittest.TestCase):
                             default_config=True,
                             )
 
-        self.ss.dae.print_array('f')
-        self.ss.dae.print_array('g')
-        self.ss.dae.print_array('f', tol=1e-4)
-        self.ss.dae.print_array('g', tol=1e-4)
+        ss.dae.print_array('f')
+        ss.dae.print_array('g')
+        ss.dae.print_array('f', tol=1e-4)
+        ss.dae.print_array('g', tol=1e-4)
 
     def test_npcc_raw_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'),
+        ss = andes.run(get_case('npcc/npcc.raw'),
                             convert=True,
                             default_config=True,
                             )
 
-        os.remove(self.ss.files.dump)
-        self.assertEqual(self.ss.exit_code, 0, "Exit code is not 0.")
+        os.remove(ss.files.dump)
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
     def test_npcc_raw2json_convert(self):
-        self.ss = andes.run(get_case('npcc/npcc.raw'),
+        ss = andes.run(get_case('npcc/npcc.raw'),
                             convert='json',
                             default_config=True,
                             )
 
-        self.ss2 = andes.run('npcc.json',
+        ss2 = andes.run('npcc.json',
                              default_config=True,
                              no_output=True,
                              )
 
-        os.remove(self.ss.files.dump)
-        self.assertEqual(self.ss2.exit_code, 0, "Exit code is not 0.")
+        os.remove(ss.files.dump)
+        self.assertEqual(ss2.exit_code, 0, "Exit code is not 0.")
 
     def test_read_json_from_memory(self):
         fd = open(get_case('ieee14/ieee14_zip.json'), 'r')
