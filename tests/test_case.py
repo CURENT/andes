@@ -104,20 +104,20 @@ class TestNPCCRAW(unittest.TestCase):
     """
 
     def test_npcc_raw(self):
-        ss = andes.run(get_case('npcc/npcc.raw'),
-                            default_config=True,
-                            no_output=True,
-                            )
+        andes.run(get_case('npcc/npcc.raw'),
+                  default_config=True,
+                  no_output=True,
+                  )
 
     def test_npcc_raw_tds(self):
         ss = andes.run(get_case('npcc/npcc.raw'),
-                            verbose=50,
-                            routine='tds',
-                            no_output=True,
-                            profile=True,
-                            tf=10,
-                            default_config=True,
-                            )
+                       verbose=50,
+                       routine='tds',
+                       no_output=True,
+                       profile=True,
+                       tf=10,
+                       default_config=True,
+                       )
 
         ss.dae.print_array('f')
         ss.dae.print_array('g')
@@ -126,23 +126,23 @@ class TestNPCCRAW(unittest.TestCase):
 
     def test_npcc_raw_convert(self):
         ss = andes.run(get_case('npcc/npcc.raw'),
-                            convert=True,
-                            default_config=True,
-                            )
+                       convert=True,
+                       default_config=True,
+                       )
 
         os.remove(ss.files.dump)
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
 
     def test_npcc_raw2json_convert(self):
         ss = andes.run(get_case('npcc/npcc.raw'),
-                            convert='json',
-                            default_config=True,
-                            )
+                       convert='json',
+                       default_config=True,
+                       )
 
         ss2 = andes.run('npcc.json',
-                             default_config=True,
-                             no_output=True,
-                             )
+                        default_config=True,
+                        no_output=True,
+                        )
 
         os.remove(ss.files.dump)
         self.assertEqual(ss2.exit_code, 0, "Exit code is not 0.")
