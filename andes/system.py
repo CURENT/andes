@@ -1203,10 +1203,25 @@ class System:
         # collect from-bus and to-bus indices
         fr, to, u = list(), list(), list()
 
+        # TODO: generalize it to all serial devices
         # collect from Line
         fr.extend(self.Line.a1.a.tolist())
         to.extend(self.Line.a2.a.tolist())
         u.extend(self.Line.u.v.tolist())
+
+        # collect from Fortescue
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.aa.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.ab.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.ac.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
         os = [0] * len(u)
 
         # find islanded buses

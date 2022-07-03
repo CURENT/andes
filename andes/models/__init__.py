@@ -17,6 +17,7 @@ file_classes = list([
     ('bus', ['Bus']),
     ('static', ['PQ', 'PV', 'Slack']),
     ('shunt', ['Shunt', "ShuntTD", 'ShuntSw']),
+    ('interface', ['Fortescue']),
     ('line', ['Line', 'Jumper']),
     ('area', ['Area', 'ACE', 'ACEc']),
     ('dynload', ['ZIP', 'FLoad']),
