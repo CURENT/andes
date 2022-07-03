@@ -62,6 +62,7 @@ class FortescueModel(Model):
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
 
+        self.group = 'Interface'
         self.flags.pflow = True
         self.flags.tds = True
 

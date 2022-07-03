@@ -811,3 +811,23 @@ class OutputSelect(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_params = []
+
+
+class Interface(GroupBase):
+    """
+    Group for interface models.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params = []
+
+
+class TimeSeries(GroupBase):
+    """
+    Group for TimeSeries models.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params = []
