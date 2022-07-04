@@ -255,24 +255,21 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
     """
     IEEE Type 1 Speed-Governing Model.
 
-    If only one generator is connected, its `idx` must
-    be given to `syn`, and `syn2` must be left blank.
-    Each generator must provide data in its `Sn` base.
+    If only one generator is connected, its `idx` must be given to `syn`, and
+    `syn2` must be left blank. Each generator must provide data in its `Sn`
+    base.
 
-    `syn` is connected to the high-pressure output (PHP)
-    and the optional `syn2` is connected to the low-
-    pressure output (PLP).
+    `syn` is connected to the high-pressure output (PHP) and the optional `syn2`
+    is connected to the low- pressure output (PLP).
 
-    The speed deviation of generator 1 (syn) is measured.
-    If the turbine rating `Tn` is not specified, the sum
-    of `Sn` of all connected generators will be used.
+    The speed deviation of generator 1 (syn) is measured. If the turbine rating
+    `Tn` is not specified, the sum of `Sn` of all connected generators will be
+    used.
 
-    Normally, K1 + K2 + ... + K8 = 1.0.
-    If the second generator is not connected,
-    K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
+    Normally, K1 + K2 + ... + K8 = 1.0. If the second generator is not
+    connected, K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
 
-    IEEEG1 does not yet support the change of reference
-    (scheduling).
+    IEEEG1 does not yet support the change of reference (scheduling).
     """
 
     def __init__(self, system, config):
