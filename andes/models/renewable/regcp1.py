@@ -53,6 +53,9 @@ class REGCP1Model(REGCA1Model):
                              info='Flag invalid angle measurements as zeros',
                              )
 
+        delattr(self, 'vd')
+        self.algebs_ext.pop("vd")
+
         self.vd = Algeb(v_str='v',
                         info='d-axis voltage', tex_name='V_d',
                         e_str='v*cos(zam * (a - am)) - vd')

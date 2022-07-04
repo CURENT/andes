@@ -6,6 +6,7 @@ from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Model, ModelData, NumParam, Piecewise,)
 from andes.core.block import GainLimiter, LagAntiWindupRate
 from andes.core.service import PostInitService
+from andes.core.var import AliasAlgeb
 
 
 class REGCA1Data(ModelData):
@@ -133,6 +134,8 @@ class REGCA1Model(Model):
                           ename='Q',
                           tex_ename='Q',
                           )
+
+        self.vd = AliasAlgeb(self.v)
 
         self.p0s = ExtService(model='StaticGen',
                               src='p',
