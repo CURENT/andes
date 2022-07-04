@@ -39,10 +39,10 @@ class REGCP1Model(REGCA1Model):
         self.am = ExtState(model='PLL', src='am', indexer=self.pllidx)
 
         self.vd = Algeb(v_str='v', info='d-axis voltage', tex_name='V_d',
-                        e_str='vd - v*cos(a - am)')
+                        e_str='v*cos(a - am) - vd')
 
         self.vq = Algeb(v_str='0', info='q-axis voltage', tex_name='V_q',
-                        e_str='-vq - v*sin(a - am)')
+                        e_str='- v*sin(a - am) - vq')
 
         self.Pe.e_str = '(vd * Ipout + vq * Iqout_y) - Pe'
 
@@ -59,9 +59,11 @@ class REGCP1(REGCP1Data, REGCP1Model):
     """
     Renewable energy generator model type A with PLL.
 
-    Volim is the voltage limit for high voltage reactive current management,
-    which should be large than static bus voltage (Volim > v),
-    or initialization error will occur.
+    A PLL device needs to be specified for estimating the phase angle at the
+    coupling bus. If not provided, a PLL1 device will be used, but one should
+    carefully tune the PLL parameters to match the desired performance.
+
+    All remarks for ``REGCA1`` apply.
     """
 
     def __init__(self, system, config):

@@ -288,7 +288,7 @@ class REGCA1(REGCA1Data, REGCA1Model):
     """
     Renewable energy generator model type A.
 
-    Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
+    Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF and Powerworld.
 
     Volim is the voltage limit for high voltage reactive current management,
     which should be large than static bus voltage (Volim > v),
