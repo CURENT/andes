@@ -198,9 +198,9 @@ Parameter in the table is the same as that in the input file without any
 conversion. Some input data, by convention, are given as per unit in the device
 base; see :ref:`per_unit_system` for details.
 
-Note that :py:meth:`andes.core.model.as_df` returns a *view*. Modifying the
-returned dataframe *will not* affect the original data used for simulation. To
-modify the data, see Example "Working with Data".
+Note that :py:meth:`andes.core.modeldata.ModelData.as_df` returns a *view*.
+Modifying the returned dataframe *will not* affect the original data used for
+simulation. To modify the data, see Example "Working with Data".
 
 Running Studies
 ---------------
