@@ -666,16 +666,30 @@ class DataSelect(BaseService):
 
 class DeviceFinder(BaseService):
     """
-    Service for finding indices of optionally linked devices.
+    Service for finding ``idx`` of devices which are linked to the given
+    devices.
 
-    If not provided, `DeviceFinder` will add devices at the beginning of
-    `System.setup`.
+    The ``auto_find`` parameter controls if the device idx should be
+    automatically looked up. The ``auto_add`` parameter controls if the device
+    will be automatically added. The two parameters are not exclusive. One can
+    skip finding the device but automatically adding it.
+
+    If ``auto_find`` is ``True`` and the ``idx`` is None, DeviceFinder will look
+    up for the device. If not found and ``auto_add`` is ``True``, DevFinder will
+    then automatically add the devices. The ``idx`` of the devices that are
+    found or added will be stored to the DeviceFinder instance, so that
+    `DeviceFinder` can be used like any `IdxParam`.
+
+    Adding new devices are called at the beginning of
+    :py:meth:`andes.system.System.setup`.
 
     Examples
     --------
-    IEEEST stabilizer takes an optional `busf` (IdxParam) for specifying the
-    connected BusFreq, which is needed for mode 6. To avoid reimplementing
-    `BusFreq` within IEEEST, one can do
+
+    The IEEEST stabilizer takes an optional parameter ``busf`` of the type
+    `IdxParam` for specifying the connected bus frequency measurement device,
+    which is needed for mode 6. To avoid reimplementing `BusFreq` within IEEEST,
+    one can do
 
     .. code-block :: python
 
@@ -683,18 +697,31 @@ class DeviceFinder(BaseService):
                                     link=self.buss, idx_name='bus',
                                     default_model='BusFreq')
 
-    where ``self.busf`` is the optional input, ``self.buss`` is the bus indices
-    that ``busf`` should measure, and ``idx_name`` is the name of a BusFreq
-    parameter through which the measured bus indices are specified. For each
-    ``None`` values in ``self.busf``, a ``BusFreq`` device will be created to
-    measure the corresponding bus in ``self.buss``.
+    where ``self.busf`` is for the optional parameter for the ``idx`` of bus
+    frequency estimation devices (e.g., `BusFreq`), ``self.buss`` is for the
+    ``idx`` of buses that ``self.busf`` devices should measure, and ``idx_name``
+    is the name of the BusFreq parameter through which the indices of measured
+    buses are given.
 
-    That is, ``BusFreq.[idx_name].v = [link]``. ``DeviceFinder`` will find or
-    create ``BusFreq`` devices so that the returned list of ``BusFreq`` indices
-    are connected to `self.buss`, respectively.
+    For each ``None`` or invalid values in ``self.busf``, a `BusFreq` device
+    will be created with its ``bus`` set to the corresponding value in
+    ``self.buss``. That is, ``BusFreq.[idx_name].v = [link]``.
+
+    At the end, the `DeviceFinder` instance will contain the list of ``BusFreq``
+    that are are connected to `self.buss`, respectively.
+
+    In the case of any valid value in ``self.busf``, that is, the value is an
+    existing ``BusFreq`` device, `DeviceFinder` will return it as is without
+    checking if the ``BusFreq`` device actually measures the bus specified by
+    ``self.buss``. It allows to use the measurement at a different location, but
+    the user have to perform the data consistency check.
     """
 
-    def __init__(self, u, link, idx_name, default_model,
+    def __init__(self, u, link,
+                 idx_name: str,
+                 default_model: str,
+                 auto_find: Optional[bool] = True,
+                 auto_add: Optional[bool] = True,
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
 
@@ -702,11 +729,14 @@ class DeviceFinder(BaseService):
         self.model = u.model
         self.idx_name = idx_name
         self.default_model = default_model
+        self.auto_find = auto_find
+        self.auto_add = auto_add
 
         if self.model is None:
             raise ValueError(f'{u.owner.class_name}.{u.name} must contain "model".')
 
         self.link = link
+        self.v = None
 
     def find_or_add(self, system):
         """
@@ -717,6 +747,11 @@ class DeviceFinder(BaseService):
         Find devices one by one.
         Devices previously added in this function can be used later without duplication.
         """
+
+        # make a copy of indices from `u`
+        self.v = list(self.u.v)
+
+        # determine model or group
 
         if self.model in system.models:
             is_model = True
@@ -731,28 +766,39 @@ class DeviceFinder(BaseService):
         added = False
 
         for ii, link_to in enumerate(self.link.v):
-            idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
 
-            if idx is None:
-                new_idx = system.add(add_to_model, {self.idx_name: link_to})
-                self.u.v[ii] = new_idx
+            idx = self.v[ii]
+            valid_idx = None
+
+            # check if ``idx`` is valid
+            if idx is not None:
+                valid_idx = mdl.find_idx('idx', (idx, ), allow_none=True, default=None)[0]
+                if valid_idx == idx:
+                    continue
+                else:
+                    logger.warning("%s.%s: <%s> is not found.",
+                                   self.u.owner.class_name, self.u.name, idx)
+
+            if (not valid_idx) and self.auto_find:
+                idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
+                if idx is not None:
+                    self.v[ii] = idx
+                    continue
+
+            if (not valid_idx) and self.auto_add:
+                idx = system.add(add_to_model, {self.idx_name: link_to})
+                self.v[ii] = idx
 
                 logger.info(f"{self.owner.class_name} <{self.owner.idx.v[ii]}> "
-                            f"added {add_to_model} <{new_idx}> "
+                            f"added {add_to_model} <{idx}> "
                             f"linked to {self.idx_name} <{link_to}>")
                 added = True
-            else:
-                self.u.v[ii] = idx
 
         if added:
             mdl = system.models[add_to_model]
             mdl.list2array()
             mdl.refresh_inputs()
             system.link_ext_param({mdl.name: mdl})
-
-    @property
-    def v(self):
-        return self.u.v
 
 
 class OperationService(BaseService):
@@ -1063,8 +1109,8 @@ class NumSelect(OperationService):
 
     Any values equal to ``np.nan`` will always be ignored. If one needs to
     ignore values based on additional conditions, pass it through
-    ``ignore_cond``. For example, to ignore zero values, use
-    ``ignore_cond = partial(np.equal, 0)``.
+    ``ignore_cond``. For example, to ignore zero values, use ``ignore_cond =
+    partial(np.equal, 0)``.
 
     Examples
     --------
@@ -1072,9 +1118,8 @@ class NumSelect(OperationService):
 
     .. code:: python
 
-        self.Tn = NumParam(default=None)
-        self.Sg = ExtParam(...)
-        self.Sn = DataSelect(Tn, Sg)
+        self.Tn = NumParam(default=None) self.Sg = ExtParam(...) self.Sn =
+        DataSelect(Tn, Sg)
 
     """
 
