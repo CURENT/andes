@@ -823,7 +823,7 @@ class Interface(GroupBase):
         self.common_params = []
 
 
-class TimeSeries(GroupBase):
+class DataSeries(GroupBase):
     """
     Group for TimeSeries models.
     """
