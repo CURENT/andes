@@ -168,6 +168,7 @@ class IEEEG1Model(TGBase):
                                   v_str='tm0 + tm02',
                                   )
 
+        # Note: the following applies `zsyn2` to disable the syn2
         self.tm2 = ExtAlgeb(src='tm',
                             model='SynGen',
                             indexer=self.syn2,
