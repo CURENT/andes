@@ -81,7 +81,7 @@ class TimeSeriesModel(Model):
         # Notes:
         # TimeSeries model is not used in power flow for now
 
-        self.interface = 'TimeSeries'
+        self.group = 'TimeSeries'
         self.flags.tds = True
 
         self.config.add(OrderedDict((('silent', 1),
