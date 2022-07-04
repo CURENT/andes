@@ -1980,7 +1980,7 @@ class System:
         """
         Invoke the actions associated with switch times.
 
-        Switch actions will be disabled if `flat=True` is passed to system.
+        This function will not be called if ``flat=True`` is passed to system.
         """
         for instance in models.values():
             instance.switch_action(self.dae.t)

@@ -240,11 +240,28 @@ class TimeSeriesModel(Model):
 
 class TimeSeries(TimeSeriesData, TimeSeriesModel):
     """
-    Model for metadata of timeseries.
+    Model for applying time-series data.
 
-    TimeSeries will not overwrite values in power flow.
+    A TimeSeries device takes a `xlsx` data spreadsheet and applies the data to
+    the specified device. The spreadsheet can contain multiple sheets, each with
+    a column named ``t`` and multiple user-defined columns for the data. The
+    values will be applied at the exact time instant.
 
-    Relative path is assumed in the same folder as the case file.
+    The ``xlsx`` data spreadsheet is assumed in the same folder as the case
+    file.
+
+    Regarding the parameters for the ``TimeSeries`` device:
+
+    - The column names in the ``xlsx`` data file need to be specified through
+      the ``fields`` parameter, separated by commas.
+    - The parameter/service names of the device which is to be updated need to
+      be specified through the ``dests`` parameter, separated by commas.
+
+    There are a few caveats with the current TimeSeries implementation:
+
+    - TimeSeries will not be applied power flow.
+    - The interpolation mode has yet to be implemented.
+
     """
 
     def __init__(self, system, config):
