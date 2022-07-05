@@ -52,6 +52,7 @@ class REGCV1Data(ModelData):
                            info='reactive power droop on voltage',
                            unit='p.u.',
                            power=True,
+                           non_negative=True,
                            )
 
         self.M = NumParam(default=10, tex_name='M',
@@ -364,6 +365,9 @@ class REGCV1(REGCV1Data, VSGOuterPIData, VSGInnerPIData,
       parameters.
     - Setting the primary frequency control droop ``kw`` can improve
       small-signal stability.
+    - The droop ``kv`` for voltage control (pu voltage / pu Q change), if used,
+      needs to be chosen carefully. In most cases, ``kv`` should be a very small
+      positive value if not zero.
 
     """
 
