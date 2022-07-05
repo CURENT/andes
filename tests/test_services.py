@@ -80,3 +80,23 @@ class TestBackRef(unittest.TestCase):
 
         self.assertSequenceEqual(ss.StaticGen.SynGen.v[0], ['GENROU_2'])
         self.assertSequenceEqual(ss.SynGen.TurbineGov.v[0], ['TGOV1_1'])
+
+
+class TestDeviceFinder(unittest.TestCase):
+    """
+    Test DeviceFinder.
+    """
+
+    def test_no_find_or_add(self):
+        """
+        Test if DeviceFinder can skip finding and adding devices.
+        """
+
+        ss = andes.load(andes.get_case("ieee14/ieee14_regcp1_nopll.json"),
+                        default_config=True, no_output=True,
+                        )
+
+        self.assertIsNone(ss.REGCP1.pllidx.v[0])
+
+        # test if the flag for `am` is set to 0 to disable `am` measurement
+        self.assertEqual(ss.REGCP1.zam.v[0], 0)

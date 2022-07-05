@@ -722,7 +722,10 @@ class DeviceFinder(BaseService):
                  default_model: str,
                  auto_find: Optional[bool] = True,
                  auto_add: Optional[bool] = True,
-                 name=None, tex_name=None, info=None):
+                 name: Optional[str] = None,
+                 tex_name: Optional[str] = None,
+                 info: Optional[str] = None):
+
         super().__init__(name=name, tex_name=tex_name, info=info)
 
         self.u = u
@@ -775,9 +778,9 @@ class DeviceFinder(BaseService):
                 valid_idx = mdl.find_idx('idx', (idx, ), allow_none=True, default=None)[0]
                 if valid_idx == idx:
                     continue
-                else:
-                    logger.warning("%s.%s: <%s> is not found.",
-                                   self.u.owner.class_name, self.u.name, idx)
+
+                logger.warning("%s.%s: <%s> is not found.",
+                               self.u.owner.class_name, self.u.name, idx)
 
             if (not valid_idx) and self.auto_find:
                 idx = mdl.find_idx(self.idx_name, (link_to, ), allow_none=True, default=None)[0]
