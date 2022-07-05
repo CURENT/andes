@@ -53,7 +53,7 @@ class REGCA1Data(ModelData):
                                )
 
         self.Lvpl1 = NumParam(default=1.0, tex_name='L_{vpl1}',
-                              info='LVPL gain',
+                              info='LVPL gain at Brkpt',
                               unit='p.u',
                               )
         self.Volim = NumParam(default=1.2, tex_name='V_{olim}',
