@@ -53,6 +53,7 @@ class LineData(ModelData):
                           tex_name='x',
                           z=True,
                           unit='p.u.',
+                          non_zero=True,
                           )
         self.b = NumParam(default=0.0,
                           info="shared shunt susceptance",
