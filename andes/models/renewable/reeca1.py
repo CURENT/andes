@@ -305,6 +305,10 @@ class REECA1Model(Model):
                            )
 
         # --- External variables ---
+        #   For angle and voltage, check whether to use `bus` or `buss`
+        #   If use a remote bus, one needs to confirm the PLL is on the remote
+        #   bus instead
+
         self.a = ExtAlgeb(model='Bus',
                           src='a',
                           indexer=self.bus,
@@ -312,12 +316,15 @@ class REECA1Model(Model):
                           info='Bus voltage angle',
                           )
 
-        self.v = ExtAlgeb(model='Bus',
-                          src='v',
-                          indexer=self.bus,
-                          tex_name=r'V',
-                          info='Bus voltage magnitude',
-                          )  # check whether to use `bus` or `buss`
+        # NOTE: `v` below is `vd`, which can be the actual `v` or `vd` depending
+        # on whether or not PLL is used.
+
+        self.v = ExtAlgeb(model='RenGen',
+                          src='vd',
+                          indexer=self.reg,
+                          tex_name=r'V_d',
+                          info='d-axis bus voltage magnitude',
+                          )
 
         self.Pe = ExtAlgeb(model='RenGen', src='Pe', indexer=self.reg, export=False,
                            info='Retrieved Pe of RenGen')

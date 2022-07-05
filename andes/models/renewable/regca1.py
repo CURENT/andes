@@ -6,6 +6,7 @@ from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Model, ModelData, NumParam, Piecewise,)
 from andes.core.block import GainLimiter, LagAntiWindupRate
 from andes.core.service import PostInitService
+from andes.core.var import AliasAlgeb
 
 
 class REGCA1Data(ModelData):
@@ -52,7 +53,7 @@ class REGCA1Data(ModelData):
                                )
 
         self.Lvpl1 = NumParam(default=1.0, tex_name='L_{vpl1}',
-                              info='LVPL gain',
+                              info='LVPL gain at Brkpt',
                               unit='p.u',
                               )
         self.Volim = NumParam(default=1.2, tex_name='V_{olim}',
@@ -133,6 +134,8 @@ class REGCA1Model(Model):
                           ename='Q',
                           tex_ename='Q',
                           )
+
+        self.vd = AliasAlgeb(self.v)
 
         self.p0s = ExtService(model='StaticGen',
                               src='p',
@@ -288,7 +291,7 @@ class REGCA1(REGCA1Data, REGCA1Model):
     """
     Renewable energy generator model type A.
 
-    Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF.
+    Implements ``REGCA1`` in PSS/E, or ``REGC_A`` in PSLF and Powerworld.
 
     Volim is the voltage limit for high voltage reactive current management,
     which should be large than static bus voltage (Volim > v),

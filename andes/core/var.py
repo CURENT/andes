@@ -334,7 +334,7 @@ class ExtVar(BaseVar):
         A parameter of the hosting model, used as indices into
         the source model and variable. If is None, the source
         variable address will be fully copied.
-    allow_none : bool
+    allow_none : bool, optional, default=False
         True to allow None in indexer
 
     Attributes
