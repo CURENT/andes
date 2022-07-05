@@ -9,6 +9,9 @@ The package for DAE models in ANDES.
 # `file_classes` records the `.py` files under `andes/models` and the classes in
 # each file. Models will be initialized in the order given below.
 
+from andes.models.governor.hygov4 import HYGOV4
+
+
 file_classes = list([
     ('info', ['Summary']),
     ('misc', ['Output']),
@@ -22,7 +25,7 @@ file_classes = list([
     ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU', 'PLBVFU1']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'TGOV1N', 'TGOV1NDB',
-                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB']),
+                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB', 'HYGOV4']),
     ('vcomp', ['IEEEVC']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
                  'IEEET1', 'EXAC1', 'EXAC4', 'ESST4B', 'AC8B', 'IEEET3',

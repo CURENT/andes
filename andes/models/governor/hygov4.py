@@ -117,7 +117,7 @@ class HYGOV4Data(TGBaseData):
 
 class HYGOV4Model(TGBase):
     """
-    Implement HYGOV model.
+    Implement HYGOV4 model.
 
     The input lead-lag filter is ignored.
 
@@ -182,6 +182,7 @@ class HYGOV4Model(TGBase):
                            unit='rad',
                            v_str='q0',
                            tex_name=r'\delta',
+                           ##t_const = self.Tg,
                            e_str='LGTP_y * k'
                            )
         
