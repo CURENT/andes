@@ -1246,7 +1246,9 @@ class Model:
         """
         Symbolic processing and code generation.
         """
-        logger.debug(f"Generating code for {self.class_name}")
+
+        logger.debug("Generating code for %s", self.class_name)
+
         self.calls.md5 = self.get_md5()
 
         self.syms.generate_symbols()

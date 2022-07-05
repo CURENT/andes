@@ -172,6 +172,10 @@ class IEEET1Model(ExcBase):
 
 
 class IEEET1(IEEET1Data, IEEET1Model):
+    """
+    IEEET1 exciter.
+    """
+
     def __init__(self, system, config):
         IEEET1Data.__init__(self)
         IEEET1Model.__init__(self, system, config)

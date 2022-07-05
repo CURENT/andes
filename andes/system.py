@@ -62,9 +62,12 @@ class System:
 
     Parameters
     ----------
-    no_undill : bool, optional
+    no_undill : bool, optional, default=False
         True to disable the call to ``System.undill()`` at the end of object creation.
         False by default.
+
+    autogen_stale : bool, optional, default=True
+        True to automatically generate code for stale models.
 
     Notes
     -----
@@ -98,6 +101,7 @@ class System:
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
                  no_undill: Optional[bool] = False,
+                 autogen_stale: Optional[bool] = True,
                  **kwargs
                  ):
         self.name = name
@@ -207,7 +211,7 @@ class System:
         self.is_setup = False        # if system has been setup
 
         if not no_undill:
-            self.undill()
+            self.undill(autogen_stale=autogen_stale)
 
     def _set_numpy(self):
         """
@@ -260,11 +264,11 @@ class System:
 
             if not newobj:
                 self._config_object.set(section, key, value)
-                logger.debug("Config option set: {}.{}={}".format(section, key, value))
+                logger.debug("Existing config option set: %s.%s=%s", section, key, value)
             else:
                 self._config_object.add_section(section)
                 self._config_object.set(section, key, value)
-                logger.debug("Config option added: {}.{}={}".format(section, key, value))
+                logger.debug("New config option added: %s.%s=%s", section, key, value)
 
     def reload(self, case, **kwargs):
         """
@@ -1199,10 +1203,25 @@ class System:
         # collect from-bus and to-bus indices
         fr, to, u = list(), list(), list()
 
+        # TODO: generalize it to all serial devices
         # collect from Line
         fr.extend(self.Line.a1.a.tolist())
         to.extend(self.Line.a2.a.tolist())
         u.extend(self.Line.u.v.tolist())
+
+        # collect from Fortescue
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.aa.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.ab.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
+        fr.extend(self.Fortescue.a.a.tolist())
+        to.extend(self.Fortescue.ac.a.tolist())
+        u.extend(self.Fortescue.u.v.tolist())
+
         os = [0] * len(u)
 
         # find islanded buses
@@ -1501,20 +1520,39 @@ class System:
             logger.debug("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
             logger.debug("ANDES is fully functional with generated Python code.")
 
-    def undill(self):
+    def undill(self, autogen_stale=True):
         """
-        Deserialize the function calls from ``~/.andes/calls.pkl`` with ``dill``.
+        Reload generated function functions, from either the
+        ``$HOME/.andes/pycode`` folder or the ``$HOME/.andes/calls.pkl`` file.
 
-        If no change is made to models, future calls to ``prepare()`` can be replaced with ``undill()`` for
-        acceleration.
+        If no change is made to models, future calls to ``prepare()`` can be
+        replaced with ``undill()`` for acceleration.
+
+        Parameters
+        ----------
+        autogen_stale: bool
+            True to automatically call code generation if stale code is
+            detected. Regardless of this option, codegen is trigger if importing
+            existing code fails.
         """
 
         # load equations and jacobian from saved code
         loaded = self._load_calls()
+
         stale_models = self._find_stale_models()
 
         if loaded is False:
             self.prepare(quick=True, incremental=False)
+            loaded = True
+        elif autogen_stale is False:
+            # NOTE: incremental code generation may be triggered due to Python
+            # not invalidating ``.pyc`` caches. If multiprocessing is being
+            # used, code generation will cause nested multiprocessing, which is
+            # not allowed.
+            # The flag ``autogen_stale=False`` is used to prevent nested codegen
+            # and is intended to be used only in multiprocessing.
+            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
+            logger.info("Automatic code re-generation manually skipped")
             loaded = True
         elif len(stale_models) > 0:
             logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
@@ -1942,7 +1980,7 @@ class System:
         """
         Invoke the actions associated with switch times.
 
-        Switch actions will be disabled if `flat=True` is passed to system.
+        This function will not be called if ``flat=True`` is passed to system.
         """
         for instance in models.values():
             instance.switch_action(self.dae.t)

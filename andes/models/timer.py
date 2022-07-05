@@ -353,7 +353,7 @@ class Alter(AlterData, AlterModel):
     update variables.
 
     Alter is implemented by applying the given calculation to the ``v`` field of
-    the linked parameter or constsnt. Alter will not affect other parameters or
+    the linked parameter or constant. Alter will not affect other parameters or
     constants that depend on the altered variable.
 
     It is not uncommon for equations to depend on intermediate constants rather

@@ -9,6 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.7 Notes
 ==========
 
+v1.7.5 (2022-07-xx)
+-------------------
+
+- Added :ref:`Fortescue` model to support symmetric component calculation. The
+  model allows interfacing a positive-sequence bus with three buses representing
+  three phases. See the model description for details.
+
 v1.7.4 (2022-07-01)
 -------------------
 
