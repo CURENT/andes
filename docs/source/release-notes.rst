@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.7 Notes
 ==========
 
-v1.7.5 (2022-07-xx)
+v1.7.5 (2022-07-05)
 -------------------
 
 - Added :ref:`Fortescue` model to support symmetric component calculation. The
