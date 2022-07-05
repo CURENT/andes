@@ -15,6 +15,13 @@ v1.7.5 (2022-07-xx)
 - Added :ref:`Fortescue` model to support symmetric component calculation. The
   model allows interfacing a positive-sequence bus with three buses representing
   three phases. See the model description for details.
+- Added :ref:`PLL2` for the Synchronously-rotating Reference Frame (SRF)-based
+  PLL.
+- :ref:`REGCP1` works identically to :ref:`REGCA1` when the `pll` parameter is
+  empty and works with a PLL.
+- :ref:`REECA1` is updated to work with `vd` of the converter. If using the
+  ``REGCA1`` model, ``vd = v``.
+- Reverted a change in Line parameter that caused SMIB case to crash.
 
 v1.7.4 (2022-07-01)
 -------------------
