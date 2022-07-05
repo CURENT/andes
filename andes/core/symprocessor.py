@@ -379,7 +379,7 @@ class SymProcessor:
         # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
-        for var in self.parent.cache.vars_int.values():
+        for var in self.parent.cache.all_vars.values():
             if var.diag_eps == 0.0:
                 continue
             elif var.diag_eps is True:

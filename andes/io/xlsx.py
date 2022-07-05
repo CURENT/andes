@@ -49,7 +49,7 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None, **kwa
     writer = _add_book(system, writer, add_book)
 
     writer.save()
-    logger.info(f'xlsx file written to "{outfile}"')
+    logger.info('xlsx file written to "%s"', outfile)
     return True
 
 
@@ -78,7 +78,7 @@ def _add_book(system, writer, add_book):
         for item in add_book:
             if item in system.models:
                 system.models[item].cache.df_in.to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
-                logger.info(f'<{item}> template sheet added.')
+                logger.info('<%s> template sheet added.', item)
             else:
                 logger.error('<%s> is not a valid model name.', item)
     return writer
