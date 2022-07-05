@@ -53,7 +53,6 @@ class LineData(ModelData):
                           tex_name='x',
                           z=True,
                           unit='p.u.',
-                          non_zero=True,
                           )
         self.b = NumParam(default=0.0,
                           info="shared shunt susceptance",
@@ -191,7 +190,7 @@ class Line(LineData, Model):
 
         self.yh.v_str = 'u * (gh + 1j * bh)'
         self.yk.v_str = 'u * (gk + 1j * bk)'
-        self.yhk.v_str = 'u/(r + 1j*x)'
+        self.yhk.v_str = 'u/((r+1e-8) + 1j*(x+1e-8))'
 
         self.ghk.v_str = 're(yhk)'
         self.bhk.v_str = 'im(yhk)'
