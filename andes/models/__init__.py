@@ -30,7 +30,7 @@ file_classes = list([
                  'ESAC1A', 'ESST1A', 'ESAC5A']),
     ('pss', ['IEEEST', 'ST2CUT']),
     ('motor', ['Motor3', 'Motor5']),
-    ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1']),
+    ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1', 'PLL2']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REGCP1']),
