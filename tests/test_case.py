@@ -7,18 +7,44 @@ import andes
 from andes.utils.paths import get_case
 
 
+class TestSMIB(unittest.TestCase):
+    """
+    Tests for SMIB.
+    """
+
+    def test_pflow(self):
+        """
+        Test power flow for SMIB.
+        """
+        ss = andes.run(andes.get_case("smib/SMIB.json"),
+                       default_config=True,
+                       no_output=True,
+                       )
+        np.testing.assert_array_almost_equal(ss.Bus.v.v, [1.05, 1, 1.01699103])
+        np.testing.assert_array_almost_equal(ss.Bus.a.v, [3.04692663e-01, 1.43878247e-22, 1.77930079e-01])
+
+
 class Test5Bus(unittest.TestCase):
+    """
+    Tests for the 5-bus system.
+    """
+
     def setUp(self) -> None:
         self.ss = andes.main.load(get_case('5bus/pjm5bus.json'),
                                   default_config=True,
                                   no_output=True,
                                   )
 
-    def test_names(self):
+    def test_essential(self):
+        """
+        Test essential functionalities of Model and System.
+        """
+
+        # --- test model names
         self.assertTrue('Bus' in self.ss.models)
         self.assertTrue('PQ' in self.ss.models)
 
-    def test_count(self):
+        # --- test device counts
         self.assertEqual(self.ss.Bus.n, 5)
         self.assertEqual(self.ss.PQ.n, 3)
         self.assertEqual(self.ss.PV.n, 3)
@@ -27,27 +53,35 @@ class Test5Bus(unittest.TestCase):
         self.assertEqual(self.ss.GENCLS.n, 4)
         self.assertEqual(self.ss.TG2.n, 4)
 
-    def test_idx(self):
+        # test idx values
         self.assertSequenceEqual(self.ss.Bus.idx.v, [0, 1, 2, 3, 4])
         self.assertSequenceEqual(self.ss.Area.idx.v, [1, 2, 3])
 
-    def test_cache_refresh(self):
+        # test cache refreshing
         self.ss.Bus.cache.refresh()
 
-    def test_as_df(self):
+        # test conversion to dataframe
         self.ss.Bus.as_df()
         self.ss.Bus.as_df(vin=True)
 
-    def test_init_order(self):
+        # test model initialization sequence
         self.ss.Bus.get_init_order()
 
     def test_pflow_reset(self):
+        """
+        Test resetting power flow.
+        """
+
         self.ss.PFlow.run()
         if self.ss.PFlow.config.init_tds == 0:
             self.ss.reset()
             self.ss.PFlow.run()
 
     def test_alter_param(self):
+        """
+        Test altering parameter for power flow.
+        """
+
         self.ss.PV.alter('v0', 2, 0.98)
         self.assertEqual(self.ss.PV.v0.v[1], 0.98)
         self.ss.PFlow.run()
@@ -59,6 +93,9 @@ class TestKundur2AreaEIG(unittest.TestCase):
     """
 
     def test_xlsx_eig_run(self):
+        """
+        Test eigenvalue run for Kundur using xlsx data.
+        """
         self.xlsx = get_case("kundur/kundur_full.xlsx")
         self.ss = andes.run(self.xlsx,
                             default_config=True,
