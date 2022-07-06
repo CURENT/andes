@@ -5,7 +5,6 @@ HYGOV4 hydro governor model
 from cmath import inf
 from andes.core import Algeb, ConstService, NumParam, State
 from andes.core.block import  Integrator, Lag, AntiWindupRate
-from andes.core.service import VarService
 from andes.models.governor.tgbase import TGBase, TGBaseData 
 
 class HYGOV4Data(TGBaseData):
@@ -128,14 +127,14 @@ class HYGOV4Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.tr = ConstService(v_str='r * Tr',
-                               tex_name='r*Tr',
+        self.tr = ConstService(v_str='Rtemp * Tr',
+                               tex_name='Rtemp*Tr',
                                )
         self.R = ConstService(v_str='Rtemp + Rperm',
                                tex_name='Rtemp + Rperm',
                                )
-        self.gr = ConstService(v_str = '1/r',
-                               tex_name = '1/r'
+        self.gr = ConstService(v_str = '1/Rtemp',
+                               tex_name = '1/Rtemp'
                                )
         self.q0 = ConstService(v_str='tm0 / At + qNL',
                                tex_name='q_0',
@@ -148,14 +147,14 @@ class HYGOV4Model(TGBase):
         self.wd = Algeb(info = 'Generator speed deviation',
                         unit = 'p.u.',
                         tex_name = r'\omega_{dev}',
-                        v_str = 0,
+                        v_str = '0',
                         e_str = 'ue - (omega - wref) - wd',
                         )
         self.rg = Algeb(info = 'input to LAGTR',
                         unit = 'p.u.',
                         tex_name = 'rg',
-                        v_str = 0,
-                        e_str = '(Rtemp * g) - rg',
+                        v_str = '0',
+                        e_str = '(Rtemp * gate) - rg',
                         )
         self.LAGTR = Lag(u = self.rg,
                      K = 1,
@@ -165,7 +164,7 @@ class HYGOV4Model(TGBase):
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
-                        v_str = 0,
+                        v_str = '0',
                         e_str = '(pref + paux - R + LAGTR_y) - up',
                         )
         self.LAGTP = Lag(u = self.up,
@@ -174,7 +173,7 @@ class HYGOV4Model(TGBase):
                      info = 'lag block with T_p, velocity',
                      )
 
-        self.k = ConstService(v_str='u/Tg',
+        self.iTg = ConstService(v_str='u/Tg',
                                  tex_name='1/T_g',
                                  )
 
@@ -183,35 +182,35 @@ class HYGOV4Model(TGBase):
                            v_str='q0',
                            tex_name=r'\delta',
                            ##t_const = self.Tg,
-                           e_str='LGTP_y * k'
+                           e_str='LAGTP_y * iTg'
                            )
         
-        self.g_lim = AntiWindupRate(u=self.gtpos, lower=self.PMIN, upper=self.PMAX,
+        self.gate_lim = AntiWindupRate(u=self.gtpos, lower=self.PMIN, upper=self.PMAX,
                                      rate_lower=self.UO, rate_upper=self.UC,
-                                     tex_name='lim_{g}',
+                                     tex_name='lim_{gate}',
                                      info='gate velocity limiter',
                                      )
-        self.g = Algeb(info='gate',
+        self.gate = Algeb(info='gate',
                         unit='p.u.',
-                        tex_name="g",
+                        tex_name="gate",
                         v_str='q0',
-                        e_str='gtpos - g',
+                        e_str='gtpos - gate',
                         )
 
-        self.h = Algeb(info='turbine head',
+        self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
-                       tex_name="h",
-                       e_str='q_y**2 / g**2 - h',
+                       tex_name="trhead",
+                       e_str='q_y**2 / gate**2 - trhead',
                        v_str='1',
                        )
-        self.q = Integrator(u="1 - q_y**2 / g**2",
+        self.q = Integrator(u="1 - q_y**2 / gate**2",
                             T=self.Tw, K=1,
                             y0='q0',
                             check_init=False,
                             info="turbine flow (q)"
                             )
 
-        self.pout.e_str = 'ue * (At * h * (q_y - qNL) - Dt * wd * g) - pout'
+        self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * gate) - pout'
 
 class HYGOV4(HYGOV4Data, HYGOV4Model):
     """

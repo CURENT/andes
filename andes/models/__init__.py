@@ -9,8 +9,6 @@ The package for DAE models in ANDES.
 # `file_classes` records the `.py` files under `andes/models` and the classes in
 # each file. Models will be initialized in the order given below.
 
-from andes.models.governor.hygov4 import HYGOV4
-
 
 file_classes = list([
     ('info', ['Summary']),
@@ -33,7 +31,7 @@ file_classes = list([
                  'ESAC1A', 'ESST1A', 'ESAC5A']),
     ('pss', ['IEEEST', 'ST2CUT']),
     ('motor', ['Motor3', 'Motor5']),
-    ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1', 'PLL2']),
+    ('measurement', ['BusFreq', 'BusROCOF', 'PMU', 'PLL1', 'PLL2', 'InertiaEstimation']),
     ('dc', ['Node', 'Ground', 'R', 'L', 'C', 'RCp', 'RCs', 'RLs', 'RLCs', 'RLCp']),
     ('acdc', ['VSCShunt']),
     ('renewable', ['REGCA1', 'REGCP1']),
