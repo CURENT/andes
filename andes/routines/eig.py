@@ -350,7 +350,7 @@ class EIG(BaseRoutine):
 
         # set parameters and run cases
         for count, val in enumerate(zip(*values)):
-            logger.info(f"Parameter sweep: round={count}")
+            logger.debug(f"Parameter sweep: round={count}")
 
             for idx, (param, pos) in enumerate(zip(params, positions)):
                 param.v[pos] = val[idx]
@@ -368,9 +368,11 @@ class EIG(BaseRoutine):
         return results
 
     def plot_root_loci(self, results, eig_indices, ax=None, dpi=None, figsize=None,
-                       arrow_threshold=0.2, **kwargs):
+                       draw_line=False, arrow_threshold=0.2, **kwargs):
         """
         Plot the root loci.
+
+        Markers increase in size for the first parameter through the last.
 
         Parameters
         ----------
@@ -385,6 +387,10 @@ class EIG(BaseRoutine):
             DPI of the figure. If None, use the default DPI.
         figsize : tuple or None
             Figure size. If None, use the default size.
+        draw_line : bool, optional, False by default
+            If True, draw lines to connect the roots. Note that due to the
+            non-fixed ordering of eigenvalues, lines will largely connect
+            different modesl
         arrow_threshold : float
             Threshold for plotting arrows. If the begin and end points of a
             locus is shorter than this threshold, no arrow is plotted.
@@ -424,33 +430,41 @@ class EIG(BaseRoutine):
         loci_data = np.array(loci_list)
         npoints, nloci = loci_data.shape
 
-        # plot the beginning and ending points of the loci
-        fig, ax = self.plot(mu=loci_data[0, :], fig=fig, ax=ax, show=False, **kwargs)
-        fig, ax = self.plot(mu=loci_data[-1, :], fig=fig, ax=ax, show=False, **kwargs)
+        # plot the eigenvalues - markers increase in size from beginning to the
+        # end.
+
+        for i in range(npoints):
+            s = 10 + 40 * i / (npoints - 1)
+            fig, ax = self.plot(mu=loci_data[i, :], s=s, fig=fig, ax=ax, show=False, **kwargs)
+
+        # Note:
+        # We are not able to plot a loci by connecting the eigenvalues because
+        # the order of the returned eigenvalues are not and cannot be guaranteed.
 
         # draw solid lines to connect the roots
-        ax.plot(loci_data.real, loci_data.imag, color='grey', linewidth=1)
+        if draw_line:
+            ax.plot(loci_data.real, loci_data.imag, color='grey', linewidth=1)
 
-        # draw arrows using the middle points
-        if npoints > 1:
-            leftp = np.floor(npoints / 2 - 1).astype(int)
-            rightp = leftp + 1
+            # draw arrows using the middle points
+            if npoints > 1:
+                leftp = np.floor(npoints / 2 - 1).astype(int)
+                rightp = leftp + 1
 
-            loci_r = loci_data.real
-            loci_i = loci_data.imag
+                loci_r = loci_data.real
+                loci_i = loci_data.imag
 
-            for i in range(nloci):
-                # skip drawing arrows if the distance is too small
-                if np.abs(loci_data[0, i] - loci_data[-1, i]) < arrow_threshold:
-                    continue
+                for i in range(nloci):
+                    # skip drawing arrows if the distance is too small
+                    if np.abs(loci_data[0, i] - loci_data[-1, i]) < arrow_threshold:
+                        continue
 
-                left_r = loci_r[leftp, i]
-                left_i = loci_i[leftp, i]
-                right_r = loci_r[rightp, i]
-                right_i = loci_i[rightp, i]
+                    left_r = loci_r[leftp, i]
+                    left_i = loci_i[leftp, i]
+                    right_r = loci_r[rightp, i]
+                    right_i = loci_i[rightp, i]
 
-                ax.annotate("", xy=(right_r, right_i), xytext=(left_r, left_i),
-                            arrowprops=dict(arrowstyle="simple", color='black'))
+                    ax.annotate("", xy=(right_r, right_i), xytext=(left_r, left_i),
+                                arrowprops=dict(arrowstyle="simple", color='black'))
 
         return fig, ax
 
@@ -527,7 +541,7 @@ class EIG(BaseRoutine):
 
     def plot(self, mu=None, fig=None, ax=None,
              left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=DPI, figsize=None, base_color='black',
+             line_width=0.5, s=40, dpi=DPI, figsize=None, base_color='black',
              show=True, latex=True, style='default',
              ):
         """
@@ -553,6 +567,8 @@ class EIG(BaseRoutine):
             damping value for which the dash plots are drawn
         line_width : float, optional
             default line width, by default 0.5
+        s : float or array-like, shape (n, ), optional
+            The marker size in points**2
         dpi : int, optional
             figure dpi
         figsize : [type], optional
@@ -601,9 +617,9 @@ class EIG(BaseRoutine):
             fig = plt.figure(dpi=dpi, figsize=figsize)
             ax = plt.gca()
 
-        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='green')
-        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color=base_color)
-        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='red')
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=s, linewidth=0.5, facecolors='none', edgecolors='green')
+        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=s, linewidth=0.5, color=base_color)
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=s, linewidth=0.5, color='red')
 
         # axes lines
         ax.axhline(linewidth=0.5, color='grey', linestyle='--')
