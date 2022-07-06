@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.7 Notes
 ==========
 
+v1.7.6 (2022-07-xx)
+-------------------
+- In eigenvalue analysis, added parameter sweeping and scatter plot for root
+  loci. See revised Example 4.
+
 v1.7.5 (2022-07-05)
 -------------------
 
