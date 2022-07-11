@@ -200,10 +200,20 @@ Note that the call to ``Model``'s constructor takes two positional arguments, ``
 and ``config`` of types ``System`` and ``ModelConfig``.
 Next, the group is specified, and the model flags are set.
 
+.. note::
+
+    It is important to set the TDS flag to register the model. If not set, data
+    for the model will be successfully loaded, but the variables in the model
+    will not receive any address, and the model equations will be skipped.
+
+    There is a similar flag ``self.flags.pflow`` for models to participate in
+    power flow calculations. Most dynamic models, however, are initialized after
+    power flow.
+
 .. code:: python
 
         self.group = 'PSS'
-        self.flags.update({'tds': True})
+        self.flags.tds = True
 
 Next, ``Replace`` is used to replace input parameters that satisfy a lambda function
 with new values.

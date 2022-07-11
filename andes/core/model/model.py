@@ -45,62 +45,69 @@ class Model:
 
 
     After subclassing `ModelData`, subclass `Model`` to complete a DAE model.
-    Subclasses of `Model` define DAE variables, services, and other types of parameters,
-    in the constructor ``__init__``.
+    Subclasses of `Model` define DAE variables, services, and other types of
+    parameters, in the constructor ``__init__``.
 
     Attributes
     ----------
     num_params : OrderedDict
-        {name: instance} of numerical parameters, including internal
-        and external ones
+        {name: instance} of numerical parameters, including internal and
+        external ones
 
     Examples
     --------
-    Take the static PQ as an example, the subclass of `Model`, `PQ`, should look like ::
+    Take the static PQ as an example, the subclass of `Model`, `PQ`, should look
+    like ::
 
         class PQ(PQData, Model):
             def __init__(self, system, config):
-                PQData.__init__(self)
-                Model.__init__(self, system, config)
+                PQData.__init__(self) Model.__init__(self, system, config)
 
-    Since `PQ` is calling the base class constructors, it is meant to be the final class and not further
-    derived.
-    It inherits from `PQData` and `Model` and must call constructors in the order of `PQData` and `Model`.
-    If the derived class of `Model` needs to be further derived, it should only derive from `Model`
-    and use a name ending with `Base`. See :py:class:`andes.models.synchronous.GENBASE`.
+    Since `PQ` is calling the base class constructors, it is meant to be the
+    final class and not further derived. It inherits from `PQData` and `Model`
+    and must call constructors in the order of `PQData` and `Model`. If the
+    derived class of `Model` needs to be further derived, it should only derive
+    from `Model` and use a name ending with `Base`. See
+    :py:class:`andes.models.synchronous.genbase.GENBase`.
 
-    Next, in `PQ.__init__`, set proper flags to indicate the routines in which the model will be used ::
+    Next, in `PQ.__init__`, set proper flags to indicate the routines in which
+    the model will be used ::
 
         self.flags.update({'pflow': True})
 
-    Currently, flags `pflow` and `tds` are supported. Both are `False` by default, meaning the model is
-    neither used in power flow nor time-domain simulation. **A very common pitfall is forgetting to set the flag**.
+    Currently, flags `pflow` and `tds` are supported. Both are `False` by
+    default, meaning the model is neither used in power flow nor in time-domain
+    simulation. **A very common pitfall is forgetting to set the flag**.
 
-    Next, the group name can be provided. A group is a collection of models with common parameters and variables.
-    Devices' idx of all models in the same group must be unique. To provide a group name, use ::
+    Next, the group name can be provided. A group is a collection of models with
+    common parameters and variables. Devices' idx of all models in the same
+    group must be unique. To provide a group name, use ::
 
         self.group = 'StaticLoad'
 
-    The group name must be an existing class name in :py:mod:`andes.models.group`.
-    The model will be added to the specified group and subject to the variable and parameter policy of the
-    group.
-    If not provided with a group class name, the model will be placed in the `Undefined` group.
+    The group name must be an existing class name in
+    :py:mod:`andes.models.group`. The model will be added to the specified group
+    and subject to the variable and parameter policy of the group. If not
+    provided with a group class name, the model will be placed in the
+    `Undefined` group.
 
-    Next, additional configuration flags can be added.
-    Configuration flags for models are load-time variables, specifying the behavior of a model.
-    They can be exported to an `andes.rc` file and automatically loaded when creating the `System`.
-    Configuration flags can be used in equation strings, as long as they are numerical values.
-    To add config flags, use ::
+    Next, additional configuration flags can be added. Configuration flags for
+    models are load-time variables, specifying the behavior of a model. They can
+    be exported to an `andes.rc` file and automatically loaded when creating the
+    `System`. Configuration flags can be used in equation strings, as long as
+    they are numerical values. To add config flags, use ::
 
         self.config.add(OrderedDict((('pq2z', 1), )))
 
-    It is recommended to use `OrderedDict` instead of `dict`, although the syntax is verbose.
-    Note that booleans should be provided as integers (1 or 0), since `True` or `False` is interpreted as
-    a string when loaded from the `rc` file and will cause an error.
+    It is recommended to use `OrderedDict` instead of `dict`, although the
+    syntax is verbose. Note that booleans should be provided as integers (1 or
+    0), since `True` or `False` is interpreted as a string when loaded from the
+    `rc` file and will cause an error.
 
-    Next, it's time for variables and equations! The `PQ` class does not have internal variables itself.
-    It uses its `bus` parameter to fetch the corresponding `a` and `v` variables of buses.
-    Equation wise, it imposes an active power and a reactive power load equation.
+    Next, it's time for variables and equations! The `PQ` class does not have
+    internal variables itself. It uses its `bus` parameter to fetch the
+    corresponding `a` and `v` variables of buses. Equation wise, it imposes an
+    active power and a reactive power load equation.
 
     To define external variables from `Bus`, use ::
 
@@ -116,18 +123,20 @@ class Model:
             self.a.e_str = "u * p"
             self.v.e_str = "u * q"
 
-    where the `e_str` attribute is the equation string attribute. `u` is the connectivity status.
-    Any parameter, config, service or variable can be used in equation strings.
+    where the `e_str` attribute is the equation string attribute. `u` is the
+    connectivity status. Any parameter, config, service or variable can be used
+    in equation strings.
 
-    Three additional scalars can be used in equations:
-    - ``dae_t`` for the current simulation time (can be used if the model has flag `tds`).
-    - ``sys_f`` for system frequency (from ``system.config.freq``).
-    - ``sys_mva`` for system base mva (from ``system.config.mva``).
+    Three additional scalars can be used in equations: - ``dae_t`` for the
+    current simulation time (can be used if the model has flag `tds`). -
+    ``sys_f`` for system frequency (from ``system.config.freq``). - ``sys_mva``
+    for system base mva (from ``system.config.mva``).
 
-    The above example is overly simplified. Our `PQ` model wants a feature to switch itself to
-    a constant impedance if the voltage is out of the range `(vmin, vmax)`.
-    To implement this, we need to introduce a discrete component called `Limiter`, which yields three arrays
-    of binary flags, `zi`, `zl`, and `zu` indicating in-range, below lower-limit, and above upper-limit,
+    The above example is overly simplified. Our `PQ` model wants a feature to
+    switch itself to a constant impedance if the voltage is out of the range
+    `(vmin, vmax)`. To implement this, we need to introduce a discrete component
+    called `Limiter`, which yields three arrays of binary flags, `zi`, `zl`, and
+    `zu` indicating in-range, below lower-limit, and above upper-limit,
     respectively.
 
     First, create an attribute `vcmp` as a `Limiter` instance ::
@@ -135,8 +144,9 @@ class Model:
             self.vcmp = Limiter(u=self.v, lower=self.vmin, upper=self.vmax,
                                  enable=self.config.pq2z)
 
-    where `self.config.pq2z` is a flag to turn this feature on or off.
-    After this line, we can use `vcmp_zi`, `vcmp_zl`, and `vcmp_zu` in other equation strings. ::
+    where `self.config.pq2z` is a flag to turn this feature on or off. After
+    this line, we can use `vcmp_zi`, `vcmp_zl`, and `vcmp_zu` in other equation
+    strings. ::
 
             self.a.e_str = "u * (p0 * vcmp_zi + " \
                            "p0 * vcmp_zl * (v ** 2 / vmin ** 2) + " \
@@ -146,20 +156,17 @@ class Model:
                            "q0 * vcmp_zl * (v ** 2 / vmin ** 2) + "\
                            "q0 * vcmp_zu * (v ** 2 / vmax ** 2))"
 
-    Note that `PQ.a.e_str` can use the three variables from `vcmp` even before defining `PQ.vcmp`, as long as
-    `PQ.vcmp` is defined, because `vcmp_zi` is just a string literal in `e_str`.
+    Note that `PQ.a.e_str` can use the three variables from `vcmp` even before
+    defining `PQ.vcmp`, as long as `PQ.vcmp` is defined, because `vcmp_zi` is
+    just a string literal in `e_str`.
 
-    The two equations above implement a piece-wise power injection equation. It selects the original power demand
-    if within range, and uses the calculated power when out of range.
+    The two equations above implement a piece-wise power injection equation. It
+    selects the original power demand if within range, and uses the calculated
+    power when out of range.
 
-    Finally, to let ANDES pick up the model, the model name needs to be added to `models/__init__.py`.
-    Follow the examples in the `OrderedDict`, where the key is the file name, and the value is the class name.
-
-    Notes
-    -----
-    To modify parameters or services use ``set()``, which writes directly to the given attribute,
-    or ``alter()``, which converts parameters to system base like that for input data.
-
+    Finally, to let ANDES pick up the model, the model name needs to be added to
+    `models/__init__.py`. Follow the examples in the `OrderedDict`, where the
+    key is the file name, and the value is the class name.
     """
 
     def __init__(self, system=None, config=None):
@@ -470,7 +477,13 @@ class Model:
         """
         Set the value of an attribute of a model property.
 
-        Performs ``self.<src>.<attr>[idx] = value``.
+        Performs ``self.<src>.<attr>[idx] = value``. This method will not modify
+        the input values from the case file that have not been converted to the
+        system base. As a result, changes applied by this method will not affect
+        the dumped case file.
+
+        To alter parameters and reflect it in the case file, use :meth:`alter`
+        instead.
 
         Parameters
         ----------
@@ -495,11 +508,15 @@ class Model:
 
     def alter(self, src, idx, value):
         """
-        Alter input parameter or service values.
+        Alter values of input parameters or constant service.
 
-        If operates on a parameter, the input should be in the same
-        base as that in the input file. This function will convert
-        the new value to system-base per unit.
+        If the method operates on an input parameter, the new data should be in
+        the same base as that in the input file. This function will convert the
+        new value to per unit in the system base.
+
+        The values for storing the input data, i.e., the ``vin`` field of the
+        parameter, will be overwritten, thus the update will be reflected in the
+        dumped case file.
 
         Parameters
         ----------

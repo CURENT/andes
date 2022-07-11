@@ -22,8 +22,7 @@ class BaseVar:
     """
     Base variable class.
 
-    Derived classes `State` and `Algeb` should be used to build
-    model variables.
+    Derived classes `State` and `Algeb` should be used to build model variables.
 
     Parameters
     ----------
@@ -34,12 +33,11 @@ class BaseVar:
     unit : str, optional
         Unit
     tex_name : str
-        LaTeX-formatted variable name. If is None, use `name`
-        instead.
+        LaTeX-formatted variable name. If is None, use `name` instead.
     discrete : Discrete
-        Discrete component on which thi variable depends on.
-        ANDES will call `check_var()` of the discrete component
-        before initializing this variable.
+        Discrete component on which thi variable depends on. ANDES will call
+        `check_var()` of the discrete component before initializing this
+        variable.
 
     Attributes
     ----------
@@ -54,9 +52,8 @@ class BaseVar:
     v_str : str
         explicit initialization equation
     v_str_add : bool
-        True if the value of `v_str` will be added to the variable.
-        Useful when other models access this variable and set part
-        of the initial value
+        True if the value of `v_str` will be added to the variable. Useful when
+        other models access this variable and set part of the initial value
     v_iter : str
         implicit iterative equation in the form of 0 = v_iter
     """
@@ -173,6 +170,7 @@ class BaseVar:
         contiguous : bool, optional
             If the addresses are contiguous
         """
+
         self.a = addr
         self.n = len(self.a)
 
@@ -200,6 +198,7 @@ class BaseVar:
         dae : DAE
             Reference to System.dae
         """
+
         if inplace is True:
             self._set_arrays_inplace(dae)
         if alloc is True:
@@ -241,7 +240,18 @@ class BaseVar:
 
 class Algeb(BaseVar):
     """
-    Algebraic variable class, an alias of the `BaseVar`.
+    Algebraic variable class, an alias of :py:class:`andes.core.var.BaseVar`.
+
+    Note that residual equations corresponding to algebraic variables are given
+    in an implicit form.
+
+    Examples
+    --------
+    When an algebraic variable ``y`` and the equation ``y = x + z`` shall be
+    defined, use ``e_str = 'x + x - y'``. It is a common mistake to use ``e_str
+    = 'x + z'``, which will result in a singular Jacobian matrix because ``d(x +
+    z) / d(y)`` is zero.
+
 
     Attributes
     ----------
@@ -250,6 +260,7 @@ class Algeb(BaseVar):
     v_code : str
         Variable code string, equals string literal ``y``
     """
+
     e_code = 'g'
     v_code = 'y'
 
@@ -318,11 +329,12 @@ class State(BaseVar):
 
 class ExtVar(BaseVar):
     """
-    Externally defined algebraic variable
+    Algebraic variable that links to an external model.
 
-    This class is used to retrieve the addresses of externally-
-    defined variable. The `e` value of the `ExtVar` will be added
-    to the corresponding address in the DAE equation.
+    This class is used to retrieve the addresses of a variable defined in an
+    external model. An equation can be defined for the ``ExtVar``. The evaluated
+    value for the equation will be stored in the  ``ExtVar.e`` attribute and
+    added to the equations corresponding to the external variables.
 
     Parameters
     ----------
@@ -331,19 +343,22 @@ class ExtVar(BaseVar):
     src : str
         Source variable name
     indexer : BaseParam, BaseService
-        A parameter of the hosting model, used as indices into
-        the source model and variable. If is None, the source
-        variable address will be fully copied.
+        A parameter of the hosting model, used as indices into the source model
+        and variable. If is None, the source variable address will be fully
+        copied.
     allow_none : bool, optional, default=False
         True to allow None in indexer
+    e_str : string, optional, default=None
+        Equation string, the evaluated value of which will be added to the source
+        residual equation
 
     Attributes
     ----------
     parent_model : Model
         The parent model providing the original parameter.
     uid : array-like
-        An array containing the absolute indices into the
-        parent_instance values.
+        An array containing the absolute indices into the parent_instance
+        values.
     e_code : str
         Equation code string; copied from the parent instance.
     v_code : str
@@ -536,9 +551,13 @@ class ExtState(ExtVar):
 
     Warnings
     --------
-    ``ExtState`` is not allowed to set ``t_const``, as it will conflict with the
-    source ``State`` variable. In fact, one should not set ``e_str`` for ``ExtState``.
+    ``ExtState`` is not allowed to set ``t_const``, as it may conflict with the
+    source ``State`` variable.
+
+    Only in rare cases should one set ``e_str`` for ``ExtState``. The
+    ``t_const`` of the source State variable is used.
     """
+
     e_code = 'f'
     r_code = 'h'
     v_code = 'x'
@@ -549,6 +568,7 @@ class ExtAlgeb(ExtVar):
     """
     External algebraic variable type.
     """
+
     e_code = 'g'
     r_code = 'i'
     v_code = 'y'

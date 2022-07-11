@@ -114,13 +114,15 @@ from either your fork or the original repository. Clone the repository with
 
     git clone https://github.com/cuihantao/andes
 
-You can replace the URL with your own fork.
-Using ``git``, you can later easily version control and update the source code.
+.. note::
+
+    Replace the URL with yours to use your fork. With ``git``, you can later easily
+    update the source code and perform version control.
 
 Alternatively, you can download the ANDES source code from
-https://github.com/cuihantao/andes and extract all files to the path of your choice.
-Although this will work, this is discouraged, since tracking changes and
-pushing back code would be painful.
+https://github.com/cuihantao/andes and extract all files to the path of your
+choice. Although works, this method is discouraged because tracking changes and
+pushing back code edits will require significant manual efforts.
 
 .. _`Step 2`:
 
@@ -179,6 +181,13 @@ Note the dot at the end. Pip will take care of the rest.
 Updating ANDES
 ==============
 
+.. warning::
+
+    If ANDES has been installed in the development mode using source code, you
+    will need to use ``git`` or the manual approach to update the source code.
+    In this case, Do not proceed with the following steps, as they will install
+    a separate site-package installation on top of the development one.
+
 Regular ANDES updates will be pushed to both ``conda-forge`` and Python package index.
 It is recommended to use the latest version for bug fixes and new features.
 We also recommended you to check the :ref:`ReleaseNotes` before updating to stay informed
@@ -198,6 +207,21 @@ If you install it from PyPI (namely, through ``pip``), run
 
     python3 -m pip install --yes andes
 
+
+Uninstall Multiple Copies
+=========================
+
+A common issue is that multiple copies of ANDES are installed in the same
+environment. Only the most recent one will be accessible. This can happen when
+one previously installed ANDES in the development mode but later ran the ``conda
+install`` or ``python3 -m pip install`` commands to install the latest version.1
+
+In this case, we recommend that you uninstall them all and reinstall only one
+copy using your preferred mode. Uninstalling all copies can be done by calling
+``conda remove andes`` and ``python3 -m pip uninstall andes``. The prompted path
+will indicate the copy to be uninstalled. One may need to run the two commands a
+couple of time until the package managers indicate that the ``andes`` package
+can no longer be found.
 
 Troubleshooting
 ===============

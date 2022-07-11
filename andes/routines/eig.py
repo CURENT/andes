@@ -4,6 +4,7 @@ Module for eigenvalue analysis.
 
 import logging
 from math import ceil, pi
+from typing import Iterable
 
 import numpy as np
 import scipy.io
@@ -238,6 +239,7 @@ class EIG(BaseRoutine):
         """
         Print out a summary to ``logger.info``.
         """
+
         out = list()
         out.append('')
         out.append('-> Eigenvalue Analysis:')
@@ -248,6 +250,7 @@ class EIG(BaseRoutine):
         """
         Find the indices of states associated with zero time constants in ``x``.
         """
+
         system = self.system
         self.zstate_idx = np.array([], dtype=int)
 
@@ -259,10 +262,217 @@ class EIG(BaseRoutine):
 
         self.nz_counts = system.dae.n - len(self.zstate_idx)
 
+    def sweep(self, params, idxes, values):
+        """
+        Parameter sweep for root loci plot.
+
+        Parameters
+        ----------
+        params : list of NumParam or ConstService
+            list of parameters indices to sweep. For example, ``[ss.GENCLS.M]``
+            for GENCLS.M. To update ``ss.GENCLS.M`` for two generators,
+            ``params`` should be set to ``[ss.GENCLS.M, ss.GENCLS.M]``.
+        idxes : list of int or str
+            list of indices to sweep. For example, ``["GENCLS_1", "GENCLS_2"]``
+            for the indices of GENCLS whose corresponding parameter will be
+            updated. The length of ``idxes`` must match that of ``params`` and
+            ``values``.
+        values: list of lists
+            New values of the parameters. Each element in ``values`` is a list
+            for the corresponding element in ``params`` and ``idxes``.
+
+        Examples
+        --------
+        To apply 10 parameters evenly spaced between 1 and 10 to
+        ``ss.GENCLS.M`` of ``GENCLS_1``, do
+
+        .. code-block:: python
+
+            ret = ss.EIG.sweep(ss.GENCLS.M, "GENCLS_1", np.linspace(1, 2, 10))
+
+        This is equivalent to the following just for convenience.
+
+        .. code-block:: python
+
+            ret = ss.EIG.sweep([ss.GENCLS.M],
+                               ["GENCLS_1"],
+                               [np.linspace(1, 2, 10)])
+
+        Returns
+        -------
+        dict
+            A dictionary of the results where the keys are 0-indexed count of
+            parameter set, and the values are dictionaries. Each value
+            dictionary contains a ``mu`` field for the eigenvalues.
+
+        """
+
+        ret = False
+        results = dict()
+
+        if not isinstance(params, Iterable):
+            params = (params, )
+
+        if not isinstance(values, Iterable):
+            logger.error("values must be a list or tuple.")
+            return ret
+        elif not isinstance(values[0], Iterable):
+            values = (values, )
+
+        if isinstance(idxes, str):
+            idxes = (idxes, )
+        elif not isinstance(idxes, Iterable):
+            idxes = (idxes, )
+
+        if len(params) != len(values):
+            logger.error("params and values must have the same length.")
+            return ret
+
+        # check if all values are of the same length
+        if len(values) > 1:
+            len0 = len(values[0])
+            idx = 1
+            for value in values[1:]:
+                len1 = len(value)
+                if len1 == len0:
+                    len0 = len1
+                    idx += 1
+                    continue
+                logger.error(f"value[{idx}] is of length {len1} =/ previous length {len0}.")
+                return ret
+
+        # get position for the parameters
+        positions = list()
+        param_names = list()
+        for param, idx in zip(params, idxes):
+            positions.append(param.owner.idx2uid(idx))
+            param_names.append(param.name)
+
+        # set parameters and run cases
+        for count, val in enumerate(zip(*values)):
+            logger.debug(f"Parameter sweep: round={count}")
+
+            for idx, (param, pos) in enumerate(zip(params, positions)):
+                param.v[pos] = val[idx]
+                logger.debug(f"Set {param.name} = {param.v[pos]}")
+
+            self.system.TDS.init()
+            self.system.TDS.itm_step()
+            self.calc_As()
+            mu, N = self.calc_eig(self.As)
+
+            self.mu, self.N = mu, N  # save to `EIG` for writing if needed
+
+            results[count] = dict(param_values=val, mu=mu,)
+
+        return results
+
+    def plot_root_loci(self, results, eig_indices, ax=None, dpi=None, figsize=None,
+                       draw_line=False, arrow_threshold=0.2, **kwargs):
+        """
+        Plot the root loci.
+
+        Markers increase in size for the first parameter through the last.
+
+        Parameters
+        ----------
+        results : dict
+            Eigenvalue results from parameter sweeping
+        eig_indices : Iterable
+            A list of eigenvalue indices to plot. The indices are 0-based,
+            whereas the indices in the eigenvalue analysis report are 1-based.
+        ax : matplotlib.axes.Axes or None
+            Axes to plot on. If None, create a new figure.
+        dpi : int or None
+            DPI of the figure. If None, use the default DPI.
+        figsize : tuple or None
+            Figure size. If None, use the default size.
+        draw_line : bool, optional, False by default
+            If True, draw lines to connect the roots. Note that due to the
+            non-fixed ordering of eigenvalues, lines will largely connect
+            different modesl
+        arrow_threshold : float
+            Threshold for plotting arrows. If the begin and end points of a
+            locus is shorter than this threshold, no arrow is plotted.
+
+        Examples
+        --------
+        To plot the root loci of the first two eigenvalues, do
+
+        .. code-block:: python
+
+            fig, ax = ss.EIG.plot_root_loci(ret, [0, 1])
+
+        where ``ret`` is the return of :py:meth:`andes.routines.eig.EIG.sweep`.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            Figure containing the plot.
+        matplotlib.axes.Axes
+            Axes of the plot.
+        """
+
+        if ax is None:
+            fig = plt.figure(dpi=dpi, figsize=figsize)
+            ax = plt.gca()
+
+        loci_list = list()
+
+        # extract data into an array
+        for data in results.values():
+            mu = data['mu'][eig_indices]
+            if not isinstance(mu, Iterable):
+                mu = np.array([mu])
+
+            loci_list.append(mu)
+
+        loci_data = np.array(loci_list)
+        npoints, nloci = loci_data.shape
+
+        # plot the eigenvalues - markers increase in size from beginning to the
+        # end.
+
+        for i in range(npoints):
+            s = 10 + 40 * i / (npoints - 1)
+            fig, ax = self.plot(mu=loci_data[i, :], s=s, fig=fig, ax=ax, show=False, **kwargs)
+
+        # Note:
+        # We are not able to plot a loci by connecting the eigenvalues because
+        # the order of the returned eigenvalues are not and cannot be guaranteed.
+
+        # draw solid lines to connect the roots
+        if draw_line:
+            ax.plot(loci_data.real, loci_data.imag, color='grey', linewidth=1)
+
+            # draw arrows using the middle points
+            if npoints > 1:
+                leftp = np.floor(npoints / 2 - 1).astype(int)
+                rightp = leftp + 1
+
+                loci_r = loci_data.real
+                loci_i = loci_data.imag
+
+                for i in range(nloci):
+                    # skip drawing arrows if the distance is too small
+                    if np.abs(loci_data[0, i] - loci_data[-1, i]) < arrow_threshold:
+                        continue
+
+                    left_r = loci_r[leftp, i]
+                    left_i = loci_i[leftp, i]
+                    right_r = loci_r[rightp, i]
+                    right_i = loci_i[rightp, i]
+
+                    ax.annotate("", xy=(right_r, right_i), xytext=(left_r, left_i),
+                                arrowprops=dict(arrowstyle="simple", color='black'))
+
+        return fig, ax
+
     def _pre_check(self):
         """
         Helper function for pre-computation checks.
         """
+
         system = self.system
         status = True
 
@@ -331,8 +541,9 @@ class EIG(BaseRoutine):
 
     def plot(self, mu=None, fig=None, ax=None,
              left=-6, right=0.5, ymin=-8, ymax=8, damping=0.05,
-             line_width=0.5, dpi=DPI, figsize=None, base_color='black',
-             show=True, latex=True, style='default'):
+             line_width=0.5, s=40, dpi=DPI, figsize=None, base_color='black',
+             show=True, latex=True, style='default',
+             ):
         """
         Plot utility for eigenvalues in the S domain.
 
@@ -356,6 +567,8 @@ class EIG(BaseRoutine):
             damping value for which the dash plots are drawn
         line_width : float, optional
             default line width, by default 0.5
+        s : float or array-like, shape (n, ), optional
+            The marker size in points**2
         dpi : int, optional
             figure dpi
         figsize : [type], optional
@@ -404,9 +617,9 @@ class EIG(BaseRoutine):
             fig = plt.figure(dpi=dpi, figsize=figsize)
             ax = plt.gca()
 
-        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=40, linewidth=0.5, facecolors='none', edgecolors='green')
-        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=40, linewidth=0.5, color=base_color)
-        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=40, linewidth=0.5, color='red')
+        ax.scatter(z_mu_real, z_mu_imag, marker='o', s=s, linewidth=0.5, facecolors='none', edgecolors='green')
+        ax.scatter(n_mu_real, n_mu_imag, marker='x', s=s, linewidth=0.5, color=base_color)
+        ax.scatter(p_mu_real, p_mu_imag, marker='x', s=s, linewidth=0.5, color='red')
 
         # axes lines
         ax.axhline(linewidth=0.5, color='grey', linestyle='--')
