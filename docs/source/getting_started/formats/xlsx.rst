@@ -4,9 +4,8 @@ ANDES xlsx
 ----------
 
 The ANDES xlsx format allows one to use Excel for convenient viewing and
-editing. If you don't have Excel, there are alternatives such as the free and
-open-source `LibreOffice <https://www.libreoffice.org>`_ or the non-paid `WPS
-Office <https://www.wps.com/>`_.
+editing. If you do not use Excel, there are alternatives such as the free and
+open-source `LibreOffice <https://www.libreoffice.org>`_.
 
 Format definition
 .................
