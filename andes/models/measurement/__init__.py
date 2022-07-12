@@ -9,3 +9,4 @@ from andes.models.measurement.pll import PLL1, PLL2  # noqa
 from andes.models.measurement.inertiaestimation import InertiaEstimation #noqa
 from andes.models.measurement.ines import ines #noqa
 from andes.models.measurement.ines_piece import ines_piece
+from andes.models.measurement.ines_z import ines_z

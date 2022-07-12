@@ -2,11 +2,13 @@
 Inertia estimation model
 Used Piecewise blocks
 """
+from ast import Num
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
-from andes.core.block import  Piecewise, Washout, Integrator, Gain, Lag
-from andes.core.discrete import Limiter
+from andes.core.service import PostInitService
+from andes.core.block import  Piecewise
 
-class ines_piece(ModelData, Model):
+
+class ines_z(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -18,6 +20,11 @@ class ines_piece(ModelData, Model):
         #parameters
         self.syn = IdxParam(model='SynGen',
                             info='Synchronous generator idx',
+                            mandatory=True,
+                            unique=True,
+                            )
+        self.gov = IdxParam(model='TurbineGov',
+                            info='tgov idx',
                             mandatory=True,
                             unique=True,
                             )
@@ -104,37 +111,25 @@ class ines_piece(ModelData, Model):
                            tex_name = 'Pe',
                            export = True
                            )
-        self.pe_dot = Washout(u = self.Pe, K = 1,
-                            T = self.Two)
-
         
-        #PI controller
-        #self.k_omega = Gain(u = "omega_dot - omegadot_star_y", 
-        #                    K = self.Kp
-        #                    )        
-        #self.omegadot_star = Integrator(u = self.k_omega_y, T = 1, K = self.Ki, 
-        #                                y0 = '0', check_init = False
-        #                                )
-        #self.omegadoubledot = Lag(u = "k_omega_y - omegadoubledot_y",
-        #                          K = 1, T = self.Tf
-        #                          )
-        
-        #Trying out using washout to get omegadoubledot
-        self.omegawashout = NumParam(default=0.1,
-                           info="Time Constant for omega washout",
-                           unit="sec",
-                           tex_name='washout constant',
+        self.Pm = ExtAlgeb(src='pout',
+                           model='TurbineGov',
+                           indexer=self.gov,
+                           tex_name = 'Pm',
+                           export = True
                            )
-        self.omegadoubledot = Washout(u = self.omega_dot, K = 1,
-                            T = self.omegawashout)        
+        
+        
+        #self.Pm = PostInitService(info='Initial Pe',
+        #                     tex_name='P_m', v_str='Pe'
+        #                     )
+       
         #main blocks
  
-        self.piece = Piecewise(u = self.omegadoubledot_y, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
+        self.piece = Piecewise(u = self.omega_dot, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
                                name = 'piece')    
-        #self.M_star = State(v_str = 'piece_y * (pe_dot_y + M_star*omegadoubledot_y)',
-        #                    t_const= self.Tm,
-        #                    info = "Estimated Inertia"
-        #
-
-        self.M = Integrator(u = 'piece_y * (pe_dot_y + M_y * omegadoubledot_y)',
-                            K = 1, T = self.Tm, y0 = '0')
+        self.M_star = State(v_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
+                            e_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
+                            t_const= self.Tm,
+                            info = "Estimated Inertia"
+                            )
