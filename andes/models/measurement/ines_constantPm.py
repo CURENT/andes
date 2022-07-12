@@ -2,13 +2,12 @@
 Inertia estimation model
 Used Piecewise blocks
 """
-
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
 from andes.core.service import PostInitService
 from andes.core.block import  Piecewise
 
 
-class ines_z(ModelData, Model):
+class ines_constantPm(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -112,17 +111,9 @@ class ines_z(ModelData, Model):
                            export = True
                            )
         
-        self.Pm = ExtAlgeb(src='pout',
-                           model='TurbineGov',
-                           indexer=self.gov,
-                           tex_name = 'Pm',
-                           export = True
-                           )
-        
-        
-        #self.Pm = PostInitService(info='Initial Pe',
-        #                     tex_name='P_m', v_str='Pe'
-        #                     )
+        self.Pm = PostInitService(info='Initial Pe',
+                             tex_name='P_m', v_str='Pe'
+                             )
        
         #main blocks
  

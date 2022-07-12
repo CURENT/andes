@@ -131,7 +131,7 @@ class ines_piece(ModelData, Model):
  
         self.piece = Piecewise(u = self.omegadoubledot_y, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
                                name = 'piece')    
-        #self.M_star = State(v_str = 'piece_y * (pe_dot_y + M_star*omegadoubledot_y)',
+        #self.M_star = State(v_str = 'piece_y * (pe_dot_y + M_star * omegadoubledot_y)',
         #                    t_const= self.Tm,
         #                    info = "Estimated Inertia"
         #
