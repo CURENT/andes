@@ -1,14 +1,13 @@
 """
-Inertia estimation model
-Used Piecewise blocks
+Inertia estimation model based on swing equation using actual Pm data 
 """
 
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
-from andes.core.service import PostInitService
 from andes.core.block import  Piecewise
+from andes.core.discrete import Derivative
 
 
-class ines_z(ModelData, Model):
+class InertiaEstimationVariablePm(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -111,7 +110,12 @@ class ines_z(ModelData, Model):
                            tex_name = 'Pe',
                            export = True
                            )
-        
+        self.omega_alg = Algeb(v_str = 'omega',
+                               e_str = 'omega - omega_alg'
+                               )
+        self.omega_fd = Derivative(u = self.omega_alg, 
+                                  info= r'\dot \omega from finte differentiation'
+                                  )
         self.Pm = ExtAlgeb(src='pout',
                            model='TurbineGov',
                            indexer=self.gov,
@@ -128,8 +132,8 @@ class ines_z(ModelData, Model):
  
         self.piece = Piecewise(u = self.omega_dot, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
                                name = 'piece')    
-        self.M_star = State(v_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
-                            e_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
+        self.M_star = State(v_str = 'piece_y * ( M_star * omega_fd_v - (Pm - Pe))',
+                            e_str = 'piece_y * ( M_star * omega_fd_v - (Pm - Pe))',
                             t_const= self.Tm,
                             info = "Estimated Inertia"
                             )

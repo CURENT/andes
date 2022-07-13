@@ -1,12 +1,12 @@
 """
-Inertia estimation model
-Used equations of states and blocks to implement 
+Inertia estimation model based on swing equation with constant Pm
+ 
 """
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
-from andes.core.block import Washout
-from andes.core.discrete import Limiter
+from andes.core.block import  Piecewise
 
-class InertiaEstimation(ModelData, Model):
+
+class InertiaEstimationConstantPm(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -21,12 +21,17 @@ class InertiaEstimation(ModelData, Model):
                             mandatory=True,
                             unique=True,
                             )
+        self.gov = IdxParam(model='TurbineGov',
+                            info='tgov idx',
+                            mandatory=True,
+                            unique=True,
+                            )
         self.epsilon = NumParam(default=0.000001,
                            info="tolerance",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name=r'\epsilon',
                            )
-
+        self.negepsilon = ConstService(v_str = '-1 * epsilon')
         self.Tm = NumParam(default=0.01,
                            info="Time Constant",
                            unit="sec",
@@ -47,12 +52,12 @@ class InertiaEstimation(ModelData, Model):
                            )
         self.Kp = NumParam(default=50,
                            info="proportional constant",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name='K_p',
                            )
         self.Ki = NumParam(default=1,
                            info="integral constant",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name='K_i'
                            )
         self.damping = ExtParam(src='D',
@@ -104,23 +109,15 @@ class InertiaEstimation(ModelData, Model):
                            tex_name = 'Pe',
                            export = True
                            )
-        self.pe_dot = Washout(u = self.Pe, K = 1,
-                            T = self.Two)
-        #PI controller
-        self.omegadotstar = State(info = 'omegadotstar',
-                               v_str = 'omega_dot * Kp * Ki',
-                               e_str = 'omega_dot * Kp * Ki - omegadotstar * Kp * Ki')
-        
-        self.omegadoubledot = State(info = 'omegadoubledot',
-                               v_str = 'omega_dot * Kp',
-                               e_str = 'omega_dot * Kp - omegadotstar * Kp - 2 * omegadoubledot',
-                               t_const = self.Tf)
+
+        self.Pm = ConstService(v_str='Pe', info='initial Pe',
+                                      tex_name='P_{m}',
+                                      )
         #main blocks
-        self.gamma = Limiter(u=self.omegadoubledot, lower=self.epsilon, upper=self.epsilon,
-                                  equal= True, sign_lower= -1, allow_adjust= False 
-                            )
-        self.M_star = State(v_str = '(gamma_zl*1 + gamma_zu*-1 ) * (pe_dot_y + M_star*omegadoubledot)',
-                            e_str = '(gamma_zl*1 + gamma_zu*-1 ) * (pe_dot_y + M_star*omegadoubledot)',
+        self.piece = Piecewise(u = self.omega_dot, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
+                               name = 'piece')    
+        self.M_star = State(v_str = 'piece_y * ( M_star * omega_dot + (Pe - Pm))',
+                            e_str = 'piece_y * ( M_star * omega_dot + (Pe - Pm))',
                             t_const= self.Tm,
                             info = "Estimated Inertia"
                             )

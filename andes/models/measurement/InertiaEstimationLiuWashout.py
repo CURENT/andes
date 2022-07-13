@@ -1,12 +1,11 @@
 """
-Inertia estimation model
-Used Blocks and Limiter 
+Inertia estimation model using Liu's method but using replaced the PI controller with a washout filter
 """
-from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
-from andes.core.block import  Washout, Integrator, Gain, Lag
-from andes.core.discrete import Limiter
+from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, ExtAlgeb, ExtParam, Algeb
+from andes.core.block import  Piecewise, Washout, Integrator
 
-class ines(ModelData, Model):
+
+class InertiaEstimationLiuWashout(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -21,11 +20,13 @@ class ines(ModelData, Model):
                             mandatory=True,
                             unique=True,
                             )
+        
         self.epsilon = NumParam(default=0.000001,
                            info="tolerance",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name=r'\epsilon',
                            )
+        self.negepsilon = ConstService(v_str = '-1 * epsilon')
         self.Tm = NumParam(default=0.01,
                            info="Time Constant",
                            unit="sec",
@@ -46,12 +47,12 @@ class ines(ModelData, Model):
                            )
         self.Kp = NumParam(default=50,
                            info="proportional constant",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name='K_p',
                            )
         self.Ki = NumParam(default=1,
                            info="integral constant",
-                           unit="pu",
+                           unit="p.u.",
                            tex_name='K_i'
                            )
         self.damping = ExtParam(src='D',
@@ -105,22 +106,33 @@ class ines(ModelData, Model):
                            )
         self.pe_dot = Washout(u = self.Pe, K = 1,
                             T = self.Two)
+
+        
         #PI controller
-        self.k_omega = Gain(u = "omega_dot - omegadot_star_y", 
-                            K = self.Kp
-                            )        
-        self.omegadot_star = Integrator(u = self.k_omega_y, T = 1, K = self.Ki, 
-                                        y0 = '0', check_init = False
-                                        )
-        self.omegadoubledot = Lag(u = "k_omega_y - omegadoubledot_y",
-                                  K = 1, T = self.Tf
-                                  )        
+        #self.k_omega = Gain(u = "omega_dot - omegadot_star_y", 
+        #                    K = self.Kp
+        #                    )        
+        #self.omegadot_star = Integrator(u = self.k_omega_y, T = 1, K = self.Ki, 
+        #                                y0 = '0', check_init = False
+        #                                )
+        #self.omegadoubledot = Lag(u = "k_omega_y - omegadoubledot_y",
+        #                          K = 1, T = self.Tf
+        #                          )
+        
+        #Used a washout to get omegadoubledot
+        self.omegawashout = NumParam(default=0.1,
+                           info="Time Constant for omega washout",
+                           unit="sec",
+                           tex_name='washout constant',
+                           )
+        self.omegadoubledot = Washout(u = self.omega_dot, K = 1,
+                            T = self.omegawashout)        
         #main blocks
-        self.gamma = Limiter(u=self.omegadoubledot_y, lower=self.epsilon, upper=self.epsilon,
-                                  equal= True, sign_lower= -1, allow_adjust= False 
-                            )
-        self.M_star = State(v_str = '(gamma_zl*1 + gamma_zu*-1 ) * (pe_dot_y + M_star*omegadoubledot_y)',
-                            e_str = '(gamma_zl*1 + gamma_zu*-1 ) * (pe_dot_y + M_star*omegadoubledot_y)',
-                            t_const= self.Tm,
-                            info = "Estimated Inertia"
-                            )
+        self.piece = Piecewise(u = self.omegadoubledot_y, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
+                               name = 'piece')    
+        #self.M_star = State(v_str = 'piece_y * (pe_dot_y + M_star * omegadoubledot_y)',
+        #                    t_const= self.Tm,
+        #                    info = "Estimated Inertia"
+        #
+        self.M = Integrator(u = 'piece_y * (pe_dot_y + M_y * omegadoubledot_y)',
+                            K = 1, T = self.Tm, y0 = 0)
