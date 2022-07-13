@@ -1441,7 +1441,7 @@ class Derivative(Delay):
 
         else:
             self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
-            self.v[np.where(self.v < 1e-8)] = 0
+            self.v[np.where(np.abs(self.v) < 1e-8)] = 0
 
 
 class Sampling(Discrete):
