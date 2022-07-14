@@ -1,13 +1,13 @@
 """
-Inertia estimation model based on swing equation using actual Pm data 
+Inertia estimation model based on swing equation with constant Pm
+ 
 """
-
+from andes.core.service import ExtService
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
 from andes.core.block import  Piecewise
-from andes.core.discrete import Derivative
 
 
-class InertiaEstimationVariablePm(ModelData, Model):
+class InertiaEstimationConstPmREGCA1(ModelData, Model):
     """
     Estimates inertia of a device. Outputs estimation in pu value.
     """ 
@@ -19,6 +19,11 @@ class InertiaEstimationVariablePm(ModelData, Model):
         #parameters
         self.syn = IdxParam(model='SynGen',
                             info='Synchronous generator idx',
+                            mandatory=True,
+                            unique=True,
+                            )
+        self.res = IdxParam(model='REGCA1',
+                            info='RES idx',
                             mandatory=True,
                             unique=True,
                             )
@@ -105,38 +110,28 @@ class InertiaEstimationVariablePm(ModelData, Model):
                               )
         
         self.Pe = ExtAlgeb(src='Pe',
-                           model='SynGen',
-                           indexer=self.syn,
+                           model='REGCA1',
+                           indexer=self.res,
                            tex_name = 'Pe',
                            export = True
                            )
-        self.omega_alg = Algeb(v_str = 'omega',
-                               e_str = 'omega - omega_alg'
-                               )
-        self.omega_fd = Derivative(u = self.omega_alg,
-                                  info= r'\dot \omega from finte differentiation'
-                                  )
-        self.omega_diff =     Algeb(v_str = 'omega_fd_v',
-                               e_str = 'omega_fd_v - omega_diff'
-                               )
-        self.Pm = ExtAlgeb(src='pout',
-                           model='TurbineGov',
-                           indexer=self.gov,
-                           tex_name = 'Pm',
-                           export = True
+        self.Pe0 = ExtService(src='Pe',
+                           model='REGCA1',
+                           indexer=self.res,
+                           tex_name = 'Pe'
                            )
+
+        self.Pm = ConstService(v_str='Pe0', info='initial Pe',
+                                      tex_name='P_{m}',
+                                      )
         
-        
-        #self.Pm = PostInitService(info='Initial Pe',
-        #                     tex_name='P_m', v_str='Pe'
-        #                     )
-       
+        self.PmTest = Algeb(v_str = 'Pm',
+                            e_str = 'Pm - PmTest')
         #main blocks
- 
         self.piece = Piecewise(u = self.omega_dot, points= ['negepsilon', 'epsilon'], funs= [1, 0, -1], 
                                name = 'piece')    
-        self.M_star = State(v_str = 'piece_y * ( M_star * omega_fd_v - (Pm - Pe))',
-                            e_str = 'piece_y * ( M_star * omega_fd_v - (Pm - Pe))',
+        self.M_star = State(v_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
+                            e_str = 'piece_y * ( M_star * omega_dot - (Pm - Pe))',
                             t_const= self.Tm,
                             info = "Estimated Inertia"
                             )
