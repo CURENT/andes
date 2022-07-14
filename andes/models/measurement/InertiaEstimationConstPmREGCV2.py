@@ -2,6 +2,7 @@
 Inertia estimation model based on swing equation with constant Pm
  
 """
+from andes.core.service import ExtService
 from andes.core import ConstService, NumParam, ModelData, Model, IdxParam, ExtState, State, ExtAlgeb, ExtParam, Algeb
 from andes.core.block import  Piecewise
 
@@ -114,8 +115,12 @@ class InertiaEstimationConstPmREGCV2(ModelData, Model):
                            tex_name = 'Pe',
                            export = True
                            )
+        self.Pe0 = ExtService(src='Pe',
+                           model='REGCV2',
+                           indexer=self.vsg,
+                           )
 
-        self.Pm = ConstService(v_str='Pe', info='initial Pe',
+        self.Pm = ConstService(v_str='Pe0', info='initial Pe',
                                       tex_name='P_{m}',
                                       )
         #main blocks
