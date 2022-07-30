@@ -25,7 +25,7 @@ file_classes = list([
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'TGOV1N', 'TGOV1NDB',
                   'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB']),
     ('vcomp', ['IEEEVC']),
-    ('exciter', ['EXDC2', 'IEEEX1', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
+    ('exciter', ['EXDC2', 'IEEEX1', 'ESDC1A', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
                  'IEEET1', 'EXAC1', 'EXAC4', 'ESST4B', 'AC8B', 'IEEET3',
                  'ESAC1A', 'ESST1A', 'ESAC5A']),
     ('pss', ['IEEEST', 'ST2CUT']),

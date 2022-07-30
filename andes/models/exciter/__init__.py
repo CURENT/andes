@@ -1,5 +1,6 @@
 from andes.models.exciter.ac8b import AC8B  # NOQA
 from andes.models.exciter.esac1a import ESAC1A  # NOQA
+from andes.models.exciter.esdc1a import ESDC1A  # NOQA
 from andes.models.exciter.esdc2a import ESDC2A  # NOQA
 from andes.models.exciter.esst1a import ESST1A  # NOQA
 from andes.models.exciter.esst3a import ESST3A  # NOQA
