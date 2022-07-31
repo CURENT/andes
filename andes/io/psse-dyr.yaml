@@ -376,6 +376,66 @@ EXAC1:
         SE1: SE1
         E2: E2
         SE2: SE2
+
+EXAC2:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - TB
+        - TC
+        - KA
+        - TA
+        - VAMAX
+        - VAMIN
+        - KB
+        - VRMAX
+        - VRMIN
+        - TE
+        - KL
+        - KH
+        - KF
+        - TF
+        - KC
+        - KD
+        - KE
+        - VLR
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: EXAC1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        TR: TR
+        TB: TB
+        TC: TC
+        KA: KA
+        TA: TA
+        VAMAX: VAMAX
+        VAMIN: VAMIN
+        KB: KB
+        VRMAX: VRMAX
+        VRMIN: VRMIN
+        TE: TE
+        KL: KL
+        KH: KH
+        KF: KF
+        TF: TF
+        KC: KC
+        KD: KD
+        KE: KE
+        VLR: VLR
+        E1: E1
+        SE1: SE1
+        E2: E2
+        SE2: SE2
+
 EXAC4:
     inputs:
         - BUS
