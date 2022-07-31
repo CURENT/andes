@@ -6,6 +6,7 @@ from andes.models.exciter.esst1a import ESST1A  # NOQA
 from andes.models.exciter.esst3a import ESST3A  # NOQA
 from andes.models.exciter.esst4b import ESST4B  # NOQA
 from andes.models.exciter.exac1 import EXAC1  # NOQA
+from andes.models.exciter.exac2 import EXAC2  # NOQA
 from andes.models.exciter.exac4 import EXAC4  # NOQA
 from andes.models.exciter.exdc2 import EXDC2  # NOQA
 from andes.models.exciter.exst1 import EXST1  # NOQA
