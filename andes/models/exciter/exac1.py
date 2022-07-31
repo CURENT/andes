@@ -60,6 +60,7 @@ class EXAC1Data(ExcBaseData):
                            tex_name='T_E',
                            default=0.8,
                            unit='p.u.',
+                           non_negative=True,
                            )
         self.KF = NumParam(default=0.1,
                            info='Feedback gain',
