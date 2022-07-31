@@ -91,6 +91,8 @@ class EXAC2(EXAC1Data, EXAC1Model):
     """
     EXAC2 model.
 
+    Ref: https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20EXAC2.htm
+
     Notes
     -----
 

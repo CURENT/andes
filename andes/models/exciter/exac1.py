@@ -1,3 +1,7 @@
+"""
+EXAC1 exciter.
+"""
+
 from andes.core.block import (Integrator, Lag, LagAntiWindup, LeadLag,
                               Piecewise, Washout,)
 from andes.core.discrete import LessThan
@@ -40,13 +44,13 @@ class EXAC1Data(ExcBaseData):
                            default=0.04,
                            unit='p.u.',
                            )
-        self.VRMAX = NumParam(info='Maximum excitation limit',
+        self.VRMAX = NumParam(info='Maximum regulator output',
                               tex_name='V_{RMAX}',
                               default=8,
                               unit='p.u.',
                               vrange=(0.5, 10),
                               )
-        self.VRMIN = NumParam(info='Minimum excitation limit',
+        self.VRMIN = NumParam(info='Minimum regulator output',
                               tex_name='V_{RMIN}',
                               default=0,
                               unit='p.u.',
@@ -107,6 +111,12 @@ class EXAC1Data(ExcBaseData):
 class EXAC1Model(ExcBase):
     """
     EXAC1 implementation.
+
+    The model contains an algebraic loop that will be iteratively initialized.
+    The algebraic loop contains variables ``IN``, ``FEX_y`` and ``INT_y``.
+
+    The input to the integrator ``VFE`` is calculated using the solved ``INT_y``
+    and the saturation coefficients.
     """
 
     def __init__(self, system, config):
@@ -207,6 +217,12 @@ class EXAC1Model(ExcBase):
 
 
 class EXAC1(EXAC1Data, EXAC1Model):
+    """
+    EXAC1 model.
+
+    Ref: https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20EXAC1.htm
+    """
+
     def __init__(self, system, config):
         EXAC1Data.__init__(self)
         EXAC1Model.__init__(self, system, config)
