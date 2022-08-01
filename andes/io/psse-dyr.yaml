@@ -43,6 +43,73 @@ GENCLS:
         ra: ra
         xd1: xs
 
+# TODO: implement the model
+GENSAL:
+    destination: GENROU
+    inputs:
+        - BUS
+        - ID
+        - Td10
+        - Td20
+        - Tq20
+        - H
+        - D
+        - Xd
+        - Xq
+        - Xd1
+        - Xd2
+        - Xl
+        - S10
+        - S12
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+    get:
+        u:
+            StaticGen:
+                src: u
+                idx: gen
+        Sn:
+            StaticGen:
+                src: Sn
+                idx: gen
+        Vn:
+            Bus:
+                src: Vn
+                idx: BUS
+        ra:
+            StaticGen:
+                src: ra
+                idx: gen
+        xs:
+            StaticGen:
+                src: xs
+                idx: gen
+    outputs:
+        u: u
+        bus: BUS
+        gen: gen
+        Sn: Sn
+        Vn: Vn
+        D: D
+        M: "GENSAL.H; lambda x: 2 * x"
+        ra: ra
+        xl: Xl
+        xd: Xd
+        xq: Xq
+        xd1: Xd1
+        xd2: Xd2
+        xq1: Xd1
+        xq2: Xd2
+        Td10: Td10
+        Tq10: Td10
+        Td20: Td20
+        Tq20: Tq20
+        S10: S10
+        S12: S12
+
 GENROU:
     destination: GENROU
     inputs:
@@ -275,6 +342,103 @@ ESAC1A:
         KF : KF
         TF: TF
 
+# TODO: implement exact model below
+ESAC6A:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA
+        - TK
+        - TB
+        - TC
+        - VAMAX
+        - VAMIN
+        - VRMAX
+        - VRMIN
+        - TE
+        - VFELIM
+        - KH
+        - VHMAX
+        - TH
+        - TJ
+        - KC
+        - KD
+        - KE
+        - E1
+        - SE1
+        - E2
+        - SE2
+    destination: SEXS
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+
+# TODO:
+SCRX:
+    inputs:
+        - BUS
+        - ID
+        - TATB
+        - TB
+        - K
+        - TE
+        - EMIN
+        - EMAX
+        - CSWITCH
+        - rcrfd
+    destination: SEXS
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+
+# TODO:
+EXPIC1:
+    inputs:
+        - BUS
+        - ID
+        - TR
+        - KA
+        - TA1
+        - VR1
+        - VR2
+        - TA2
+        - TA3
+        - TA4
+        - VRMAX
+        - VRMIN
+        - KF
+        - TF1
+        - TF2
+        - EFDMAX
+        - EFDMIN
+        - KE
+        - TE
+        - E1
+        - SE1
+        - E2
+        - SE2
+        - KP
+        - KI
+        - KC
+    destination: SEXS
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+
 AC8B:
     inputs:
         - BUS
@@ -404,7 +568,7 @@ EXAC2:
         - SE1
         - E2
         - SE2
-    destination: EXAC1
+    destination: EXAC2
     find:
         syn:
             SynGen:
@@ -908,6 +1072,56 @@ TGOV1:
         T2: T2
         T3: T3
         Dt: Dt
+
+# TODO:
+GGOV1:
+    inputs:
+        - BUS
+        - ID
+        - Rselect
+        - Fswitch
+        - R
+        - Tpelec
+        - maxerr
+        - minerr
+        - Kpgov
+        - KIgov
+        - Kdgov
+        - Tdgov
+        - VMAX
+        - VMIN
+        - Tact
+        - Kturb
+        - Wfnl
+        - Tb
+        - Tc
+        - Teng
+        - Tfload
+        - Kpload
+        - KIload
+        - Ldref
+        - Dm
+        - Ropen
+        - Rclose
+        - KImw
+        - Aset
+        - Ka
+        - Ta
+        - Trate
+        - db
+        - Tsa
+        - Tsb
+        - Rup
+        - Rdown
+    destination: TGOV1
+    find:
+        syn:
+            SynGen:
+                bus: BUS
+                subidx: ID
+    outputs:
+        syn: syn
+        R: R
 
 HYGOV:
     inputs:
