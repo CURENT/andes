@@ -303,7 +303,7 @@ class REGF1Model(Model):
 
 class REGFOuterPIModel:
     """
-    Outer PI controllers for REGCV1
+    Outer PI controllers for REGF1
     """
 
     def __init__(self, vderr: str = 'vref2 - vd', vqerr: str = '-vq'):
@@ -324,7 +324,7 @@ class REGFOuterPIModel:
 
 class REGFInnerPIModel:
     """
-    Inner current PI controllers for REGCV1
+    Inner current PI controllers for REGF1
     """
 
     def __init__(self):
@@ -375,6 +375,11 @@ class REGFInnerPIModel:
 
 class REGF1(REGF1Data, REGF1Model, REGFOuterPIModel, REGFInnerPIModel):
     """
+    Grid-forming inverter using droop.
+
+    Implementation of EPRI Memorandum
+
+    D. Ramasubramanian, "PROPOSAL FOR SUITE OF GENERIC GRID FORMING (GFM) POSITIVE SEQUENCE MODELS"
     """
 
     def __init__(self, system, config):
