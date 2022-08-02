@@ -221,6 +221,7 @@ class REGF1Model(Model):
         self.vq0 = ConstService(tex_name=r'v_{q0}',
                                 v_str='0',
                                 )
+        # --- Constants end ---
 
         self.Paux = Algeb(v_str='0', e_str='Paux')
         self.Qaux = Algeb(v_str='0', e_str='Qaux')
@@ -246,21 +247,11 @@ class REGF1Model(Model):
                                    x0='Qsen_y',
                                    )
 
-        self.dw = GainLimiter(u='w0 * wdrp * (PIplim_y - Psen_y)', K=1, R=1,
-                              lower=self.dwmin,
-                              upper=self.dwmax,
-                              )
-
         self.delta = State(info='virtual delta',
                            unit='rad',
                            v_str='a',
                            tex_name=r'\delta',
-                           e_str='w0 * dw_y')
-
-        self.vref2 = Algeb(tex_name=r'v_{ref2}',
-                           info='voltage reference after droop',
-                           e_str='(u * PIqlim_y - Qsen_y) * Qdrp + vref - vref2',
-                           v_str='u * vref')
+                           e_str='dw_y')
 
         # --- End reference generator loops ---
 
@@ -299,6 +290,24 @@ class REGF1Model(Model):
         Disable the corresponding `StaticGen`s.
         """
         self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
+
+
+class REGF1Primary:
+    """
+    Primary frequency and voltage controllers based on droop.
+    """
+
+    def __init__(self) -> None:
+
+        self.dw = GainLimiter(u='w0 * wdrp * (PIplim_y - Psen_y)', K=1, R=1,
+                              lower=self.dwmin,
+                              upper=self.dwmax,
+                              )
+
+        self.vref2 = Algeb(tex_name=r'v_{ref2}',
+                           info='voltage reference after droop',
+                           e_str='(u * PIqlim_y - Qsen_y) * Qdrp + vref - vref2',
+                           v_str='u * vref')
 
 
 class REGFOuterPIModel:
@@ -373,7 +382,8 @@ class REGFInnerPIModel:
         self.uq = AliasState(self.uqLag_y)
 
 
-class REGF1(REGF1Data, REGF1Model, REGFOuterPIModel, REGFInnerPIModel):
+class REGF1(REGF1Data, REGF1Model, REGF1Primary,
+            REGFOuterPIModel, REGFInnerPIModel):
     """
     Grid-forming inverter using droop.
 
@@ -386,5 +396,6 @@ class REGF1(REGF1Data, REGF1Model, REGFOuterPIModel, REGFInnerPIModel):
         REGF1Data.__init__(self)
 
         REGF1Model.__init__(self, system, config)
+        REGF1Primary.__init__(self)
         REGFOuterPIModel.__init__(self)
         REGFInnerPIModel.__init__(self)
