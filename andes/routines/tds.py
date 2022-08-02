@@ -141,6 +141,7 @@ class TDS(BaseRoutine):
 
         # internal status
         self.converged = False
+        self.chatter = False
         self.last_converged = False   # True if the previous step converged
         self.busted = False           # True if in a non-recoverable error state
         self.err_msg = ''
@@ -566,6 +567,11 @@ class TDS(BaseRoutine):
                 # for converged cases, set step size back to the initial `config.tstep`
                 if config.fixt:
                     self.deltat = min(config.tstep, self.deltat)
+
+                if self.chatter is True:
+                    self.deltat = self.deltatmax
+                    self.chatter = False
+
             else:
                 self.deltat *= 0.9
                 if self.deltat < self.deltatmin:
@@ -909,8 +915,8 @@ class TDS(BaseRoutine):
         logger.debug('--> Iteration Number: niter = %d', self.niter)
         logger.debug('Max. algebraic equation mismatch:')
         logger.debug('  <%s> [y_idx=%d]', self.system.dae.y_name[y_idx], y_idx)
-        logger.debug('  Variable value = %.4f', self.system.dae.y[y_idx])
-        logger.debug('  Mismatch value = %.4f', self.system.dae.g[y_idx])
+        logger.debug('  Variable value = %.8f', self.system.dae.y[y_idx])
+        logger.debug('  Mismatch value = %.8f', self.system.dae.g[y_idx])
 
         assoc_vars = self.system.dae.gy[y_idx, :]
         vars_idx = np.where(np.ravel(matrix(assoc_vars)))[0]
