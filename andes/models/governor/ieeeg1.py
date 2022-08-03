@@ -113,10 +113,6 @@ class IEEEG1Model(TGBase):
                                     info='summation of K1-K8',
                                     tex_name=r"\sum_{i=1}^8 K_i"
                                     )
-        # self._K18c1 = InitChecker(u=self._sumK18,
-        #                           info='summation of K1-K8 and 1.0',
-        #                           equal=1,
-        #                           )
 
         self._Kcoeff = ConstService(v_str='1/_sumK18',
                                     info='normalization factor to be multiplied to K1-K8',
