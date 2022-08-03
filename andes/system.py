@@ -962,7 +962,7 @@ class System:
             mdl.coeffs = coeffs
             mdl.bases = {'Sn': Sn, 'Sb': Sb, 'Vn': Vn, 'Vb': Vb, 'Zn': Zn, 'Zb': Zb}
 
-    def l_update_var(self, models: OrderedDict, niter=None, err=None):
+    def l_update_var(self, models: OrderedDict, niter=0, err=None):
         """
         Update variable-based limiter discrete states by calling ``l_update_var`` of models.
 
@@ -971,14 +971,14 @@ class System:
         self.call_models('l_update_var', models,
                          dae_t=self.dae.t, niter=niter, err=err)
 
-    def l_update_eq(self, models:  OrderedDict, init=False):
+    def l_update_eq(self, models:  OrderedDict, init=False, niter=0):
         """
         Update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Force set equations after evaluating equations.
 
         This function is must be called after differential equation updates.
         """
-        self.call_models('l_check_eq', models, init=init)
+        self.call_models('l_check_eq', models, init=init, niter=niter)
 
     def s_update_var(self, models: OrderedDict):
         """

@@ -688,7 +688,7 @@ class Model:
             if instance.has_check_var:
                 instance.check_var(dae_t=dae_t, niter=niter, err=err)
 
-    def l_check_eq(self, init=False, **kwargs):
+    def l_check_eq(self, init=False, niter=0, **kwargs):
         """
         Call the ``check_eq`` method of discrete components to update equation-dependent flags.
 
@@ -705,11 +705,12 @@ class Model:
                     instance.check_eq(allow_adjust=self.config.allow_adjust,
                                       adjust_lower=self.config.adjust_lower,
                                       adjust_upper=self.config.adjust_upper,
+                                      niter=0
                                       )
         else:
             for instance in self.discrete.values():
                 if instance.has_check_eq:
-                    instance.check_eq()
+                    instance.check_eq(niter=niter)
 
     def s_update(self):
         """

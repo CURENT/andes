@@ -139,9 +139,6 @@ class DAETimeSeries:
         Get time-series data, either for a variable or for the equation
         associated with the variable.
 
-        Each row correspond to a timestamp. Values for different variables will
-        be appended horizontally.
-
         Parameters
         ----------
         base_var : BaseVar or a sequence of BaseVar(s)
@@ -151,7 +148,14 @@ class DAETimeSeries:
             Sub-indices into the address of `base_var`. Applied to each
             variable.
 
+        Returns
+        -------
+        np.ndarray
+
+            A two-dimensional array. Each row corresponds to one time step. Each
+            column corresponds to a different different variable.
         """
+
         out = np.zeros((len(self.t), 0))
         if isinstance(base_vars, BaseVar):
             base_vars = (base_vars, )
@@ -162,15 +166,21 @@ class DAETimeSeries:
                             base_var.owner.class_name, base_var.name)
                 continue
 
-            if rhs is True and (base_var.e_code == 'g') and \
+            if (rhs is True) and (base_var.e_code == 'g') and \
                     not isinstance(base_var, ExtVar):
-                logger.warning("RHS of an internal algebraic variable <%s.%s> is always zero. Ignored",
+                logger.warning("RHS of the internal Algeb var <%s.%s> is always zero.",
                                base_var.owner.class_name, base_var.name)
                 continue
 
             if rhs is False:
                 indices = base_var.a
                 array_code = base_var.v_code
+
+                if self.dae.system.Output.n > 0:
+                    indices = self.dae.system.Output.to_output_addr(base_var, check=True)
+                    if len(indices) == 0:
+                        continue
+
             else:
                 if isinstance(base_var, ExtVar):
                     # external algebraic variables

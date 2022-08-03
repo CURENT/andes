@@ -26,18 +26,21 @@ class BaseVar:
 
     Parameters
     ----------
-    name : str, optional
-        Variable name
     info : str, optional
         Descriptive information
     unit : str, optional
         Unit
     tex_name : str
-        LaTeX-formatted variable name. If is None, use `name` instead.
+        LaTeX-formatted variable symbol. If is None, the value of `name` will be
+        used.
     discrete : Discrete
-        Discrete component on which thi variable depends on. ANDES will call
+        Discrete component on which this variable depends. ANDES will call
         `check_var()` of the discrete component before initializing this
         variable.
+    name : str, optional
+        Variable name. One should typically assigning the name directly because
+        it will be automatically assigned by the model. The value of ``name``
+        will be the symbol name to be used in expressions.
 
     Attributes
     ----------
@@ -87,7 +90,7 @@ class BaseVar:
 
         self.v_str = v_str    # equation string (v = v_str) for variable initialization
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
-        self.e_str = e_str    # equation string
+        self.e_str = e_str    # residual equation string
 
         self.discrete = discrete
         self.v_setter = v_setter        # True if this variable sets the variable value
@@ -106,9 +109,6 @@ class BaseVar:
 
         # address into the variable and equation arrays (dae.f/dae.g and dae.x/dae.y)
         self.a: np.ndarray = np.array([], dtype=int)
-
-        # address into external equation RHS array (dae.h/dae.i)
-        self.r: np.ndarray = np.array([], dtype=int)
 
         self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
         self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
@@ -248,10 +248,15 @@ class Algeb(BaseVar):
     Examples
     --------
     When an algebraic variable ``y`` and the equation ``y = x + z`` shall be
-    defined, use ``e_str = 'x + x - y'``. It is a common mistake to use ``e_str
-    = 'x + z'``, which will result in a singular Jacobian matrix because ``d(x +
-    z) / d(y)`` is zero.
+    defined, use
 
+    .. code-block:: python
+
+        e_str = 'x + z - y'
+
+    because it expresses the equation ``x + z - y = 0``. It is a common mistake
+    to use ``e_str = 'x + z'``, which will result in a singular Jacobian matrix
+    because ``d(x + z) / d(y)`` is zero.
 
     Attributes
     ----------
@@ -266,19 +271,20 @@ class Algeb(BaseVar):
 
 
 class State(BaseVar):
-    """
+    r"""
     Differential variable class, an alias of the `BaseVar`.
 
     Parameters
     ----------
     t_const : BaseParam, DummyValue
-        Left-hand time constant for the differential equation.
-        Time constants will not be evaluated as part of the differential equation.
-        They will be collected to array `dae.Tf` to multiply to the right-hand side `dae.f`.
+        Left-hand time constant for the differential equation. They will be
+        collected to array ``dae.Tf``. Time constants will not be used when
+        evaluating the right-hand side specified in ``e_str`` but will be
+        applied to the left-hand side.
     check_init : bool
-        True to check if the equation right-hand-side is zero
-        initially. Disabling the checking can be used for integrators
-        when the initial input may not be zero.
+        True to check if the equation right-hand-side is zero initially.
+        Disabling the checking can be used for integrators when the initial
+        input may not be zero.
 
     Attributes
     ----------
@@ -286,7 +292,29 @@ class State(BaseVar):
         Equation code string, equals string literal ``f``
     v_code : str
         Variable code string, equals string literal ``x``
+
+    Examples
+    --------
+    To implement the swing equation
+
+    .. math::
+
+        M \dot {\omega} = \tau_m - \tau_e - D(\omega - 1)
+
+    Do the following in the ``__init__()`` of a model class:
+
+    .. code-block:: python
+
+        self.omega = State(e_str = 'tm - te - D * (omega - 1)',
+                           t_const = self.M,
+                           ...
+                           )
+
+    Note that ``self.M``, the inertia parameter is given through ``t_const`` and
+    is not part of ``e_str``.
+
     """
+
     e_code = 'f'
     v_code = 'x'
 
@@ -399,8 +427,13 @@ class ExtVar(BaseVar):
                          export=export,
                          diag_eps=diag_eps,
                          )
-        self.ename = ename  # equation name corresponding to this variable
+
+        # equation name corresponding to this variable
+        self.ename = ename
         self.tex_ename = tex_ename if tex_ename else ename
+
+        # address into external equation RHS array (dae.h/dae.i)
+        self.r: np.ndarray = np.array([], dtype=int)
 
         self.model = model
         self.src = src
@@ -450,8 +483,6 @@ class ExtVar(BaseVar):
         try:
             slice_idx = slice(self.r[0], self.r[-1] + 1)
         except IndexError as e:
-            print(self.owner.class_name)
-            print(self.name)
             raise e
 
         if isinstance(self, ExtState):

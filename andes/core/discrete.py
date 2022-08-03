@@ -742,6 +742,13 @@ class AntiWindup(Limiter):
         self.has_check_eq = True
         self.no_warn = no_warn
 
+        self.export_flags.extend(['zu0', 'zl0'])
+        self.export_flags_tex.extend(['z_{u0}', 'z_{l0}'])
+
+        self.zu0 = np.array(self.zu)
+        self.zl0 = np.array(self.zl)
+        self.niter_lock = 4  # lock limiter after `niter_lock` iterations to stop chattering
+
     def check_var(self, *args, **kwargs):
         """
         This function is empty. Defers `check_var` to `check_eq`.
@@ -753,6 +760,7 @@ class AntiWindup(Limiter):
                  adjust_lower=False,
                  adjust_upper=False,
                  is_init: bool = False,
+                 niter: int = 0,
                  **kwargs):
         """
         Check the variables and equations and set the limiter flags.
@@ -771,8 +779,12 @@ class AntiWindup(Limiter):
                                      allow_adjust=allow_adjust,
                                      adjust_upper=adjust_upper)
 
+            self.zu0[:] = self.zu
             self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
+
+            if niter > self.niter_lock:
+                self.zu[:] = np.logical_or(self.zu0, self.zu)
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
@@ -782,8 +794,11 @@ class AntiWindup(Limiter):
                                      allow_adjust=allow_adjust,
                                      adjust_lower=adjust_lower)
 
+            self.zl0[:] = self.zl
             self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
+            if niter > self.niter_lock:
+                self.zl[:] = np.logical_or(self.zl0, self.zl)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
@@ -1268,12 +1283,21 @@ class DeadBandRT(DeadBand):
 
 class Delay(Discrete):
     """
-    Delay class to memorize past variable values.
+    The delay class.
 
-    Delay allows to impose a predefined "delay" (in either steps or seconds)
-    for an input variable. The amount of delay is a scalar and has to be fixed
-    at model definition in the current implementation.
+    Delay allows to impose a predefined and fixed "delay" (in either steps or
+    seconds) for an input variable. The amount of delay must be a scalar and has
+    to be given when instantiating the Delay class when defining the model.
 
+    Delay implements an internal memorize to store past variable values.
+
+    The default delay mode is `step` but can be set to `time`.  In the `time`
+    mode, the value at the ``current time - delay`` will be interpolated based
+    on the two nearest times and values.
+
+    Delay can be applied to a state or an algebraic variable. The exported
+    variable is named ``<INSTANCE_NAME>_v``, where `<INSTANCE_NAME>` is the name
+    of the Delay instance.
     """
 
     def __init__(self, u, mode='step', delay=0,
@@ -1302,6 +1326,7 @@ class Delay(Discrete):
         """
         Allocate memory for storage arrays.
         """
+
         super().list2array(n)
         if self.mode == 'step':
             self._v_mem = np.zeros((n, self.delay + 1))
@@ -1363,7 +1388,14 @@ class Delay(Discrete):
 
 class Average(Delay):
     """
-    Compute the average of a BaseVar over a period of time or a number of samples.
+    Compute the average value of a BaseVar over a period of time or a number of
+    simulation steps.
+
+    Average is based on the memory implemented in the Delay class. The same
+    modes as in Delay are supported.
+
+    The output of the Average class is named ``<INSTANCE_NAME>_v``, where
+    `<INSTANCE_NAME>` is the instance name of Average.
     """
 
     def check_var(self, dae_t, *args, **kwargs):
@@ -1381,7 +1413,25 @@ class Average(Delay):
 
 class Derivative(Delay):
     """
-    Compute the derivative of an algebraic variable using numerical differentiation.
+    Compute the derivative of a variable using numerical differentiation.
+
+    Derivative is based on the storage implemented in the Delay class. The delay
+    is set to `1` step so that the current and the previous step are used.
+
+    A simple first order derivative is computed using ``u(t) - u(t-1) / tstep``,
+    where ``tstep`` is the current step size.
+
+    Derivative is intended to be used for algebraic variables because of
+    discontinuity. It can be applied to a state variable, but one should instead
+    implement the right-hand side equation of the state variable in an algebraic
+    equation to obtain the accurate derivative.
+
+    Alternatively, the washout filter (:py:class:`andes.core.block.Washout`) can
+    be used to implement a numerically stable derivative.
+
+    The output of the Derivative class is named ``<INSTANCE_NAME>_v`` just like
+    :py:class:`Delay`.
+
     """
 
     def __init__(self, u, name=None, tex_name=None, info=None):
@@ -1389,21 +1439,39 @@ class Derivative(Delay):
                        name=name, tex_name=tex_name, info=info)
 
     def check_var(self, dae_t, *args, **kwargs):
+        """
+        Calculate the numerical differentiation.
+
+        .. note::
+
+            Very small derivatives (< 1e-8) could cause numerical problems
+            (chattering).
+        """
+
         Delay.check_var(self, dae_t, *args, **kwargs)
 
-        # Note:
-        #    Very small derivatives (< 1e-8) could cause numerical problems (chattering).
-        #    Need to reset the output to zero following a rewind.
         if (dae_t == 0) or (self.rewind is True):
+            # Need to reset the output to zero following a rewind
             self.v[:] = 0
+
         else:
             self.v[:] = (self._v_mem[:, 1] - self._v_mem[:, 0]) / (self.t[1] - self.t[0])
-            self.v[np.where(self.v < 1e-8)] = 0
+            self.v[np.where(np.abs(self.v) < 1e-8)] = 0
 
 
 class Sampling(Discrete):
     """
-    Sample an input variable repeatedly at a given time interval.
+    Sample and hold
+
+    Sample an input variable periodically at the given time interval and hold
+    the value until the next sample time.
+
+    For example, this class can be used to implement a 4-second sampling of the
+    AGC signal.
+
+    The output of `Sampling` is named ``<INSTANCE_NAME>_v``, where
+    `<INSTANCE_NAME>` is the Sampling instance name.
+
     """
 
     def __init__(self, u, interval=1.0, offset=0.0, name=None, tex_name=None, info=None):
@@ -1427,6 +1495,10 @@ class Sampling(Discrete):
         self.rewind = False
 
     def list2array(self, n):
+        """
+        Allocate memory and set all ``_last_v`` internal storage to zeros.
+        """
+
         super().list2array(n)
         self._last_v = np.zeros(n)
 
@@ -1441,14 +1513,15 @@ class Sampling(Discrete):
 
         Initially, store `v` and `_last_v`.
 
-        If time progresses and `dae_t` is a multiple of `period`, update `_last_v` and then `v`.
+        - If time progresses and `dae_t` is a multiple of `period`, update `_last_v` and then `v`.
         Record `_last_t`.
 
-        If time does not progress, update `v`.
+        - If time does not progress, update `v`.
 
-        If time rewinds, restore `_last_v` to `v`.
+        - If rewinds, restore `_last_v` to `v`.
 
         """
+
         self.rewind = False
 
         if dae_t == 0:  # initial step

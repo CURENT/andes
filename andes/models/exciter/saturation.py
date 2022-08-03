@@ -123,10 +123,9 @@ class ExcExpSat(Block):
 
 class ExcQuadSat(Block):
     r"""
-    Exponential exciter saturation block to calculate
-    A and B from E1, SE1, E2 and SE2.
-    Input parameters will be corrected and the user will be warned.
-    To disable saturation, set either E1 or E2 to 0.
+    Exponential exciter saturation block to calculate ``A`` and ``B from ``E1``,
+    ``SE1``, ``E2`` and ``SE2``. Input parameters will be corrected and the user
+    will be warned. To disable saturation, set either ``E1`` or ``E2`` to 0.
 
     Parameters
     ----------
@@ -149,7 +148,7 @@ class ExcQuadSat(Block):
         self._SE2 = SE2
 
         self.zSE2 = FlagValue(self._SE2, value=0.,
-                              info='Flag non-zeros in SE2',
+                              info='Flag non-zeros in SE2 as 1s',
                               tex_name='z^{SE2}')
 
         # data correction for E1, E2, SE1 (TODO)
@@ -191,13 +190,19 @@ class ExcQuadSat(Block):
 
     def define(self):
         r"""
+        Define equations for calculating the saturation coefficients.
+
+        Parameter corrections for E2 and SE2: if SE2 == 0, E2 and SE2 will be
+        set to nonzeros by adding `2` to each. The resulting ``A`` and ``B``
+        will both be zeros to disable saturation.
+
         Notes
         -----
         TODO.
         """
 
         self.E1.v_str = f'{self._E1.name}'
-        self.E2.v_str = f'{self._E2.name}'
+        self.E2.v_str = f'{self._E2.name} + 2 * (1 - {self.name}_zSE2)'
         self.SE1.v_str = f'{self._SE1.name}'
         self.SE2.v_str = f'{self._SE2.name} + 2 * (1 - {self.name}_zSE2)'
 

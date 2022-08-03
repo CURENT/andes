@@ -49,9 +49,27 @@ class TestOutput(unittest.TestCase):
 
         # test loaded data by plot
         self.assertEqual(ss.TDS.plt._data.shape, (nt, nx + ny + 1))
-        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.GENCLS.omega, a=None),
-                                      [2, 3, 4, 5])
-        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.GENCLS.delta, a=None),
-                                      [1])
-        np.testing.assert_array_equal(ss.TDS.plt._process_yidx(ss.TG2.pout, a=None),
-                                      [])
+        np.testing.assert_array_equal(
+            ss.TDS.plt._process_yidx(ss.GENCLS.omega, a=None),
+            [2, 3, 4, 5])
+
+        np.testing.assert_array_equal(
+            ss.TDS.plt._process_yidx(ss.GENCLS.delta, a=None),
+            [1])
+
+        np.testing.assert_array_equal(
+            ss.TDS.plt._process_yidx(ss.TG2.pout, a=None),
+            [])
+
+        # test `DAE.ts.get_data`
+        np.testing.assert_equal(
+            ss.dae.ts.get_data(ss.GENCLS.omega, a=None).shape[1],
+            4)
+
+        np.testing.assert_equal(
+            ss.dae.ts.get_data(ss.GENCLS.delta, a=None).shape[1],
+            1)
+
+        np.testing.assert_equal(
+            ss.dae.ts.get_data(ss.TG2.pout, a=None).shape[1],
+            0)

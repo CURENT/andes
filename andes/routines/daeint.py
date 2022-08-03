@@ -45,7 +45,9 @@ class ImplicitIter:
             logger.error("Current step size is zero. Integration is not permitted.")
             return False
 
-        tds.mis = [1, 1]
+        tds.mis = [1]
+        tds.mis_inc = [1]
+
         tds.niter = 0
         tds.converged = False
 
@@ -123,6 +125,37 @@ class ImplicitIter:
             if tds.config.reset_tiny:
                 inc[np.where(np.abs(inc) < tds.tol_zero)] = 0
 
+            # store `inc` to tds for debugging
+            tds.inc = inc
+
+            # retrieve maximum abs. residual and maximum var. correction
+            mis_arg = np.argmax(np.abs(inc))
+            mis_inc = inc[mis_arg]
+
+            mis_qg_arg = np.argmax(np.abs(tds.qg))
+            mis_qg = tds.qg[mis_qg_arg]
+
+            # store initial maximum mismatch
+            if tds.niter == 0:
+                tds.mis[0] = abs(mis_qg)
+                tds.mis_inc[0] = abs(mis_inc)
+            else:
+                tds.mis.append(mis_qg)
+                tds.mis_inc.append(mis_inc)
+
+            mis = abs(mis_inc)
+
+            # chattering detection
+            if tds.niter > tds.config.chatter_iter:
+                if (abs(sum(tds.mis_inc[-2:])) < 1e-6) and abs(tds.mis_inc[-1]) > 1e-4:
+                    # chattering occurs -- flag the event and skip this time
+                    # step. At the next step, the maximum allowable step size
+                    # will be used to prevent chattering.
+                    tds.chatter = True
+
+                    logger.debug("Chattering detected at t=%s s", dae.t)
+                    logger.debug("Chattering variable: %s", dae.xy_name[mis_arg])
+
             # set new values
             dae.x -= inc[:dae.n].ravel()
             dae.y -= inc[dae.n: dae.n + dae.m].ravel()
@@ -130,46 +163,48 @@ class ImplicitIter:
             # synchronize solutions to model internal storage
             system.vars_to_models()
 
-            # store `inc` to tds for debugging
-            tds.inc = inc
-
-            mis = np.max(np.abs(inc))
-
-            # store initial maximum mismatch
-            if tds.niter == 0:
-                tds.mis[0] = mis
-            else:
-                tds.mis[-1] = mis
-
             tds.niter += 1
 
             # converged
-            if mis <= tds.config.tol:
+            if abs(mis) <= tds.config.tol:
+                tds.converged = True
+                break
+
+            if tds.chatter:
                 tds.converged = True
                 break
 
             # non-convergence cases
             if tds.niter > tds.config.max_iter:
-                if system.options.get("verbose", 20) <= 10:
-                    tqdm.write(f'* Max. iter. {tds.config.max_iter} reached for t={dae.t:.6f}s, '
-                               f'h={tds.h:.6f}s, max inc={mis:.4g} ')
-
-                # debug helpers
-                g_max = np.argmax(abs(dae.g))
-                inc_max = np.argmax(abs(inc))
-                tds._debug_g(g_max)
-                tds._debug_ac(inc_max)
                 break
 
-            if (mis > 1e6) and (mis > 1e6 * tds.mis[0]):
+            if (abs(mis) > 1e6) and (abs(mis) > 1e6 * tds.mis[0]):
                 tds.err_msg = 'Error increased too quickly.'
                 break
 
         if not tds.converged:
+
+            # restore variables and f
             dae.x[:] = np.array(tds.x0)
             dae.y[:] = np.array(tds.y0)
             dae.f[:] = np.array(tds.f0)
             system.vars_to_models()
+
+            # debug outputs
+            if system.options.get("verbose", 20) <= 10:
+                tqdm.write(f'* Max. iter. {tds.config.max_iter} reached for t={dae.t:.6f}s, '
+                           f'h={tds.h:.6f}s, max inc={mis:.4g} ')
+
+                g_max = np.argmax(abs(dae.g))
+                inc_max = np.argmax(abs(inc))
+                tds._debug_g(g_max)
+                tds._debug_ac(inc_max)
+
+        else:
+
+            if system.options.get("verbose", 20) <= 10:
+                tqdm.write(f'Converged in {tds.niter} steps for t={dae.t:.6f}s, '
+                           f'h={tds.h:.6f}s, max inc={mis:.4g} ')
 
         tds.last_converged = tds.converged
 

@@ -113,17 +113,50 @@ class IEEEG1Model(TGBase):
                                     info='summation of K1-K8',
                                     tex_name=r"\sum_{i=1}^8 K_i"
                                     )
-        self._K18c1 = InitChecker(u=self._sumK18,
-                                  info='summation of K1-K8 and 1.0',
-                                  equal=1,
-                                  )
+
+        self._Kcoeff = ConstService(v_str='1/_sumK18',
+                                    info='normalization factor to be multiplied to K1-K8',
+                                    tex_name='K_{coeff}',
+                                    )
+        self.K1n = ConstService(v_str='K1 * _Kcoeff',
+                                info='normalized K1',
+                                tex_name='K_{1n}',
+                                )
+        self.K2n = ConstService(v_str='K2 * _Kcoeff',
+                                info='normalized K2',
+                                tex_name='K_{2n}',
+                                )
+        self.K3n = ConstService(v_str='K3 * _Kcoeff',
+                                info='normalized K3',
+                                tex_name='K_{3n}',
+                                )
+        self.K4n = ConstService(v_str='K4 * _Kcoeff',
+                                info='normalized K4',
+                                tex_name='K_{4n}',
+                                )
+        self.K5n = ConstService(v_str='K5 * _Kcoeff',
+                                info='normalized K5',
+                                tex_name='K_{5n}',
+                                )
+        self.K6n = ConstService(v_str='K6 * _Kcoeff',
+                                info='normalized K6',
+                                tex_name='K_{6n}',
+                                )
+        self.K7n = ConstService(v_str='K7 * _Kcoeff',
+                                info='normalized K7',
+                                tex_name='K_{7n}',
+                                )
+        self.K8n = ConstService(v_str='K8 * _Kcoeff',
+                                info='normalized K8',
+                                tex_name='K_{8n}',
+                                )
 
         # check if  `tm0 * (K2 + k4 + K6 + K8) = tm02 *(K1 + K3 + K5 + K7)
-        self._tm0K2 = PostInitService(info='mul of tm0 and (K2+K4+K6+K8)',
-                                      v_str='zsyn2*tm0*(K2+K4+K6+K8)',
+        self._tm0K2 = PostInitService(info='mul of tm0 and (K2n+K4n+K6n+K8n)',
+                                      v_str='zsyn2*tm0*(K2n + K4n + K6n + K8n)',
                                       )
-        self._tm02K1 = PostInitService(info='mul of tm02 and (K1+K3+K5+K6)',
-                                       v_str='tm02*(K1+K3+K5+K7)',
+        self._tm02K1 = PostInitService(info='mul of tm02 and (K1n+K3n+K5n+K7n)',
+                                       v_str='tm02*(K1n + K3n + K5n + K7n)',
                                        )
         self._Pc = InitChecker(u=self._tm0K2,
                                info='proportionality of tm0 and tm02',
@@ -204,7 +237,7 @@ class IEEEG1Model(TGBase):
         self.HL = HardLimiter(u=self.vs,
                               lower=self.UC,
                               upper=self.UO,
-                              info='Limiter on valve acceleration',
+                              info='Limiter on valve speed',
                               )
 
         self.vsl = Algeb(info='Valve move speed after limiter',
@@ -239,14 +272,14 @@ class IEEEG1Model(TGBase):
 
         self.PHP = Algeb(info='HP output',
                          tex_name='P_{HP}',
-                         v_str='ue * (K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y)',
-                         e_str='ue * (K1*L4_y + K3*L5_y + K5*L6_y + K7*L7_y) - PHP',
+                         v_str='ue * (K1n*L4_y + K3n*L5_y + K5n*L6_y + K7n*L7_y)',
+                         e_str='ue * (K1n*L4_y + K3n*L5_y + K5n*L6_y + K7n*L7_y) - PHP',
                          )
 
         self.PLP = Algeb(info='LP output',
                          tex_name='P_{LP}',
-                         v_str='ue * (K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y)',
-                         e_str='ue * (K2*L4_y + K4*L5_y + K6*L6_y + K8*L7_y) - PLP',
+                         v_str='ue * (K2n*L4_y + K4n*L5_y + K6n*L6_y + K8n*L7_y)',
+                         e_str='ue * (K2n*L4_y + K4n*L5_y + K6n*L6_y + K8n*L7_y) - PLP',
                          )
 
         self.pout.e_str = 'ue * PHP - pout'
@@ -268,7 +301,12 @@ class IEEEG1(IEEEG1Data, IEEEG1Model):
     used.
 
     Normally, K1 + K2 + ... + K8 = 1.0. If the second generator is not
-    connected, K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0.
+    connected, K1 + K3 + K5 + K7 = 1, and K2 + K4 + K6 + K8 = 0. If K1 to K8 do
+    not sum up to 1.0, they will be normalized. The normalized parameters are
+    called ``K1n`` through ``K8n``.
+
+    If initialization error occurs for variable ``vs``, it is due to the limits
+    ``PMIN`` and ``PMAX``.
 
     IEEEG1 does not yet support the change of reference (scheduling).
     """
