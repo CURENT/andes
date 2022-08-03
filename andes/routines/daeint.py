@@ -125,13 +125,6 @@ class ImplicitIter:
             if tds.config.reset_tiny:
                 inc[np.where(np.abs(inc) < tds.tol_zero)] = 0
 
-            # set new values
-            dae.x -= inc[:dae.n].ravel()
-            dae.y -= inc[dae.n: dae.n + dae.m].ravel()
-
-            # synchronize solutions to model internal storage
-            system.vars_to_models()
-
             # store `inc` to tds for debugging
             tds.inc = inc
 
@@ -147,27 +140,37 @@ class ImplicitIter:
                 tds.mis[0] = abs(mis_qg)
                 tds.mis_inc[0] = abs(mis_inc)
             else:
-                # tds.mis[-1] = mis
                 tds.mis.append(mis_qg)
                 tds.mis_inc.append(mis_inc)
 
-            # use the minimum of residual and var. correction as the mismatch
-            mis = min(abs(mis_qg), abs(mis_inc))
-
-            tds.niter += 1
+            mis = abs(mis_inc)
 
             # chattering detection
-            if tds.niter > 4:
-                if tds.mis_inc[-1] + tds.mis_inc[-2] < 1e-8:
+            if tds.niter > tds.config.chatter_iter:
+                if (abs(sum(tds.mis_inc[-2:])) < 1e-6) and abs(tds.mis_inc[-1]) > 1e-4:
                     # chattering occurs -- flag the event and skip this time
                     # step. At the next step, the maximum allowable step size
                     # will be used to prevent chattering.
-                    tds.converged = True
                     tds.chatter = True
-                    break
+
+                    logger.debug("Chattering detected at t=%s s", dae.t)
+                    logger.debug("Chattering variable: %s", dae.xy_name[mis_arg])
+
+            # set new values
+            dae.x -= inc[:dae.n].ravel()
+            dae.y -= inc[dae.n: dae.n + dae.m].ravel()
+
+            # synchronize solutions to model internal storage
+            system.vars_to_models()
+
+            tds.niter += 1
 
             # converged
             if abs(mis) <= tds.config.tol:
+                tds.converged = True
+                break
+
+            if tds.chatter:
                 tds.converged = True
                 break
 

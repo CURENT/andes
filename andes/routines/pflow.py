@@ -53,7 +53,7 @@ class PFlow(BaseRoutine):
         self.converged = False
         self.inc = None
         self.A = None
-        self.niter = None
+        self.niter = 0
         self.mis = [1]
         self.models = OrderedDict()
 
@@ -73,7 +73,7 @@ class PFlow(BaseRoutine):
         self.converged = False
         self.inc = None
         self.A = None
-        self.niter = None
+        self.niter = 0
         self.mis = [1]
         self.exec_time = 0.0
 
@@ -271,7 +271,7 @@ class PFlow(BaseRoutine):
         system.s_update_var(self.models)
         system.f_update(self.models)
         system.g_update(self.models)
-        system.l_update_eq(self.models)
+        system.l_update_eq(self.models, niter=0)
         system.fg_to_dae()
 
         return system.dae.fg

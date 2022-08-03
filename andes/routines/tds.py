@@ -57,6 +57,7 @@ class TDS(BaseRoutine):
                                      ('save_every', 1),
                                      ('save_mode', 'auto'),
                                      ('no_tqdm', 0),
+                                     ('chatter_iter', 4),
                                      )))
         self.config.add_extra("_help",
                               method='DAE solution method',
@@ -86,6 +87,7 @@ class TDS(BaseRoutine):
                               save_every='save results for one step every "save_every" steps',
                               save_mode='automatically or manually save output data when done',
                               no_tqdm='disable tqdm progressbar and outputs',
+                              chatter_iter='minimum iterations to detect chattering',
                               )
         self.config.add_extra("_alt",
                               method=tuple(method_map.keys()),
@@ -114,6 +116,7 @@ class TDS(BaseRoutine):
                               save_every='integer',
                               save_mode=('auto', 'manual'),
                               no_tqdm=(0, 1),
+                              chatter_iter='int>=4',
                               )
 
         # overwrite `tf` from command line
@@ -569,7 +572,10 @@ class TDS(BaseRoutine):
                     self.deltat = min(config.tstep, self.deltat)
 
                 if self.chatter is True:
-                    self.deltat = self.deltatmax
+                    # one can do something such as increasing the step size, but
+                    # stopping chattering is not guaranteed
+
+                    # remember of unset the `chatter` flag
                     self.chatter = False
 
             else:
@@ -815,7 +821,7 @@ class TDS(BaseRoutine):
         # 12/08/2020: Moved `l_update_eq` to before `g_update`
         #   because some algebraic variables depend on pegged states.
         system.f_update(models=models)
-        system.l_update_eq(models=models, init=init)
+        system.l_update_eq(models=models, init=init, niter=self.niter)
 
         system.g_update(models=models)
         system.fg_to_dae()

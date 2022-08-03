@@ -742,6 +742,13 @@ class AntiWindup(Limiter):
         self.has_check_eq = True
         self.no_warn = no_warn
 
+        self.export_flags.extend(['zu0', 'zl0'])
+        self.export_flags_tex.extend(['z_{u0}', 'z_{l0}'])
+
+        self.zu0 = np.array(self.zu)
+        self.zl0 = np.array(self.zl)
+        self.niter_lock = 4  # lock limiter after `niter_lock` iterations to stop chattering
+
     def check_var(self, *args, **kwargs):
         """
         This function is empty. Defers `check_var` to `check_eq`.
@@ -753,6 +760,7 @@ class AntiWindup(Limiter):
                  adjust_lower=False,
                  adjust_upper=False,
                  is_init: bool = False,
+                 niter: int = 0,
                  **kwargs):
         """
         Check the variables and equations and set the limiter flags.
@@ -771,8 +779,12 @@ class AntiWindup(Limiter):
                                      allow_adjust=allow_adjust,
                                      adjust_upper=adjust_upper)
 
+            self.zu0[:] = self.zu
             self.zu[:] = np.logical_and(np.greater_equal(self.u.v, upper_v),
                                         np.greater_equal(self.state.e, 0))
+
+            if niter > self.niter_lock:
+                self.zu[:] = np.logical_or(self.zu0, self.zu)
 
         if not self.no_lower:
             lower_v = -self.lower.v if self.sign_lower.v == -1 else self.lower.v
@@ -782,8 +794,11 @@ class AntiWindup(Limiter):
                                      allow_adjust=allow_adjust,
                                      adjust_lower=adjust_lower)
 
+            self.zl0[:] = self.zl
             self.zl[:] = np.logical_and(np.less_equal(self.u.v, lower_v),
                                         np.less_equal(self.state.e, 0))
+            if niter > self.niter_lock:
+                self.zl[:] = np.logical_or(self.zl0, self.zl)
 
         self.zi[:] = np.logical_not(np.logical_or(self.zu, self.zl))
 
