@@ -14,11 +14,13 @@ v1.7.7 (2022-08-xx)
 - Implemented a chattering detection and stop algorithm by increasing the step
   size when chattering is detected.
 - ``TimeSeries.get_data()`` works for systems with ``Output``.
+- Allow freezing states associated with anti-windup limiters after a certain
+  number of iterations to prevent chattering.
 
 Models:
 
 - New exciter models: ESDC1A, EXAC2.
-- New grid-forming inverter models: REGF1, REGF2.
+- New grid-forming inverter models: REGF1, REGF2, REGF3.
 - For ``IEEEG1``, normalize ``K1`` through ``K8`` if they do not sum up to 1.0
 
 v1.7.6 (2022-07-11)

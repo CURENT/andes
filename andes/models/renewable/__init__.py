@@ -18,3 +18,4 @@ from andes.models.renewable.wttqa1 import WTTQA1  # NOQA
 
 from andes.models.renewable.regf1 import REGF1  # NOQA
 from andes.models.renewable.regf2 import REGF2  # NOQA
+from andes.models.renewable.regf3 import REGF3  # NOQA
