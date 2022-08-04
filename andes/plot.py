@@ -386,14 +386,9 @@ class TDSData:
                     continue
 
                 if system.Output.n > 0:
-                    output_addr = system.Output.to_output_addr(item.a, item.v_code)[0]
+                    output_addr = system.Output.to_output_addr(item, check=True)
                     if len(output_addr) == 0:
-                        logger.info("<%s.%s> contains no saved data, skipped.", item.owner.class_name, item.name)
                         continue
-
-                    if len(output_addr) != len(item.a):
-                        logger.info("<%s.%s> is partially stored as set in <Output>. Showing all saved data.",
-                                    item.owner.class_name, item.name)
 
                     nx = len(system.Output.xidx)
                 else:

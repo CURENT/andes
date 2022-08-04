@@ -483,8 +483,6 @@ class ExtVar(BaseVar):
         try:
             slice_idx = slice(self.r[0], self.r[-1] + 1)
         except IndexError as e:
-            print(self.owner.class_name)
-            print(self.name)
             raise e
 
         if isinstance(self, ExtState):

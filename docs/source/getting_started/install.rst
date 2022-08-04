@@ -211,15 +211,16 @@ If you install it from PyPI (namely, through ``pip``), run
 Uninstall Multiple Copies
 =========================
 
-A common issue is that multiple copies of ANDES are installed in the same
-environment. Only the most recent one will be accessible. This can happen when
-one previously installed ANDES in the development mode but later ran the ``conda
-install`` or ``python3 -m pip install`` commands to install the latest version.1
+A common mistake new users make is to have multiple copies of ANDES installed in
+the same environment. This can happen when one previously installed ANDES in the
+development mode but later ran ``conda install`` or ``python3 -m pip install``
+to install the latest version. As a result, only the most recently installed
+version will be accessible.
 
-In this case, we recommend that you uninstall them all and reinstall only one
+In this case, we recommend that you uninstall all version and reinstall only one
 copy using your preferred mode. Uninstalling all copies can be done by calling
 ``conda remove andes`` and ``python3 -m pip uninstall andes``. The prompted path
-will indicate the copy to be uninstalled. One may need to run the two commands a
+will indicate the copy to be removed. One may need to run the two commands for a
 couple of time until the package managers indicate that the ``andes`` package
 can no longer be found.
 

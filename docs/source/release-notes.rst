@@ -9,6 +9,29 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.7 Notes
 ==========
 
+v1.7.8 (2022-08-xx)
+-------------------
+
+- Support marking tests as extra so that they are not run by default. The
+  function names for extra tests should contain ``extra_test``. To run all
+  tests, use ``andes st -e`` or ``andes selftest --extra``.
+- Add the ``new_A`` flag for sparse solvers to trigger actions. Currently, only
+  the spsolve solver will need to rebuild and refactorize the sparse matrix.
+
+v1.7.7 (2022-08-02)
+-------------------
+- Implemented a chattering detection and stop algorithm by increasing the step
+  size when chattering is detected.
+- ``TimeSeries.get_data()`` works for systems with ``Output``.
+- Allow freezing states associated with anti-windup limiters after a certain
+  number of iterations to prevent chattering.
+
+Models:
+
+- New exciter models: ESDC1A, EXAC2.
+- New grid-forming inverter models: REGF1, REGF2, REGF3.
+- For ``IEEEG1``, normalize ``K1`` through ``K8`` if they do not sum up to 1.0
+
 v1.7.6 (2022-07-11)
 -------------------
 - In eigenvalue analysis, added parameter sweeping and scatter plot for root

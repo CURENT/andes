@@ -23,6 +23,7 @@ class SuiteSparseSolver:
         self.F = None   # symbolic factorization
         self.N = None   # numeric factorization
         self.factorize = True
+        self.new_A = False  # does not need to handle new A in suitesparse solvers
         self.use_linsolve = False
 
     def clear(self):

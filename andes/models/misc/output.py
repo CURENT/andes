@@ -2,9 +2,13 @@
 Module for specifying output variables as part of the data file.
 """
 
+import logging
+
 import numpy as np
 from andes.core.model import ModelData, Model
 from andes.core.param import DataParam
+
+logger = logging.getLogger(__name__)
 
 
 class OutputData(ModelData):
@@ -52,10 +56,34 @@ class Output(OutputData, Model):
 
         raise NotImplementedError("v_code <%s> not recognized" % v_code)
 
-    def to_output_addr(self, addr, v_code):
+    def to_output_addr(self, item, check=False):
         """
         Convert DAE-based variable address to relative output addresses.
+
+        Parameters
+        ----------
+        check : bool, optional, False by default
+            If True, check if the address fully or partially exists.
+
+        Returns
+        -------
+        np.ndarray
+            An array containing the indices into the output matrix
         """
 
+        addr = item.a
+        v_code = item.v_code
+
         bool_intersect = self.in1d(addr, v_code)
-        return np.where(bool_intersect)
+        output_addr = np.where(bool_intersect)[0]
+
+        if check is True:
+            if len(output_addr) == 0:
+                logger.info("<%s.%s> not found in <Output>, skipped.",
+                            item.owner.class_name, item.name)
+
+            if len(output_addr) != len(item.a):
+                logger.info("<%s.%s> is partially stored by <Output>. Showing all saved data.",
+                            item.owner.class_name, item.name)
+
+        return output_addr
