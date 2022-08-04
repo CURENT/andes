@@ -15,6 +15,8 @@ v1.7.8 (2022-08-xx)
 - Support marking tests as extra so that they are not run by default. The
   function names for extra tests should contain ``extra_test``. To run all
   tests, use ``andes st -e`` or ``andes selftest --extra``.
+- Add the ``new_A`` flag for sparse solvers to trigger actions. Currently, only
+  the spsolve solver will need to rebuild and refactorize the sparse matrix.
 
 v1.7.7 (2022-08-02)
 -------------------
