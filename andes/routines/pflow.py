@@ -41,7 +41,7 @@ class PFlow(BaseRoutine):
                               )
         self.config.add_extra("_alt",
                               tol="float",
-                              method=("NR", "dishonest"),
+                              method=("NR", "dishonest", "NK"),
                               check_conn=(0, 1),
                               max_iter=">=10",
                               n_factorize=">0",
@@ -204,13 +204,14 @@ class PFlow(BaseRoutine):
 
     def run(self, **kwargs):
         """
-        Full Newton-Raphson method.
+        Solve the power flow using the selected method.
 
         Returns
         -------
         bool
             convergence status
         """
+
         system = self.system
         if self.config.check_conn == 1:
             self.system.connectivity()
@@ -223,9 +224,15 @@ class PFlow(BaseRoutine):
             system.exit_code = 1
             return False
 
+        method = self.config.method.lower()
+
         t0, _ = elapsed()
 
-        self.nr_solve()
+        # ---------- Call solution methods ----------
+        if method == 'nr':
+            self.nr_solve()
+        elif method == 'nk':
+            self.newton_krylov()
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
@@ -262,6 +269,16 @@ class PFlow(BaseRoutine):
             r = Report(self.system)
             r.write()
 
+    def _set_xy(self, xy):
+        """
+        Helper function to set values for variables.
+        """
+
+        system = self.system
+        system.dae.x[:] = xy[:system.dae.n]
+        system.dae.y[:] = xy[system.dae.n:]
+        system.vars_to_models()
+
     def _fg_wrapper(self, xy):
         """
         Wrapper for algebraic equations to be used with Newton-Krylov general solver
@@ -274,12 +291,10 @@ class PFlow(BaseRoutine):
         -------
 
         """
-        system = self.system
-        system.dae.x[:] = xy[:system.dae.n]
-        system.dae.y[:] = xy[system.dae.n:]
-        system.vars_to_models()
+        self._set_xy(xy)
+        self.fg_update()
 
-        return system.dae.fg
+        return self.system.dae.fg
 
     def fg_update(self):
         """
@@ -296,7 +311,7 @@ class PFlow(BaseRoutine):
         system.l_update_eq(self.models, niter=0)
         system.fg_to_dae()
 
-    def newton_krylov(self, verbose=False):
+    def newton_krylov(self, verbose=True):
         """
         Full Newton-Krylov method from SciPy.
 
@@ -311,17 +326,21 @@ class PFlow(BaseRoutine):
 
         Returns
         -------
-        np.array
-            Solutions `dae.xy`.
+        bool
+            Convergence status
         """
-        system = self.system
-        self.init()
 
+        system = self.system
         v0 = system.dae.xy
+
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
+            self._set_xy(ret)
+            self.converged = True
+
         except ValueError as e:
             logger.error('Mismatch is not correctable. Equations may be unsolvable.')
-            raise e
+            logger.error(e)
+            self.converged = False
 
-        return ret
+        return self.converged
