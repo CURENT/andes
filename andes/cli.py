@@ -167,8 +167,11 @@ def create_parser():
                       action='store_true')
 
     selftest = sub_parsers.add_parser('selftest', aliases=command_aliases['selftest'])
-    selftest.add_argument('-q', '--quick', action='store_true',
-                          help='quick selftest by skipping codegen')
+    quick_or_extra = selftest.add_mutually_exclusive_group()
+    quick_or_extra.add_argument('-q', '--quick', action='store_true',
+                                help='quick selftest by skipping codegen')
+    quick_or_extra.add_argument('-e', '--extra', action='store_true',
+                                help='run all standard tests plus the extra')
 
     demo = sub_parsers.add_parser('demo')  # NOQA
 

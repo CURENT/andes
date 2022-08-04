@@ -37,7 +37,7 @@ class TestRunMATPOWER(unittest.TestCase):
 @unittest.skipUnless(MATPOWER_WORKING, "MATPOWER not available")
 class TestMATPOWEROct2Py(unittest.TestCase):
 
-    def test_pflow_against_matpower(self):
+    def test_pflow_against_matpower_extra_test(self):
 
         m = start_instance()
         cases = ('case5.m', 'case14.m', 'case118.m')
