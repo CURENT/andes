@@ -2,7 +2,6 @@
 HYGOV4 hydro governor model
 """
 
-from cmath import inf
 from andes.core import Algeb, ConstService, NumParam, State
 from andes.core.block import  Integrator, Lag, AntiWindupRate
 from andes.models.governor.tgbase import TGBase, TGBaseData 
@@ -144,28 +143,35 @@ class HYGOV4Model(TGBase):
                           v_str = 'R * q0',
                           e_str = 'R * q0 - pref'
                           )
+        self.gate = Algeb(info='gate',
+                        unit='p.u.',
+                        tex_name="gate",
+                        v_str='q0',
+                        e_str='gtpos - gate',
+                        )
+
         self.wd = Algeb(info = 'Generator speed deviation',
                         unit = 'p.u.',
                         tex_name = r'\omega_{dev}',
                         v_str = '0',
-                        e_str = 'ue - (omega - wref) - wd',
+                        e_str = 'ue * (omega - wref) - wd',
                         )
-        self.rg = Algeb(info = 'input to LAGTR',
-                        unit = 'p.u.',
-                        tex_name = 'rg',
-                        v_str = '0',
-                        e_str = '(Rtemp * gate) - rg',
-                        )
-        self.LAGTR = Lag(u = self.rg,
-                     K = 1,
+        #self.rg = Algeb(info = 'input to LAGTR',
+        #                unit = 'p.u.',
+        #                tex_name = 'rg',
+        #                v_str = '0',
+        #                e_str = '(Rtemp * gate) - rg',
+        #                )
+        self.LAGTR = Lag(u = self.gate,
+                     K = self.Rtemp,
                      T = self.Tr,
                      info = 'lag block with T_r',
                      )
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
-                        v_str = '0',
-                        e_str = '(pref + paux - R + LAGTR_y) - up',
+                        v_str = '(pref + paux - R + LAGTR_y - wd)',
+                        e_str = '(pref + paux - R + LAGTR_y - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
                      K = 1,
@@ -190,12 +196,6 @@ class HYGOV4Model(TGBase):
                                      tex_name='lim_{gate}',
                                      info='gate velocity limiter',
                                      )
-        self.gate = Algeb(info='gate',
-                        unit='p.u.',
-                        tex_name="gate",
-                        v_str='q0',
-                        e_str='gtpos - gate',
-                        )
 
         self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
