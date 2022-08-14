@@ -10,5 +10,5 @@ from andes.models.measurement.InertiaEstimationLiu import InertiaEstimationLiu #
 from andes.models.measurement.InertiaEstimationLiuWashout import InertiaEstimationLiuWashout #noqa
 from andes.models.measurement.InertiaEstimationVariablePm import InertiaEstimationVariablePm #noqa
 from andes.models.measurement.InertiaEstimationConstantPm import InertiaEstimationConstantPm #noqa
-from models.measurement.InertiaEstimationConstPmREGCA1 import InertiaEstimationConstPmREGCA1 #noqa
-from models.measurement.InertiaEstimationConstPmREGCV2 import InertiaEstimationConstPmREGCV2 #noqa
+from andes.models.measurement.InertiaEstimationConstPmREGCA1 import InertiaEstimationConstPmREGCA1 #noqa
+from andes.models.measurement.InertiaEstimationConstPmREGCV2 import InertiaEstimationConstPmREGCV2 #noqa
