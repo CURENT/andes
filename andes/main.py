@@ -784,7 +784,7 @@ def prepare(quick=False, incremental=False, models=None,
         return system
 
 
-def selftest(quick=False, **kwargs):
+def selftest(quick=False, extra=False, **kwargs):
     """
     Run unit tests.
     """
@@ -795,6 +795,9 @@ def selftest(quick=False, **kwargs):
 
     # skip if quick
     quick_skips = ('test_1_docs', 'test_codegen_inc')
+
+    # extra test naming convention
+    extra_test = 'extra_test'
 
     try:
         logger.handlers[0].setLevel(logging.WARNING)
@@ -807,16 +810,22 @@ def selftest(quick=False, **kwargs):
     suite = unittest.TestLoader().discover(test_directory)
 
     # remove codegen for quick mode
-    if quick is True:
-        for test_group in suite._tests:
-            for test_class in test_group._tests:
-                tests_keep = list()
+    for test_group in suite._tests:
+        for test_class in test_group._tests:
+            tests_keep = list()
 
-                for t in test_class._tests:
-                    if t._testMethodName not in quick_skips:
-                        tests_keep.append(t)
+            for t in test_class._tests:
+                # skip the extra tests if `extra` is not True
+                if (extra is not True) and (extra_test in t._testMethodName):
+                    continue
 
-                test_class._tests = tests_keep
+                # skip the ones for `quick`
+                if quick is True and (t._testMethodName in quick_skips):
+                    continue
+
+                tests_keep.append(t)
+
+            test_class._tests = tests_keep
 
     unittest.TextTestRunner(verbosity=verbose).run(suite)
     sys.stdout = sys.__stdout__

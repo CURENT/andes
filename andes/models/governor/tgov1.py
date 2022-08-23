@@ -209,15 +209,30 @@ class TGOV1N(TGOV1Data, TGOV1NModel):
     """
     New TGOV1 (TGOV1N) turbine governor model.
 
-    New TGOV1 model with `pref` and `paux` summed after the gain.
-    This model is useful for incorporating AGC and scheduling
-    signals without having to know the droop.
+    The TGOV1N model that sums ``pref`` and ``paux`` signals after the droop.
+    This model is useful for incorporating AGC and scheduling signals, which
+    will not be multiplied by ``1/R`` like in the original TGOV1 model.
 
-    Scheduling changes should write to the `v` fields of
-    `pref0` and `qref0` in place.
-    AGC signal should write to that of `paux0` in place.
+    Scheduling changes should write to ``pref0.v`` in place. AGC signal should
+    write to ``paux0.v`` in place.
 
-    Modifying `tm0` is not allowed.
+    Modifying ``tm0`` is not allowed.
+
+    Examples
+    --------
+    To update all ``paux0`` values to ``paux_new``, which contains the new
+    values, do
+
+    .. code:: python
+
+        ss.TGOV1N.paux0.v[:] = paux_new  # in-place update of the `paux0.v` array
+
+    instead of
+
+    .. code:: python
+
+        ss.TGOV1N.paux0.v = paux_new  # error; changes the reference of `paux0.v`
+
     """
 
     def __init__(self, system, config):

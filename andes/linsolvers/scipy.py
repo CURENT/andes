@@ -5,7 +5,7 @@ Scipy sparse linear solver with SuperLU backend.
 import numpy as np
 
 from scipy.sparse import csc_matrix
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, splu
 
 
 class SciPySolver:
@@ -14,7 +14,10 @@ class SciPySolver:
     """
 
     def __init__(self):
-        pass
+        self.factorize = True
+
+        # when `new_A` is True, rebuild and factorize A
+        self.new_A = True
 
     def to_csc(self, A):
         """
@@ -73,6 +76,22 @@ class SpSolve(SciPySolver):
     """
 
     def solve(self, A, b):
+
+        if self.factorize or self.new_A:
+            A_csc = self.to_csc(A)
+            self.lu = splu(A_csc)
+
+            self.factorize = False
+            self.new_A = False
+
+        x = self.lu.solve(np.ravel(b))
+        return x
+
+    def linsolve(self, A, b):
+        """
+        Solve using `spsolve`.
+        """
+
         A_csc = self.to_csc(A)
-        x = spsolve(A_csc, b)
-        return np.ravel(x)
+        b = np.ravel(b)
+        return spsolve(A_csc, b)

@@ -41,7 +41,7 @@ class PFlow(BaseRoutine):
                               )
         self.config.add_extra("_alt",
                               tol="float",
-                              method=("NR", "dishonest"),
+                              method=("NR", "dishonest", "NK"),
                               check_conn=(0, 1),
                               max_iter=">=10",
                               n_factorize=">0",
@@ -71,8 +71,10 @@ class PFlow(BaseRoutine):
 
         self.models = system.find_models('pflow')
         self.converged = False
-        self.inc = None
+
+        self.res = matrix(0, (system.dae.n + system.dae.m, 1), 'd')
         self.A = None
+
         self.niter = 0
         self.mis = [1]
         self.exec_time = 0.0
@@ -95,43 +97,38 @@ class PFlow(BaseRoutine):
 
     def nr_step(self):
         """
-        Single step using Newton-Raphson method.
+        Solve a single iteration step using the Newton-Raphson method.
 
         Returns
         -------
         float
             maximum absolute mismatch
         """
+
         system = self.system
-        # evaluate discrete, differential, algebraic, and Jacobians
-        system.dae.clear_fg()
-        system.l_update_var(self.models, niter=self.niter, err=self.mis[-1])
-        system.s_update_var(self.models)
-        system.f_update(self.models)
-        system.g_update(self.models)
-        system.l_update_eq(self.models)
-        system.fg_to_dae()
 
-        if self.config.method == 'NR':
-            system.j_update(models=self.models)
-        elif self.config.method == 'dishonest':
-            if self.niter < self.config.n_factorize:
-                system.j_update(self.models)
+        # ---------- Build numerical DAE----------
+        self.fg_update()
 
-        # prepare and solve linear equations
-        self.inc = -matrix([matrix(system.dae.f),
-                            matrix(system.dae.g)])
+        # ---------- update the Jacobian on conditions ----------
+        if self.config.method != 'dishonest' or (self.niter < self.config.n_factorize):
+            system.j_update(self.models)
+            self.solver.worker.new_A = True
+
+        # ---------- prepare and solve linear equations ----------
+        self.res[:system.dae.n] = -system.dae.f[:]
+        self.res[system.dae.n:] = -system.dae.g[:]
 
         self.A = sparse([[system.dae.fx, system.dae.gx],
                          [system.dae.fy, system.dae.gy]])
 
         if not self.config.linsolve:
-            self.inc = self.solver.solve(self.A, self.inc)
+            self.inc = self.solver.solve(self.A, self.res)
         else:
-            self.inc = self.solver.linsolve(self.A, self.inc)
+            self.inc = self.solver.linsolve(self.A, self.res)
 
-        system.dae.x += np.ravel(np.array(self.inc[:system.dae.n]))
-        system.dae.y += np.ravel(np.array(self.inc[system.dae.n:]))
+        system.dae.x += np.ravel(self.inc[:system.dae.n])
+        system.dae.y += np.ravel(self.inc[system.dae.n:])
 
         # find out variables associated with maximum mismatches
         fmax = 0
@@ -145,21 +142,52 @@ class PFlow(BaseRoutine):
         logger.debug("Max. algeb mismatch %.10g on %s", gmax, system.dae.y_name[gmax_idx])
 
         mis = max(abs(fmax), abs(gmax))
-        if self.niter == 0:
-            self.mis[0] = mis
-        else:
-            self.mis.append(mis)
-
         system.vars_to_models()
 
         return mis
+
+    def nr_solve(self):
+        """
+        Solve the power flow problem using itertive Newton's method.
+        """
+
+        self.niter = 0
+        while True:
+            mis = self.nr_step()
+            logger.info('%d: |F(x)| = %.10g', self.niter, mis)
+
+            # store the increment
+            if self.niter == 0:
+                self.mis[0] = mis
+            else:
+                self.mis.append(mis)
+
+            # check for convergence
+            if mis < self.config.tol:
+                self.converged = True
+                break
+
+            if self.niter > self.config.max_iter:
+                break
+
+            if np.isnan(mis).any():
+                logger.error('NaN found in solution. Convergence is not likely')
+                break
+
+            if mis > 1e4 * self.mis[0]:
+                logger.error('Mismatch increased too fast. Convergence is not likely.')
+                break
+
+            self.niter += 1
+
+        return self.converged
 
     def summary(self):
         """
         Output a summary for the PFlow routine.
         """
 
-        # extract package name, `kvxopt` or `kvxopt`
+        # extract package name of the solver
         sp_module = sparse.__module__
         if '.' in sp_module:
             sp_module = sp_module.split('.')[0]
@@ -170,18 +198,20 @@ class PFlow(BaseRoutine):
         out.append(f'{"Numba":>16s}: {"On" if self.system.config.numba else "Off"}')
         out.append(f'{"Sparse solver":>16s}: {self.solver.sparselib.upper()}')
         out.append(f'{"Solution method":>16s}: {self.config.method} method')
+
         out_str = '\n'.join(out)
         logger.info(out_str)
 
     def run(self, **kwargs):
         """
-        Full Newton-Raphson method.
+        Solve the power flow using the selected method.
 
         Returns
         -------
         bool
             convergence status
         """
+
         system = self.system
         if self.config.check_conn == 1:
             self.system.connectivity()
@@ -194,25 +224,15 @@ class PFlow(BaseRoutine):
             system.exit_code = 1
             return False
 
-        t0, _ = elapsed()
-        self.niter = 0
-        while True:
-            mis = self.nr_step()
-            logger.info('%d: |F(x)| = %.10g', self.niter, mis)
+        method = self.config.method.lower()
 
-            if mis < self.config.tol:
-                self.converged = True
-                break
-            if self.niter > self.config.max_iter:
-                break
-            if np.isnan(mis).any():
-                logger.error('NaN found in solution. Convergence not likely')
-                self.niter = self.config.max_iter + 1
-                break
-            if mis > 1e4 * self.mis[0]:
-                logger.error('Mismatch increased too fast. Convergence not likely.')
-                break
-            self.niter += 1
+        t0, _ = elapsed()
+
+        # ---------- Call solution methods ----------
+        if method == 'nr':
+            self.nr_solve()
+        elif method == 'nk':
+            self.newton_krylov()
 
         t1, s1 = elapsed(t0)
         self.exec_time = t1 - t0
@@ -243,11 +263,21 @@ class PFlow(BaseRoutine):
 
     def report(self):
         """
-        Write power flow report to text file.
+        Write power flow report to a plain-text file.
         """
         if self.system.files.no_output is False:
             r = Report(self.system)
             r.write()
+
+    def _set_xy(self, xy):
+        """
+        Helper function to set values for variables.
+        """
+
+        system = self.system
+        system.dae.x[:] = xy[:system.dae.n]
+        system.dae.y[:] = xy[system.dae.n:]
+        system.vars_to_models()
 
     def _fg_wrapper(self, xy):
         """
@@ -261,10 +291,17 @@ class PFlow(BaseRoutine):
         -------
 
         """
+        self._set_xy(xy)
+        self.fg_update()
+
+        return self.system.dae.fg
+
+    def fg_update(self):
+        """
+        Evaluate the limiters and residual equations.
+        """
+
         system = self.system
-        system.dae.x[:] = xy[:system.dae.n]
-        system.dae.y[:] = xy[system.dae.n:]
-        system.vars_to_models()
 
         system.dae.clear_fg()
         system.l_update_var(self.models, niter=self.niter, err=self.mis[-1])
@@ -274,9 +311,7 @@ class PFlow(BaseRoutine):
         system.l_update_eq(self.models, niter=0)
         system.fg_to_dae()
 
-        return system.dae.fg
-
-    def newton_krylov(self, verbose=False):
+    def newton_krylov(self, verbose=True):
         """
         Full Newton-Krylov method from SciPy.
 
@@ -291,17 +326,21 @@ class PFlow(BaseRoutine):
 
         Returns
         -------
-        np.array
-            Solutions `dae.xy`.
+        bool
+            Convergence status
         """
-        system = self.system
-        self.init()
 
+        system = self.system
         v0 = system.dae.xy
+
         try:
             ret = newton_krylov(self._fg_wrapper, v0, verbose=verbose)
+            self._set_xy(ret)
+            self.converged = True
+
         except ValueError as e:
             logger.error('Mismatch is not correctable. Equations may be unsolvable.')
-            raise e
+            logger.error(e)
+            self.converged = False
 
-        return ret
+        return self.converged
