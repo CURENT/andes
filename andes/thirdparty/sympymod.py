@@ -20,6 +20,9 @@ class Indicator(sympy.Expr):
     def _numpycode(self, printer):
         return printer._print(self.args[0])
 
+    def _julia(self, printer):
+        return "(" + printer._print(self.args[0]) + ")"
+
 
 class FixPiecewise(sympy.Piecewise):
     """
