@@ -1323,7 +1323,7 @@ class Model:
 
     def post_init_check(self):
         """
-        Post init checking. Warns if values of `InitChecker` is not True.
+        Post init checking. Warns if values of `InitChecker` are not True.
         """
         self.get_inputs(refresh=True)
 
