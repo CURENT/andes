@@ -81,7 +81,7 @@ class DisplayablePath:
 
 def andes_root():
     """
-    Return the root path to the andes source code.
+    Return the path to the folder of the ANDES package.
     """
 
     dir_name = os.path.dirname(os.path.abspath(__file__))
@@ -98,7 +98,10 @@ def cases_root():
 
 
 def tests_root():
-    """Return the root path to the stock cases"""
+    """
+    Return the root path to the stock cases
+    """
+
     dir_name = os.path.dirname(os.path.abspath(__file__))
     return os.path.normpath(os.path.join(dir_name, '..', '..', 'tests'))
 
@@ -189,27 +192,6 @@ def get_pycode_path(pycode_path=None, mkdir=False):
         os.makedirs(pycode_path, exist_ok=True)
 
     return pycode_path
-
-
-def get_pkl_path():
-    """
-    Get the path to the picked/dilled function calls.
-
-    Returns
-    -------
-    str
-        Path to the calls.pkl file
-
-    """
-    pkl_name = 'calls.pkl'
-    andes_path = get_dot_andes_path()
-
-    if not os.path.exists(andes_path):
-        os.makedirs(andes_path)
-
-    pkl_path = os.path.join(andes_path, pkl_name)
-
-    return pkl_path
 
 
 def get_dot_andes_path():

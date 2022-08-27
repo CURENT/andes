@@ -6,6 +6,19 @@ Release notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.8 Notes
+==========
+
+v1.8.0 (2022-08-XX)
+-------------------
+
+- Internal change: drop the support for reloading generated code from
+  ``calls.pkl``. All generated code are serialized into Python files and
+  reloaded as a ``pycode`` module.
+- Fix an issue where cases in multiprocessing fail to serialize due to
+  not being able to find ``pycode``. ``pycode`` is now properly imported by the
+  main process.
+
 v1.7 Notes
 ==========
 
