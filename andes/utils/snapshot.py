@@ -34,6 +34,7 @@ disturbances:
 import dill
 
 import andes
+from andes.system import import_pycode_priority
 
 
 def save_ss(path, system):
@@ -77,8 +78,7 @@ def load_ss(path):
     """
 
     # the line below is needed to properly import `pycode`.
-    # TODO: properly import `pycode` beforehand
-    system = andes.System()
+    import_pycode_priority()
 
     if hasattr(path, 'read'):
         system = dill.load(path)
