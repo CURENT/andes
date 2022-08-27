@@ -33,7 +33,7 @@ from ._version import get_versions
 import andes
 from andes.routines import routine_cli
 from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
-from andes.system import System
+from andes.system import System, import_pycode_priority
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
@@ -614,13 +614,14 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
     if len(cases) == 1:
         system = run_case(cases[0], codegen=codegen, **kwargs)
     elif len(cases) > 1:
+        # import `pycode` to local namespace to avoid a picking issue
+        import_pycode_priority()
 
         # suppress logging output during multiprocessing
         logger.info('-> Processing %s jobs on %s CPUs.', len(cases), ncpu)
         set_logger_level(logger, logging.StreamHandler, mp_verbose)
         set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
-        kwargs['no_pbar'] = True
         if pool is True:
             system = _run_mp_pool(cases,
                                   ncpu=ncpu,
