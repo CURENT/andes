@@ -32,8 +32,7 @@ from andes.routines import all_routines
 from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
                           jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
-from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
-                               get_pkl_path, get_pycode_path)
+from andes.utils.paths import andes_root, confirm_overwrite, get_config_path, get_pycode_path
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -151,7 +150,6 @@ class System:
                                      ('save_stats', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
-                                     ('pickle_path', get_pkl_path())
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -168,7 +166,6 @@ class System:
                               save_stats='store statistics of function calls',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
-                              pickle_path='path models should be (un)dilled to/from',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -373,7 +370,6 @@ class System:
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
             self._store_calls(models)
-            self.dill()
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
@@ -428,7 +424,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        self._call_from_pycode()
+        self._load_calls()
 
     def _find_stale_models(self):
         """
@@ -1496,34 +1492,10 @@ class System:
                     break
         return out
 
-    def dill(self):
-        """
-        Serialize generated numerical functions in ``System.calls`` with package ``dill``.
-
-        The serialized file will be stored to ``~/.andes/calls.pkl``, where `~` is the home directory path.
-
-        Notes
-        -----
-        This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
-
-        """
-        np_ver = np.__version__.split('.')
-        # Read only first two elements. Last one may contain 'rcxx'
-        np_ver = tuple([int(i) for i in np_ver[:2]])
-        if np_ver < (1, 20):
-            logger.debug("Dumping calls to calls.pkl with dill")
-            dill.settings['recurse'] = True
-
-            with open(self.config.pickle_path, 'wb') as f:
-                dill.dump(self.calls, f)
-        else:
-            logger.debug("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
-            logger.debug("ANDES is fully functional with generated Python code.")
-
     def undill(self, autogen_stale=True):
         """
         Reload generated function functions, from either the
-        ``$HOME/.andes/pycode`` folder or the ``$HOME/.andes/calls.pkl`` file.
+        ``$HOME/.andes/pycode`` folder.
 
         If no change is made to models, future calls to ``prepare()`` can be
         replaced with ``undill()`` for acceleration.
@@ -1563,80 +1535,13 @@ class System:
 
     def _load_calls(self):
         """
-        Helper function for loading calls from pkl or pycode module.
-        """
-        loaded = self._call_from_pycode()
-
-        if loaded is False:
-            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
-            loaded = self._call_from_pkl()
-
-        self.with_calls = loaded
-
-        return loaded
-
-    def _load_pkl(self):
-        """
-        Helper function to open and load dill-pickled functions.
-        """
-
-        loaded_calls = None
-
-        if os.path.isfile(self.config.pickle_path):
-            with open(self.config.pickle_path, 'rb') as f:
-
-                try:
-                    loaded_calls = dill.load(f)
-                    logger.info('> Loaded generated code from pkl file "%s"', self.config.pickle_path)
-                except (IOError, EOFError, AttributeError):
-                    logger.debug('> Cannot open pkl file at "%s"', self.config.pickle_path)
-
-        return loaded_calls
-
-    def _call_from_pkl(self):
-        """
-        Helper function for loading ModelCall from pickle file.
+        Helper function for loading generated numerical functions from the ``pycode`` module.
         """
 
         loaded = False
-        any_calls = self._load_pkl()
+        user_pycode_path = self.options.get("pycode_path")
+        pycode = import_pycode_priority(user_pycode_path=user_pycode_path)
 
-        if any_calls is not None:
-            self.calls = any_calls
-
-            for name, model_call in self.calls.items():
-                if name in self.__dict__:
-                    self.__dict__[name].calls = model_call
-
-            loaded = True
-
-        return loaded
-
-    def _call_from_pycode(self):
-        """
-        Helper function to import generated pycode.
-
-        ``pycode`` is imported in the following sequence:
-
-        - a user-provided path from CLI
-        - ``~/.andes/pycode``
-        - ``<andes_root>/pycode``
-
-        """
-
-        loaded = False
-
-        # below are executed serially because of priority
-        pycode = reload_submodules('pycode')
-        if not pycode:
-            pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
-            pycode = load_pycode_from_path(pycode_path)
-        if not pycode:
-            pycode = reload_submodules('andes.pycode')
-        if not pycode:
-            pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
-
-        # DO NOT USE `elif` here since below depends on the above.
         if pycode:
             try:
                 self._expand_pycode(pycode)
@@ -2256,7 +2161,31 @@ class System:
         self.Output.yidx = sorted(np.unique(export_vars['y']))
 
 
-def load_pycode_from_path(pycode_path):
+def import_pycode_priority(user_pycode_path=None):
+    """
+    Helper function to import generated pycode in the following priority:
+
+    1. a user-provided path from CLI. Currently, this is only for specifying the
+       path to store the generated pycode via ``andes prepare``.
+    2. ``~/.andes/pycode``. This is where pycode is stored by default.
+    3. ``<andes_package_root>/pycode``. One can store pycode in the ANDES
+       package folder and ship a full package, which does not require code generation.
+    """
+
+    # below are executed serially because of priority
+    pycode = reload_submodules('pycode')
+    if not pycode:
+        pycode_path = get_pycode_path(user_pycode_path, mkdir=False)
+        pycode = _import_pycode(pycode_path)
+    if not pycode:
+        pycode = reload_submodules('andes.pycode')
+    if not pycode:
+        pycode = _import_pycode(os.path.join(andes_root(), 'pycode'))
+
+    return pycode
+
+
+def _import_pycode(pycode_path):
     """
     Helper function to load pycode from ``.andes``.
     """
