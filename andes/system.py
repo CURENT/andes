@@ -127,7 +127,7 @@ class System:
         if default_config is True:
             self._config_path = None
 
-        self._config_object = self.load_config(self._config_path)
+        self._config_object = load_config_rc(self._config_path)
         self._update_config_object()
         self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
@@ -184,7 +184,10 @@ class System:
                               )
 
         self.config.check()
-        self._set_numpy()
+        _config_numpy(seed=self.config.seed,
+                      divide=self.config.np_divide,
+                      invalid=self.config.np_invalid,
+                      )
 
         self.exist = ExistingModels()
 
@@ -209,19 +212,6 @@ class System:
 
         if not no_undill:
             self.undill(autogen_stale=autogen_stale)
-
-    def _set_numpy(self):
-        """
-        Configure NumPy based on Config.
-        """
-        # set up numpy random seed
-        if isinstance(self.config.seed, int):
-            np.random.seed(self.config.seed)
-            logger.debug("Random seed set to <%d>.", self.config.seed)
-
-        np.seterr(divide=self.config.np_divide,
-                  invalid=self.config.np_invalid,
-                  )
 
     def _update_config_object(self):
         """
@@ -1948,7 +1938,7 @@ class System:
                 self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
 
-    def get_config(self):
+    def collect_config(self):
         """
         Collect config data from models.
 
@@ -1969,29 +1959,6 @@ class System:
             if len(cfg) > 0:
                 config_dict[name] = cfg
         return config_dict
-
-    @staticmethod
-    def load_config(conf_path=None):
-        """
-        Load config from an rc-formatted file.
-
-        Parameters
-        ----------
-        conf_path : None or str
-            Path to the config file. If is `None`, the function body will not
-            run.
-
-        Returns
-        -------
-        configparse.ConfigParser
-        """
-        if conf_path is None:
-            return
-
-        conf = configparser.ConfigParser()
-        conf.read(conf_path)
-        logger.info('> Loaded config from file "%s"', conf_path)
-        return conf
 
     def save_config(self, file_path=None, overwrite=False):
         """
@@ -2021,7 +1988,7 @@ class System:
             if not confirm_overwrite(file_path, overwrite=overwrite):
                 return
 
-        conf = self.get_config()
+        conf = self.collect_config()
         with open(file_path, 'w') as f:
             conf.write(f)
 
@@ -2142,6 +2109,47 @@ class System:
 
         self.Output.xidx = sorted(np.unique(export_vars['x']))
         self.Output.yidx = sorted(np.unique(export_vars['y']))
+
+
+# --------------- Helper Functions ---------------
+
+def _config_numpy(seed='None', divide='warn', invalid='warn'):
+    """
+    Configure NumPy based on Config.
+    """
+
+    # set up numpy random seed
+    if isinstance(seed, int):
+        np.random.seed(seed)
+        logger.debug("Random seed set to <%d>.", seed)
+
+    # set levels
+    np.seterr(divide=divide,
+              invalid=invalid,
+              )
+
+
+def load_config_rc(conf_path=None):
+    """
+    Load config from an rc-formatted file.
+
+    Parameters
+    ----------
+    conf_path : None or str
+        Path to the config file. If is `None`, the function body will not
+        run.
+
+    Returns
+    -------
+    configparse.ConfigParser
+    """
+    if conf_path is None:
+        return
+
+    conf = configparser.ConfigParser()
+    conf.read(conf_path)
+    logger.info('> Loaded config from file "%s"', conf_path)
+    return conf
 
 
 def fix_view_arrays(system):
