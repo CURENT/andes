@@ -1333,17 +1333,12 @@ class Model:
 
     def numba_jitify(self, parallel=False, cache=True, nopython=False):
         """
-        Convert equation residual calls, Jacobian calls,
-        and variable service calls into JIT compiled functions.
+        Convert equation residual calls, Jacobian calls, and variable service
+        calls into JIT compiled functions.
 
-        This function can be turned on by setting
-        ``System.config.numba`` to ``1``.
-
-        Warnings
-        --------
-        This feature is experimental and does not guarantee a speed up.
-        In fact, the program will likely end up being slower due to compilation.
+        This function can be enabled by setting ``System.config.numba = 1``.
         """
+
         if self.system.config.numba != 1:
             return
 
