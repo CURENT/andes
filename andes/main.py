@@ -33,7 +33,7 @@ from ._version import get_versions
 import andes
 from andes.routines import routine_cli
 from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
-from andes.system import System, import_pycode_priority
+from andes.system import System, import_pycode_priority, fix_view_arrays
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
@@ -553,7 +553,7 @@ def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
 
     # fix address for in-place arrays
     for ss in ret:
-        ss.fix_address()
+        fix_view_arrays(ss)
 
     return ret
 

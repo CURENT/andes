@@ -33,7 +33,7 @@ disturbances:
 
 import dill
 
-from andes.system import import_pycode_priority
+from andes.system import fix_view_arrays, import_pycode_priority
 
 
 def save_ss(path, system):
@@ -85,6 +85,7 @@ def load_ss(path):
         with open(path, 'rb') as file:
             system = dill.load(file)
 
-    system.fix_address()
+    # point the "view arrays" to the correct memory
+    fix_view_arrays(system)
 
     return system

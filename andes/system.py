@@ -2085,23 +2085,6 @@ class System:
 
         return out
 
-    def fix_address(self):
-        """
-        Fixes addressing issues after loading a snapshot.
-
-        This function properly sets ``v`` and ``e`` of internal variables as
-        views of the corresponding DAE arrays.
-
-        Inputs will be refreshed for each model.
-        """
-
-        self.set_var_arrays(self.models)
-
-        for model in self.models.values():
-            model.get_inputs(refresh=True)
-
-        return True
-
     def set_output_subidx(self, models):
         """
         Process :py:class:`andes.models.misc.Output` data and store the
@@ -2159,6 +2142,30 @@ class System:
 
         self.Output.xidx = sorted(np.unique(export_vars['x']))
         self.Output.yidx = sorted(np.unique(export_vars['y']))
+
+
+def fix_view_arrays(system):
+    """
+    Point NumPy arrays without OWNDATA (termed "view arrays" here) to the source
+    array.
+
+    This function properly sets ``v`` and ``e`` arrays of internal variables as
+    views of the corresponding DAE arrays.
+
+    Inputs will be refreshed for each model.
+
+    Parameters
+    ----------
+    system : andes.system.System
+        System object to be fixed
+    """
+
+    system.set_var_arrays(system.models)
+
+    for model in system.models.values():
+        model.get_inputs(refresh=True)
+
+    return True
 
 
 def import_pycode_priority(user_pycode_path=None):
