@@ -366,7 +366,18 @@ class System:
 
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
-        Wrapper function for multiprocess prepare.
+        Wrapper for multiprocessed code generation.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            model name : model instance pairs
+        quick : bool
+            True to skip LaTeX string generation
+        pycode_path : str
+            Path to store `pycode` folder
+        ncpu : int
+            Number of processors to use
         """
 
         # create empty models without dependency
@@ -390,11 +401,11 @@ class System:
             """
             Wrapper function to call prepare on a model.
             """
-
             model.prepare(quick=quick,
                           pycode_path=pycode_path,
                           yapf_pycode=yapf_pycode
                           )
+
         Pool(ncpu).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
@@ -430,9 +441,10 @@ class System:
 
     def _to_orddct(self, model_list):
         """
-        Helper function to convert a list of model names to OrderedDict
-        with name as keys and model instances as values.
+        Helper function to convert a list of model names to OrderedDict with
+        name as keys and model instances as values.
         """
+
         if isinstance(model_list, OrderedDict):
             return model_list
         if isinstance(model_list, list):
@@ -495,6 +507,7 @@ class System:
         TODO: Models with `TimerParam` will need to be stored anyway.
         This will allow adding switches on the fly.
         """
+
         self.exist.pflow = self.find_models('pflow')
         self.exist.tds = self.find_models('tds')
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
@@ -552,6 +565,7 @@ class System:
         """
         Add dependent devices for all model based on `DeviceFinder`.
         """
+
         for mdl in self.models.values():
             if len(mdl.services_fnd) == 0:
                 continue
@@ -593,8 +607,9 @@ class System:
                 item.set_address(yaddr[idx], contiguous=not collate)
 
         # --- Phase 2: set external variable addresses ---
-        # NOTE: this step will retrieve the number of variables (item.n) for
-        # Phase 3.
+        # NOTE:
+        # This step will retrieve the number of variables (item.n) for Phase 3.
+
         for mdl in models.values():
             # handle external groups
             for instance in mdl.cache.vars_ext.values():
@@ -660,8 +675,8 @@ class System:
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
-        Set arrays (`v` and `e`) for internal variables to access
-        dae arrays in place.
+        Set arrays (`v` and `e`) for internal variables to access dae arrays in
+        place.
 
         This function needs to be called after de-serializing a System object,
         where the internal variables are incorrectly assigned new memory.
