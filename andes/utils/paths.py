@@ -81,7 +81,7 @@ class DisplayablePath:
 
 def andes_root():
     """
-    Return the root path to the andes source code.
+    Return the path to the folder of the ANDES package.
     """
 
     dir_name = os.path.dirname(os.path.abspath(__file__))
@@ -98,7 +98,10 @@ def cases_root():
 
 
 def tests_root():
-    """Return the root path to the stock cases"""
+    """
+    Return the root path to the stock cases
+    """
+
     dir_name = os.path.dirname(os.path.abspath(__file__))
     return os.path.normpath(os.path.join(dir_name, '..', '..', 'tests'))
 
