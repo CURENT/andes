@@ -37,7 +37,6 @@ from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
 logger = logging.getLogger(__name__)
-dill.settings['recurse'] = True
 
 
 class ExistingModels:
