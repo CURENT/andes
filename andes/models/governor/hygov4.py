@@ -126,9 +126,7 @@ class HYGOV4Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-        self.tr = ConstService(v_str='Rtemp * Tr',
-                               tex_name='Rtemp*Tr',
-                               )
+
         self.R = ConstService(v_str='Rtemp + Rperm',
                                tex_name='Rtemp + Rperm',
                                )
@@ -143,12 +141,6 @@ class HYGOV4Model(TGBase):
                           v_str = 'R * q0',
                           e_str = 'R * q0 - pref'
                           )
-        self.gate = Algeb(info='gate',
-                        unit='p.u.',
-                        tex_name="gate",
-                        v_str='q0',
-                        e_str='gtpos - gate',
-                        )
 
         self.wd = Algeb(info = 'Generator speed deviation',
                         unit = 'p.u.',
@@ -162,6 +154,14 @@ class HYGOV4Model(TGBase):
         #                v_str = '0',
         #                e_str = '(Rtemp * gate) - rg',
         #                )
+        #
+        # 
+        self.gate = Algeb(info='gate',
+                        unit='p.u.',
+                        tex_name="gate",
+                        v_str='gtpos',
+                        e_str='gtpos - gate',
+                        )                
         self.LAGTR = Lag(u = self.gate,
                      K = self.Rtemp,
                      T = self.Tr,
@@ -170,8 +170,8 @@ class HYGOV4Model(TGBase):
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
-                        v_str = '(pref + paux - R + LAGTR_y - wd)',
-                        e_str = '(pref + paux - R + LAGTR_y - wd) - up',
+                        v_str = '(pref + paux - (R - LAGTR_y) * gate - wd) - up',
+                        e_str = '(pref + paux - (R - LAGTR_y) * gate - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
                      K = 1,
@@ -191,6 +191,8 @@ class HYGOV4Model(TGBase):
                            e_str='LAGTP_y * iTg'
                            )
         
+
+
         self.gate_lim = AntiWindupRate(u=self.gtpos, lower=self.PMIN, upper=self.PMAX,
                                      rate_lower=self.UO, rate_upper=self.UC,
                                      tex_name='lim_{gate}',
