@@ -155,9 +155,6 @@ Configuration
 System, models and routines have a member attribute `config` for model-specific or routine-specific configurations.
 System manages all configs, including saving to a config file and loading back.
 
-.. autofunction:: andes.system.System.get_config
-    :noindex:
-
 .. autofunction:: andes.system.System.save_config
     :noindex:
 
