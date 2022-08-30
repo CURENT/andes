@@ -33,7 +33,7 @@ from ._version import get_versions
 import andes
 from andes.routines import routine_cli
 from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
-from andes.system import System, import_pycode_priority, fix_view_arrays
+from andes.system import System, import_pycode, fix_view_arrays
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
@@ -615,7 +615,7 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
         system = run_case(cases[0], codegen=codegen, **kwargs)
     elif len(cases) > 1:
         # import `pycode` to local namespace to avoid a picking issue
-        import_pycode_priority()
+        import_pycode()
 
         # suppress logging output during multiprocessing
         logger.info('-> Processing %s jobs on %s CPUs.', len(cases), ncpu)

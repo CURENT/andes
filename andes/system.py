@@ -1544,7 +1544,7 @@ class System:
 
         loaded = False
         user_pycode_path = self.options.get("pycode_path")
-        pycode = import_pycode_priority(user_pycode_path=user_pycode_path)
+        pycode = import_pycode(user_pycode_path=user_pycode_path)
 
         if pycode:
             try:
@@ -2190,7 +2190,7 @@ def fix_view_arrays(system):
     return True
 
 
-def import_pycode_priority(user_pycode_path=None):
+def import_pycode(user_pycode_path=None):
     """
     Helper function to import generated pycode in the following priority:
 
@@ -2205,16 +2205,16 @@ def import_pycode_priority(user_pycode_path=None):
     pycode = reload_submodules('pycode')
     if not pycode:
         pycode_path = get_pycode_path(user_pycode_path, mkdir=False)
-        pycode = _import_pycode(pycode_path)
+        pycode = _import_pycode_from(pycode_path)
     if not pycode:
         pycode = reload_submodules('andes.pycode')
     if not pycode:
-        pycode = _import_pycode(os.path.join(andes_root(), 'pycode'))
+        pycode = _import_pycode_from(os.path.join(andes_root(), 'pycode'))
 
     return pycode
 
 
-def _import_pycode(pycode_path):
+def _import_pycode_from(pycode_path):
     """
     Helper function to load pycode from ``.andes``.
     """
