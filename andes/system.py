@@ -21,8 +21,6 @@ import time
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
-import dill
-
 import andes.io
 from andes.core import AntiWindup, Config, Model
 from andes.io.streaming import Streaming
@@ -32,7 +30,8 @@ from andes.routines import all_routines
 from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
                           jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
-from andes.utils.paths import andes_root, confirm_overwrite, get_config_path, get_pycode_path
+from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
+                               get_pycode_path)
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
