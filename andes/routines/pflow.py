@@ -85,14 +85,20 @@ class PFlow(BaseRoutine):
         self.system.set_var_arrays(self.models, inplace=True, alloc=False)
         self.system.init(self.models, routine='pflow')
 
+        _, s1 = elapsed(t0)
+        logger.info('Power flow initialized in %s.', s1)
+
         # force compile if numba is on - improves timing accuracy
         if system.config.numba:
+            t0, _ = elapsed()
+
             system.f_update(self.models)
             system.g_update(self.models)
             system.j_update(models=self.models)
 
-        _, s1 = elapsed(t0)
-        logger.info('Power flow initialized in %s.', s1)
+            _, s1 = elapsed(t0)
+            logger.info('Numba compilation for power flow finished in %s.', s1)
+
         return system.dae.xy
 
     def nr_step(self):

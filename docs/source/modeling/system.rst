@@ -22,28 +22,34 @@ To add new models, groups or routines, edit the corresponding file by adding ent
 
 Code Generation
 ```````````````
-Under the hood, all symbolically defined equations need to be generated into anonymous function calls for
-accelerating numerical simulations.
-This process is automatically invoked for the first time ANDES is run command line.
-It takes several seconds up to a minute to finish the generation.
+Under the hood, all models whose equations are provided in strings need be
+processed to generate executable functions for simulations. We call this process
+"code generation".  Code generation utilizes SymPy, a symbolic toolbox, and can
+take up to one minute.
+
+Code generation is automatically triggered upon the first ANDES run or whenever
+model changes are detected. Code generation only needs to run once unless the
+generated code is removed or model edits are detected. The generated code is
+then stored and reused for speed up.
+
+The generated Python code is called ``pycode``. It is a Python package (folder)
+with each module (a `.py` file) storing the executable Python code and metadata
+for numerical simulation. The default path to store ``pycode`` is
+``HOME_DIR/.andes``, where ``HOME_DIR`` is one's `home directory`_.
+
+.. _`home directory`: https://en.wikipedia.org/wiki/Home_directory
 
 .. note::
-    Code generation has been done if one has executed ``andes``, ``andes selftest``, or ``andes prepare``.
+    Code generation has been done if one has executed ``andes``,
+    ``andes selftest``, or ``andes prepare``.
 
 .. warning::
-    When models are modified (such as adding new models or changing equation strings), code generation needs
-    to be executed again for consistency. It can be more conveniently triggered from command line with
-    ``andes prepare -i``.
+    For developers: when models are modified (such as adding new models or
+    changing equation strings), code generation needs to be executed again
+    for consistency. ANDES can automatically detect changes, and it can be
+    manually triggered from command line using ``andes prepare -i``.
 
 .. autofunction:: andes.system.System.prepare
-    :noindex:
-
-Since the process is slow, generated numerical functions (Python Callable) will be serialized into a file
-for future speed up.
-The package used for serializing/de-serializing numerical calls is ``dill``.
-System has a function called ``dill`` for serializing using the ``dill`` package.
-
-.. autofunction:: andes.system.System.dill
     :noindex:
 
 .. autofunction:: andes.system.System.undill
@@ -148,9 +154,6 @@ Configuration
 -------------
 System, models and routines have a member attribute `config` for model-specific or routine-specific configurations.
 System manages all configs, including saving to a config file and loading back.
-
-.. autofunction:: andes.system.System.get_config
-    :noindex:
 
 .. autofunction:: andes.system.System.save_config
     :noindex:

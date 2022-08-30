@@ -21,8 +21,6 @@ import time
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
-import dill
-
 import andes.io
 from andes.core import AntiWindup, Config, Model
 from andes.io.streaming import Streaming
@@ -33,12 +31,11 @@ from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
                           jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
-                               get_pkl_path, get_pycode_path)
+                               get_pycode_path)
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
 logger = logging.getLogger(__name__)
-dill.settings['recurse'] = True
 
 
 class ExistingModels:
@@ -128,7 +125,7 @@ class System:
         if default_config is True:
             self._config_path = None
 
-        self._config_object = self.load_config(self._config_path)
+        self._config_object = load_config_rc(self._config_path)
         self._update_config_object()
         self.config = Config(self.__class__.__name__, dct=config)
         self.config.load(self._config_object)
@@ -151,7 +148,6 @@ class System:
                                      ('save_stats', 0),
                                      ('np_divide', 'warn'),
                                      ('np_invalid', 'warn'),
-                                     ('pickle_path', get_pkl_path())
                                      )))
         self.config.add_extra("_help",
                               freq='base frequency [Hz]',
@@ -168,7 +164,6 @@ class System:
                               save_stats='store statistics of function calls',
                               np_divide='treatment for division by zero',
                               np_invalid='treatment for invalid floating-point ops.',
-                              pickle_path='path models should be (un)dilled to/from',
                               )
         self.config.add_extra("_alt",
                               freq="float",
@@ -187,7 +182,10 @@ class System:
                               )
 
         self.config.check()
-        self._set_numpy()
+        _config_numpy(seed=self.config.seed,
+                      divide=self.config.np_divide,
+                      invalid=self.config.np_invalid,
+                      )
 
         self.exist = ExistingModels()
 
@@ -212,19 +210,6 @@ class System:
 
         if not no_undill:
             self.undill(autogen_stale=autogen_stale)
-
-    def _set_numpy(self):
-        """
-        Configure NumPy based on Config.
-        """
-        # set up numpy random seed
-        if isinstance(self.config.seed, int):
-            np.random.seed(self.config.seed)
-            logger.debug("Random seed set to <%d>.", self.config.seed)
-
-        np.seterr(divide=self.config.np_divide,
-                  invalid=self.config.np_invalid,
-                  )
 
     def _update_config_object(self):
         """
@@ -373,14 +358,24 @@ class System:
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
             self._store_calls(models)
-            self.dill()
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
-        Wrapper function for multiprocess prepare.
+        Wrapper for multiprocessed code generation.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            model name : model instance pairs
+        quick : bool
+            True to skip LaTeX string generation
+        pycode_path : str
+            Path to store `pycode` folder
+        ncpu : int
+            Number of processors to use
         """
 
         # create empty models without dependency
@@ -404,11 +399,11 @@ class System:
             """
             Wrapper function to call prepare on a model.
             """
-
             model.prepare(quick=quick,
                           pycode_path=pycode_path,
                           yapf_pycode=yapf_pycode
                           )
+
         Pool(ncpu).map(_prep_model, model_list)
 
     def _finalize_pycode(self, pycode_path):
@@ -428,7 +423,7 @@ class System:
         logger.info('Saved generated pycode to "%s"', pycode_path)
 
         # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        self._call_from_pycode()
+        self._load_calls()
 
     def _find_stale_models(self):
         """
@@ -444,9 +439,10 @@ class System:
 
     def _to_orddct(self, model_list):
         """
-        Helper function to convert a list of model names to OrderedDict
-        with name as keys and model instances as values.
+        Helper function to convert a list of model names to OrderedDict with
+        name as keys and model instances as values.
         """
+
         if isinstance(model_list, OrderedDict):
             return model_list
         if isinstance(model_list, list):
@@ -509,6 +505,7 @@ class System:
         TODO: Models with `TimerParam` will need to be stored anyway.
         This will allow adding switches on the fly.
         """
+
         self.exist.pflow = self.find_models('pflow')
         self.exist.tds = self.find_models('tds')
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
@@ -566,6 +563,7 @@ class System:
         """
         Add dependent devices for all model based on `DeviceFinder`.
         """
+
         for mdl in self.models.values():
             if len(mdl.services_fnd) == 0:
                 continue
@@ -607,8 +605,9 @@ class System:
                 item.set_address(yaddr[idx], contiguous=not collate)
 
         # --- Phase 2: set external variable addresses ---
-        # NOTE: this step will retrieve the number of variables (item.n) for
-        # Phase 3.
+        # NOTE:
+        # This step will retrieve the number of variables (item.n) for Phase 3.
+
         for mdl in models.values():
             # handle external groups
             for instance in mdl.cache.vars_ext.values():
@@ -674,8 +673,8 @@ class System:
 
     def set_var_arrays(self, models, inplace=True, alloc=True):
         """
-        Set arrays (`v` and `e`) for internal variables to access
-        dae arrays in place.
+        Set arrays (`v` and `e`) for internal variables to access dae arrays in
+        place.
 
         This function needs to be called after de-serializing a System object,
         where the internal variables are incorrectly assigned new memory.
@@ -1496,34 +1495,10 @@ class System:
                     break
         return out
 
-    def dill(self):
-        """
-        Serialize generated numerical functions in ``System.calls`` with package ``dill``.
-
-        The serialized file will be stored to ``~/.andes/calls.pkl``, where `~` is the home directory path.
-
-        Notes
-        -----
-        This function sets `dill.settings['recurse'] = True` to serialize the function calls recursively.
-
-        """
-        np_ver = np.__version__.split('.')
-        # Read only first two elements. Last one may contain 'rcxx'
-        np_ver = tuple([int(i) for i in np_ver[:2]])
-        if np_ver < (1, 20):
-            logger.debug("Dumping calls to calls.pkl with dill")
-            dill.settings['recurse'] = True
-
-            with open(self.config.pickle_path, 'wb') as f:
-                dill.dump(self.calls, f)
-        else:
-            logger.debug("Dumping calls to calls.pkl is not supported with NumPy 1.2+")
-            logger.debug("ANDES is fully functional with generated Python code.")
-
     def undill(self, autogen_stale=True):
         """
         Reload generated function functions, from either the
-        ``$HOME/.andes/pycode`` folder or the ``$HOME/.andes/calls.pkl`` file.
+        ``$HOME/.andes/pycode`` folder.
 
         If no change is made to models, future calls to ``prepare()`` can be
         replaced with ``undill()`` for acceleration.
@@ -1563,80 +1538,13 @@ class System:
 
     def _load_calls(self):
         """
-        Helper function for loading calls from pkl or pycode module.
-        """
-        loaded = self._call_from_pycode()
-
-        if loaded is False:
-            logger.debug("Pycode not found. Trying to load from `calls.pkl`.")
-            loaded = self._call_from_pkl()
-
-        self.with_calls = loaded
-
-        return loaded
-
-    def _load_pkl(self):
-        """
-        Helper function to open and load dill-pickled functions.
-        """
-
-        loaded_calls = None
-
-        if os.path.isfile(self.config.pickle_path):
-            with open(self.config.pickle_path, 'rb') as f:
-
-                try:
-                    loaded_calls = dill.load(f)
-                    logger.info('> Loaded generated code from pkl file "%s"', self.config.pickle_path)
-                except (IOError, EOFError, AttributeError):
-                    logger.debug('> Cannot open pkl file at "%s"', self.config.pickle_path)
-
-        return loaded_calls
-
-    def _call_from_pkl(self):
-        """
-        Helper function for loading ModelCall from pickle file.
+        Helper function for loading generated numerical functions from the ``pycode`` module.
         """
 
         loaded = False
-        any_calls = self._load_pkl()
+        user_pycode_path = self.options.get("pycode_path")
+        pycode = import_pycode(user_pycode_path=user_pycode_path)
 
-        if any_calls is not None:
-            self.calls = any_calls
-
-            for name, model_call in self.calls.items():
-                if name in self.__dict__:
-                    self.__dict__[name].calls = model_call
-
-            loaded = True
-
-        return loaded
-
-    def _call_from_pycode(self):
-        """
-        Helper function to import generated pycode.
-
-        ``pycode`` is imported in the following sequence:
-
-        - a user-provided path from CLI
-        - ``~/.andes/pycode``
-        - ``<andes_root>/pycode``
-
-        """
-
-        loaded = False
-
-        # below are executed serially because of priority
-        pycode = reload_submodules('pycode')
-        if not pycode:
-            pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
-            pycode = load_pycode_from_path(pycode_path)
-        if not pycode:
-            pycode = reload_submodules('andes.pycode')
-        if not pycode:
-            pycode = load_pycode_from_path(os.path.join(andes_root(), 'pycode'))
-
-        # DO NOT USE `elif` here since below depends on the above.
         if pycode:
             try:
                 self._expand_pycode(pycode)
@@ -2043,7 +1951,7 @@ class System:
                 self.config.add(config[self.__class__.__name__])
                 logger.debug("Config: set for System")
 
-    def get_config(self):
+    def collect_config(self):
         """
         Collect config data from models.
 
@@ -2064,29 +1972,6 @@ class System:
             if len(cfg) > 0:
                 config_dict[name] = cfg
         return config_dict
-
-    @staticmethod
-    def load_config(conf_path=None):
-        """
-        Load config from an rc-formatted file.
-
-        Parameters
-        ----------
-        conf_path : None or str
-            Path to the config file. If is `None`, the function body will not
-            run.
-
-        Returns
-        -------
-        configparse.ConfigParser
-        """
-        if conf_path is None:
-            return
-
-        conf = configparser.ConfigParser()
-        conf.read(conf_path)
-        logger.info('> Loaded config from file "%s"', conf_path)
-        return conf
 
     def save_config(self, file_path=None, overwrite=False):
         """
@@ -2116,7 +2001,7 @@ class System:
             if not confirm_overwrite(file_path, overwrite=overwrite):
                 return
 
-        conf = self.get_config()
+        conf = self.collect_config()
         with open(file_path, 'w') as f:
             conf.write(f)
 
@@ -2180,23 +2065,6 @@ class System:
 
         return out
 
-    def fix_address(self):
-        """
-        Fixes addressing issues after loading a snapshot.
-
-        This function properly sets ``v`` and ``e`` of internal variables as
-        views of the corresponding DAE arrays.
-
-        Inputs will be refreshed for each model.
-        """
-
-        self.set_var_arrays(self.models)
-
-        for model in self.models.values():
-            model.get_inputs(refresh=True)
-
-        return True
-
     def set_output_subidx(self, models):
         """
         Process :py:class:`andes.models.misc.Output` data and store the
@@ -2256,7 +2124,96 @@ class System:
         self.Output.yidx = sorted(np.unique(export_vars['y']))
 
 
-def load_pycode_from_path(pycode_path):
+# --------------- Helper Functions ---------------
+
+def _config_numpy(seed='None', divide='warn', invalid='warn'):
+    """
+    Configure NumPy based on Config.
+    """
+
+    # set up numpy random seed
+    if isinstance(seed, int):
+        np.random.seed(seed)
+        logger.debug("Random seed set to <%d>.", seed)
+
+    # set levels
+    np.seterr(divide=divide,
+              invalid=invalid,
+              )
+
+
+def load_config_rc(conf_path=None):
+    """
+    Load config from an rc-formatted file.
+
+    Parameters
+    ----------
+    conf_path : None or str
+        Path to the config file. If is `None`, the function body will not
+        run.
+
+    Returns
+    -------
+    configparse.ConfigParser
+    """
+    if conf_path is None:
+        return
+
+    conf = configparser.ConfigParser()
+    conf.read(conf_path)
+    logger.info('> Loaded config from file "%s"', conf_path)
+    return conf
+
+
+def fix_view_arrays(system):
+    """
+    Point NumPy arrays without OWNDATA (termed "view arrays" here) to the source
+    array.
+
+    This function properly sets ``v`` and ``e`` arrays of internal variables as
+    views of the corresponding DAE arrays.
+
+    Inputs will be refreshed for each model.
+
+    Parameters
+    ----------
+    system : andes.system.System
+        System object to be fixed
+    """
+
+    system.set_var_arrays(system.models)
+
+    for model in system.models.values():
+        model.get_inputs(refresh=True)
+
+    return True
+
+
+def import_pycode(user_pycode_path=None):
+    """
+    Helper function to import generated pycode in the following priority:
+
+    1. a user-provided path from CLI. Currently, this is only for specifying the
+       path to store the generated pycode via ``andes prepare``.
+    2. ``~/.andes/pycode``. This is where pycode is stored by default.
+    3. ``<andes_package_root>/pycode``. One can store pycode in the ANDES
+       package folder and ship a full package, which does not require code generation.
+    """
+
+    # below are executed serially because of priority
+    pycode = reload_submodules('pycode')
+    if not pycode:
+        pycode_path = get_pycode_path(user_pycode_path, mkdir=False)
+        pycode = _import_pycode_from(pycode_path)
+    if not pycode:
+        pycode = reload_submodules('andes.pycode')
+    if not pycode:
+        pycode = _import_pycode_from(os.path.join(andes_root(), 'pycode'))
+
+    return pycode
+
+
+def _import_pycode_from(pycode_path):
     """
     Helper function to load pycode from ``.andes``.
     """
