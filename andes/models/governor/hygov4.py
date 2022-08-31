@@ -69,6 +69,11 @@ class HYGOV4Data(TGBaseData):
                               tex_name ='D_{turb}',
                               power = True,
                               )
+        self.Hdam = NumParam(info = 'Head available at dam',
+                              default = 0.1,
+                              tex_name ='H_{dam}',
+                              power = True,
+                              )
         self.qNL = NumParam(info = 'No-Load flow at nominal head',
                             default = 0.1,
                             tex_name = 'q_NL',
@@ -119,8 +124,6 @@ class HYGOV4Model(TGBase):
 
     The input lead-lag filter is ignored.
 
-    The ``g`` signal (LAG) is initialized to the initial value of
-    ``q`` (Integrator) to simplify the initializaiton equations.
     """
 
     def __init__(self, system, config):
@@ -133,13 +136,13 @@ class HYGOV4Model(TGBase):
         self.gr = ConstService(v_str = '1/Rtemp',
                                tex_name = '1/Rtemp'
                                )
-        self.q0 = ConstService(v_str='tm0 / At + qNL',
+        self.q0 = ConstService(v_str='tm0 / (At * Hdam) + qNL',
                                tex_name='q_0',
                                )
         self.pref = Algeb(info = 'Reference power input',
                           tex_name= 'P_{ref}',
-                          v_str = 'R * q0',
-                          e_str = 'R * q0 - pref'
+                          v_str = 'Rperm * (q0 / Hdam ** 0.5))',
+                          e_str = 'Rperm * (q0 / Hdam ** 0.5)) - pref'
                           )
 
         self.wd = Algeb(info = 'Generator speed deviation',
@@ -156,12 +159,7 @@ class HYGOV4Model(TGBase):
         #                )
         #
         # 
-        self.gate = Algeb(info='gate',
-                        unit='p.u.',
-                        tex_name="gate",
-                        v_str='gtpos',
-                        e_str='gtpos - gate',
-                        )                
+            
         self.LAGTR = Lag(u = self.gate,
                      K = self.Rtemp,
                      T = self.Tr,
@@ -170,7 +168,7 @@ class HYGOV4Model(TGBase):
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
-                        v_str = '(pref + paux - (R - LAGTR_y) * gate - wd) - up',
+                        v_str = '0',
                         e_str = '(pref + paux - (R - LAGTR_y) * gate - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
@@ -183,9 +181,9 @@ class HYGOV4Model(TGBase):
                                  tex_name='1/T_g',
                                  )
 
-        self.gtpos = State(info='State in gate position (c)',
+        self.gate = State(info='State in gate position (c)',
                            unit='rad',
-                           v_str='q0',
+                           v_str='(q0 / Hdam ** 0.5)',
                            tex_name=r'\delta',
                            ##t_const = self.Tg,
                            e_str='LAGTP_y * iTg'
@@ -193,7 +191,7 @@ class HYGOV4Model(TGBase):
         
 
 
-        self.gate_lim = AntiWindupRate(u=self.gtpos, lower=self.PMIN, upper=self.PMAX,
+        self.gate_lim = AntiWindupRate(u=self.gate, lower=self.PMIN, upper=self.PMAX,
                                      rate_lower=self.UO, rate_upper=self.UC,
                                      tex_name='lim_{gate}',
                                      info='gate velocity limiter',
@@ -203,7 +201,7 @@ class HYGOV4Model(TGBase):
                        unit='p.u.',
                        tex_name="trhead",
                        e_str='q_y**2 / gate**2 - trhead',
-                       v_str='1',
+                       v_str='Hdam',
                        )
         self.q = Integrator(u="1 - q_y**2 / gate**2",
                             T=self.Tw, K=1,
