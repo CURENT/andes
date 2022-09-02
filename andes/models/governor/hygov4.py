@@ -3,7 +3,7 @@ HYGOV4 hydro governor model
 """
 
 from andes.core import Algeb, ConstService, NumParam, State
-from andes.core.block import  Integrator, Lag, AntiWindupRate
+from andes.core.block import  Integrator, Lag, AntiWindupRate, AntiWindup
 from andes.models.governor.tgbase import TGBase, TGBaseData 
 
 class HYGOV4Data(TGBaseData):
@@ -33,7 +33,7 @@ class HYGOV4Data(TGBaseData):
                            ) 
         self.UC = NumParam(info = 'Maximum Gate closing velocity',
                            tex_name = 'U_{C}',
-                           default = 1,
+                           default = 0,
                            unit = 'p.u.',
                            power = True,
                            )
@@ -70,7 +70,7 @@ class HYGOV4Data(TGBaseData):
                               power = True,
                               )
         self.Hdam = NumParam(info = 'Head available at dam',
-                              default = 0.1,
+                              default = 1,
                               tex_name ='H_{dam}',
                               power = True,
                               )
@@ -133,18 +133,17 @@ class HYGOV4Model(TGBase):
         self.R = ConstService(v_str='Rtemp + Rperm',
                                tex_name='Rtemp + Rperm',
                                )
-        self.gr = ConstService(v_str = '1/Rtemp',
-                               tex_name = '1/Rtemp'
-                               )
+        #self.gr = ConstService(v_str = '1/Rtemp',
+        #                       tex_name = '1/Rtemp'
+        #                       )
         self.q0 = ConstService(v_str='tm0 / (At * Hdam) + qNL',
                                tex_name='q_0',
                                )
         self.pref = Algeb(info = 'Reference power input',
                           tex_name= 'P_{ref}',
-                          v_str = 'Rperm * (q0 / Hdam ** 0.5))',
-                          e_str = 'Rperm * (q0 / Hdam ** 0.5)) - pref'
+                          v_str = 'Rperm * (q0 / (Hdam ** 0.5))',
+                          e_str = 'Rperm * (q0 / (Hdam ** 0.5)) - pref'
                           )
-
         self.wd = Algeb(info = 'Generator speed deviation',
                         unit = 'p.u.',
                         tex_name = r'\omega_{dev}',
@@ -158,8 +157,14 @@ class HYGOV4Model(TGBase):
         #                e_str = '(Rtemp * gate) - rg',
         #                )
         #
-        # 
-            
+        #
+        self.gate = State(info='State in gate position (c)',
+                           unit='rad',
+                           v_str='(q0 / (Hdam ** 0.5))',
+                           tex_name='gate',
+                           t_const = self.Tg,
+                           e_str='LAGTP_y'
+                           )
         self.LAGTR = Lag(u = self.gate,
                      K = self.Rtemp,
                      T = self.Tr,
@@ -169,7 +174,7 @@ class HYGOV4Model(TGBase):
                         unit = 'p.u.',
                         tex_name = 'up',
                         v_str = '0',
-                        e_str = '(pref + paux - (R - LAGTR_y) * gate - wd) - up',
+                        e_str = 'ue * (pref + paux - R * gate - (- LAGTR_y ) - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
                      K = 1,
@@ -180,30 +185,18 @@ class HYGOV4Model(TGBase):
         self.iTg = ConstService(v_str='u/Tg',
                                  tex_name='1/T_g',
                                  )
-
-        self.gate = State(info='State in gate position (c)',
-                           unit='rad',
-                           v_str='(q0 / Hdam ** 0.5)',
-                           tex_name=r'\delta',
-                           ##t_const = self.Tg,
-                           e_str='LAGTP_y * iTg'
-                           )
-        
-
-
         self.gate_lim = AntiWindupRate(u=self.gate, lower=self.PMIN, upper=self.PMAX,
                                      rate_lower=self.UO, rate_upper=self.UC,
                                      tex_name='lim_{gate}',
                                      info='gate velocity limiter',
                                      )
-
         self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
                        tex_name="trhead",
                        e_str='q_y**2 / gate**2 - trhead',
                        v_str='Hdam',
                        )
-        self.q = Integrator(u="1 - q_y**2 / gate**2",
+        self.q = Integrator(u='Hdam - trhead ** 2',
                             T=self.Tw, K=1,
                             y0='q0',
                             check_init=False,
