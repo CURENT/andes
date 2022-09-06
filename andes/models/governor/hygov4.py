@@ -3,7 +3,7 @@ HYGOV4 hydro governor model
 """
 
 from andes.core import Algeb, ConstService, NumParam, State
-from andes.core.block import  Integrator, Lag, AntiWindupRate, AntiWindup
+from andes.core.block import  Integrator, Lag, AntiWindupRate, AntiWindup, Washout
 from andes.models.governor.tgbase import TGBase, TGBaseData 
 
 class HYGOV4Data(TGBaseData):
@@ -133,6 +133,9 @@ class HYGOV4Model(TGBase):
         self.R = ConstService(v_str='Rtemp + Rperm',
                                tex_name='Rtemp + Rperm',
                                )
+        self.TrRtemp = ConstService(v_str='Rtemp * Tr',
+                               tex_name='Rtemp * Tr',
+                               )
         #self.gr = ConstService(v_str = '1/Rtemp',
         #                       tex_name = '1/Rtemp'
         #                       )
@@ -165,16 +168,26 @@ class HYGOV4Model(TGBase):
                            t_const = self.Tg,
                            e_str='LAGTP_y'
                            )
-        self.LAGTR = Lag(u = self.gate,
-                     K = self.Rtemp,
-                     T = self.Tr,
-                     info = 'lag block with T_r',
-                     )
+        #self.LAGTR = Lag(u = self.gate,
+        #             K = self.Rtemp,
+        #             T = self.Tr,
+        #             info = 'lag block with T_r',
+        #             )
+        #self.up = Algeb(info = 'input to LAGTP',
+        #                unit = 'p.u.',
+        #                tex_name = 'up',
+        #                v_str = '0',
+        #                e_str = 'ue * (pref + paux - R * gate - (- LAGTR_y ) - wd) - up',
+        #                )
+        self.TRBLOCK = Washout(u = self.gate,
+                               K = self.TrRtemp,
+                               T = self.Tr,
+                               info = 'Washout with T_r')
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
                         v_str = '0',
-                        e_str = 'ue * (pref + paux - R * gate - (- LAGTR_y ) - wd) - up',
+                        e_str = 'ue * (pref + paux - (Rperm * gate + TRBLOCK_y ) - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
                      K = 1,
@@ -196,7 +209,7 @@ class HYGOV4Model(TGBase):
                        e_str='q_y**2 / gate**2 - trhead',
                        v_str='Hdam',
                        )
-        self.q = Integrator(u='Hdam - trhead ** 2',
+        self.q = Integrator(u='Hdam - trhead',
                             T=self.Tw, K=1,
                             y0='q0',
                             check_init=False,
