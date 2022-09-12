@@ -158,9 +158,6 @@ System manages all configs, including saving to a config file and loading back.
 .. autofunction:: andes.system.System.save_config
     :noindex:
 
-.. autofunction:: andes.system.System.load_config
-    :noindex:
-
 .. warning::
 
     It is important to note that configs from files is passed to *model constructors* during instantiation.
