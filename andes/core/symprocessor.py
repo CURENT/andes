@@ -65,7 +65,7 @@ class SymProcessor:
 
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
-        self.vars_list = list()
+        self.vars_list = list()       # list of variable symbols, corresponding to `self.xy`
         self.substitution_map = {}    # mapping of ``SubsService`` to its expression
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
