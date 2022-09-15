@@ -3,7 +3,7 @@ HYGOV4 hydro governor model
 """
 
 from andes.core import Algeb, ConstService, NumParam, State
-from andes.core.block import  Integrator, Lag, AntiWindupRate, AntiWindup, Washout
+from andes.core.block import  Integrator, IntegratorAntiWindup, Lag, AntiWindupRate, AntiWindup, Washout, GainLimiter
 from andes.models.governor.tgbase import TGBase, TGBaseData 
 
 class HYGOV4Data(TGBaseData):
@@ -129,7 +129,10 @@ class HYGOV4Model(TGBase):
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
 
-
+        
+        self.iTg = ConstService(v_str='u/Tg',
+                                 tex_name='1/T_g',
+                                 )
         self.R = ConstService(v_str='Rtemp + Rperm',
                                tex_name='Rtemp + Rperm',
                                )
@@ -161,13 +164,45 @@ class HYGOV4Model(TGBase):
         #                )
         #
         #
-        self.gate = State(info='State in gate position (c)',
-                           unit='rad',
-                           v_str='(q0 / (Hdam ** 0.5))',
-                           tex_name='gate',
-                           t_const = self.Tg,
-                           e_str='LAGTP_y'
-                           )
+        
+        
+        #self.gate = State(info='State in gate position (c)',
+        #                   unit='rad',
+        #                   v_str='(q0 / (Hdam ** 0.5))',
+        #                   tex_name='gate',
+        #                   t_const = self.Tg,
+        #                   e_str='LAGTP_y'
+        #                   )
+        
+
+        self.servogain = GainLimiter(u = 'LAGTP_y', K = self.iTg, R =1, 
+                                    upper = self.UO, lower = self.UC
+                                    )
+        
+        self.gate = IntegratorAntiWindup(u='servogain_y', upper =self.PMAX, lower = self.PMIN,
+                             #name = 'gateblock',
+                             T=1, K=1,
+                             y0='(q0 / (Hdam ** 0.5))',
+                            #check_init=False,
+                            info="turbine flow (q)"
+                            )
+
+
+
+        # self.gate = IntegratorAntiWindup(u='LAGTP_y', upper =self.PMAX, lower = self.PMIN,
+        #                     #name = 'gateblock',
+        #                     T=self.Tg, K=1,
+        #                     y0='(q0 / (Hdam ** 0.5))',
+        #                     #check_init=False,
+        #                     info="turbine flow (q)"
+        #                     )
+        self.TRBLOCK = Washout(u = 'gate_y',
+                               #name = 'washoutblock',
+                               K = self.TrRtemp,
+                               T = self.Tr,
+                               info = 'Washout with T_r')
+     
+
         #self.LAGTR = Lag(u = self.gate,
         #             K = self.Rtemp,
         #             T = self.Tr,
@@ -179,15 +214,12 @@ class HYGOV4Model(TGBase):
         #                v_str = '0',
         #                e_str = 'ue * (pref + paux - R * gate - (- LAGTR_y ) - wd) - up',
         #                )
-        self.TRBLOCK = Washout(u = self.gate,
-                               K = self.TrRtemp,
-                               T = self.Tr,
-                               info = 'Washout with T_r')
+
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
                         v_str = '0',
-                        e_str = 'ue * (pref + paux - (Rperm * gate + TRBLOCK_y ) - wd) - up',
+                        e_str = 'ue * (pref + paux - (Rperm * gate_y + TRBLOCK_y ) - wd) - up',
                         )
         self.LAGTP = Lag(u = self.up,
                      K = 1,
@@ -195,18 +227,15 @@ class HYGOV4Model(TGBase):
                      info = 'lag block with T_p, velocity',
                      )
 
-        self.iTg = ConstService(v_str='u/Tg',
-                                 tex_name='1/T_g',
-                                 )
-        self.gate_lim = AntiWindupRate(u=self.gate, lower=self.PMIN, upper=self.PMAX,
-                                     rate_lower=self.UO, rate_upper=self.UC,
-                                     tex_name='lim_{gate}',
-                                     info='gate velocity limiter',
-                                     )
+        #self.gate_lim = AntiWindupRate(u= self.gate_y , lower=self.PMIN, upper=self.PMAX,
+        ##                             rate_lower=self.UO, rate_upper=self.UC,
+         #                            tex_name='lim_{gate}',
+         #                            info='gate velocity limiter',
+          #                           )
         self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
                        tex_name="trhead",
-                       e_str='q_y**2 / gate**2 - trhead',
+                       e_str='q_y**2 / gate_y**2 - trhead',
                        v_str='Hdam',
                        )
         self.q = Integrator(u='Hdam - trhead',
@@ -216,7 +245,7 @@ class HYGOV4Model(TGBase):
                             info="turbine flow (q)"
                             )
 
-        self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * gate) - pout'
+        self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * gate_y) - pout'
 
 class HYGOV4(HYGOV4Data, HYGOV4Model):
     """
