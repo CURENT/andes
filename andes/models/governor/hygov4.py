@@ -208,4 +208,3 @@ class HYGOV4(HYGOV4Data, HYGOV4Model):
     def __init__(self, system, config):
         HYGOV4Data.__init__(self)
         HYGOV4Model.__init__(self, system, config)
-        
