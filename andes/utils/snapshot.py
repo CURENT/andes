@@ -33,7 +33,7 @@ disturbances:
 
 import dill
 
-import andes
+from andes.system import fix_view_arrays, import_pycode
 
 
 def save_ss(path, system):
@@ -77,8 +77,7 @@ def load_ss(path):
     """
 
     # the line below is needed to properly import `pycode`.
-    # TODO: properly import `pycode` beforehand
-    system = andes.System()
+    import_pycode()
 
     if hasattr(path, 'read'):
         system = dill.load(path)
@@ -86,6 +85,7 @@ def load_ss(path):
         with open(path, 'rb') as file:
             system = dill.load(file)
 
-    system.fix_address()
+    # point the "view arrays" to the correct memory
+    fix_view_arrays(system)
 
     return system
