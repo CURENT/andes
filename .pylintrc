@@ -44,6 +44,8 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
+load-plugins=pylint_django
+django-settings-module=myproject.settings
 
 [MESSAGES CONTROL]
 
@@ -591,3 +593,4 @@ preferred-modules=
 # "BaseException, Exception".
 overgeneral-exceptions=BaseException,
                        Exception
+
