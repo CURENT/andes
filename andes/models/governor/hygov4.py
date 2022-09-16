@@ -139,9 +139,6 @@ class HYGOV4Model(TGBase):
         self.TrRtemp = ConstService(v_str='Rtemp * Tr',
                                tex_name='Rtemp * Tr',
                                )
-        #self.gr = ConstService(v_str = '1/Rtemp',
-        #                       tex_name = '1/Rtemp'
-        #                       )
         self.q0 = ConstService(v_str='tm0 / (At * Hdam) + qNL',
                                tex_name='q_0',
                                )
@@ -156,25 +153,6 @@ class HYGOV4Model(TGBase):
                         v_str = '0',
                         e_str = 'ue * (omega - wref) - wd',
                         )
-        #self.rg = Algeb(info = 'input to LAGTR',
-        #                unit = 'p.u.',
-        #                tex_name = 'rg',
-        #                v_str = '0',
-        #                e_str = '(Rtemp * gate) - rg',
-        #                )
-        #
-        #
-        
-        
-        #self.gate = State(info='State in gate position (c)',
-        #                   unit='rad',
-        #                   v_str='(q0 / (Hdam ** 0.5))',
-        #                   tex_name='gate',
-        #                   t_const = self.Tg,
-        #                   e_str='LAGTP_y'
-        #                   )
-        
-
         self.servogain = GainLimiter(u = 'LAGTP_y', K = self.iTg, R =1, 
                                     upper = self.UO, lower = self.UC
                                     )
@@ -186,35 +164,11 @@ class HYGOV4Model(TGBase):
                             #check_init=False,
                             info="turbine flow (q)"
                             )
-
-
-
-        # self.gate = IntegratorAntiWindup(u='LAGTP_y', upper =self.PMAX, lower = self.PMIN,
-        #                     #name = 'gateblock',
-        #                     T=self.Tg, K=1,
-        #                     y0='(q0 / (Hdam ** 0.5))',
-        #                     #check_init=False,
-        #                     info="turbine flow (q)"
-        #                     )
         self.TRBLOCK = Washout(u = 'gate_y',
                                #name = 'washoutblock',
                                K = self.TrRtemp,
                                T = self.Tr,
                                info = 'Washout with T_r')
-     
-
-        #self.LAGTR = Lag(u = self.gate,
-        #             K = self.Rtemp,
-        #             T = self.Tr,
-        #             info = 'lag block with T_r',
-        #             )
-        #self.up = Algeb(info = 'input to LAGTP',
-        #                unit = 'p.u.',
-        #                tex_name = 'up',
-        #                v_str = '0',
-        #                e_str = 'ue * (pref + paux - R * gate - (- LAGTR_y ) - wd) - up',
-        #                )
-
         self.up = Algeb(info = 'input to LAGTP',
                         unit = 'p.u.',
                         tex_name = 'up',
@@ -227,11 +181,6 @@ class HYGOV4Model(TGBase):
                      info = 'lag block with T_p, velocity',
                      )
 
-        #self.gate_lim = AntiWindupRate(u= self.gate_y , lower=self.PMIN, upper=self.PMAX,
-        ##                             rate_lower=self.UO, rate_upper=self.UC,
-         #                            tex_name='lim_{gate}',
-         #                            info='gate velocity limiter',
-          #                           )
         self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
                        tex_name="trhead",
