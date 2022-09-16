@@ -45,7 +45,7 @@ suggestion-mode=yes
 unsafe-load-any-extension=no
 
 load-plugins=pylint_django
-django-settings-module=myproject.settings
+django-settings-module=andes.settings
 
 [MESSAGES CONTROL]
 
