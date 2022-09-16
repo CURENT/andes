@@ -3,7 +3,7 @@ HYGOV4 hydro governor model
 """
 
 from andes.core import Algeb, ConstService, NumParam
-from andes.core.block import  Integrator, IntegratorAntiWindup, Lag, Washout, GainLimiter
+from andes.core.block import Integrator, IntegratorAntiWindup, Lag, Washout, GainLimiter
 from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
@@ -76,10 +76,10 @@ class HYGOV4Data(TGBaseData):
                               power=True,
                               )
         self.Hdam = NumParam(info='Head available at dam',
-                              default=1,
-                              tex_name='H_{dam}',
-                              power=True,
-                              )
+                             default=1,
+                             tex_name='H_{dam}',
+                             power=True,
+                             )
         self.qNL = NumParam(info='No-Load flow at nominal head',
                             default=0.1,
                             tex_name='q_NL',
@@ -158,7 +158,7 @@ class HYGOV4Model(TGBase):
                         v_str='0',
                         e_str='ue * (omega - wref) - wd',
                         )
-        self.servogain = GainLimiter(u='LAGTP_y', K=self.iTg, R =1,
+        self.servogain = GainLimiter(u='LAGTP_y', K=self.iTg, R=1,
                                      upper=self.UO, lower=self.UC
                                      )
         self.gate = IntegratorAntiWindup(u='servogain_y', upper=self.PMAX, lower=self.PMIN,
@@ -197,6 +197,7 @@ class HYGOV4Model(TGBase):
 
         self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * gate_y) - pout'
 
+
 class HYGOV4(HYGOV4Data, HYGOV4Model):
     """
     HYGOV4 turbine governor model.
@@ -207,3 +208,4 @@ class HYGOV4(HYGOV4Data, HYGOV4Model):
     def __init__(self, system, config):
         HYGOV4Data.__init__(self)
         HYGOV4Model.__init__(self, system, config)
+        
