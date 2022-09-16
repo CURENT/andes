@@ -2,9 +2,10 @@
 HYGOV4 hydro governor model
 """
 
-from andes.core import Algeb, ConstService, NumParam, State
-from andes.core.block import  Integrator, IntegratorAntiWindup, Lag, AntiWindupRate, AntiWindup, Washout, GainLimiter
+from andes.core import Algeb, ConstService, NumParam
+from andes.core.block import  Integrator, IntegratorAntiWindup, Lag, Washout, GainLimiter
 from andes.models.governor.tgbase import TGBase, TGBaseData 
+
 
 class HYGOV4Data(TGBaseData):
     """
@@ -118,18 +119,17 @@ class HYGOV4Data(TGBaseData):
         #                      default=0.9,
         #                      tex_name='PGV_5')
 
+
 class HYGOV4Model(TGBase):
     """
     Implement HYGOV4 model.
 
     The input lead-lag filter is ignored.
-
     """
 
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
-
-        
+    
         self.iTg = ConstService(v_str='u/Tg',
                                  tex_name='1/T_g',
                                  )
@@ -155,17 +155,13 @@ class HYGOV4Model(TGBase):
                         )
         self.servogain = GainLimiter(u = 'LAGTP_y', K = self.iTg, R =1, 
                                     upper = self.UO, lower = self.UC
-                                    )
-        
+                                    )    
         self.gate = IntegratorAntiWindup(u='servogain_y', upper =self.PMAX, lower = self.PMIN,
-                             #name = 'gateblock',
                              T=1, K=1,
                              y0='(q0 / (Hdam ** 0.5))',
-                            #check_init=False,
                             info="turbine flow (q)"
                             )
         self.TRBLOCK = Washout(u = 'gate_y',
-                               #name = 'washoutblock',
                                K = self.TrRtemp,
                                T = self.Tr,
                                info = 'Washout with T_r')
@@ -180,7 +176,6 @@ class HYGOV4Model(TGBase):
                      T = self.Tp,
                      info = 'lag block with T_p, velocity',
                      )
-
         self.trhead = Algeb(info='turbine head',
                        unit='p.u.',
                        tex_name="trhead",
@@ -201,7 +196,6 @@ class HYGOV4(HYGOV4Data, HYGOV4Model):
     HYGOV4 turbine governor model.
 
     Implements the PSS/E HYGOV4 model without deadband.
-
     """
 
     def __init__(self, system, config):
