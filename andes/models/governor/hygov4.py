@@ -1,5 +1,5 @@
 """
-HYGOV4 hydro governor model
+HYGOV4 hydro governor model.
 """
 
 from andes.core import Algeb, ConstService, NumParam
