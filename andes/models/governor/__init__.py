@@ -1,3 +1,7 @@
+"""
+HydroTurbine classes
+"""
+
 from andes.models.governor.gast import GAST  # NOQA
 from andes.models.governor.ieeeg1 import IEEEG1  # NOQA
 from andes.models.governor.ieesgo import IEESGO  # NOQA
