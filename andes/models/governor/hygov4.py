@@ -4,81 +4,86 @@ HYGOV4 hydro governor model
 
 from andes.core import Algeb, ConstService, NumParam
 from andes.core.block import  Integrator, IntegratorAntiWindup, Lag, Washout, GainLimiter
-from andes.models.governor.tgbase import TGBase, TGBaseData 
+from andes.models.governor.tgbase import TGBase, TGBaseData
 
 
 class HYGOV4Data(TGBaseData):
     """
     HYGOV4 Data
-    """ 
+    """
 
     def __init__(self):
         super().__init__()
-        self.Rperm = NumParam(info = 'Speed Regulation Gain (mach. base default)',
-                              tex_name = 'Rperm',
-                              default = 0.5,
-                              unit = 'p.u.',
-                              ipower = True,
+        self.Rperm = NumParam(info='Speed Regulation Gain (mach. base default)',
+                              tex_name='Rperm',
+                              default=0.5,
+                              unit='p.u.',
+                              ipower=True,
                               )
-        self.Rtemp = NumParam(info = 'Temporary Droop (Rtemp < Rperm)',
-                              tex_name = 'Rtemp',
-                              default = 1,
-                              unit = 'p.u.',
-                              ipower = True,
+        self.Rtemp = NumParam(info='Temporary Droop (Rtemp < Rperm)',
+                              tex_name='Rtemp',
+                              default=1,
+                              unit='p.u.',
+                              ipower=True,
                               )
-        self.UO = NumParam(info = 'Maximum Gate opening velocity',
-                           tex_name = 'U_{O}',
-                           default = 1,
-                           unit = 'p.u.',
-                           power = True,
-                           ) 
-        self.UC = NumParam(info = 'Maximum Gate closing velocity',
-                           tex_name = 'U_{C}',
-                           default = 0,
-                           unit = 'p.u.',
-                           power = True,
+        self.UO = NumParam(info='Maximum Gate opening velocity',
+                           tex_name='U_{O}',
+                           default=1,
+                           unit='p.u.',
+                           power=True,
                            )
-        self.PMAX = NumParam(info = 'Maximum Gate opening',
-                             tex_name = 'PMAX',
-                             default = 1,
-                             unit = 'p.u.',
-                             power = True,
-                             ) 
-        self.PMIN = NumParam(info = 'Minimum Gate opening',
-                             tex_name = 'PMIN',
-                             default = 0,
-                             unit = 'p.u.',
-                             power = True,
+        self.UC = NumParam(info='Maximum Gate closing velocity',
+                           tex_name='U_{C}',
+                           default=0,
+                           unit='p.u.',
+                           power=True,
+                           )
+        self.PMAX = NumParam(info='Maximum Gate opening',
+                             tex_name='PMAX',
+                             default=1,
+                             unit='p.u.',
+                             power=True,
                              )
-        self.Tp = NumParam(info = 'Pilot servo time constant',
-                           default = 0.05,
-                           tex_name = 'T_p')
-        self.Tg = NumParam(info = 'Gate servo time constant',
-                           default = 0.05,
-                           tex_name = 'T_g')
-        self.Tr = NumParam(info = 'Dashpot time constant',
-                           default = 0.05,
-                           tex_name = 'T_r')
-        self.Tw = NumParam(info = 'Water inertia time constant',
-                           default = 1,
-                           tex_name = 'T_w')
-        self.At = NumParam(info = 'Turbine gain',
-                           default = 1,
-                           tex_name = 'A_t')
-        self.Dturb = NumParam(info = 'Turbine Damping Factor',
-                              default = 0.0,
-                              tex_name ='D_{turb}',
-                              power = True,
+        self.PMIN = NumParam(info='Minimum Gate opening',
+                             tex_name='PMIN',
+                             default=0,
+                             unit='p.u.',
+                             power=True,
+                             )
+        self.Tp = NumParam(info='Pilot servo time constant',
+                           default=0.05,
+                           tex_name='T_p'
+                           )
+        self.Tg = NumParam(info='Gate servo time constant',
+                           default=0.05,
+                           tex_name='T_g'
+                           )
+        self.Tr = NumParam(info='Dashpot time constant',
+                           default=0.05,
+                           tex_name='T_r'
+                           )
+        self.Tw = NumParam(info='Water inertia time constant',
+                           default=1,
+                           tex_name='T_w'
+                           )
+        self.At = NumParam(info='Turbine gain',
+                           default=1,
+                           tex_name='A_t'
+                           )
+        self.Dturb = NumParam(info='Turbine Damping Factor',
+                              default=0.0,
+                              tex_name='D_{turb}',
+                              power=True,
                               )
-        self.Hdam = NumParam(info = 'Head available at dam',
-                              default = 1,
-                              tex_name ='H_{dam}',
-                              power = True,
+        self.Hdam = NumParam(info='Head available at dam',
+                              default=1,
+                              tex_name='H_{dam}',
+                              power=True,
                               )
-        self.qNL = NumParam(info = 'No-Load flow at nominal head',
-                            default = 0.1,
-                            tex_name = 'q_NL',
-                            power = True,
+        self.qNL = NumParam(info='No-Load flow at nominal head',
+                            default=0.1,
+                            tex_name='q_NL',
+                            power=True,
                             )
 
         # nonlinear points, keep for future use
@@ -129,59 +134,60 @@ class HYGOV4Model(TGBase):
 
     def __init__(self, system, config):
         TGBase.__init__(self, system, config)
-    
+
         self.iTg = ConstService(v_str='u/Tg',
-                                 tex_name='1/T_g',
-                                 )
+                                tex_name='1/T_g',
+                                )
         self.R = ConstService(v_str='Rtemp + Rperm',
-                               tex_name='Rtemp + Rperm',
-                               )
+                              tex_name='Rtemp + Rperm',
+                              )
         self.TrRtemp = ConstService(v_str='Rtemp * Tr',
-                               tex_name='Rtemp * Tr',
-                               )
+                                    tex_name='Rtemp * Tr',
+                                    )
         self.q0 = ConstService(v_str='tm0 / (At * Hdam) + qNL',
                                tex_name='q_0',
                                )
-        self.pref = Algeb(info = 'Reference power input',
-                          tex_name= 'P_{ref}',
-                          v_str = 'Rperm * (q0 / (Hdam ** 0.5))',
-                          e_str = 'Rperm * (q0 / (Hdam ** 0.5)) - pref'
+        self.pref = Algeb(info='Reference power input',
+                          tex_name='P_{ref}',
+                          v_str='Rperm * (q0 / (Hdam ** 0.5))',
+                          e_str='Rperm * (q0 / (Hdam ** 0.5)) - pref'
                           )
-        self.wd = Algeb(info = 'Generator speed deviation',
-                        unit = 'p.u.',
-                        tex_name = r'\omega_{dev}',
-                        v_str = '0',
-                        e_str = 'ue * (omega - wref) - wd',
+        self.wd = Algeb(info='Generator speed deviation',
+                        unit='p.u.',
+                        tex_name=r'\omega_{dev}',
+                        v_str='0',
+                        e_str='ue * (omega - wref) - wd',
                         )
-        self.servogain = GainLimiter(u = 'LAGTP_y', K = self.iTg, R =1, 
-                                    upper = self.UO, lower = self.UC
-                                    )    
-        self.gate = IntegratorAntiWindup(u='servogain_y', upper =self.PMAX, lower = self.PMIN,
-                             T=1, K=1,
-                             y0='(q0 / (Hdam ** 0.5))',
-                            info="turbine flow (q)"
-                            )
-        self.TRBLOCK = Washout(u = 'gate_y',
-                               K = self.TrRtemp,
-                               T = self.Tr,
-                               info = 'Washout with T_r')
-        self.up = Algeb(info = 'input to LAGTP',
-                        unit = 'p.u.',
-                        tex_name = 'up',
-                        v_str = '0',
-                        e_str = 'ue * (pref + paux - (Rperm * gate_y + TRBLOCK_y ) - wd) - up',
+        self.servogain = GainLimiter(u='LAGTP_y', K=self.iTg, R =1,
+                                     upper=self.UO, lower=self.UC
+                                     )
+        self.gate = IntegratorAntiWindup(u='servogain_y', upper=self.PMAX, lower=self.PMIN,
+                                         T=1, K=1,
+                                         y0='(q0 / (Hdam ** 0.5))',
+                                         info="turbine flow (q)"
+                                         )
+        self.TRBLOCK = Washout(u='gate_y',
+                               K=self.TrRtemp,
+                               T=self.Tr,
+                               info='Washout with T_r'
+                               )
+        self.up = Algeb(info='input to LAGTP',
+                        unit='p.u.',
+                        tex_name='up',
+                        v_str='0',
+                        e_str='ue * (pref + paux - (Rperm * gate_y + TRBLOCK_y ) - wd) - up',
                         )
-        self.LAGTP = Lag(u = self.up,
-                     K = 1,
-                     T = self.Tp,
-                     info = 'lag block with T_p, velocity',
-                     )
+        self.LAGTP = Lag(u=self.up,
+                         K=1,
+                         T=self.Tp,
+                         info='lag block with T_p, velocity',
+                         )
         self.trhead = Algeb(info='turbine head',
-                       unit='p.u.',
-                       tex_name="trhead",
-                       e_str='q_y**2 / gate_y**2 - trhead',
-                       v_str='Hdam',
-                       )
+                            unit='p.u.',
+                            tex_name="trhead",
+                            e_str='q_y**2 / gate_y**2 - trhead',
+                            v_str='Hdam',
+                            )
         self.q = Integrator(u='Hdam - trhead',
                             T=self.Tw, K=1,
                             y0='q0',
@@ -201,4 +207,3 @@ class HYGOV4(HYGOV4Data, HYGOV4Model):
     def __init__(self, system, config):
         HYGOV4Data.__init__(self)
         HYGOV4Model.__init__(self, system, config)
-
