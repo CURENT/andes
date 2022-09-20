@@ -128,8 +128,6 @@ class HYGOV4Data(TGBaseData):
 class HYGOV4Model(TGBase):
     """
     Implement HYGOV4 model.
-
-    The input lead-lag filter is ignored.
     """
 
     def __init__(self, system, config):
@@ -152,42 +150,50 @@ class HYGOV4Model(TGBase):
                           v_str='Rperm * (q0 / (Hdam ** 0.5))',
                           e_str='Rperm * (q0 / (Hdam ** 0.5)) - pref'
                           )
+
         self.wd = Algeb(info='Generator speed deviation',
                         unit='p.u.',
                         tex_name=r'\omega_{dev}',
                         v_str='0',
                         e_str='ue * (omega - wref) - wd',
                         )
-        self.servogain = GainLimiter(u='LAGTP_y', K=self.iTg, R=1,
-                                     upper=self.UO, lower=self.UC
-                                     )
-        self.gate = IntegratorAntiWindup(u='servogain_y', upper=self.PMAX, lower=self.PMIN,
+
+        self.SV = GainLimiter(u='LAG_y', K=self.iTg, R=1,
+                              upper=self.UO, lower=self.UC,
+                              info='servo gain and limiters'
+                              )
+
+        self.GATE = IntegratorAntiWindup(u='SV_y', upper=self.PMAX, lower=self.PMIN,
                                          T=1, K=1,
                                          y0='(q0 / (Hdam ** 0.5))',
                                          info="Gate position"
                                          )
-        self.TRBLOCK = Washout(u='gate_y',
-                               K=self.TrRtemp,
-                               T=self.Tr,
-                               info='Washout with T_r'
-                               )
-        self.up = Algeb(info='input to LAGTP',
-                        unit='p.u.',
-                        tex_name='up',
-                        v_str='0',
-                        e_str='ue * (pref + paux - (Rperm * gate_y + TRBLOCK_y ) - wd) - up',
-                        )
-        self.LAGTP = Lag(u=self.up,
-                         K=1,
-                         T=self.Tp,
-                         info='lag block with T_p, velocity',
-                         )
+        self.WO = Washout(u='GATE_y',
+                          K=self.TrRtemp,
+                          T=self.Tr,
+                          info='Washout feedback with T_r'
+                          )
+
+        self.Psum = Algeb(info='summation of power input to servo',
+                          unit='p.u.',
+                          tex_name='P_{sum}',
+                          v_str='0',
+                          e_str='ue * (pref + paux - (Rperm * GATE_y + WO_y ) - wd) - Psum',
+                          )
+
+        self.LAG = Lag(u=self.Psum,
+                       K=1,
+                       T=self.Tp,
+                       info='lag block with T_p, outputs velocity',
+                       )
+
         self.trhead = Algeb(info='turbine head',
                             unit='p.u.',
                             tex_name="trhead",
-                            e_str='q_y**2 / gate_y**2 - trhead',
+                            e_str='q_y**2 / GATE_y**2 - trhead',
                             v_str='Hdam',
                             )
+
         self.q = Integrator(u='Hdam - trhead',
                             T=self.Tw, K=1,
                             y0='q0',
@@ -195,14 +201,18 @@ class HYGOV4Model(TGBase):
                             info="turbine flow (q)"
                             )
 
-        self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * gate_y) - pout'
+        self.pout.e_str = 'ue * (At * trhead * (q_y - qNL) - Dturb * wd * GATE_y) - pout'
 
 
 class HYGOV4(HYGOV4Data, HYGOV4Model):
     """
     HYGOV4 turbine governor model.
 
-    Implements the PSS/E HYGOV4 model without deadband.
+    Implements the PSS/E HYGOV4 model with the following ignored:
+
+    - input deadband DB1
+    - valve position deadband DB2
+    - nonlinear function bewteen GV and P_{GV}
     """
 
     def __init__(self, system, config):
