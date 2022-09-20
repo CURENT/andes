@@ -15,37 +15,37 @@ class HYGOV4Data(TGBaseData):
     def __init__(self):
         super().__init__()
         self.Rperm = NumParam(info='Speed Regulation Gain (mach. base default)',
-                              tex_name='Rperm',
+                              tex_name='R_{perm}',
                               default=0.5,
                               unit='p.u.',
                               ipower=True,
                               )
         self.Rtemp = NumParam(info='Temporary Droop (Rtemp < Rperm)',
-                              tex_name='Rtemp',
+                              tex_name='R_{temp}',
                               default=1,
                               unit='p.u.',
                               ipower=True,
                               )
         self.UO = NumParam(info='Maximum Gate opening velocity',
-                           tex_name='U_{O}',
+                           tex_name='U_O',
                            default=1,
                            unit='p.u.',
                            power=True,
                            )
         self.UC = NumParam(info='Maximum Gate closing velocity',
-                           tex_name='U_{C}',
+                           tex_name='U_C',
                            default=0,
                            unit='p.u.',
                            power=True,
                            )
         self.PMAX = NumParam(info='Maximum Gate opening',
-                             tex_name='PMAX',
+                             tex_name='P_{MAX}',
                              default=1,
                              unit='p.u.',
                              power=True,
                              )
         self.PMIN = NumParam(info='Minimum Gate opening',
-                             tex_name='PMIN',
+                             tex_name='P_{MIN}',
                              default=0,
                              unit='p.u.',
                              power=True,
@@ -82,7 +82,7 @@ class HYGOV4Data(TGBaseData):
                              )
         self.qNL = NumParam(info='No-Load flow at nominal head',
                             default=0.1,
-                            tex_name='q_NL',
+                            tex_name='q_{NL}',
                             power=True,
                             )
 
@@ -137,10 +137,10 @@ class HYGOV4Model(TGBase):
                                 tex_name='1/T_g',
                                 )
         self.R = ConstService(v_str='Rtemp + Rperm',
-                              tex_name='Rtemp + Rperm',
+                              tex_name='R_{temp} + R_{perm}',
                               )
         self.TrRtemp = ConstService(v_str='Rtemp * Tr',
-                                    tex_name='Rtemp * Tr',
+                                    tex_name='R_{temp} * T_r',
                                     )
         self.q0 = ConstService(v_str='tm0 / (At * Hdam) + qNL',
                                tex_name='q_0',
