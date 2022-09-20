@@ -164,7 +164,7 @@ class HYGOV4Model(TGBase):
         self.gate = IntegratorAntiWindup(u='servogain_y', upper=self.PMAX, lower=self.PMIN,
                                          T=1, K=1,
                                          y0='(q0 / (Hdam ** 0.5))',
-                                         info="turbine flow (q)"
+                                         info="Gate position"
                                          )
         self.TRBLOCK = Washout(u='gate_y',
                                K=self.TrRtemp,
