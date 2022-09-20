@@ -23,7 +23,7 @@ file_classes = list([
     ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU', 'PLBVFU1']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'TGOV1N', 'TGOV1NDB',
-                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB']),
+                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB', 'HYGOV4']),
     ('vcomp', ['IEEEVC']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC1A', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
                  'IEEET1', 'EXAC1', 'EXAC2', 'EXAC4', 'ESST4B', 'AC8B', 'IEEET3',
