@@ -181,7 +181,8 @@ class Streaming:
             if isinstance(p, (int, float)):
                 ret.append([p] * len(ret[0]))
             elif isinstance(p, list):
-                assert len(p) == len(ret[0])
+                if len(p) != len(ret[0]):
+                    raise ValueError("number of params does not match ret list")
                 ret.append(p)
             else:
                 val = list(self.system.__dict__[model].__dict__[p])
