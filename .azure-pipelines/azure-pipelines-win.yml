@@ -32,8 +32,3 @@ jobs:
       pip install .[dev,interop]
       pytest
     displayName: pytest
-
-  - script: |
-      call activate andesEnv
-      make -C docs html
-    displayName: 'make documentation'

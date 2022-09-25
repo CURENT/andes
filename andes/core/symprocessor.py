@@ -65,12 +65,14 @@ class SymProcessor:
 
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
-        self.vars_list = list()
+        self.vars_list = list()       # list of variable symbols, corresponding to `self.xy`
         self.substitution_map = {}    # mapping of ``SubsService`` to its expression
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
-        self.s_syms = list()
+        self.s_syms = list()  # service symbols
+        self.j_args = dict()   # Jacobian name -> argument list
+        self.j_calls = dict()  # Jacobian name -> symbolic expressions
 
         # pretty print of variables
         self.xy = list()  # variables in the order of states, algebs
@@ -352,6 +354,7 @@ class SymProcessor:
                 jname = f'{eqn.e_code}{var.v_code}'
 
                 # jac calls with all arguments and stored individually
+                # the `0` value will be used for building the Jacobian sparsity pattern
                 self.calls.append_ijv(jname, e_idx, v_idx, 0)
 
                 # collect unique arguments for jac calls
@@ -360,6 +363,9 @@ class SymProcessor:
                     if fs not in j_args[jname]:
                         j_args[jname].append(fs)
                 j_calls[jname].append(e_symbolic)
+
+        self.j_args = j_args
+        self.j_calls = j_calls
 
         for jname in j_calls:
             # sort for stable argument list

@@ -28,7 +28,3 @@ jobs:
       pip install pytest pytest-azurepipelines
       pytest
     displayName: 'pytest'
-
-  - script: |
-      make -C docs html  # Build the documentation.
-    displayName: 'make documentation'

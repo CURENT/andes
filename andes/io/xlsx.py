@@ -48,7 +48,8 @@ def write(system, outfile, skip_empty=True, overwrite=None, add_book=None, **kwa
     writer = _write_system(system, writer, skip_empty)
     writer = _add_book(system, writer, add_book)
 
-    writer.save()
+    writer.close()
+
     logger.info('xlsx file written to "%s"', outfile)
     return True
 

@@ -18,6 +18,7 @@ class GENCLSModel:
     def __init__(self):
         # internal voltage and rotor angle calculation
         self.xq = ExtService(model='GENCLS', src='xd1', indexer=self.idx,
+                             tex_name="{x'_d}",
                              )
         self._V = ConstService(v_str='v * exp(1j * a)',
                                tex_name='V_c',
