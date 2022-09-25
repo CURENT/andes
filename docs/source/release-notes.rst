@@ -9,6 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.1 (2022-09-24)
+-------------------
+
+- New turbine governor model :ref:`HYGOV4`. Thanks to Zaid Mahmood for the
+  contribution.
+- Bug fixes to saving data to xlsx file.
+
 v1.8.0 (2022-08-30)
 -------------------
 
