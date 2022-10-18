@@ -89,6 +89,9 @@ class ModelData:
         self.n = 0
         self.uid = {}
 
+        # indexing bases. Most vectorized models only have one base: self.idx
+        self.index_bases = []
+
         if not hasattr(self, 'cache'):
             self.cache = ModelCache()
         self.cache.add_callback('dict', self.as_dict)
@@ -100,6 +103,8 @@ class ModelData:
             self.idx = DataParam(info='unique device idx')
             self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')
             self.name = DataParam(info='device name')
+
+            self.index_bases.append(self.idx)
 
     def __len__(self):
         return self.n
