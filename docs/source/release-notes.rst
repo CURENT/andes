@@ -9,6 +9,18 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.2 (2022-10-30)
+-------------------
+This is a minor release to support SymPy 1.11.x.
+
+Internally, ``ModelData`` contains a new member field ``index_bases`` to record
+the variables by which other variables are indexed. Most variables, by default,
+are indexed by ``idx``. Some models (such as COI) whose device can link to
+multiple other devices can have multiple index bases.
+
+Index bases are currently placeholders and have not been used in the current
+version.
+
 v1.8.1 (2022-09-24)
 -------------------
 
