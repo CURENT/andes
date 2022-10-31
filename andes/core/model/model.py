@@ -891,7 +891,7 @@ class Model:
         col = self.calls.jjac[j_name][idx]
 
         try:
-            row_name = eq_names[j_name[0]][row]  # where jname[0] is the equation name (f, g, r, t)
+            row_name = eq_names[j_name[0]][row]  # where jname[0] is the equation name in ("f", "g")
             col_name = var_names_list[col]
         except IndexError as e:
             logger.error("Generated code outdated. Run `andes prepare -i` to re-generate.")
