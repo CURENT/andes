@@ -13,7 +13,7 @@ v1.8.2 (2022-10-30)
 -------------------
 This is a minor release to support SymPy 1.11.x.
 
-Internally, :ref:`ModelData` contains a new member field ``index_bases`` to record
+Internally, ``ModelData`` contains a new member field ``index_bases`` to record
 the variables by which other variables are indexed. Most variables, by default,
 are indexed by ``idx``. Some models (such as COI) whose device can link to
 multiple other devices can have multiple index bases.
