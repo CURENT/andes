@@ -34,7 +34,7 @@ class COIModel(Model):
         self.flags.update({'tds': True})
 
         self.SynGen = BackRef(info='Back reference to SynGen idx')  # `self.SynGen` is an IndexBase
-        self.SynGenIdx = RefFlatten(ref=self.SynGen) # flattened IndexBase
+        self.SynGenIdx = RefFlatten(ref=self.SynGen)  # flattened IndexBase
 
         self.index_bases.append(self.SynGenIdx)
 
