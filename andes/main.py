@@ -866,8 +866,8 @@ def versioninfo():
     import sympy
     import scipy
     import pandas
-    import numba
     import kvxopt
+
     versions = {'Python': platform.python_version(),
                 'andes': get_versions()['version'],
                 'numpy': np.__version__,
@@ -875,9 +875,17 @@ def versioninfo():
                 'sympy': sympy.__version__,
                 'scipy': scipy.__version__,
                 'pandas': pandas.__version__,
-                'numba': numba.__version__,
                 }
     maxwidth = max([len(k) for k in versions.keys()])
 
+    try:
+        import numba
+    except ImportError:
+        numba = None
+
+    if numba is not None:
+        versions["numba"] = numba.__version__
+
     for key, val in versions.items():
         print(f"{key: <{maxwidth}}  {val}")
+
