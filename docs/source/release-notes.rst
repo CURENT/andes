@@ -14,6 +14,8 @@ v1.8.3 (2022-11-15)
 - Support Python 3.11. The average performance gain is a few percent.
 - Made ``numba`` an optional dependency because it does not yet support Python
   3.11.
+- Fixes a bug in the time stepping logic that causes resumed simulations to
+  overwrite the result of the previous final step.
 
 v1.8.2 (2022-10-30)
 -------------------
