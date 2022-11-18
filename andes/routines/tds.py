@@ -611,7 +611,7 @@ class TDS(BaseRoutine):
 
     def _calc_h_first(self):
         """
-        Compute the first time step and save to ``self.h``.
+        Compute the first time step and save to ``self.deltat`` and return it.
         """
 
         system = self.system
@@ -638,7 +638,8 @@ class TDS(BaseRoutine):
         self.deltatmin = min(tcycle / 500, self.deltatmax / 20)
 
         if config.tstep <= 0:
-            logger.warning('Fixed time step must be positive, current value is ', config.tstep)
+            logger.warning('Fixed time step must be positive, current value is %g',
+                           config.tstep)
             logger.warning('Switching to automatic time steping')
             config.fixt = False
 
@@ -655,12 +656,10 @@ class TDS(BaseRoutine):
             if self.data_csv.shape[0] > 1:
                 self.deltat = self.data_csv[1, 0] - self.data_csv[0, 0]
             else:
-                logger.warning("CSV data does not contain more than one time step.")
+                logger.warning("CSV file only contains data for one time step.")
                 self.deltat = 0
 
-        self.h = self.deltat
-
-        return self.h
+        return self.deltat
 
     def load_plotter(self):
         """
