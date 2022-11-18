@@ -340,7 +340,7 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
-            self._calc_h_first()
+            self.calc_h(resume=resume)
             dae.t += self.h
             logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
             logger.debug("Resuming from t=%.4fs.", system.dae.t)
@@ -549,16 +549,15 @@ class TDS(BaseRoutine):
         system = self.system
         config = self.config
 
-        # t=0, first iteration (not previously failed)
+        # t=0, first iteration (not previously failed), or resumed simulation
         if (system.dae.t == 0 and self.niter == 0) or resume:
-            return self._calc_h_first()
+            self.deltat = self._calc_h_first()
 
-        if config.fixt and not config.shrinkt:
-            if not self.converged:
-                self.deltat = 0
-                self.busted = True
-                self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
-                self.err_msg += "Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
+        elif config.fixt and not config.shrinkt and (not self.converged):
+            self.deltat = 0
+            self.busted = True
+            self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
+            self.err_msg += "Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
         else:
             if self.converged:
                 if self.niter >= 15:
@@ -586,14 +585,18 @@ class TDS(BaseRoutine):
                     self.err_msg = "Time step reduced to zero. Convergence not likely."
                     self.busted = True
 
-        # last step size
-        if system.dae.t + self.deltat > config.tf:
-            self.deltat = config.tf - system.dae.t
+        # do not skip over the end time
+        self.deltat = min(self.deltat, config.tf - system.dae.t)
 
         self.h = self.deltat
 
-        # do not skip event switch_times
+        # do not skip over event switch_times
         if self._switch_idx < system.n_switches:
+
+            # skip the first switch at the exact first time step to avoid h == 0
+            if (not resume) and (system.dae.t == system.switch_times[self._switch_idx]):
+                self._switch_idx += 1
+
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
 
@@ -635,8 +638,8 @@ class TDS(BaseRoutine):
         self.deltatmin = min(tcycle / 500, self.deltatmax / 20)
 
         if config.tstep <= 0:
-            logger.warning('Fixed time step is negative or zero')
-            logger.warning('Switching to automatic time step')
+            logger.warning('Fixed time step must be positive, current value is ', config.tstep)
+            logger.warning('Switching to automatic time steping')
             config.fixt = False
 
         if config.fixt:
@@ -644,21 +647,18 @@ class TDS(BaseRoutine):
             if config.tstep < self.deltatmin:
                 logger.warning('Fixed time step is smaller than the estimated minimum.')
             if config.tstep > self.deltatmax:
-                logger.debug('Increased deltatmax to tstep.')
+                logger.debug('Increased deltatmax to tstep=%g.', config.tstep)
                 self.deltatmax = config.tstep
 
-        self.h = self.deltat
-
-        # do not skip over the end time at the first step
-        self.h = min(self.h, config.tf - system.dae.t)
-
-        # if from CSV, determine `h` from data
+        # if from CSV, determine `deltat` from data
         if self.data_csv is not None:
             if self.data_csv.shape[0] > 1:
-                self.h = self.data_csv[1, 0] - self.data_csv[0, 0]
+                self.deltat = self.data_csv[1, 0] - self.data_csv[0, 0]
             else:
                 logger.warning("CSV data does not contain more than one time step.")
-                self.h = 0
+                self.deltat = 0
+
+        self.h = self.deltat
 
         return self.h
 
