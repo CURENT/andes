@@ -34,13 +34,12 @@ class TestSnapshot(unittest.TestCase):
 
         # --- load a snapshot ---
         ss = load_ss(path)
+        os.remove(path)
 
         # set a new simulation end time
         ss.TDS.config.tf = 3.0
         ss.TDS.run()
 
         np.testing.assert_almost_equal(ss.GENROU.omega.v,
-                                       np.array([1.005491, 1.005290, 1.004268, 1.00392]),
+                                       np.array([1.00524852, 1.00508697, 1.00423421, 1.0039603]),
                                        decimal=4)
-
-        os.remove(path)
