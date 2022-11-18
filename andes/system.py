@@ -28,7 +28,7 @@ from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.routines import all_routines
 from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
-                          jac_names, matrix, np, sparse, spmatrix)
+                          jac_names, matrix, np, sparse, spmatrix, numba)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
                                get_pycode_path)
@@ -707,6 +707,14 @@ class System:
         if not self.config.numba:
             return
 
+        try:
+            getattr(numba, '__version__')
+        except ImportError:
+            # numba not installed
+            logger.warning("numba is enabled but not installed. Please install numba manually.")
+            self.config.numba = 0
+            return False
+
         use_parallel = bool(self.config.numba_parallel)
         nopython = bool(self.config.numba_nopython)
 
@@ -716,6 +724,8 @@ class System:
             mdl.numba_jitify(parallel=use_parallel,
                              nopython=nopython,
                              )
+
+        return True
 
     def precompile(self,
                    models: Union[OrderedDict, None] = None,
@@ -738,7 +748,10 @@ class System:
         self.config.numba = 1
 
         self.setup()
-        self._init_numba(models)
+        numba_ok = self._init_numba(models)
+
+        if not numba_ok:
+            return
 
         def _precompile_model(model: Model):
             model.precompile()

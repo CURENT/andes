@@ -340,9 +340,10 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             resume = True
-            logger.debug("Resuming simulation from t=%.4fs.", system.dae.t)
             self._calc_h_first()
-            logger.debug("Initial step size for resumed simulation is h=%.4fs.", self.h)
+            dae.t += self.h
+            logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
+            logger.debug("Resuming from t=%.4fs.", system.dae.t)
 
         if system.options.get("init") is True:
             logger.debug("Initialization only is requested and done")

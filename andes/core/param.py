@@ -698,7 +698,8 @@ class ExtParam(NumParam):
             try:
                 self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin',
                                          allow_none=self.allow_none, default=self.default)
-                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin',
+
+                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='pu_coeff',
                                               allow_none=self.allow_none, default=self.default)
             except KeyError:  # idx param without vin
                 pass

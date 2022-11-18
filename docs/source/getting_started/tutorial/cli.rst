@@ -139,7 +139,8 @@ models that are detected with changes since the last code generation.
     best, or even lead to unexpected errors
 
 ANDES supports precompiling the generated Python code using Numba. See
-:ref:`numba-compilation`.
+:ref:`numba-compilation`. Numba needs to be installed separately. Check the
+version of installed numba and other dependencies with ``andes misc --version``.
 
 andes run
 -------------

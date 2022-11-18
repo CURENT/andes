@@ -343,9 +343,9 @@ class SymProcessor:
         for idx, eq_sparse in enumerate(fg_sparse):
             for item in eq_sparse.row_list():
                 e_idx, v_idx, e_symbolic = item
-                if idx == 0:
+                if idx == 0:                              # differential equation
                     eq_name = states_and_ext_list[e_idx]
-                else:
+                else:                                     # algebraic equation
                     eq_name = algebs_and_ext_list[e_idx]
 
                 var_name = vars_syms_list[v_idx]

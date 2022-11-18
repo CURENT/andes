@@ -19,8 +19,8 @@ solving equations is the major time consumer.
 
 .. note::
 
-    Numba is supported since ANDES 1.5.0 and is automatically installed for
-    ANDES>=1.5.3.
+    Numba is supported since ANDES 1.5.0. One needs to manually install it with
+    ``python -m pip install numba`` from the Anaconda Prompt.
 
 Enabling Numba JIT
 ------------------

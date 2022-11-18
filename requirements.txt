@@ -12,6 +12,5 @@ tqdm
 pyyaml
 coloredlogs
 chardet
-numba
 psutil
 texttable
