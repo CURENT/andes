@@ -586,7 +586,7 @@ class TDS(BaseRoutine):
                     self.busted = True
 
         # do not skip over the end time
-        self.deltat = min(self.deltat, config.tf - system.dae.t)
+        self.deltat = max(min(self.deltat, config.tf - system.dae.t), 0)
 
         self.h = self.deltat
 
