@@ -709,7 +709,7 @@ class System:
 
         try:
             getattr(numba, '__version__')
-        except:
+        except ImportError:
             # numba not installed
             logger.warning("numba is enabled but not installed. Please install numba manually.")
             self.config.numba = 0
