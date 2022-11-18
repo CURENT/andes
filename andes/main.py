@@ -888,4 +888,3 @@ def versioninfo():
 
     for key, val in versions.items():
         print(f"{key: <{maxwidth}}  {val}")
-
