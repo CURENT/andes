@@ -468,8 +468,8 @@ class TDS(BaseRoutine):
                     self.err_msg = "Time step reduced to zero. Convergence is not likely."
                     self.busted = True
                     break
-                else:
-                    dae.t += self.h
+
+                dae.t += self.h
 
         if self.busted:
             logger.error(self.err_msg)
