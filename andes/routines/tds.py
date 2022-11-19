@@ -590,13 +590,13 @@ class TDS(BaseRoutine):
 
         self.h = self.deltat
 
-        # do not skip over event switch_times
+        # skip the first switch at the exact first time step to avoid h == 0
         if self._switch_idx < system.n_switches:
-
-            # skip the first switch at the exact first time step to avoid h == 0
             if (not resume) and (system.dae.t == system.switch_times[self._switch_idx]):
                 self._switch_idx += 1
 
+        # do not skip over event switch_times
+        if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
 
