@@ -32,6 +32,10 @@ differential-algebraic equation-based models. In this framework, a comprehensive
 second-generation renewable models. Models in ANDES have been :ref:`verified
 <verification>` with commercial software.
 
+ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
+More information about CURENT LTB can be found at the
+.. _`LTB Repository`: https://github.com/CURENT/ltb2.
+
 .. panels::
     :card: + intro-card text-center
     :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 d-flex
