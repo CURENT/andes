@@ -22,6 +22,7 @@ ANDES documentation
 .. _`Q&A`: https://github.com/cuihantao/andes/discussions
 .. _`Binary Installer`: https://pypi.org/project/andes/
 .. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
+.. _`LTB Repository`: https://github.com/CURENT/ltb2
 
 ANDES is an open-source Python library for power system modeling, computation,
 analysis, and control. It supports power flows calculation, transient stability
@@ -33,8 +34,7 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
 <verification>` with commercial software.
 
 ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
-More information about CURENT LTB can be found at the
-.. _`LTB Repository`: https://github.com/CURENT/ltb2.
+More information about CURENT LTB can be found at the `LTB Repository`_.
 
 .. panels::
     :card: + intro-card text-center
