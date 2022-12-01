@@ -107,6 +107,9 @@ We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 ![Idaho National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/inl.jpg)
 
 # Sponsors and Contributors
+ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
+More information about CURENT LTB can be found at the
+[LTB Repository](https://github.com/CURENT/ltb2).
 
 This work was supported in part by the Engineering Research Center
 Program of the National Science Foundation and the Department of Energy

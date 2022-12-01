@@ -9,6 +9,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.4 (2022-11-23)
+-------------------
+- Fixed a bug in time stepping where step sizes were not properly reduced
+  when the solver failed to converge.
+
 v1.8.3 (2022-11-15)
 -------------------
 - Support Python 3.11. The average performance gain is a few percent.

@@ -309,6 +309,19 @@ class TDS(BaseRoutine):
             logger.warning("The honest Newton method is being used. It will slow down the simulation.")
             logger.warning("For speed up, set `honest=0` in TDS.config.")
 
+    def init_resume(self):
+        """
+        Initialize a resumed simulation.
+        """
+        system = self.system
+        dae = system.dae
+
+        self.calc_h(resume=True)
+        dae.t += self.h
+
+        logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
+        logger.debug("Resuming from t=%.4fs.", system.dae.t)
+
     def run(self, no_summary=False, **kwargs):
         """
         Run time-domain simulation using numerical integration.
@@ -321,7 +334,6 @@ class TDS(BaseRoutine):
         config = self.config
 
         succeed = False
-        resume = False
 
         if system.PFlow.converged is False:
             logger.warning('Power flow not solved. Simulation will not continue.')
@@ -339,11 +351,7 @@ class TDS(BaseRoutine):
         if system.dae.t == 0:
             self.init()
         else:  # resume simulation
-            resume = True
-            self._calc_h_first()
-            dae.t += self.h
-            logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
-            logger.debug("Resuming from t=%.4fs.", system.dae.t)
+            self.init_resume()
 
         if system.options.get("init") is True:
             logger.debug("Initialization only is requested and done")
@@ -356,10 +364,10 @@ class TDS(BaseRoutine):
             self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
                              file=sys.stdout, disable=self.config.no_tqdm)
 
-        if resume:
-            perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 2)
-            self.last_pc = perc
-            self.pbar.update(perc)
+        # set initial pbar percentage; also works for resumed simulation
+        perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 2)
+        self.last_pc = perc
+        self.pbar.update(perc)
 
         self.qrt_start = time.time()
         self.headroom = 0.0
@@ -371,6 +379,7 @@ class TDS(BaseRoutine):
         t0, _ = elapsed()
 
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
+            logger.debug("Start to integrate time step t=%g", system.dae.t)
 
             # call perturbation file if specified
             if self.callpert is not None:
@@ -419,6 +428,8 @@ class TDS(BaseRoutine):
                 dae.t += self.h
                 dae.kcount += 1
 
+                logger.debug("Next time step advanced to t=%g", dae.t)
+
                 # show progress in percentage
                 perc = max(min((dae.t - config.t0) / (config.tf - config.t0) * 100, 100), 0)
                 perc = round(perc, 2)
@@ -446,10 +457,19 @@ class TDS(BaseRoutine):
                     self.qrt_start = time.time()
 
             else:
-                if self.calc_h() == 0:
+                logger.debug("Anticipated time step t=%g did not converge", system.dae.t)
+
+                dae.t -= self.h
+                self.calc_h()
+
+                logger.debug("From t=%g, new step size h=%g ", system.dae.t, self.h)
+
+                if self.h == 0:
                     self.err_msg = "Time step reduced to zero. Convergence is not likely."
                     self.busted = True
                     break
+
+                dae.t += self.h
 
         if self.busted:
             logger.error(self.err_msg)
@@ -549,16 +569,15 @@ class TDS(BaseRoutine):
         system = self.system
         config = self.config
 
-        # t=0, first iteration (not previously failed)
+        # t=0, first iteration (not previously failed), or resumed simulation
         if (system.dae.t == 0 and self.niter == 0) or resume:
-            return self._calc_h_first()
+            self.deltat = self._calc_h_first()
 
-        if config.fixt and not config.shrinkt:
-            if not self.converged:
-                self.deltat = 0
-                self.busted = True
-                self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
-                self.err_msg += "Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
+        elif config.fixt and not config.shrinkt and (not self.converged):
+            self.deltat = 0
+            self.busted = True
+            self.err_msg = f"Simulation did not converge with step size h={self.config.tstep:.4f}.\n"
+            self.err_msg += "Reduce the step size `tstep`, or set `shrinkt = 1` to let it shrink."
         else:
             if self.converged:
                 if self.niter >= 15:
@@ -586,13 +605,17 @@ class TDS(BaseRoutine):
                     self.err_msg = "Time step reduced to zero. Convergence not likely."
                     self.busted = True
 
-        # last step size
-        if system.dae.t + self.deltat > config.tf:
-            self.deltat = config.tf - system.dae.t
-
         self.h = self.deltat
 
-        # do not skip event switch_times
+        # do not skip over the end time
+        self.h = max(min(self.h, config.tf - system.dae.t), 0)
+
+        # skip the first switch at the exact first time step to avoid h == 0
+        if self._switch_idx < system.n_switches:
+            if (not resume) and (system.dae.t == system.switch_times[self._switch_idx]):
+                self._switch_idx += 1
+
+        # do not skip over event switch_times
         if self._switch_idx < system.n_switches:
             if (system.dae.t + self.h) > system.switch_times[self._switch_idx]:
                 self.h = system.switch_times[self._switch_idx] - system.dae.t
@@ -604,11 +627,13 @@ class TDS(BaseRoutine):
             else:
                 self.h = 0
 
+        logger.debug("Calculated TDS.h = %g", self.h)
+
         return self.h
 
     def _calc_h_first(self):
         """
-        Compute the first time step and save to ``self.h``.
+        Compute the first time step and save to ``self.deltat`` and return it.
         """
 
         system = self.system
@@ -635,8 +660,9 @@ class TDS(BaseRoutine):
         self.deltatmin = min(tcycle / 500, self.deltatmax / 20)
 
         if config.tstep <= 0:
-            logger.warning('Fixed time step is negative or zero')
-            logger.warning('Switching to automatic time step')
+            logger.warning('Fixed time step must be positive, current value is %g',
+                           config.tstep)
+            logger.warning('Switching to automatic time steping')
             config.fixt = False
 
         if config.fixt:
@@ -644,23 +670,18 @@ class TDS(BaseRoutine):
             if config.tstep < self.deltatmin:
                 logger.warning('Fixed time step is smaller than the estimated minimum.')
             if config.tstep > self.deltatmax:
-                logger.debug('Increased deltatmax to tstep.')
+                logger.debug('Increased deltatmax to tstep=%g.', config.tstep)
                 self.deltatmax = config.tstep
 
-        self.h = self.deltat
-
-        # do not skip over the end time at the first step
-        self.h = min(self.h, config.tf - system.dae.t)
-
-        # if from CSV, determine `h` from data
+        # if from CSV, determine `deltat` from data
         if self.data_csv is not None:
             if self.data_csv.shape[0] > 1:
-                self.h = self.data_csv[1, 0] - self.data_csv[0, 0]
+                self.deltat = self.data_csv[1, 0] - self.data_csv[0, 0]
             else:
-                logger.warning("CSV data does not contain more than one time step.")
-                self.h = 0
+                logger.warning("CSV file only contains data for one time step.")
+                self.deltat = 0
 
-        return self.h
+        return self.deltat
 
     def load_plotter(self):
         """
