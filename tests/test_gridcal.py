@@ -65,8 +65,20 @@ def _test_to_gridcal_single(case, **kwargs):
     v_gc = np.abs(pf.results.voltage)
     a_gc = np.angle(pf.results.voltage) * 180 / np.pi
 
-    # align ssa angle with slack bus angle
-    rid_slack = np.argmin(np.abs(a_gc))
-    a_andes = a_andes - a_andes[rid_slack]
-
     return np.testing.assert_almost_equal(v_andes, v_gc, decimal=3)
+
+
+if __name__ == "__main__":
+
+    cases = ['ieee14/ieee14_ieeet1.xlsx',
+             'ieee14/ieee14_pvd1.xlsx',
+             'ieee39/ieee39.xlsx',
+             'npcc/npcc.xlsx',
+             ]
+
+    for case_file in cases:
+        case = andes.get_case(case_file)
+
+        _test_to_gridcal_single(case, tol=1e-3)
+
+

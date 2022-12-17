@@ -63,7 +63,7 @@ unittest = LazyImport('import unittest')
 yaml = LazyImport('import yaml')
 pandapower = LazyImport('import pandapower')
 pypowsybl = LazyImport('import pypowsybl')
-gridcal = LazyImport('import gridcal')
+GridCal_Engine = LazyImport('from GridCal import Engine')
 
 plt = LazyImport('from matplotlib import pyplot')
 Pool = LazyImport('from pathos.multiprocessing import Pool')

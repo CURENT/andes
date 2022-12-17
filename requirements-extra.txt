@@ -24,7 +24,7 @@ pre-commit #                   dev
 numba #                        dev, perf
 
 pandapower #                   interop
-gridcal #                      interop
+GridCal #                      interop
 
 # below work around a bug with tqdm bar with ipywidgets 8.0.1
 ipywidgets==7.7 #              web
