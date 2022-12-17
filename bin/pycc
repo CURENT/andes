@@ -1,0 +1,3 @@
+#!/home/josep/Desktop/andes/bin/python
+from numba.pycc import main
+main()

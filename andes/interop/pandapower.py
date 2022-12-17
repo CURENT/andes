@@ -31,14 +31,14 @@ def require_pandapower(f):
 
 def build_group_table(ssa, group, columns, mdl_name=[]):
     """
-    Build the table for devices in a group in an ADNES System.
+    Build the table for devices in a group in an ANDES System.
 
     Parameters
     ----------
     ssa : andes.system.System
-        The ADNES system to build the table
+        The ANDES system to build the table
     group : string
-        The ADNES group
+        The ANDES group
     columns : list of string
         The common columns of a group that to be included in the table.
     mdl_name : list of string
@@ -66,13 +66,13 @@ def build_group_table(ssa, group, columns, mdl_name=[]):
 
 def make_link_table(ssa):
     """
-    Build the link table for generators and generator controllers in an ADNES
+    Build the link table for generators and generator controllers in an ANDES
     System, including ``SynGen`` and ``DG`` for now.
 
     Parameters
     ----------
     ssa : andes.system.System
-        The ADNES system to link
+        The ANDES system to link
 
     Returns
     -------
@@ -150,7 +150,7 @@ def runopp_map(ssp, link_table, **kwargs):
         The pandapower network
 
     link_table : DataFrame
-        The link table of ADNES system
+        The link table of ANDES system
 
     Returns
     -------
@@ -445,12 +445,12 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
 @require_pandapower
 def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     """
-    Convert an ADNES system to a pandapower network for power flow studies.
+    Convert an ANDES system to a pandapower network for power flow studies.
 
     Parameters
     ----------
     ssa : andes.system.System
-        The ADNES system to be converted
+        The ANDES system to be converted
     ctrl : list
         The controlability of generators. The length should be the same with the
         number of ``StaticGen``.
