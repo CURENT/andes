@@ -70,11 +70,7 @@ def _test_to_gridcal_single(case, **kwargs):
 
 if __name__ == "__main__":
 
-    cases = ['ieee14/ieee14_ieeet1.xlsx',
-             'ieee14/ieee14_pvd1.xlsx',
-             'ieee39/ieee39.xlsx',
-             'npcc/npcc.xlsx',
-             ]
+    cases = ['ieee14/ieee14_ieeet1.xlsx']
 
     for case_file in cases:
         case = andes.get_case(case_file)
