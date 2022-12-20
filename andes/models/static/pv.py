@@ -121,6 +121,10 @@ class PVModel(Model):
         self.v.e_str = "-u * q"
 
         # power injection equations g(y) = 0
+        # NOTE: dynamic generators set `u` to `0` to disable static generators.
+        # The equation below cannot introduce `(1-u)*q` until a flag other than
+        # `u` is used to indicate the substitution by a dynamic generator
+
         self.q.e_str = "u*(qlim_zi * (v0-v) + " \
                        "qlim_zl * (qmin-q) + " \
                        "qlim_zu * (qmax-q))"
