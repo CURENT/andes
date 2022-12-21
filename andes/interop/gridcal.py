@@ -204,13 +204,13 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     ssp = _to_gc_branch(ssp, ssa.Line, dic_bus)
 
     # 3. convert loads
-    ssp = _to_gc_load(ssp, ssa.PQ, dic_bus, Sbase=sbase)
+    ssp = _to_gc_load(ssp, ssa.PQ, dic_bus, sbase=sbase)
 
     # 4. convert shunts
-    ssp = _to_gc_shunt(ssp, ssa.Shunt, dic_bus, Sbase=sbase)
+    ssp = _to_gc_shunt(ssp, ssa.Shunt, dic_bus, sbase=sbase)
 
     # 5. convert generators (Slack and PV)
-    ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=sbase)
+    ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, sbase=sbase)
 
     if verify:
         _verify_pf(ssa, ssp, tol)
