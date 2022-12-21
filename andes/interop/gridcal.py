@@ -92,35 +92,35 @@ def _to_gc_branch(ssp, ssa_line, dic_bus):
     return ssp
 
 
-def _to_gc_load(ssp, ssa_load, dic_bus, Sbase=1.0):
+def _to_gc_load(ssp, ssa_load, dic_bus, sbase=1.0):
     """Define loads in GridCal's grid"""
 
     for i in range(len(ssa_load)):
         load = gc.Load(name=ssa_load.name.v[i],
                        active=ssa_load.u.v[i],
-                       P=ssa_load.p0.v[i] * Sbase,
-                       Q=ssa_load.q0.v[i] * Sbase)
+                       P=ssa_load.p0.v[i] * sbase,
+                       Q=ssa_load.q0.v[i] * sbase)
 
         ssp.add_load(dic_bus[ssa_load.bus.v[i]], load)
 
     return ssp
 
 
-def _to_gc_shunt(ssp, ssa_shunt, dic_bus, Sbase=1.0):
+def _to_gc_shunt(ssp, ssa_shunt, dic_bus, sbase=1.0):
     """Define shunts in GridCal's grid"""
 
     for i in range(len(ssa_shunt)):
         shunt = gc.Shunt(name=ssa_shunt.name.v[i],
                          active=ssa_shunt.u.v[i],
-                         G=ssa_shunt.g.v[i] * Sbase,
-                         B=ssa_shunt.b.v[i] * Sbase)
+                         G=ssa_shunt.g.v[i] * sbase,
+                         B=ssa_shunt.b.v[i] * sbase)
 
         ssp.add_shunt(dic_bus[ssa_shunt.bus.v[i]], shunt)
 
     return ssp
 
 
-def _to_gc_generator(ssp, ssa_slack, ssa_PV, dic_bus, Sbase=1.0):
+def _to_gc_generator(ssp, ssa_slack, ssa_pv, dic_bus, sbase=1.0):
     """Define generators considering slack and PV buses"""
 
     for i in range(len(ssa_slack)):
@@ -132,30 +132,30 @@ def _to_gc_generator(ssp, ssa_slack, ssa_PV, dic_bus, Sbase=1.0):
 
         gen = gc.Generator(name=str(ssa_slack.SynGen.v[i]),
                            active=ssa_slack.u.v[i],
-                           active_power=ssa_slack.p0.v[i] * Sbase,
+                           active_power=ssa_slack.p0.v[i] * sbase,
                            power_factor=ssa_slack.p0.v[i] / np.sqrt((ssa_slack.p0.v[i]**2 + ssa_slack.q0.v[i]**2)),
-                           p_min=ssa_slack.pmin.v[i] * Sbase,
-                           p_max=ssa_slack.pmax.v[i] * Sbase,
-                           Qmin=ssa_slack.qmin.v[i] * Sbase,
-                           Qmax=ssa_slack.qmax.v[i] * Sbase,
+                           p_min=ssa_slack.pmin.v[i] * sbase,
+                           p_max=ssa_slack.pmax.v[i] * sbase,
+                           Qmin=ssa_slack.qmin.v[i] * sbase,
+                           Qmax=ssa_slack.qmax.v[i] * sbase,
                            voltage_module=ssa_slack.v0.v[i],
                            Snom=ssa_slack.Sn.v[i])
 
         ssp.add_generator(dic_bus[ssa_slack.bus.v[i]], gen)
 
-    for i in range(len(ssa_PV)):
-        gen = gc.Generator(name=str(ssa_PV.SynGen.v[i]),
-                           active=ssa_PV.u.v[i],
-                           active_power=ssa_PV.p0.v[i] * Sbase,
-                           power_factor=ssa_PV.p0.v[i] / np.sqrt((ssa_PV.p0.v[i]**2 + ssa_PV.q0.v[i]**2)),
-                           p_min=ssa_PV.pmin.v[i] * Sbase,
-                           p_max=ssa_PV.pmax.v[i] * Sbase,
-                           Qmin=ssa_PV.qmin.v[i] * Sbase,
-                           Qmax=ssa_PV.qmax.v[i] * Sbase,
-                           voltage_module=ssa_PV.v0.v[i],
-                           Snom=ssa_PV.Sn.v[i])
+    for i in range(len(ssa_pv)):
+        gen = gc.Generator(name=str(ssa_pv.SynGen.v[i]),
+                           active=ssa_pv.u.v[i],
+                           active_power=ssa_pv.p0.v[i] * sbase,
+                           power_factor=ssa_pv.p0.v[i] / np.sqrt((ssa_pv.p0.v[i]**2 + ssa_pv.q0.v[i]**2)),
+                           p_min=ssa_pv.pmin.v[i] * sbase,
+                           p_max=ssa_pv.pmax.v[i] * sbase,
+                           Qmin=ssa_pv.qmin.v[i] * sbase,
+                           Qmax=ssa_pv.qmax.v[i] * sbase,
+                           voltage_module=ssa_pv.v0.v[i],
+                           Snom=ssa_pv.Sn.v[i])
 
-        ssp.add_generator(dic_bus[ssa_PV.bus.v[i]], gen)
+        ssp.add_generator(dic_bus[ssa_pv.bus.v[i]], gen)
 
     return ssp
 
@@ -194,8 +194,8 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     """
 
     # create an empty GC grid
-    Sbase = ssa.config.mva
-    ssp = gc.MultiCircuit(Sbase=Sbase, fbase=ssa.config.freq, name=ssa.name)
+    sbase = ssa.config.mva
+    ssp = gc.MultiCircuit(Sbase=sbase, fbase=ssa.config.freq, name=ssa.name)
 
     # 1. convert buses
     ssp, dic_bus = _to_gc_bus(ssp, ssa.Bus)
@@ -204,13 +204,13 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     ssp = _to_gc_branch(ssp, ssa.Line, dic_bus)
 
     # 3. convert loads
-    ssp = _to_gc_load(ssp, ssa.PQ, dic_bus, Sbase=Sbase)
+    ssp = _to_gc_load(ssp, ssa.PQ, dic_bus, Sbase=sbase)
 
     # 4. convert shunts
-    ssp = _to_gc_shunt(ssp, ssa.Shunt, dic_bus, Sbase=Sbase)
+    ssp = _to_gc_shunt(ssp, ssa.Shunt, dic_bus, Sbase=sbase)
 
     # 5. convert generators (Slack and PV)
-    ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=Sbase)
+    ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=sbase)
 
     if verify:
         _verify_pf(ssa, ssp, tol)
