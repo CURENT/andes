@@ -743,6 +743,43 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
         return None
 
+    def get_var_symbol(self, xyname, *, with_ext=False):
+        """
+        Get a list of symbols for variables.
+
+        Parameters
+        ----------
+        xyname : str
+            'x' or 'y'
+        with_ext : bool
+            True to include external variables
+        """
+        if xyname not in ("x", "y"):
+            raise ValueError("unknown variable name %s", xyname)
+
+        if len(self.vars_dict) == 0:
+            logger.warning("Symbols not generated. Trying to generate")
+            self.parent.prepare()
+
+        out = list()
+
+        if xyname == 'x':
+            if with_ext is True:
+                look_up_from = self.parent.cache.states_and_ext
+            else:
+                look_up_from = self.parent.states
+        else:
+            if with_ext is True:
+                look_up_from = self.parent.cache.algebs_and_ext
+            else:
+                look_up_from = self.parent.algebs
+
+        for name, sym in self.vars_dict.items():
+            if name in look_up_from:
+                out.append(sym)
+
+        return out
+
 
 def _store_deps(name, sympified, vars_int_dict, deps):
     """
