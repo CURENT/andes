@@ -540,7 +540,7 @@ def _verify_pf(ssa, ssp, tol=1e-6):
         logger.info("Power flow results are consistent. Conversion is successful.")
         return True
     else:
-        logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
+        logger.warning("Warning: Power flow results are inconsistent. Please check!")
         return False
 
 
