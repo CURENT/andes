@@ -72,7 +72,6 @@ if __name__ == "__main__":
 
     cases = ['ieee14/ieee14_ieeet1.xlsx',
              'ieee14/ieee14_pvd1.xlsx',
-             'ieee39/ieee39.xlsx',
              'npcc/npcc.xlsx',]
 
     for case_file in cases:
