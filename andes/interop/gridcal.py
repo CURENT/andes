@@ -4,14 +4,11 @@ Basic GridCal (4.6.1) interface, based on the pandapower interface written by Ji
 Josep Fanals
 """
 
-import os
 import logging
 import numpy as np
 from functools import wraps
 
-from andes.utils.lazyimport import LazyImport
 from andes.shared import GridCal_Engine as gc
-from andes.shared import rad2deg, deg2rad
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +38,8 @@ def _to_gc_bus(ssp, ssa_bus):
     for i in range(len(ssa_bus.name.v)):
         bus = gc.Bus(name=ssa_bus.name.v[i],
                      active=ssa_bus.u.v[i],
-                     vnom=ssa_bus.Vn.v[i], 
-                     vmin=ssa_bus.vmin.v[i], 
+                     vnom=ssa_bus.Vn.v[i],
+                     vmin=ssa_bus.vmin.v[i],
                      vmax=ssa_bus.vmax.v[i],
                      xpos=ssa_bus.xcoord.v[i],
                      ypos=ssa_bus.ycoord.v[i],
@@ -162,7 +159,7 @@ def _to_gc_generator(ssp, ssa_slack, ssa_PV, dic_bus, Sbase=1.0):
 
     return ssp
 
-    
+
 @require_gridcal
 def to_gridcal(ssa, verify=True, tol=1e-6):
     """
@@ -180,7 +177,7 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
 
     Returns
     -------
-    GridCal.Engine.Core.multi_circuit.MultiCircuit 
+    GridCal.Engine.Core.multi_circuit.MultiCircuit
         A GridCal net with the same bus, branch, gen, and load data as the
         ANDES system
 
@@ -203,7 +200,7 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     # 1. convert buses
     ssp, dic_bus = _to_gc_bus(ssp, ssa.Bus)
 
-    # 2. convert branches 
+    # 2. convert branches
     ssp = _to_gc_branch(ssp, ssa.Line, dic_bus)
 
     # 3. convert loads
@@ -214,9 +211,6 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
 
     # 5. convert generators (Slack and PV)
     ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=Sbase)
-
-    # gggc = gc.IO.file_handler.FileSave(ssp, "test_gc.xlsx").save()
-    # print(os.path.abspath(__name__))
 
     if verify:
         _verify_pf(ssa, ssp, tol)
@@ -236,11 +230,14 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     pf_bus['v_andes'] = ssa.Bus.v.v
     pf_bus['a_andes'] = ssa.Bus.a.v
 
-    # GridCal 
+    # GridCal
     options = gc.PowerFlowOptions(gc.SolverType.NR, verbose=False)
     pf = gc.PowerFlowDriver(ssp, options)
     pf.run()
-    
+
+    # GridCal assumes the slack has an angle of 0 always, correct it
+    pf.results.voltage = pf.results.voltage * np.exp(1j * ssa.Slack.a0.v[0])
+
     # Check
     vm_dif = pf_bus['v_andes'] - np.abs(pf.results.voltage)
     va_dif = pf_bus['a_andes'] - np.angle(pf.results.voltage)
@@ -251,6 +248,6 @@ def _verify_pf(ssa, ssp, tol=1e-6):
         return True
     else:
         logger.warning("Warning: Power flow results are inconsistent. Please check!")
+        logger.warning(vm_dif)
+        logger.warning(va_dif)
         return False
-
-
