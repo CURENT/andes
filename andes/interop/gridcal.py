@@ -121,6 +121,40 @@ def _to_gc_shunt(ssp, ssa_shunt, dic_bus, Sbase=1.0):
 
     return ssp
 
+
+def _to_gc_generator(ssp, ssa_slack, ssa_PV, dic_bus, Sbase=1.0):
+    """Define generators considering slack and PV buses"""
+
+    for i in range(len(ssa_slack)):
+        gen = gc.Generator(name=ssa_slack.SynGen.v[i][0],  # TODO: check this indexing
+                           active=ssa_slack.u.v[i],
+                           active_power=ssa_slack.p0.v[i],
+                           power_factor=ssa_slack.p0.v[i] / np.sqrt((ssa_slack.p0.v[i]**2 + ssa_slack.q0.v[i]**2)),
+                           p_min=ssa_slack.pmin.v[i],
+                           p_max=ssa_slack.pmax.v[i],
+                           Qmin=ssa_slack.qmin.v[i],
+                           Qmax=ssa_slack.qmax.v[i],
+                           voltage_module=ssa_slack.v0.v[i],
+                           Snom=ssa_slack.Sn.v[i])
+
+        ssp.add_generator(dic_bus[ssa_slack.bus.v[i]], gen)
+
+    for i in range(len(ssa_PV)):
+        gen = gc.Generator(name=ssa_PV.SynGen.v[i][0],
+                           active=ssa_PV.u.v[i],
+                           active_power=ssa_PV.p0.v[i],
+                           power_factor=ssa_PV.p0.v[i] / np.sqrt((ssa_PV.p0.v[i]**2 + ssa_PV.q0.v[i]**2)),
+                           p_min=ssa_PV.pmin.v[i],
+                           p_max=ssa_PV.pmax.v[i],
+                           Qmin=ssa_PV.qmin.v[i],
+                           Qmax=ssa_PV.qmax.v[i],
+                           voltage_module=ssa_PV.v0.v[i],
+                           Snom=ssa_PV.Sn.v[i])
+
+        ssp.add_generator(dic_bus[ssa_PV.bus.v[i]], gen)
+
+    return ssp
+
     
 @require_gridcal
 def to_gridcal(ssa, verify=True, tol=1e-6):
@@ -171,8 +205,8 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     # 4. convert shunts
     ssp = _to_gc_shunt(ssp, ssa.Shunt, dic_bus, Sbase=Sbase)
 
-    # 5. convert generators
-    # ssp = _to_gc_generator(ssp, ssa.x, dic_bus)
+    # 5. convert generators (Slack and PV)
+    ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=Sbase)
 
     # if verify:
         # _verify_pf(ssa, ssp, tol)
