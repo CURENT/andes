@@ -4,6 +4,7 @@ Basic GridCal (4.6.1) interface, based on the pandapower interface written by Ji
 Josep Fanals
 """
 
+import os
 import logging
 import numpy as np
 from functools import wraps
@@ -126,28 +127,34 @@ def _to_gc_generator(ssp, ssa_slack, ssa_PV, dic_bus, Sbase=1.0):
     """Define generators considering slack and PV buses"""
 
     for i in range(len(ssa_slack)):
-        gen = gc.Generator(name=ssa_slack.SynGen.v[i][0],  # TODO: check this indexing
+
+        sl_name = dic_bus[ssa_slack.bus.v[i]]
+        b2_dict = ssp.get_bus_names()
+        bus_id = b2_dict.index(sl_name.name)
+        ssp.buses[bus_id].is_slack = True
+
+        gen = gc.Generator(name=str(ssa_slack.SynGen.v[i]),
                            active=ssa_slack.u.v[i],
-                           active_power=ssa_slack.p0.v[i],
+                           active_power=ssa_slack.p0.v[i] * Sbase,
                            power_factor=ssa_slack.p0.v[i] / np.sqrt((ssa_slack.p0.v[i]**2 + ssa_slack.q0.v[i]**2)),
-                           p_min=ssa_slack.pmin.v[i],
-                           p_max=ssa_slack.pmax.v[i],
-                           Qmin=ssa_slack.qmin.v[i],
-                           Qmax=ssa_slack.qmax.v[i],
+                           p_min=ssa_slack.pmin.v[i] * Sbase,
+                           p_max=ssa_slack.pmax.v[i] * Sbase,
+                           Qmin=ssa_slack.qmin.v[i] * Sbase,
+                           Qmax=ssa_slack.qmax.v[i] * Sbase,
                            voltage_module=ssa_slack.v0.v[i],
                            Snom=ssa_slack.Sn.v[i])
 
         ssp.add_generator(dic_bus[ssa_slack.bus.v[i]], gen)
 
     for i in range(len(ssa_PV)):
-        gen = gc.Generator(name=ssa_PV.SynGen.v[i][0],
+        gen = gc.Generator(name=str(ssa_PV.SynGen.v[i]),
                            active=ssa_PV.u.v[i],
-                           active_power=ssa_PV.p0.v[i],
+                           active_power=ssa_PV.p0.v[i] * Sbase,
                            power_factor=ssa_PV.p0.v[i] / np.sqrt((ssa_PV.p0.v[i]**2 + ssa_PV.q0.v[i]**2)),
-                           p_min=ssa_PV.pmin.v[i],
-                           p_max=ssa_PV.pmax.v[i],
-                           Qmin=ssa_PV.qmin.v[i],
-                           Qmax=ssa_PV.qmax.v[i],
+                           p_min=ssa_PV.pmin.v[i] * Sbase,
+                           p_max=ssa_PV.pmax.v[i] * Sbase,
+                           Qmin=ssa_PV.qmin.v[i] * Sbase,
+                           Qmax=ssa_PV.qmax.v[i] * Sbase,
                            voltage_module=ssa_PV.v0.v[i],
                            Snom=ssa_PV.Sn.v[i])
 
@@ -208,8 +215,11 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     # 5. convert generators (Slack and PV)
     ssp = _to_gc_generator(ssp, ssa.Slack, ssa.PV, dic_bus, Sbase=Sbase)
 
-    # if verify:
-        # _verify_pf(ssa, ssp, tol)
+    # gggc = gc.IO.file_handler.FileSave(ssp, "test_gc.xlsx").save()
+    # print(os.path.abspath(__name__))
+
+    if verify:
+        _verify_pf(ssa, ssp, tol)
 
     return ssp
 
@@ -218,26 +228,29 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     """
     Verify power flow results.
     """
+
+    # ANDES
     ssa.PFlow.run()
     pf_bus = ssa.Bus.as_df()[["name"]]
 
-    # ssa
     pf_bus['v_andes'] = ssa.Bus.v.v
     pf_bus['a_andes'] = ssa.Bus.a.v
 
-    # ssp
+    # GridCal 
     options = gc.PowerFlowOptions(gc.SolverType.NR, verbose=False)
     pf = gc.PowerFlowDriver(ssp, options)
     pf.run()
     
+    # Check
     vm_dif = pf_bus['v_andes'] - np.abs(pf.results.voltage)
     va_dif = pf_bus['a_andes'] - np.angle(pf.results.voltage)
 
     if (np.max(np.abs(vm_dif)) < tol) and (np.max(np.abs(va_dif)) < tol):
         logger.info("Power flow results are consistent. Conversion is successful.")
+        print('OK conversion')
         return True
     else:
-        logger.warning("Warning: Power flow results are inconsistent. Pleaes check!")
+        logger.warning("Warning: Power flow results are inconsistent. Please check!")
         return False
 
 
