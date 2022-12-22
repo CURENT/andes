@@ -11,7 +11,7 @@ try:
     import GridCal.Engine as gc
     getattr(gc, '__name__')
     HAVE_GRIDCAL = True
-except (ImportError, AttributeError, ModuleNotFoundError):
+except (ImportError, AttributeError):
     HAVE_GRIDCAL = False
 
 
