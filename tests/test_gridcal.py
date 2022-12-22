@@ -5,14 +5,13 @@ Test the ANDES-gridcal interface.
 import unittest
 
 import andes
-from andes.interop.gridcal import to_gridcal
-
+from andes.interop.gridcal import to_gridcal, _verify_pf
 
 try:
     import GridCal.Engine as gc
     getattr(gc, '__name__')
     HAVE_GRIDCAL = True
-except (ImportError, AttributeError):
+except (ImportError, AttributeError, ModuleNotFoundError):
     HAVE_GRIDCAL = False
 
 
@@ -22,11 +21,12 @@ class TestGridcal(unittest.TestCase):
     Tests for the ANDES-gridcal interface.
     """
 
-    cases = ['ieee14/ieee14_ieeet1.xlsx',
-             'ieee14/ieee14_pvd1.xlsx',
-             'ieee39/ieee39.xlsx',
-             'npcc/npcc.xlsx',
-             ]
+    cases = [
+        'ieee14/ieee14_ieeet1.xlsx',
+        'ieee14/ieee14_pvd1.xlsx',
+        'ieee39/ieee39.xlsx',
+        'npcc/npcc.xlsx',
+    ]
 
     def setUp(self) -> None:
         """
@@ -39,8 +39,9 @@ class TestGridcal(unittest.TestCase):
         """
         for case_file in self.cases:
             case = andes.get_case(case_file)
+            match = _test_to_gridcal_single(case)
 
-            _test_to_gridcal_single(case, tol=1e-3)
+            self.assertEqual(match, True)
 
 
 def _test_to_gridcal_single(case, **kwargs):
@@ -49,4 +50,5 @@ def _test_to_gridcal_single(case, **kwargs):
     """
 
     sa = andes.load(case, setup=True, no_output=True, default_config=True)
-    to_gridcal(sa, **kwargs)
+    sgc = to_gridcal(sa, verify=False, **kwargs)
+    return _verify_pf(sa, sgc)
