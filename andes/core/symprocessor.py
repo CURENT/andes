@@ -755,7 +755,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
             True to include external variables
         """
         if xyname not in ("x", "y"):
-            raise ValueError("unknown variable name %s", xyname)
+            raise ValueError("unknown variable name %s" % xyname)
 
         if len(self.vars_dict) == 0:
             logger.warning("Symbols not generated. Trying to generate")

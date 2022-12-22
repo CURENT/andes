@@ -100,13 +100,13 @@ class TestKundur2AreaEIG(unittest.TestCase):
         Test eigenvalue run for Kundur using xlsx data.
         """
         self.xlsx = get_case("kundur/kundur_full.xlsx")
-        self.ss = andes.run(
+        ss = andes.run(
             self.xlsx,
             default_config=True,
             no_output=True,
         )
 
-        self.ss.EIG.run()
+        ss.EIG.run()
 
 
 class TestKundur2AreaPSSE(unittest.TestCase):
