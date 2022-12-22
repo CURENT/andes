@@ -1,15 +1,17 @@
 """
 Basic GridCal (4.6.1) interface, based on the pandapower interface written by Jinning Wang
 
-Josep Fanals
+Author: Josep Fanals (@JosepFanals)
 """
 
 import logging
 import numpy as np
 from functools import wraps
 
+import matplotlib
 from andes.shared import GridCal_Engine as gc
 
+matplotlib.use('agg')
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +33,9 @@ def require_gridcal(f):
 
 
 def _to_gc_bus(ssp, ssa_bus):
-    """Define buses in GridCal's grid"""
+    """
+    Define buses in GridCal's grid.
+    """
 
     dic_bus = {}
 
@@ -54,7 +58,9 @@ def _to_gc_bus(ssp, ssa_bus):
 
 
 def _to_gc_branch(ssp, ssa_line, dic_bus):
-    """Define branches (lines and trafos) in GridCal's grid"""
+    """
+    Define branches (lines and trafos) in GridCal's grid.
+    """
 
     rate = [xx if xx != 0.0 else 1.0 for xx in ssa_line.rate_a.v]  # 1.0 is the default in GridCal
 
@@ -93,7 +99,9 @@ def _to_gc_branch(ssp, ssa_line, dic_bus):
 
 
 def _to_gc_load(ssp, ssa_load, dic_bus, sbase=1.0):
-    """Define loads in GridCal's grid"""
+    """
+    Define loads in GridCal's grid.
+    """
 
     for i in range(len(ssa_load)):
         load = gc.Load(name=ssa_load.name.v[i],
@@ -107,7 +115,9 @@ def _to_gc_load(ssp, ssa_load, dic_bus, sbase=1.0):
 
 
 def _to_gc_shunt(ssp, ssa_shunt, dic_bus, sbase=1.0):
-    """Define shunts in GridCal's grid"""
+    """
+    Define shunts in GridCal's grid.
+    """
 
     for i in range(len(ssa_shunt)):
         shunt = gc.Shunt(name=ssa_shunt.name.v[i],
@@ -121,7 +131,9 @@ def _to_gc_shunt(ssp, ssa_shunt, dic_bus, sbase=1.0):
 
 
 def _to_gc_generator(ssp, ssa_slack, ssa_pv, dic_bus, sbase=1.0):
-    """Define generators considering slack and PV buses"""
+    """
+    Define generators considering slack and PV buses.
+    """
 
     for i in range(len(ssa_slack)):
 
@@ -170,25 +182,25 @@ def to_gridcal(ssa, verify=True, tol=1e-6):
     ssa : andes.system.System
         The ANDES system to be converted
     verify : bool
-        If True, the converted network will be verified with the source ANDES system
-        using AC power flow.
+        If True, the converted network will be verified with the source ANDES
+        system using AC power flow.
     tol : float
-        The tolerance of error.
+        The tolerance of error when comparing power flow solutions.
 
     Returns
     -------
     GridCal.Engine.Core.multi_circuit.MultiCircuit
-        A GridCal net with the same bus, branch, gen, and load data as the
-        ANDES system
+        A GridCal net with the same bus, branch, gen, and load data as the ANDES
+        system
 
     Notes
     -----
     Handling of the following parameters:
 
-      - By default, all generators in ``ssp`` are controllable unless user-defined controllability
-        is given
-      - The online status of generators are determined by the online status of ``StaticGen``
-        that connected to the ``SynGen`` or ``DG``
+      - By default, all generators in ``ssp`` are controllable unless
+        user-defined controllability is given
+      - The online status of generators are determined by the online status of
+        ``StaticGen`` that connected to the ``SynGen`` or ``DG``
       - ``ssp.gen.name`` is from ``ssa.StaticGen.idx``, which should be unique
 
     """
