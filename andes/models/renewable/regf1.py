@@ -228,7 +228,7 @@ class REGF1Model(Model):
 
         # s0 and s1
         self.Psen = Lag(u='Pe', K=1, T=self.Tr)
-        self.Qsen = Lag(u='Pe', K=1, T=self.Tr)
+        self.Qsen = Lag(u='Qe', K=1, T=self.Tr)
 
         # s9 and s11
         self.Psig = LagAntiWindup(u='Psen_y + Paux', K=1, T=self.Tpm,

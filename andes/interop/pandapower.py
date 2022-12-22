@@ -169,9 +169,10 @@ def runopp_map(ssp, link_table, **kwargs):
 
     try:
         pp.runopp(ssp, **kwargs)
+        logger.warning("ACOPF is solved.")
     except Exception:
         pp.rundcopp(ssp, **kwargs)
-        logger.warning("ACOPF failed, DCOPF is used instead.")
+        logger.warning("ACOPF failed. DCOPF is solved.")
 
     # take dispatch results from pp
     ssp_gen = ssp.gen.rename(columns={'name': 'stg_idx'})

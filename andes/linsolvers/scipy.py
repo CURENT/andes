@@ -19,28 +19,6 @@ class SciPySolver:
         # when `new_A` is True, rebuild and factorize A
         self.new_A = True
 
-    def to_csc(self, A):
-        """
-        Convert A to scipy.sparse.csc_matrix.
-
-        Parameters
-        ----------
-        A : kvxopt.spmatrix
-            Sparse N-by-N matrix
-
-        Returns
-        -------
-        scipy.sparse.csc_matrix
-            Converted csc_matrix
-
-        """
-        ccs = A.CCS
-        size = A.size
-        data = np.array(ccs[2]).ravel()
-        indices = np.array(ccs[1]).ravel()
-        indptr = np.array(ccs[0]).ravel()
-        return csc_matrix((data, indices, indptr), shape=size)
-
     def solve(self, A, b):
         """
         Solve linear systems.
@@ -78,7 +56,7 @@ class SpSolve(SciPySolver):
     def solve(self, A, b):
 
         if self.factorize or self.new_A:
-            A_csc = self.to_csc(A)
+            A_csc = spmatrix_to_csc(A)
             self.lu = splu(A_csc)
 
             self.factorize = False
@@ -92,6 +70,29 @@ class SpSolve(SciPySolver):
         Solve using `spsolve`.
         """
 
-        A_csc = self.to_csc(A)
+        A_csc = spmatrix_to_csc(A)
         b = np.ravel(b)
         return spsolve(A_csc, b)
+
+
+def spmatrix_to_csc(A):
+    """
+    Convert A of ``kvxopt.spmatrix`` to ``scipy.sparse.csc_matrix``.
+
+    Parameters
+    ----------
+    A : kvxopt.spmatrix
+        Sparse N-by-N matrix
+
+    Returns
+    -------
+    scipy.sparse.csc_matrix
+        Converted csc_matrix
+
+    """
+    ccs = A.CCS
+    size = A.size
+    data = np.array(ccs[2]).ravel()
+    indices = np.array(ccs[1]).ravel()
+    indptr = np.array(ccs[0]).ravel()
+    return csc_matrix((data, indices, indptr), shape=size)

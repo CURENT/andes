@@ -50,13 +50,13 @@ class JumperModel(Model):
                            )
 
         self.p = Algeb(info='active power (1 to 2)',
-                       e_str='u * (a1 - a2)',
+                       e_str='u*(a1 - a2) + (1-u) * p',
                        tex_name='P',
                        diag_eps=True,
                        )
 
         self.q = Algeb(info='active power (1 to 2)',
-                       e_str='u * (v1 - v2)',
+                       e_str='u*(v1 - v2) + (1-u) * p',
                        tex_name='Q',
                        diag_eps=True,
                        )
@@ -83,6 +83,10 @@ class Jumper(JumperData, JumperModel):
 
     In the solutions, the ``p`` and ``q`` are flowing out of bus1
     and flowing into bus2.
+
+    Setting a Jumper's connectivity status ``u`` to zero will disconnect the two
+    buses. In the case of a system split, one will need to call
+    ``System.connectivity()`` immediately following the split to detect islands.
     """
 
     def __init__(self, system, config):

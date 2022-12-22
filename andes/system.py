@@ -1769,7 +1769,7 @@ class System:
 
     def import_groups(self):
         """
-        Import all groups classes defined in ``devices/group.py``.
+        Import all groups classes defined in ``models/group.py``.
 
         Groups will be stored as instances with the name as class names.
         All groups will be stored to dictionary ``System.groups``.
@@ -1824,7 +1824,7 @@ class System:
         Import routines as defined in ``routines/__init__.py``.
 
         Routines will be stored as instances with the name as class names.
-        All groups will be stored to dictionary ``System.groups``.
+        All routines will be stored to dictionary ``System.routines``.
 
         Examples
         --------

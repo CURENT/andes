@@ -5,10 +5,11 @@ Author: Josep Fanals (@JosepFanals)
 """
 
 import logging
-import numpy as np
 from functools import wraps
 
+import numpy as np
 import matplotlib
+
 from andes.shared import GridCal_Engine as gc
 
 matplotlib.use('agg')
@@ -24,8 +25,8 @@ def require_gridcal(f):
     def wrapper(*args, **kwds):
         try:
             getattr(gc, '__name__')
-        except AttributeError:
-            raise ModuleNotFoundError("GridCal needs to be installed manually.")
+        except AttributeError as exc:
+            raise ModuleNotFoundError("GridCal needs to be installed manually.") from exc
 
         return f(*args, **kwds)
 
@@ -39,7 +40,7 @@ def _to_gc_bus(ssp, ssa_bus):
 
     dic_bus = {}
 
-    for i in range(len(ssa_bus.name.v)):
+    for i in range(ssa_bus.n):
         bus = gc.Bus(name=ssa_bus.name.v[i],
                      active=ssa_bus.u.v[i],
                      vnom=ssa_bus.Vn.v[i],
@@ -254,12 +255,13 @@ def _verify_pf(ssa, ssp, tol=1e-6):
     vm_dif = pf_bus['v_andes'] - np.abs(pf.results.voltage)
     va_dif = pf_bus['a_andes'] - np.angle(pf.results.voltage)
 
+    ret = False
     if (np.max(np.abs(vm_dif)) < tol) and (np.max(np.abs(va_dif)) < tol):
         logger.info("Power flow results are consistent. Conversion is successful.")
-        print('OK conversion')
-        return True
+        ret = True
     else:
         logger.warning("Warning: Power flow results are inconsistent. Please check!")
         logger.warning(vm_dif)
         logger.warning(va_dif)
-        return False
+
+    return ret
