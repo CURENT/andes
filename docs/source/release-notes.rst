@@ -9,9 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
-v1.8.5 (2022-12-xx)
+v1.8.5 (2022-12-22)
 -------------------
 - Fixed an issue to properly handle turning off a ``Jumper``.
+- New interface to GridCal by @JosepFanals. GridCal installation required.
 
 v1.8.4 (2022-11-23)
 -------------------
