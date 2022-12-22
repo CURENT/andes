@@ -9,7 +9,7 @@ from andes.interop.gridcal import to_gridcal
 
 
 try:
-    import GridCal as gc
+    import GridCal.Engine as gc
     getattr(gc, '__name__')
     HAVE_GRIDCAL = True
 except (ImportError, AttributeError):
