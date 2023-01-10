@@ -9,3 +9,4 @@ from andes.models.experimental.genrouos import GENROUOS  # NOQA
 from andes.models.experimental.regca1os import REGCA1OS  # NOQA
 from andes.models.experimental.reeca1os import REECA1OS  # NOQA
 from andes.models.experimental.olpi import OLPI  # NOQA
+from andes.models.experimental.clpi import CLPI  # NOQA
