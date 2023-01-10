@@ -52,6 +52,11 @@ class OLPIModel(Model):
         self.group = 'Experimental'
         self.flags.tds = True
 
+        self.wd = ExtAlgeb(model='TurbineGov', src='pout', indexer=self.gov,
+                           info='Generator speed deviation',
+                           unit='p.u.',
+                           tex_name=r'\omega_{dev}',
+                           )
         self.pout = ExtAlgeb(model='TurbineGov', src='pout', indexer=self.gov,
                              tex_name='P_{out}',
                              info='Turbine governor output',
@@ -60,7 +65,7 @@ class OLPIModel(Model):
                                   tex_name='P_{out0}',
                                   info='initial turbine governor output',
                                   )
-        self.PID = PIDController(u=self.pout, kp=self.kP, ki=self.kI,
+        self.PID = PIDController(u=self.wd, kp=self.kP, ki=self.kI,
                                  kd=self.kD, Td=self.tD,
                                  tex_name='PID', info='PID', name='PID',
                                  ref=self.pout0,
@@ -69,7 +74,7 @@ class OLPIModel(Model):
 
 class OLPI(OLPIData, OLPIModel):
     r"""
-    Open-loop PI controller that takes Turbine Governor output power as input.
+    Open-loop PI controller that takes Generator speed deviation as input.
 
     ```
         ┌────────────────────┐
