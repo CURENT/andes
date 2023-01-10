@@ -55,7 +55,6 @@ class OLPIModel(Model):
         self.pout = ExtAlgeb(model='TurbineGov', src='pout', indexer=self.gov,
                              tex_name='P_{out}',
                              info='Turbine governor output',
-                             is_input=True,
                              )
         self.pout0 = ConstService(v_str='pout',
                                   tex_name='P_{out0}',
