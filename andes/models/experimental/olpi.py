@@ -1,12 +1,12 @@
 """
-Module for PI Controllers.
+Module for PID Controllers.
 """
 
 import logging
 
 from andes.core.model import ModelData, Model
-from andes.core.param import NumParam, IdxParam, ExtParam
-from andes.core.block import PIController, PIDController
+from andes.core.param import NumParam, IdxParam
+from andes.core.block import PIDController
 from andes.core.var import ExtAlgeb
 from andes.core.service import ConstService
 
