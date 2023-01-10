@@ -5,10 +5,10 @@ Module for close-loop PID Controllers.
 import logging
 
 from andes.core.model import ModelData, Model
-from andes.core.param import NumParam, IdxParam, ExtParam
+from andes.core.param import NumParam, IdxParam
 from andes.core.block import PIDController
-from andes.core.var import ExtAlgeb, ExtState
-from andes.core.service import ConstService, ExtService
+from andes.core.var import ExtAlgeb
+from andes.core.service import ConstService
 
 logger = logging.getLogger(__name__)
 
