@@ -1,5 +1,5 @@
 """
-Module for PID Controllers.
+Module for open-loop PID Controllers.
 """
 
 import logging
@@ -53,7 +53,8 @@ class OLPIModel(Model):
         self.flags.tds = True
 
         self.pout = ExtAlgeb(model='TurbineGov', src='pout', indexer=self.gov,
-                             tex_name=r'\tau_m', info='Turbine governor output',
+                             tex_name='P_{out}',
+                             info='Turbine governor output',
                              is_input=True,
                              )
         self.pout0 = ConstService(v_str='pout',
