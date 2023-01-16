@@ -621,7 +621,7 @@ class Model:
         Use mock data to fill the inputs.
 
         This function is used to generate input data of the desired type
-        to trigget JIT compilation.
+        to trigger JIT compilation.
         """
 
         self.get_inputs()
