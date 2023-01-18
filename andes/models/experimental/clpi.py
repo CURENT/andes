@@ -70,11 +70,13 @@ class CLPIModel(Model):
                                  tex_name='PID', info='PID', name='PID',
                                  ref=self.pout0,
                                  )
-        self.pref = ExtAlgeb(model='TurbineGov', src='pref', indexer=self.gov,
+        self.pref = ExtAlgeb(indexer=self.gov,
                              tex_name='P_{ref}',
                              info='Turbine governor output',
-                             e_str='u * PID_y',
-                             v_str='u * PID_y',
+                             # model=<**ANSWER**>,
+                             # src=<**ANSWER**>,
+                             # e_str=<**ANSWER**>,
+                             #  v_str=<**ANSWER**>,
                              )
 
 
