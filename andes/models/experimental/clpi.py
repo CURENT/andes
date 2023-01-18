@@ -76,7 +76,7 @@ class CLPIModel(Model):
                              # model=<**ANSWER**>,
                              # src=<**ANSWER**>,
                              # e_str=<**ANSWER**>,
-                             #  v_str=<**ANSWER**>,
+                             # v_str=<**ANSWER**>,
                              )
 
 
