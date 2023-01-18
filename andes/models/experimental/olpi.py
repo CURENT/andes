@@ -76,13 +76,13 @@ class OLPI(OLPIData, OLPIModel):
     r"""
     Open-loop PI controller that takes Generator speed deviation as input.
 
-    ```
-        ┌────────────────────┐
-        │      ki     skd    │
-    u ->│kp + ─── + ───────  │ -> y
-        │      s    1 + sTd  │
-        └────────────────────┘
-    ```
+    ::
+
+            ┌────────────────────┐
+            │      ki     skd    │
+        u ->│kp + ─── + ───────  │ -> y
+            │      s    1 + sTd  │
+            └────────────────────┘
     """
 
     def __init__(self, system, config):
