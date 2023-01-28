@@ -126,8 +126,10 @@ class TimeSeriesModel(Model):
                                         self.class_name, idx, path)
 
             # --- read supported formats ---
-            if path.endswith("xlsx") or path.endswith("xls"):
-                df = self._read_excel(path, sheet, idx)
+            if path.endswith("xlsx"):
+                df = self._read_excel(path, sheet, idx, engine='openpyxl')
+            elif path.endswith("xls"):
+                df = self._read_excel(path, sheet, idx, engine='xlrd')
             elif path.endswith("csv"):
                 df = pd.read_csv(path)
 
@@ -138,13 +140,24 @@ class TimeSeriesModel(Model):
             self._data[idx] = df
             logger.info('Read timeseries data from "%s"', path)
 
-    def _read_excel(self, path, sheet, idx):
+    def _read_excel(self, path, sheet, idx, engine):
         """
         Helper function to read excel file.
+
+        Parameters
+        ----------
+        path : str
+            Path to excel record file
+        sheet : str
+            Excel sheet name to use
+        idx : str, float, int
+            idx of device for error reporting
+        engine : str
+            excel reader engine to be used by pandas
         """
 
         try:
-            df = pd.read_excel(path, sheet_name=sheet)
+            df = pd.read_excel(path, sheet_name=sheet, engine=engine)
             return df
         except ValueError as e:
             logger.error('<%s idx=%s>: Sheet not found: "%s" in "%s"',
