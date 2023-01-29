@@ -97,7 +97,6 @@ class BaseVar:
         self.e_setter = e_setter        # True if this var sets the equation value
         self.v_str_add = v_str_add
 
-        self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.export = export            # True if this var's value needs to exported
         self.diag_eps = diag_eps        # small diagonal value to be added to `dae.gy`
         self.deps = deps          # a list of variable names this BaseVar depends on for initialization
@@ -110,8 +109,6 @@ class BaseVar:
         # address into the variable and equation arrays (dae.f/dae.g and dae.x/dae.y)
         self.a: np.ndarray = np.array([], dtype=int)
 
-        self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
-        self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
         # --- attributes assigned by `set_address` ends ---
 
         self.v: np.ndarray = np.array([], dtype=float)  # variable value array
@@ -124,7 +121,12 @@ class BaseVar:
 
         self.e_inplace = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
         self.v_inplace = False    # True if `self.v` is in-place access to `System.dae.__dict__[self.v_code]`
-        self.allow_none = False   # True to allow None in address (NOT IN USE)
+
+        # --- NOT IN USE YET ---
+        self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
+        self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
+        self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
+        # --- NOT IN USE ENDS ---
 
     def reset(self):
         """
@@ -159,6 +161,26 @@ class BaseVar:
 
         return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}, {span}'
 
+    def set_address(self):
+        raise NotImplementedError("Base class method not callable")
+
+    def set_arrays(self, dae, inplace=True, alloc=True):
+        raise NotImplementedError("Base class method not callable")
+
+    def get_names(self):
+        return [self.name]
+
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
+
+class IntVar(BaseVar):
+    """
+    Class for an internal variable belonging to a model.
+
+    """
+
     def set_address(self, addr: np.ndarray, contiguous=False):
         """
         Set the address of internal variables.
@@ -180,6 +202,16 @@ class BaseVar:
         # -----------
 
         self._contiguous = contiguous
+        self._update_e_v_inplace()
+
+    def _update_e_v_inplace(self):
+        """
+        Update ``self.e_inplace`` and ``self.v_inplace`` after knowing if
+        variables are contiguously stored.
+        """
+
+        self.e_inplace = False
+        self.v_inplace = False
 
         if self._contiguous:
             if self.e_setter is False:
@@ -191,7 +223,6 @@ class BaseVar:
     def set_arrays(self, dae, inplace=True, alloc=True):
         """
         Set the equation and values arrays.
-
 
         Parameters
         ----------
@@ -208,7 +239,7 @@ class BaseVar:
         """
         Set arrays that share memory with the dae arrays.
 
-        It slicing into DAE due to the contiguous indices.
+        This function slices into DAE using the contiguous indices.
         """
 
         slice_idx = slice(self.a[0], self.a[-1] + 1)
@@ -220,8 +251,8 @@ class BaseVar:
 
     def _set_arrays_alloc(self):
         """
-        Allocate for internal v and e arrays that cannot
-        share memory with dae arrays.
+        Allocate for internal v and e arrays that cannot share memory with dae
+        arrays.
         """
 
         if not self.v_inplace:
@@ -230,17 +261,10 @@ class BaseVar:
         if not self.e_inplace:
             self.e = np.zeros(self.n)
 
-    def get_names(self):
-        return [self.name]
 
-    @property
-    def class_name(self):
-        return self.__class__.__name__
-
-
-class Algeb(BaseVar):
+class Algeb(IntVar):
     """
-    Algebraic variable class, an alias of :py:class:`andes.core.var.BaseVar`.
+    Algebraic variable class, an alias of :py:class:`andes.core.var.IntVar`.
 
     Note that residual equations corresponding to algebraic variables are given
     in an implicit form.
@@ -270,9 +294,9 @@ class Algeb(BaseVar):
     v_code = 'y'
 
 
-class State(BaseVar):
+class State(IntVar):
     r"""
-    Differential variable class, an alias of the `BaseVar`.
+    Differential variable class, an alias of `IntVar`.
 
     Parameters
     ----------
@@ -432,9 +456,6 @@ class ExtVar(BaseVar):
         self.ename = ename
         self.tex_ename = tex_ename if tex_ename else ename
 
-        # address into external equation RHS array (dae.h/dae.i)
-        self.r: np.ndarray = np.array([], dtype=int)
-
         self.model = model
         self.src = src
         self.indexer = indexer
@@ -447,23 +468,12 @@ class ExtVar(BaseVar):
         self._n = []
         self._n_count = 0
 
-    @property
-    def _v(self):
-        out = []
-        idx = 0
-        for n in self._n:
-            out.append(self.v[idx:idx+n])
-            idx += n
-        return out
+        # --- Numerical data begins ---
 
-    @property
-    def _a(self):
-        out = []
-        idx = 0
-        for n in self._n:
-            out.append(self.a[idx:idx+n])
-            idx += n
-        return out
+        # address into external equation RHS array (dae.h/dae.i)
+        self.r: np.ndarray = np.array([], dtype=int)
+
+        # --- Numerical data ends ---
 
     def set_address(self, addr, contiguous=False):
         """
@@ -474,7 +484,7 @@ class ExtVar(BaseVar):
     def set_arrays(self, dae, inplace=True, alloc=True):
         """
         Access ``dae.h`` or ``dae.i`` for the RHS of external variables
-        when ``e_str`` exists..
+        when ``e_str`` exists.
         """
 
         if self.e_str is None or (self.n == 0):
@@ -496,9 +506,9 @@ class ExtVar(BaseVar):
         """
         Update variable addresses provided by external models
 
-        This method sets attributes including `parent_model`,
-        `parent_instance`, `uid`, `a`, `n`, `e_code` and
-        `v_code`. It initializes the `e` and `v` to zero.
+        This method sets attributes including `parent_model`, `parent_instance`,
+        `uid`, `a`, `n`, `e_code` and `v_code`. It initializes the `e` and `v`
+        to zero.
 
         Returns
         -------
@@ -511,10 +521,10 @@ class ExtVar(BaseVar):
 
         Warnings
         --------
-        `link_external` does not check if the ExtVar type is the same
-        as the original variable to reduce performance overhead.
-        It will be a silent error (a dimension too small error from `dae.build_pattern`)
-        if a model uses `ExtAlgeb` to access a `State`, or vice versa.
+        `link_external` does not check if the ExtVar type is the same as the
+        original variable to reduce performance overhead. It will be a silent
+        error (a dimension too small error from `dae.build_pattern`) if a model
+        uses `ExtAlgeb` to access a `State`, or vice versa.
 
         """
 
@@ -573,7 +583,7 @@ class ExtVar(BaseVar):
             self.n = len(self.a)
 
         self.v = np.zeros(self.n)
-        # `self.e` is assigned in `set_arrays()`
+        # do not create a new `self.e` as it is assigned in `set_arrays()`
 
 
 class ExtState(ExtVar):
