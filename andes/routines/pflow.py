@@ -78,7 +78,7 @@ class PFlow(BaseRoutine):
 
         t0, _ = elapsed()
 
-        self.models = system.find_models('PFlow')
+        self.models = system.find_models('pflow')
         self.converged = False
 
         self.res = matrix(0, (system.dae.n + system.dae.m, 1), 'd')

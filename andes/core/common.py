@@ -4,7 +4,6 @@ import pprint
 from collections import OrderedDict, defaultdict
 from typing import Iterable
 
-
 from andes.shared import jac_full_names, jac_names, jac_types
 from andes.utils.tab import make_doc_table, math_wrap
 
@@ -50,7 +49,6 @@ class ModelFlags:
                  pflow_init=None, tds_init=None, series=False,
                  nr_iter=False, f_num=False, g_num=False, j_num=False,
                  s_num=False, sv_num=False):
-
         self.collate = collate
         self.pflow = pflow
         self.tds = tds
@@ -209,6 +207,7 @@ class Config:
 
         Existing configs will NOT be overwritten.
         """
+
         def warn_upper_case(s):
             if any(x.isupper() for x in s):
                 logger.warning("Config fields must be in lower case, found %s", s)

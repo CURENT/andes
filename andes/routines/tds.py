@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 def create_config_tds(config_obj):
     config = create_config_base_routine("TDS",
                                         config_obj=config_obj)
+
     config.add(OrderedDict((('method', 'trapezoid'),
                             ('tol', 1e-4),
                             ('t0', 0.0),
