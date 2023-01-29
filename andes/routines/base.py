@@ -7,6 +7,28 @@ from andes.core import Config
 from collections import OrderedDict
 
 
+def create_config_base_routine(name, config_obj=None):
+    config = Config(name)
+
+    if config_obj is not None:
+        config.load(config_obj)
+
+    config.add(OrderedDict((('sparselib', 'klu'),
+                            ('linsolve', 0),
+                            )))
+
+    config.add_extra("_help",
+                     sparselib="linear sparse solver name",
+                     linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
+                     )
+    config.add_extra("_alt",
+                     sparselib=("klu", "umfpack", "spsolve", "cupy"),
+                     linsolve=(0, 1),
+                     )
+
+    return config
+
+
 class BaseRoutine:
     """
     Base routine class.
@@ -14,25 +36,10 @@ class BaseRoutine:
     Provides references to system, config, and solver.
     """
 
-    def __init__(self, system=None, config=None):
+    def __init__(self, system=None):
         self.system = system
-        self.config = Config(self.class_name)
 
-        if config is not None:
-            self.config.load(config)
-
-        self.config.add(OrderedDict((('sparselib', 'klu'),
-                                     ('linsolve', 0),
-                                     )))
-        self.config.add_extra("_help",
-                              sparselib="linear sparse solver name",
-                              linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
-                              )
-        self.config.add_extra("_alt",
-                              sparselib=("klu", "umfpack", "spsolve", "cupy"),
-                              linsolve=(0, 1),
-                              )
-
+        self.config = create_config_base_routine("BaseRoutine")
         self.solver = Solver(sparselib=self.config.sparselib)
         self.exec_time = 0.0  # recorded time to execute the routine in seconds
 
