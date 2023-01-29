@@ -104,7 +104,7 @@ class BaseVar:
         self.is_input = False     # internal variables are never inputs
 
         # --- attributes assigned by `set_address` begins ---
-        self.n = 0
+        self.n: int = 0
 
         # address into the variable and equation arrays (dae.f/dae.g and dae.x/dae.y)
         self.a: np.ndarray = np.array([], dtype=int)
@@ -116,14 +116,12 @@ class BaseVar:
 
         # internal flags
         # NOTE:
-        # contiguous is True only for internal variables of models with flag `collate = False`.
-        self._contiguous = False  # True if if address is contiguous to allow slicing into arrays without copy.
 
-        self.e_inplace = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
-        self.v_inplace = False    # True if `self.v` is in-place access to `System.dae.__dict__[self.v_code]`
+        self.e_inplace: bool = False    # True if `self.e` is in-place access to `System.dae.__dict__[self.e_code]`
+        self.v_inplace: bool = False    # True if `self.v` is in-place access to `System.dae.__dict__[self.v_code]`
 
         # --- NOT IN USE YET ---
-        self.addressable = addressable  # True if this var needs to be assigned an address FIXME: not in use
+        self.addressable: bool = addressable  # True if this var needs to be assigned an address FIXME: not in use
         self.av: np.ndarray = np.array([], dtype=int)      # FIXME: future var. address array
         self.ae: np.ndarray = np.array([], dtype=int)      # FIXME: future equation address array
         # --- NOT IN USE ENDS ---
@@ -139,7 +137,6 @@ class BaseVar:
         self.av[:] = 0
         self.ae[:] = 0
 
-        self._contiguous = False
         self.e_inplace = False
         self.v_inplace = False
 
@@ -190,21 +187,21 @@ class IntVar(BaseVar):
         addr : np.ndarray
             The assigned address for this variable
         contiguous : bool, optional
-            If the addresses are contiguous
+            If the addresses are contiguous. True only for internal variables of
+            models with flag `collate = False`.
         """
 
         self.a = addr
         self.n = len(self.a)
 
-        # NOT IN USE
+        # --- NOT IN USE ---
         self.ae = np.array(self.a)
         self.av = np.array(self.a)
-        # -----------
+        # ------------------
 
-        self._contiguous = contiguous
-        self._update_e_v_inplace()
+        self._update_e_v_inplace(contiguous)
 
-    def _update_e_v_inplace(self):
+    def _update_e_v_inplace(self, contiguous):
         """
         Update ``self.e_inplace`` and ``self.v_inplace`` after knowing if
         variables are contiguously stored.
@@ -213,7 +210,7 @@ class IntVar(BaseVar):
         self.e_inplace = False
         self.v_inplace = False
 
-        if self._contiguous:
+        if contiguous:
             if self.e_setter is False:
                 self.e_inplace = True
 
