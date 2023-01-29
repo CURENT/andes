@@ -23,12 +23,13 @@ from typing import Dict, Optional, Tuple, Union
 
 import andes.io
 from andes.core import AntiWindup, Config, Model
+from andes.core.model.modelcall import ModelCall
 from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
 from andes.routines import all_routines
 from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
-                          jac_names, matrix, np, sparse, spmatrix, numba)
+                          jac_names, matrix, np, numba, sparse, spmatrix)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
                                get_pycode_path)
@@ -45,8 +46,554 @@ class ExistingModels:
 
     def __init__(self):
         self.pflow = OrderedDict()
-        self.tds = OrderedDict()   # if a model needs to be initialized before TDS, set `flags.tds = True`
+
+        # if a model needs to be initialized before TDS, set `flags.tds = True`
+        self.tds = OrderedDict()
         self.pflow_tds = OrderedDict()
+
+
+class ModelManager:
+    """
+    Class for loading available models.
+    """
+
+    def __init__(self) -> None:
+        self.groups: OrderedDict = OrderedDict()
+        self.models: OrderedDict = OrderedDict()
+        self.model_aliases = OrderedDict()   # alias: model instance
+
+        self.import_groups()
+        self.import_models()
+
+    def import_groups(self):
+        """
+        Import all groups classes as defined in ``models/group.py``.
+
+        Groups will be stored as instances with the name as class names. All
+        groups will be stored to dictionary ``self.groups``.
+        """
+        module = importlib.import_module('andes.models.group')
+
+        for m in inspect.getmembers(module, inspect.isclass):
+
+            name, cls = m
+            if name == 'GroupBase':
+                continue
+
+            elif not issubclass(cls, GroupBase):
+                # skip other imported classes such as `OrderedDict`
+                continue
+
+            self.__dict__[name] = cls()
+            self.groups[name] = self.__dict__[name]
+
+    def import_models(self):
+        """
+        Import and instantiate models as System member attributes.
+
+        Models defined in ``models/__init__.py`` will be instantiated
+        `sequentially` as attributes with the same name as the class name. In
+        addition, all models will be stored in dictionary ``System.models`` with
+        model names as keys and the corresponding instances as values.
+
+        Examples
+        --------
+        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the
+        classical generator object,
+
+        ``system.models['Bus']`` points the same instance as ``system.Bus``.
+        """
+        for fname, cls_list in file_classes:
+            for model_name in cls_list:
+                the_module = importlib.import_module('andes.models.' + fname)
+                the_class = getattr(the_module, model_name)
+                self.__dict__[model_name] = the_class(system=self, config=None)  # TODO: config
+
+                self.models[model_name] = self.__dict__[model_name]
+                self.models[model_name].config.check()
+
+                # link to the group
+                group_name = self.__dict__[model_name].group
+                self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
+
+        for key, val in andes.models.model_aliases.items():
+            self.model_aliases[key] = self.models[val]
+            self.__dict__[key] = self.models[val]
+
+
+class PyCodeGenerator:
+    """
+    Class for managing code generation and loading.
+    """
+
+    def __init__(self,
+                 models: OrderedDict,
+                 options=None) -> None:
+
+        self.models = models
+        self.options = {} if options is None else options
+
+        # True if generated function calls have been loaded
+        self.with_calls = False
+
+        # a dictionary with model names (keys) and their ``calls`` instance
+        self.calls = OrderedDict()
+
+    def prepare(self,
+                quick=False,
+                incremental=False,
+                models=None,
+                nomp=False,
+                ncpu=NCPUS_PHYSICAL,
+                ):
+        """
+        Generate numerical functions from symbolically defined models.
+
+        All procedures in this function must be independent of test case.
+
+        Parameters
+        ----------
+        quick : bool, optional
+            True to skip pretty-print generation to reduce code generation time.
+        incremental : bool, optional
+            True to generate only for modified models, incrementally.
+        models : list, OrderedDict, None
+            List or OrderedList of models to prepare
+        nomp : bool
+            True to disable multiprocessing
+
+        Notes
+        -----
+        Option ``incremental`` compares the md5 checksum of all var and service
+        strings, and only regenerate for updated models.
+
+        Examples
+        --------
+        If one needs to print out LaTeX-formatted equations in a Jupyter
+        Notebook, one need to generate such equations with ::
+
+            import andes sys = andes.prepare()
+
+        Alternatively, one can explicitly create a System and generate the code
+        ::
+
+            import andes sys = andes.System() sys.prepare()
+
+        Warnings
+        --------
+        Generated lambda functions will be stored in Python modules.Pretty
+        prints (SymPy objects) can only exist in the System instance on which
+        prepare is called.
+        """
+        if incremental is True:
+            mode_text = 'rapid incremental mode'
+        elif quick is True:
+            mode_text = 'quick mode'
+        else:
+            mode_text = 'full mode'
+
+        logger.info('Numerical code generation (%s) started...', mode_text)
+
+        t0, _ = elapsed()
+
+        # get `pycode` folder path without automatic creation
+        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
+
+        # determine which models to prepare based on mode and `models` list.
+        if incremental and models is None:
+            if not self.with_calls:
+                self._load_calls()
+            models = self._find_stale_models()
+        elif not incremental and models is None:
+            models = self.models
+        else:
+            models = self._get_models(models)
+
+        total = len(models)
+        width = len(str(total))
+
+        if nomp is False:
+            print(f"Generating code for {total} models on {ncpu} processes.")
+            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
+
+        else:
+            for idx, (name, model) in enumerate(models.items()):
+                print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
+                      end='\r', flush=True)
+                model.prepare(quick=quick, pycode_path=pycode_path)
+
+        if len(models) > 0:
+            self._finalize_pycode(pycode_path)
+            self._store_calls(models)
+
+        _, s = elapsed(t0)
+        logger.info('Generated numerical code for %d models in %s.', len(models), s)
+
+    def _mp_prepare(self, models, quick, pycode_path, ncpu):
+        """
+        Wrapper for multiprocessed code generation.
+
+        Parameters
+        ----------
+        models : OrderedDict
+            model name : model instance pairs
+        quick : bool
+            True to skip LaTeX string generation
+        pycode_path : str
+            Path to store `pycode` folder
+        ncpu : int
+            Number of processors to use
+        """
+
+        # create empty models without dependency
+        if len(models) == 0:
+            return
+
+        model_names = list(models.keys())
+        model_list = list()
+
+        for fname, cls_list in file_classes:
+            for model_name in cls_list:
+                if model_name not in model_names:
+                    continue
+                the_module = importlib.import_module('andes.models.' + fname)
+                the_class = getattr(the_module, model_name)
+                model_list.append(the_class(system=None, config=None))
+
+        # yapf_pycode = self.config.yapf_pycode # TODO
+        yapf_pycode = False
+
+        def _prep_model(model: Model, ):
+            """
+            Wrapper function to call prepare on a model.
+            """
+            model.prepare(quick=quick,
+                          pycode_path=pycode_path,
+                          yapf_pycode=yapf_pycode
+                          )
+
+        Pool(ncpu).map(_prep_model, model_list)
+
+    def _finalize_pycode(self, pycode_path):
+        """
+        Helper function for finalizing pycode generation by
+        writing ``__init__.py`` and reloading ``pycode`` package.
+        """
+
+        init_path = os.path.join(pycode_path, '__init__.py')
+        with open(init_path, 'w') as f:
+            f.write(f"__version__ = '{andes.__version__}'\n\n")
+
+            for name in self.models.keys():
+                f.write(f"from . import {name:20s}  # NOQA\n")
+            f.write('\n')
+
+        logger.info('Saved generated pycode to "%s"', pycode_path)
+
+    def _find_stale_models(self):
+        """
+        Find models whose ModelCall are stale using md5 checksum.
+        """
+        out = OrderedDict()
+        for model in self.models.values():
+            calls_md5 = getattr(model.calls, 'md5', None)
+            if calls_md5 != model.get_md5():
+                out[model.class_name] = model
+
+        return out
+
+    def precompile(self,
+                   models: Union[OrderedDict, None] = None,
+                   nomp: bool = False,
+                   ncpu: int = NCPUS_PHYSICAL):
+        """
+        Trigger precompilation for the given models.
+
+        Arguments are the same as ``prepare``.
+        """
+
+        t0, _ = elapsed()
+
+        if models is None:
+            models = self.models
+        else:
+            models = self._get_models(models)
+
+        self.setup()
+        numba_ok = self._init_numba(models)
+
+        if not numba_ok:
+            return
+
+        def _precompile_model(model: Model):
+            model.precompile()
+
+        logger.info("Compilation in progress. This might take a minute...")
+
+        if nomp is True:
+            for name, mdl in models.items():
+                _precompile_model(mdl)
+                logger.debug("Model <%s> compiled.", name)
+
+        # multi-processed implementation. `Pool.map` runs very slow somehow.
+        else:
+            jobs = []
+            for idx, (name, mdl) in enumerate(models.items()):
+                job = Process(
+                    name='Process {0:d}'.format(idx),
+                    target=_precompile_model,
+                    args=(mdl,),
+                )
+                jobs.append(job)
+                job.start()
+
+                if (idx % ncpu == ncpu - 1) or (idx == len(models) - 1):
+                    time.sleep(0.02)
+                    for job in jobs:
+                        job.join()
+                    jobs = []
+
+        _, s = elapsed(t0)
+        logger.info('Numba compiled %d model%s in %s.',
+                    len(models),
+                    '' if len(models) == 1 else 's',
+                    s)
+
+    def _init_numba(self, models: OrderedDict):
+        """
+        Helper function to compile all functions with Numba before init.
+        """
+
+        try:
+            getattr(numba, '__version__')
+        except ImportError:
+            # numba not installed
+            logger.warning("numba is enabled but not installed. Please install numba manually.")
+            return False
+
+        use_parallel = False  # TODO
+        nopython = True  # TODO
+
+        logger.info("Numba compilation initiated with caching.")
+
+        for mdl in models.values():
+            mdl.numba_jitify(parallel=use_parallel,
+                             nopython=nopython,
+                             )
+
+        return True
+
+    def undill(self, autogen_stale=True):
+        """
+        Reload generated function functions, from either the
+        ``$HOME/.andes/pycode`` folder.
+
+        If no change is made to models, future calls to ``prepare()`` can be
+        replaced with ``undill()`` for acceleration.
+
+        Parameters
+        ----------
+        autogen_stale: bool
+            True to automatically call code generation if stale code is
+            detected. Regardless of this option, codegen is trigger if importing
+            existing code fails.
+        """
+
+        # load equations and jacobian from saved code
+        loaded = self._load_calls()
+
+        stale_models = self._find_stale_models()
+
+        if loaded is False:
+            self.prepare(quick=True, incremental=False)
+            loaded = True
+
+        elif autogen_stale is False:
+            # NOTE: incremental code generation may be triggered due to Python
+            # not invalidating ``.pyc`` caches. If multiprocessing is being
+            # used, code generation will cause nested multiprocessing, which is
+            # not allowed.
+            # The flag ``autogen_stale=False`` is used to prevent nested codegen
+            # and is intended to be used only in multiprocessing.
+            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
+            logger.info("Automatic code re-generation manually skipped")
+            loaded = True
+
+        elif len(stale_models) > 0:
+            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
+            self.prepare(quick=True, incremental=True, models=stale_models)
+            loaded = True
+
+        return loaded
+
+    def _get_models(self, models):
+        """
+        Helper function for sanitizing the ``models`` input.
+
+        The output is an OrderedDict of model names and instances.
+        """
+        out = OrderedDict()
+
+        if isinstance(models, OrderedDict):
+            out.update(models)
+
+        elif models is None:
+            out.update(self.exist.pflow)
+
+        elif isinstance(models, str):
+            out[models] = self.__dict__[models]
+
+        elif isinstance(models, Model):
+            out[models.class_name] = models
+
+        elif isinstance(models, list):
+            for item in models:
+                if isinstance(item, Model):
+                    out[item.class_name] = item
+                elif isinstance(item, str):
+                    out[item] = self.__dict__[item]
+                else:
+                    raise TypeError(f'Unknown type {type(item)}')
+
+        return out
+
+    def _store_calls(self, models: OrderedDict):
+        """
+        Collect and store model calls into system.
+        """
+        logger.debug("Collecting Model.calls into System.")
+
+        self.calls['__version__'] = andes.__version__
+
+        for name, mdl in models.items():
+            self.calls[name] = mdl.calls
+
+
+class PyCodeManager:
+
+    def __init__(self, model) -> None:
+        pass
+
+    def load_pycode(self) -> OrderedDict:
+        """
+        API for loading generated numerical functions from the ``pycode``
+        """
+
+        # look up pycode_path
+
+        # load only md5 hash from pycode
+
+        # find stale models
+
+        #   compare loaded hash with current hash
+
+        #   for models with mismatched hash, re-generate
+
+        # load all pycode
+
+        pass
+
+    def generate_pycode(self, model_names: Optional[list] = None) -> bool:
+        """
+        API for generating numerical functions from the ``pycode``
+        """
+
+        # remove invalid names from `model_names`
+
+        # for the valid model names, generate pycode and store to files
+
+        # load all md5 hashes and update the generated ones
+
+        pass
+
+
+class PyCodeLoader:
+
+    def __init__(self, models) -> None:
+        self.models = models
+
+    def _load_calls(self):
+        """
+        Helper function for loading generated numerical functions from the
+        ``pycode`` module.
+        """
+
+        loaded = False
+        # user_pycode_path = self.options.get("pycode_path")  # TODO
+        user_pycode_path = None
+
+        pycode = import_pycode(user_pycode_path=user_pycode_path)
+
+        if pycode:
+            try:
+                self._expand_pycode(pycode)
+                loaded = True
+            except KeyError:
+                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
+
+        return loaded
+
+    def _expand_pycode(self, pycode_module):
+        """
+        Expand imported ``pycode`` module to model calls.
+
+        Parameters
+        ----------
+        pycode : module
+            The module for generated code for models.
+        """
+
+        modelcall_dict = dict()
+
+        for name, model in self.models.items():
+            if name not in pycode_module.__dict__:
+                logger.debug("Model %s does not exist in pycode", name)
+                continue
+
+            pycode_model = pycode_module.__dict__[model.class_name]
+
+            calls = ModelCall()
+
+            # md5
+            calls.md5 = getattr(pycode_model, 'md5', None)
+
+            # reload stored variables
+            for item in dilled_vars:
+                calls.__dict__[item] = pycode_model.__dict__[item]
+
+            # equations
+            calls.f = pycode_model.__dict__.get("f_update")
+            calls.g = pycode_model.__dict__.get("g_update")
+
+            # services
+            for instance in model.services.values():
+                if (instance.v_str is not None) and instance.sequential is True:
+                    sv_name = f'{instance.name}_svc'
+                    calls.s[instance.name] = pycode_model.__dict__[sv_name]
+
+            # services - non sequential
+            calls.sns = pycode_model.__dict__.get("sns_update")
+
+            # load initialization; assignment
+            for instance in model.cache.all_vars.values():
+                if instance.v_str is not None:
+                    ia_name = f'{instance.name}_ia'
+                    calls.ia[instance.name] = pycode_model.__dict__[ia_name]
+
+            # load initialization: iterative
+            for item in calls.init_seq:
+                if isinstance(item, list):
+                    name_concat = '_'.join(item)
+                    calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
+                    calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
+
+            # load Jacobian functions
+            for jname in calls.j_names:
+                calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
+
+            modelcall_dict[name] = calls
+
+        return modelcall_dict
 
 
 class System:
@@ -107,14 +654,11 @@ class System:
             self.options.update(options)
         if kwargs:
             self.options.update(kwargs)
-        self.calls = OrderedDict()           # a dictionary with model names (keys) and their ``calls`` instance
         self.models = OrderedDict()          # model names and instances
-        self.model_aliases = OrderedDict()   # alias: model instance
         self.groups = OrderedDict()          # group names and instances
         self.routines = OrderedDict()        # routine names and instances
         self.switch_times = np.array([])     # an array of ordered event switching times
         self.switch_dict = OrderedDict()     # time: OrderedDict of associated models
-        self.with_calls = False              # if generated function calls have been loaded
         self.n_switches = 0                  # number of elements in `self.switch_times`
         self.exit_code = 0                   # command-line exit code, 0 - normal, others - error.
 
@@ -194,9 +738,10 @@ class System:
         self.streaming = Streaming(self)                   # Dime2 streaming
 
         # dynamic imports of groups, models and routines
-        self.import_groups()
-        self.import_models()
         self.import_routines()  # routine imports come after models
+
+        # consistency check for group parameters and variables
+        self._check_group_common()
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -207,9 +752,6 @@ class System:
 
         # internal flags
         self.is_setup = False        # if system has been setup
-
-        if not no_undill:
-            self.undill(autogen_stale=autogen_stale)
 
     def _update_config_object(self):
         """
@@ -273,169 +815,6 @@ class System:
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
-
-    def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=NCPUS_PHYSICAL):
-        """
-        Generate numerical functions from symbolically defined models.
-
-        All procedures in this function must be independent of test case.
-
-        Parameters
-        ----------
-        quick : bool, optional
-            True to skip pretty-print generation to reduce code generation time.
-        incremental : bool, optional
-            True to generate only for modified models, incrementally.
-        models : list, OrderedDict, None
-            List or OrderedList of models to prepare
-        nomp : bool
-            True to disable multiprocessing
-
-        Notes
-        -----
-        Option ``incremental`` compares the md5 checksum of all var and
-        service strings, and only regenerate for updated models.
-
-        Examples
-        --------
-        If one needs to print out LaTeX-formatted equations in a Jupyter Notebook, one need to generate such
-        equations with ::
-
-            import andes
-            sys = andes.prepare()
-
-        Alternatively, one can explicitly create a System and generate the code ::
-
-            import andes
-            sys = andes.System()
-            sys.prepare()
-
-        Warnings
-        --------
-        Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
-        the System instance on which prepare is called.
-        """
-        if incremental is True:
-            mode_text = 'rapid incremental mode'
-        elif quick is True:
-            mode_text = 'quick mode'
-        else:
-            mode_text = 'full mode'
-
-        logger.info('Numerical code generation (%s) started...', mode_text)
-
-        t0, _ = elapsed()
-
-        # consistency check for group parameters and variables
-        self._check_group_common()
-
-        # get `pycode` folder path without automatic creation
-        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
-
-        # determine which models to prepare based on mode and `models` list.
-        if incremental and models is None:
-            if not self.with_calls:
-                self._load_calls()
-            models = self._find_stale_models()
-        elif not incremental and models is None:
-            models = self.models
-        else:
-            models = self._get_models(models)
-
-        total = len(models)
-        width = len(str(total))
-
-        if nomp is False:
-            print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
-
-        else:
-            for idx, (name, model) in enumerate(models.items()):
-                print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
-                      end='\r', flush=True)
-                model.prepare(quick=quick, pycode_path=pycode_path)
-
-        if len(models) > 0:
-            self._finalize_pycode(pycode_path)
-            self._store_calls(models)
-
-        _, s = elapsed(t0)
-        logger.info('Generated numerical code for %d models in %s.', len(models), s)
-
-    def _mp_prepare(self, models, quick, pycode_path, ncpu):
-        """
-        Wrapper for multiprocessed code generation.
-
-        Parameters
-        ----------
-        models : OrderedDict
-            model name : model instance pairs
-        quick : bool
-            True to skip LaTeX string generation
-        pycode_path : str
-            Path to store `pycode` folder
-        ncpu : int
-            Number of processors to use
-        """
-
-        # create empty models without dependency
-        if len(models) == 0:
-            return
-
-        model_names = list(models.keys())
-        model_list = list()
-
-        for fname, cls_list in file_classes:
-            for model_name in cls_list:
-                if model_name not in model_names:
-                    continue
-                the_module = importlib.import_module('andes.models.' + fname)
-                the_class = getattr(the_module, model_name)
-                model_list.append(the_class(system=None, config=self._config_object))
-
-        yapf_pycode = self.config.yapf_pycode
-
-        def _prep_model(model: Model, ):
-            """
-            Wrapper function to call prepare on a model.
-            """
-            model.prepare(quick=quick,
-                          pycode_path=pycode_path,
-                          yapf_pycode=yapf_pycode
-                          )
-
-        Pool(ncpu).map(_prep_model, model_list)
-
-    def _finalize_pycode(self, pycode_path):
-        """
-        Helper function for finalizing pycode generation by
-        writing ``__init__.py`` and reloading ``pycode`` package.
-        """
-
-        init_path = os.path.join(pycode_path, '__init__.py')
-        with open(init_path, 'w') as f:
-            f.write(f"__version__ = '{andes.__version__}'\n\n")
-
-            for name in self.models.keys():
-                f.write(f"from . import {name:20s}  # NOQA\n")
-            f.write('\n')
-
-        logger.info('Saved generated pycode to "%s"', pycode_path)
-
-        # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        self._load_calls()
-
-    def _find_stale_models(self):
-        """
-        Find models whose ModelCall are stale using md5 checksum.
-        """
-        out = OrderedDict()
-        for model in self.models.values():
-            calls_md5 = getattr(model.calls, 'md5', None)
-            if calls_md5 != model.get_md5():
-                out[model.class_name] = model
-
-        return out
 
     def _to_orddct(self, model_list):
         """
@@ -699,94 +1078,6 @@ class System:
             for var in mdl.cache.vars_ext.values():
                 var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
-    def _init_numba(self, models: OrderedDict):
-        """
-        Helper function to compile all functions with Numba before init.
-        """
-
-        if not self.config.numba:
-            return
-
-        try:
-            getattr(numba, '__version__')
-        except ImportError:
-            # numba not installed
-            logger.warning("numba is enabled but not installed. Please install numba manually.")
-            self.config.numba = 0
-            return False
-
-        use_parallel = bool(self.config.numba_parallel)
-        nopython = bool(self.config.numba_nopython)
-
-        logger.info("Numba compilation initiated with caching.")
-
-        for mdl in models.values():
-            mdl.numba_jitify(parallel=use_parallel,
-                             nopython=nopython,
-                             )
-
-        return True
-
-    def precompile(self,
-                   models: Union[OrderedDict, None] = None,
-                   nomp: bool = False,
-                   ncpu: int = NCPUS_PHYSICAL):
-        """
-        Trigger precompilation for the given models.
-
-        Arguments are the same as ``prepare``.
-        """
-
-        t0, _ = elapsed()
-
-        if models is None:
-            models = self.models
-        else:
-            models = self._get_models(models)
-
-        # turn on numba for precompilation
-        self.config.numba = 1
-
-        self.setup()
-        numba_ok = self._init_numba(models)
-
-        if not numba_ok:
-            return
-
-        def _precompile_model(model: Model):
-            model.precompile()
-
-        logger.info("Compilation in progress. This might take a minute...")
-
-        if nomp is True:
-            for name, mdl in models.items():
-                _precompile_model(mdl)
-                logger.debug("Model <%s> compiled.", name)
-
-        # multi-processed implementation. `Pool.map` runs very slow somehow.
-        else:
-            jobs = []
-            for idx, (name, mdl) in enumerate(models.items()):
-                job = Process(
-                    name='Process {0:d}'.format(idx),
-                    target=_precompile_model,
-                    args=(mdl,),
-                )
-                jobs.append(job)
-                job.start()
-
-                if (idx % ncpu == ncpu - 1) or (idx == len(models) - 1):
-                    time.sleep(0.02)
-                    for job in jobs:
-                        job.join()
-                    jobs = []
-
-        _, s = elapsed(t0)
-        logger.info('Numba compiled %d model%s in %s.',
-                    len(models),
-                    '' if len(models) == 1 else 's',
-                    s)
-
     def init(self, models: OrderedDict, routine: str):
         """
         Initialize the variables for each of the specified models.
@@ -798,7 +1089,7 @@ class System:
         - Copy variables to DAE and then back to the model.
         """
 
-        self._init_numba(models)
+        # self._init_numba(models) # TODO: call numba compilation here
 
         for mdl in models.values():
             # link externals services first
@@ -890,7 +1181,7 @@ class System:
         if model is None:
             models = self.models
         else:
-            models = self._get_models(model)
+            models = self._to_orddct(model)
 
         ret = True
         for model in models.values():
@@ -1508,149 +1799,6 @@ class System:
                     break
         return out
 
-    def undill(self, autogen_stale=True):
-        """
-        Reload generated function functions, from either the
-        ``$HOME/.andes/pycode`` folder.
-
-        If no change is made to models, future calls to ``prepare()`` can be
-        replaced with ``undill()`` for acceleration.
-
-        Parameters
-        ----------
-        autogen_stale: bool
-            True to automatically call code generation if stale code is
-            detected. Regardless of this option, codegen is trigger if importing
-            existing code fails.
-        """
-
-        # load equations and jacobian from saved code
-        loaded = self._load_calls()
-
-        stale_models = self._find_stale_models()
-
-        if loaded is False:
-            self.prepare(quick=True, incremental=False)
-            loaded = True
-        elif autogen_stale is False:
-            # NOTE: incremental code generation may be triggered due to Python
-            # not invalidating ``.pyc`` caches. If multiprocessing is being
-            # used, code generation will cause nested multiprocessing, which is
-            # not allowed.
-            # The flag ``autogen_stale=False`` is used to prevent nested codegen
-            # and is intended to be used only in multiprocessing.
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            logger.info("Automatic code re-generation manually skipped")
-            loaded = True
-        elif len(stale_models) > 0:
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            self.prepare(quick=True, incremental=True, models=stale_models)
-            loaded = True
-
-        return loaded
-
-    def _load_calls(self):
-        """
-        Helper function for loading generated numerical functions from the ``pycode`` module.
-        """
-
-        loaded = False
-        user_pycode_path = self.options.get("pycode_path")
-        pycode = import_pycode(user_pycode_path=user_pycode_path)
-
-        if pycode:
-            try:
-                self._expand_pycode(pycode)
-                loaded = True
-            except KeyError:
-                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
-
-        return loaded
-
-    def _expand_pycode(self, pycode_module):
-        """
-        Expand imported ``pycode`` module to model calls.
-
-        Parameters
-        ----------
-        pycode : module
-            The module for generated code for models.
-        """
-        for name, model in self.models.items():
-            if name not in pycode_module.__dict__:
-                logger.debug("Model %s does not exist in pycode", name)
-                continue
-
-            pycode_model = pycode_module.__dict__[model.class_name]
-
-            # md5
-            model.calls.md5 = getattr(pycode_model, 'md5', None)
-
-            # reload stored variables
-            for item in dilled_vars:
-                model.calls.__dict__[item] = pycode_model.__dict__[item]
-
-            # equations
-            model.calls.f = pycode_model.__dict__.get("f_update")
-            model.calls.g = pycode_model.__dict__.get("g_update")
-
-            # services
-            for instance in model.services.values():
-                if (instance.v_str is not None) and instance.sequential is True:
-                    sv_name = f'{instance.name}_svc'
-                    model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
-
-            # services - non sequential
-            model.calls.sns = pycode_model.__dict__.get("sns_update")
-
-            # load initialization; assignment
-            for instance in model.cache.all_vars.values():
-                if instance.v_str is not None:
-                    ia_name = f'{instance.name}_ia'
-                    model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
-
-            # load initialization: iterative
-            for item in model.calls.init_seq:
-                if isinstance(item, list):
-                    name_concat = '_'.join(item)
-                    model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
-                    model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
-
-            # load Jacobian functions
-            for jname in model.calls.j_names:
-                model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
-
-    def _get_models(self, models):
-        """
-        Helper function for sanitizing the ``models`` input.
-
-        The output is an OrderedDict of model names and instances.
-        """
-        out = OrderedDict()
-
-        if isinstance(models, OrderedDict):
-            out.update(models)
-
-        elif models is None:
-            out.update(self.exist.pflow)
-
-        elif isinstance(models, str):
-            out[models] = self.__dict__[models]
-
-        elif isinstance(models, Model):
-            out[models.class_name] = models
-
-        elif isinstance(models, list):
-            for item in models:
-                if isinstance(item, Model):
-                    out[item.class_name] = item
-                elif isinstance(item, str):
-                    out[item] = self.__dict__[item]
-                else:
-                    raise TypeError(f'Unknown type {type(item)}')
-
-        return out
-
     def _store_tf(self, models):
         """
         Store the inverse time constant associated with equations.
@@ -1767,58 +1915,6 @@ class System:
             if isinstance(model, Model):
                 model.set_in_use()
 
-    def import_groups(self):
-        """
-        Import all groups classes defined in ``models/group.py``.
-
-        Groups will be stored as instances with the name as class names.
-        All groups will be stored to dictionary ``System.groups``.
-        """
-        module = importlib.import_module('andes.models.group')
-
-        for m in inspect.getmembers(module, inspect.isclass):
-
-            name, cls = m
-            if name == 'GroupBase':
-                continue
-            elif not issubclass(cls, GroupBase):
-                # skip other imported classes such as `OrderedDict`
-                continue
-
-            self.__dict__[name] = cls()
-            self.groups[name] = self.__dict__[name]
-
-    def import_models(self):
-        """
-        Import and instantiate models as System member attributes.
-
-        Models defined in ``models/__init__.py`` will be instantiated `sequentially` as attributes with the same
-        name as the class name.
-        In addition, all models will be stored in dictionary ``System.models`` with model names as
-        keys and the corresponding instances as values.
-
-        Examples
-        --------
-        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the classical
-        generator object,
-
-        ``system.models['Bus']`` points the same instance as ``system.Bus``.
-        """
-        for fname, cls_list in file_classes:
-            for model_name in cls_list:
-                the_module = importlib.import_module('andes.models.' + fname)
-                the_class = getattr(the_module, model_name)
-                self.__dict__[model_name] = the_class(system=self, config=self._config_object)
-                self.models[model_name] = self.__dict__[model_name]
-                self.models[model_name].config.check()
-
-                # link to the group
-                group_name = self.__dict__[model_name].group
-                self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
-        for key, val in andes.models.model_aliases.items():
-            self.model_aliases[key] = self.models[val]
-            self.__dict__[key] = self.models[val]
-
     def import_routines(self):
         """
         Import routines as defined in ``routines/__init__.py``.
@@ -1932,17 +2028,6 @@ class System:
         """
         for r in self.routines.values():
             r.solver.clear()
-
-    def _store_calls(self, models: OrderedDict):
-        """
-        Collect and store model calls into system.
-        """
-        logger.debug("Collecting Model.calls into System.")
-
-        self.calls['__version__'] = andes.__version__
-
-        for name, mdl in models.items():
-            self.calls[name] = mdl.calls
 
     def _list2array(self):
         """
