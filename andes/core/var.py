@@ -495,9 +495,9 @@ class ExtVar(BaseVar):
         except IndexError as e:
             raise e
 
-        if isinstance(self, ExtState):
+        if self.r_code == 'h':     # ExtState
             self.e = dae.h[slice_idx]
-        elif isinstance(self, ExtAlgeb):
+        elif self.r_code == 'i':   # ExtAlgeb
             self.e = dae.i[slice_idx]
         else:
             raise NotImplementedError
