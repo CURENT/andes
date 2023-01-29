@@ -394,18 +394,32 @@ Assemble ``IEEESTData`` and ``IEEESTModel`` into ``IEEEST``:
             IEEESTData.__init__(self)
             IEEESTModel.__init__(self, system, config)
 
-Locate ``andes/models/__init__.py``, in ``file_classes``. In ``file_classes``,
-the first element of each sublist is the ``.py`` file names in ``models``
-folder, and the second element contains class names to be imported from that
-file. Find the line with ``pss`` and add ``IEEEST`` to the corresponding list of
-model names. If the file name does not exist in any element of ``file_classes``,
-add it after all prerequisite models. For example, PSS should be added after
+Locate and edit the file ``andes/models/__init__.py``. The variable
+``file_classes`` is a list of tuples that stores the source file and class names
+in strings. In each tuple, the first element is the ``.py`` file name in the
+``models`` folder, and the second element is a list of class names to be
+imported from that file.
+
+Find the line with ``pss``, then add ``IEEEST`` to the corresponding list of
+model names. The line will look like
+
+.. code:: python
+
+    file_classes = list([
+        ...
+        ('pss', ['IEEEST', 'ST2CUT']),
+        ...
+    ])
+
+Note in the above that the string ``'IEEEST'`` is used. The line above is valid
+as long as ``from andes.models.pss import IEEEST`` is valid. If the source file
+name does not exist in any line of ``file_classes``, one may add it after all
+prerequisite models. For example, the ``pss`` line should be added after
 exciters (and generators, of course).
 
-Finally, locate ``andes/models/group.py``, check if the class
-with ``PSS`` exist.
-It is the name of IEEEST's group name.
-If not, create one by inheriting from ``GroupBase``:
+Finally, locate ``andes/models/group.py``, check if the class ``PSS`` exist. It
+needs to match the group name of IEEEST. If not, create one by inheriting from
+``GroupBase``:
 
 .. code:: python
 
@@ -416,10 +430,8 @@ If not, create one by inheriting from ``GroupBase``:
             super().__init__()
             self.common_vars.extend(('vsout',))
 
-where we added ``vsout`` to the ``common_vars`` list.
-All models in the PSS group must have a variable named
-``vsout``, which is defined in ``PSSBase``.
+where we added ``vsout`` to the ``common_vars`` list. All models in the PSS
+group must have a variable named ``vsout``, which is defined in ``PSSBase``.
 
-This completes the IEEEST model.
-When developing new models, use ``andes prepare`` to generate numerical code and
-start debugging.
+This completes the IEEEST model. When developing new models, use ``andes
+prepare`` to generate numerical code and start debugging.

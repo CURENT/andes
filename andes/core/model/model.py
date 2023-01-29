@@ -621,7 +621,7 @@ class Model:
         Use mock data to fill the inputs.
 
         This function is used to generate input data of the desired type
-        to trigget JIT compilation.
+        to trigger JIT compilation.
         """
 
         self.get_inputs()
@@ -728,13 +728,15 @@ class Model:
                     # NOTE:
                     # Use new assignment due to possible size change.
                     # Always make a copy and make the RHS a 1-d array
-                    instance.v = np.ravel(np.array(func(*self.s_args[name]), dtype=instance.vtype))
+                    instance.v = np.array(func(*self.s_args[name]),
+                                          dtype=instance.vtype).ravel()
                 else:
-                    instance.v = np.ravel(np.array(func, dtype=instance.vtype))
+                    instance.v = np.array(func, dtype=instance.vtype).ravel()
 
                 # convert to an array if the return of lambda function is a scalar
                 if isinstance(instance.v, (int, float)):
                     instance.v = np.ones(self.n, dtype=instance.vtype) * instance.v
+
                 elif isinstance(instance.v, np.ndarray) and len(instance.v) == 1:
                     instance.v = np.ones(self.n, dtype=instance.vtype) * instance.v
 

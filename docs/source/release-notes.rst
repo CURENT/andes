@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.6 (2023-01-xx)
+-------------------
+- Minor fix in `timeseries.py` for backward compatibility with Python 3.6.
+
 v1.8.5 (2022-12-22)
 -------------------
 - Fixed an issue to properly handle turning off a ``Jumper``.
