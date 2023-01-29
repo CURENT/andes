@@ -10,7 +10,6 @@ Module for parameters used for describing models.
 #  (at your option) any later version.
 
 #  File name: param.py
-#  Last modified: 8/16/20, 7:27 PM
 
 import logging
 import math
@@ -25,28 +24,30 @@ class BaseParam:
     """
     The base parameter class.
 
-    This class provides the basic data structure and interfaces for all types of parameters. Parameters are from
-    input files and in general constant once initialized.
+    This class provides the basic data structure and interfaces for all types of
+    parameters. Parameters are from input files and in general constant once
+    initialized.
 
-    Subclasses should overload the `n()` method for the total count of elements in the value
-    array.
+    Subclasses should overload the `n()` method for the total count of elements
+    in the value array.
 
     Parameters
     ----------
     default : str or float, optional
         The default value of this parameter if None is provided
     name : str, optional
-        Parameter name. If not provided, it will be automatically set to the attribute name defined in the
-        owner model.
+        Parameter name. If not provided, it will be automatically set to the
+        attribute name defined in the owner model.
     tex_name : str, optional
-        LaTeX-formatted parameter name. If not provided, `tex_name` will be assigned the same as `name`.
+        LaTeX-formatted parameter name. If not provided, `tex_name` will be
+        assigned the same as `name`.
     info : str, optional
         Descriptive information of parameter
     mandatory : bool
-        True if this parameter is mandatory
+        True if this parameter is of mandatory property
     export : bool
-        True if the parameter will be exported when dumping data into files. True for most parameters.
-        False for ``BackRef``.
+        True if the parameter will be exported when dumping data into files.
+        True for most parameters. False for ``BackRef``.
 
     Other Parameters
     ----------------
@@ -58,16 +59,16 @@ class BaseParam:
     Attributes
     ----------
     v : list
-        A list holding all the values. The ``BaseParam`` class does not convert the ``v`` attribute into NumPy
-        arrays.
+        A list holding all the values. The ``BaseParam`` class does not convert
+        the ``v`` attribute into NumPy arrays.
     property : dict
         A dict containing the truth values of the model properties.
 
     Warnings
     --------
     The most distinct feature of BaseParam, DataParam and IdxParam is that
-    values are stored in a list without conversion to array.
-    BaseParam, DataParam or IdxParam are **not allowed** in equations.
+    values are stored in a list without conversion to array. BaseParam,
+    DataParam or IdxParam are **not allowed** in equations.
     """
 
     def __init__(self,
@@ -86,24 +87,25 @@ class BaseParam:
         self.tex_name = tex_name if (tex_name is not None) else name
         self.info = info
         self.unit = unit
-        self.owner = None
         self.export = export
-
-        self.v = []
-        self.property = dict(mandatory=mandatory)
+        self.vtype = float
         self.iconvert = iconvert
         self.oconvert = oconvert
-        self.vtype = float
-        self.eltype = list
+
+        self.owner = None
+        self.v = []
+        self.property = dict(mandatory=mandatory)
 
     def add(self, value=None):
         """
-        Add a new parameter value (from a new device of the owner model) to the ``v`` list.
+        Add a new parameter value (from a new device of the owner model) to the
+        ``v`` list.
 
         Parameters
         ----------
         value : str or float, optional
-            Parameter value of the new element. If None, the default will be used.
+            Parameter value of the new element. If None, the default will be
+            used.
 
         Notes
         -----
@@ -118,7 +120,8 @@ class BaseParam:
 
     def set(self, pos, attr, value):
         """
-        Set attributes of the BaseParam class to new values at the given positions.
+        Set attributes of the BaseParam class to new values at the given
+        positions.
 
         Parameters
         ----------
@@ -185,8 +188,9 @@ class BaseParam:
 
     def get_property(self, property_name: str):
         """
-        Check the boolean value of the given property. If the property does not exist in the dictionary,
-        ``False`` will be returned.
+        Check the boolean value of the given property.
+
+        If the property does not exist in the dictionary, return ``False``.
 
         Parameters
         ----------
@@ -216,12 +220,18 @@ class BaseParam:
 
     @property
     def class_name(self):
-        """Return the class name."""
+        """
+        Return the class name.
+        """
+
         return self.__class__.__name__
 
     @property
     def n(self):
-        """Return the count of elements in the value array."""
+        """
+        Return the count of elements in the value array.
+        """
+
         return len(self.v)
 
     def __repr__(self):
@@ -231,16 +241,16 @@ class BaseParam:
             if hasattr(self, 'vin') and (self.vin is not None):
                 span += f', vin={self.vin}'
 
-        return f'{self.__class__.__name__}: {self.owner.__class__.__name__}.{self.name}{span}'
+        return f'{self.class_name}: {self.owner.class_name}.{self.name}{span}'
 
 
 class DataParam(BaseParam):
     """
     An alias of the `BaseParam` class.
 
-    This class is used for string parameters or non-computational numerical parameters.
-    This class does not provide a `to_array` method.
-    All input values will be stored in `v` as a list.
+    This class is used for string parameters or non-computational numerical
+    parameters. This class does not provide a `to_array` method. All input
+    values will be stored in `v` as a list.
 
     See Also
     --------
@@ -254,8 +264,8 @@ class IdxParam(BaseParam):
     """
     An alias of `BaseParam` with an additional storage of the owner model name
 
-    This class is intended for storing `idx` into other models.
-    It can be used in the future for data consistency check.
+    This class is intended for storing `idx` into other models. It can be used
+    in the future for data consistency check.
 
     Examples
     --------
@@ -270,6 +280,7 @@ class IdxParam(BaseParam):
     -----
     This will be useful when, for example, one connects two TGs to one SynGen.
     """
+
     def __init__(self,
                  default: Optional[Union[float, str, int]] = None,
                  name: Optional[str] = None,
@@ -283,10 +294,17 @@ class IdxParam(BaseParam):
                  iconvert: Optional[Callable] = None,
                  oconvert: Optional[Callable] = None,
                  ):
-        super().__init__(default=default, name=name, tex_name=tex_name,
-                         info=info, unit=unit, mandatory=mandatory,
-                         export=export, iconvert=iconvert, oconvert=oconvert,
+        super().__init__(default=default,
+                         name=name,
+                         tex_name=tex_name,
+                         info=info,
+                         unit=unit,
+                         mandatory=mandatory,
+                         export=export,
+                         iconvert=iconvert,
+                         oconvert=oconvert,
                          )
+
         self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
 
@@ -412,8 +430,15 @@ class NumParam(BaseParam):
                  dc_current: bool = False,
                  export: bool = True,
                  ):
-        super(NumParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info,
-                                       unit=unit, export=export, iconvert=iconvert, oconvert=oconvert,
+
+        super(NumParam, self).__init__(default=default,
+                                       name=name,
+                                       tex_name=tex_name,
+                                       info=info,
+                                       unit=unit,
+                                       export=export,
+                                       iconvert=iconvert,
+                                       oconvert=oconvert,
                                        )
 
         self.property = dict(non_zero=non_zero,
@@ -431,16 +456,20 @@ class NumParam(BaseParam):
                              dc_current=dc_current,
                              dc_voltage=dc_voltage)
 
-        self.pu_coeff = np.ndarray([])
-        self.vin = None  # values from input
         self.vrange = vrange
         self.vtype = vtype
+
+        # --- Numerical data begins ---
+        self.pu_coeff = np.ndarray([])
+        self.vin = None  # values from input
+        # --- Numerical data ends   ---
 
     def add(self, value=None):
         """
         Add a value to the parameter value list.
 
-        In addition to ``BaseParam.add``, this method checks for non-zero property and reset to default if is zero.
+        In addition to ``BaseParam.add``, this method checks for non-zero
+        property and resets zeros to the default value.
 
         See Also
         --------
@@ -485,17 +514,15 @@ class NumParam(BaseParam):
 
     def to_array(self):
         """
-        Converts field ``v`` to the NumPy array type.
-        to enable array-based calculation.
+        Converts field ``v`` to the NumPy array type. to enable array-based
+        calculation.
 
-        Must be called after adding all elements.
-        Store a copy of original input values to field ``vin``.
-        Set ``pu_coeff`` to all ones.
+        Must be called after adding all elements. Store a copy of original input
+        values to field ``vin``. Set ``pu_coeff`` to all ones.
 
         Warnings
         --------
-        After this call, `add` will not be allowed to avoid
-        unexpected issues.
+        After this call, `add` will not be allowed to avoid unexpected issues.
         """
 
         self.v = np.array(self.v, dtype=self.vtype)
@@ -517,10 +544,10 @@ class NumParam(BaseParam):
 
     def set_pu_coeff(self, coeff):
         """
-        Store p.u. conversion coefficient into ``self.pu_coeff`` and calculate the system-base per unit with
-        ``self.v = self.vin * self.pu_coeff``.
+        Store p.u. conversion coefficient into ``self.pu_coeff`` and calculate
+        the system-base per unit with ``self.v = self.vin * self.pu_coeff``.
 
-        This function must be called after ``self.to_array``.
+        This function must be called after ``.to_array``.
 
         Parameters
         ----------
@@ -540,7 +567,8 @@ class NumParam(BaseParam):
 
     def restore(self):
         """
-        Restore parameter to the original input by copying ``self.vin`` to ``self.v``.
+        Restore parameter to the original input by copying ``self.vin`` to
+        ``self.v``.
 
         `pu_coeff` will not be overwritten.
         """
@@ -551,17 +579,18 @@ class TimerParam(NumParam):
     """
     A parameter whose values are event occurrence times during the simulation.
 
-    The constructor takes an additional Callable `self.callback` for the action of the event.
-    `TimerParam` has a default value of -1, meaning deactivated.
+    The constructor takes an additional Callable `self.callback` for the action
+    of the event. `TimerParam` has a default value of -1, meaning deactivated.
 
     Examples
     --------
-    A connectivity status toggle class `Toggle` takes a parameter `t` for the toggle time.
-    Inside ``Toggle.__init__``, one would have ::
+    A connectivity status toggle class `Toggle` takes a parameter `t` for the
+    toggle time. Inside ``Toggle.__init__``, one would have ::
 
         self.t = TimerParam()
 
-    The `Toggle` class also needs to define a method for togging the connectivity status ::
+    The `Toggle` class also needs to define a method for togging the
+    connectivity status ::
 
         def _u_switch(self, is_time: np.ndarray):
             action = False
@@ -577,11 +606,13 @@ class TimerParam(NumParam):
                     action = True
             return action
 
-    Finally, in ``Toggle.__init__``, assign the function as the callback for `self.t` ::
+    Finally, in ``Toggle.__init__``, assign the function as the callback for
+    `self.t` ::
 
         self.t.callback = self._u_switch
 
     """
+
     def __init__(self,
                  callback: Optional[Callable] = None,
                  default: Optional[Union[float, str, Callable]] = None,
@@ -592,15 +623,26 @@ class TimerParam(NumParam):
                  non_zero: bool = False,
                  mandatory: bool = False,
                  export: bool = True):
-        super(TimerParam, self).__init__(default=default, name=name, tex_name=tex_name, info=info, unit=unit,
-                                         mandatory=mandatory, non_zero=non_zero, export=export)
-        self.default = -1  # default to -1 to deactivate
-        self.callback = callback  # provide a callback function that takes an array of booleans
+        super(TimerParam, self).__init__(default=default,
+                                         name=name,
+                                         tex_name=tex_name,
+                                         info=info,
+                                         unit=unit,
+                                         mandatory=mandatory,
+                                         non_zero=non_zero,
+                                         export=export,
+                                         )
+
+        # default to -1 to deactivate
+        self.default = -1
+
+        # provide a callback function that takes an array of booleans
+        self.callback = callback
 
     def is_time(self, dae_t):
         """
-        Element-wise check if the DAE time is the same as the parameter value. The current implementation uses
-        `np.equal`.
+        Element-wise check if the DAE time is the same as the parameter value.
+        The current implementation uses `np.equal`.
 
         Parameters
         ----------
@@ -610,12 +652,14 @@ class TimerParam(NumParam):
         Returns
         -------
         np.ndarray
-            The array containing the truth value of if the DAE time is close to the parameter value.
+            The array containing the truth value of if the DAE time is close to
+            the parameter value.
 
         Notes
         -----
-        The previous implementation with `np.isclose` with default `rtol=1e-5` mistakes
-        the immediate pre- and post-event time as in-event when simulation time is greater than 10.
+        The previous implementation with `np.isclose` with default `rtol=1e-5`
+        mistakes the immediate pre- and post-event time as in-event when
+        simulation time is greater than 10.
         """
 
         return np.equal(dae_t, self.v)
@@ -625,6 +669,10 @@ class ExtParam(NumParam):
     """
     A parameter whose values are retrieved from an external model or group.
 
+    Values are retrieved from the source model before per-unit conversion. That
+    means the retrieved value will be converted to per unit using the bases of
+    the model where the ``ExtParam`` is defined.
+
     Parameters
     ----------
     model : str
@@ -632,34 +680,38 @@ class ExtParam(NumParam):
     src : str
         The source parameter name
     indexer : BaseParam
-        A parameter defined in the model defining this ExtParam instance. `indexer.v` should contain indices into
-        `model.src.v`. If is None, the source parameter values will be fully copied. If `model` is a group
+        A parameter defined in the model defining this ExtParam instance.
+        `indexer.v` should contain indices into `model.src.v`. If is None, the
+        source parameter values will be fully copied. If `model` is a group
         name, the indexer cannot be None.
     vtype : type, optional, default to float
-        Type of each element to be retrieved. Can be ``str`` if the ExtParam is used
-        to access an ``IdxParam``.
+        Type of each element to be retrieved. Can be ``str`` if the ExtParam is
+        used to access an ``IdxParam``.
 
     Attributes
     ----------
     parent_model : Model
         The parent model providing the original parameter.
     """
+
     def __init__(self,
                  model: str,
                  src: str,
                  indexer=None,
-                 vtype=float,
-                 allow_none=False,
+                 allow_none: bool = False,
+                 vtype: type = float,
                  default=0.0,
                  **kwargs):
-        super().__init__(**kwargs)
+
+        super().__init__(vtype=vtype,
+                         default=default,
+                         **kwargs)
+
         self.model = model
         self.src = src
         self.indexer = indexer
-        self.vtype = vtype
         self.parent_model = None   # parent model instance
         self.allow_none = allow_none
-        self.default = default
 
     def add(self, value=None):
         """
@@ -675,12 +727,14 @@ class ExtParam(NumParam):
 
     def link_external(self, ext_model):
         """
-        Update parameter values provided by external models. This needs to be called before pu conversion.
+        Update parameter values provided by external models. This needs to be
+        called before pu conversion.
 
         Parameters
         ----------
         ext_model : Model, Group
-            Instance of the parent model or group, provided by the System calling this method.
+            Instance of the parent model or group, provided by the System
+            calling this method.
 
         """
         self.parent_model = ext_model
@@ -688,19 +742,30 @@ class ExtParam(NumParam):
         if hasattr(ext_model, "_idx2model"):
             # copy properties from models in the group
 
-            # TODO: the three `get` calls below is a bit inefficient - same loops for three times
+            # TODO: three calls to `get`below is inefficient
             try:
-                self.v = ext_model.get(src=self.src, idx=self.indexer.v, attr='v',
-                                       allow_none=self.allow_none, default=self.default)
+                self.v = ext_model.get(src=self.src,
+                                       idx=self.indexer.v,
+                                       attr='v',
+                                       allow_none=self.allow_none,
+                                       default=self.default)
             except IndexError:
                 pass
 
             try:
-                self.vin = ext_model.get(src=self.src, idx=self.indexer.v, attr='vin',
-                                         allow_none=self.allow_none, default=self.default)
+                self.vin = ext_model.get(src=self.src,
+                                         idx=self.indexer.v,
+                                         attr='vin',
+                                         allow_none=self.allow_none,
+                                         default=self.default)
 
-                self.pu_coeff = ext_model.get(src=self.src, idx=self.indexer.v, attr='pu_coeff',
-                                              allow_none=self.allow_none, default=self.default)
+                self.pu_coeff = ext_model.get(src=self.src,
+                                              idx=self.indexer.v,
+                                              attr='pu_coeff',
+                                              allow_none=self.allow_none,
+                                              default=self.default,
+                                              )
+
             except KeyError:  # idx param without vin
                 pass
             except TypeError:  # vin or pu_coeff is None
@@ -708,7 +773,8 @@ class ExtParam(NumParam):
 
         else:
             if self.allow_none:
-                raise NotImplementedError(f"{self.name}: allow_none not implemented for Model")
+                raise NotImplementedError(
+                    f"{self.name}: allow_none not implemented for Model")
 
             parent_instance = ext_model.__dict__[self.src]
             self.property = dict(parent_instance.property)
