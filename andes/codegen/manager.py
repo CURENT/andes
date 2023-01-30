@@ -539,3 +539,13 @@ def reload_submodules(module_name):
         return pycode
 
     return None
+
+
+if __name__ == '__main__':
+
+    from andes.system import ModelManager
+    andes.config_logger(20)
+
+    mm = ModelManager()
+    pcm = PyCodeManager(models=mm.models)
+    pcm.generate(quick=True, incremental=False)
