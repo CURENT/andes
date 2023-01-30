@@ -7,6 +7,7 @@ import time
 from collections import OrderedDict
 from typing import Union, Optional
 
+import andes
 from andes.core import Model, ModelCall
 from andes.models import file_classes
 from andes.shared import NCPUS_PHYSICAL, Pool, Process, numba, dilled_vars
@@ -36,6 +37,7 @@ class PyCodeGenerator:
             models: bool = None,
             nomp: bool = False,
             ncpu: int = NCPUS_PHYSICAL,
+            with_yapf: bool = False,
             ):
         """
         Generate numerical functions from symbolically defined models.
@@ -52,6 +54,8 @@ class PyCodeGenerator:
             List or OrderedList of models to prepare
         nomp : bool
             True to disable multiprocessing
+        with_yapf : bool
+            True to run yapf on generated code
 
         Notes
         -----
@@ -82,13 +86,13 @@ class PyCodeGenerator:
 
         if nomp is False:
             print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(models, quick, path, ncpu=ncpu)
+            self._mp_prepare(models, quick, path, ncpu=ncpu, with_yapf=with_yapf)
 
         else:
             for idx, (name, model) in enumerate(models.items()):
                 print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                       end='\r', flush=True)
-                model.prepare(quick=quick, pycode_path=path)
+                model.prepare(quick=quick, pycode_path=path, yapf_pycode=with_yapf)
 
         if len(models) > 0:
             self._finalize_pycode(path)
@@ -96,7 +100,7 @@ class PyCodeGenerator:
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
 
-    def _mp_prepare(self, models, quick, pycode_path, ncpu):
+    def _mp_prepare(self, models, quick, pycode_path, ncpu, with_yapf):
         """
         Wrapper for multiprocessed code generation.
 
@@ -127,16 +131,13 @@ class PyCodeGenerator:
                 the_class = getattr(the_module, model_name)
                 model_list.append(the_class(system=None, config=None))
 
-        # yapf_pycode = self.config.yapf_pycode # TODO
-        yapf_pycode = False
-
         def _prep_model(model: Model, ):
             """
             Wrapper function to call prepare on a model.
             """
             model.prepare(quick=quick,
                           pycode_path=pycode_path,
-                          yapf_pycode=yapf_pycode
+                          yapf_pycode=with_yapf
                           )
 
         Pool(ncpu).map(_prep_model, model_list)
