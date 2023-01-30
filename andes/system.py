@@ -15,7 +15,6 @@ import configparser
 import importlib
 import inspect
 import logging
-import os
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
@@ -27,7 +26,6 @@ from andes.models.group import GroupBase
 from andes.routines import all_routines
 from andes.shared import (jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
-from andes.utils.paths import confirm_overwrite
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -41,75 +39,9 @@ class ExistingModels:
 
     def __init__(self):
         self.pflow = OrderedDict()
-        self.tds = OrderedDict()  # if a model needs to be initialized before TDS, set `flags.tds = True`
+        # if a model needs to be initialized before TDS, set `flags.tds = True`
+        self.tds = OrderedDict()
         self.pflow_tds = OrderedDict()
-
-
-def create_config_system(config: Optional[Dict] = None,
-                         config_obj=None):
-
-    config_system = Config("System", dct=config)
-    config_system.load(config_obj)
-
-    # custom configuration for system goes after this line
-    config_system.add(OrderedDict((('freq', 60),
-                                   ('mva', 100),
-                                   ('ipadd', 1),
-                                   ('seed', 'None'),
-                                   ('diag_eps', 1e-8),
-                                   ('sparselib', 'klu'),
-                                   ('linsolve', 0),
-                                   ('warn_limits', 1),
-                                   ('warn_abnormal', 1),
-                                   ('dime_enabled', 0),
-                                   ('dime_name', 'andes'),
-                                   ('dime_address', 'ipc:///tmp/dime2'),
-                                   ('numba', 0),
-                                   ('numba_parallel', 0),
-                                   ('numba_nopython', 0),
-                                   ('yapf_pycode', 0),
-                                   ('save_stats', 0),
-                                   ('np_divide', 'warn'),
-                                   ('np_invalid', 'warn'),
-                                   )))
-    config_system.add_extra("_help",
-                            freq='base frequency [Hz]',
-                            mva='system base MVA',
-                            ipadd='use spmatrix.ipadd if available',
-                            seed='seed (or None) for random number generator',
-                            diag_eps='small value for Jacobian diagonals',
-                            sparselib="linear sparse solver name",
-                            linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
-                            warn_limits='warn variables initialized at limits',
-                            warn_abnormal='warn initialization out of normal values',
-                            numba='use numba for JIT compilation',
-                            numba_parallel='enable parallel for numba.jit',
-                            numba_nopython='nopython mode for numba',
-                            yapf_pycode='format generated code with yapf',
-                            save_stats='store statistics of function calls',
-                            np_divide='treatment for division by zero',
-                            np_invalid='treatment for invalid floating-point ops.',
-                            )
-
-    config_system.add_extra("_alt",
-                            freq="float",
-                            mva="float",
-                            ipadd=(0, 1),
-                            seed='int or None',
-                            sparselib=("klu", "umfpack", "spsolve", "cupy"),
-                            linsolve=(0, 1),
-                            warn_limits=(0, 1),
-                            warn_abnormal=(0, 1),
-                            numba=(0, 1),
-                            numba_parallel=(0, 1),
-                            numba_nopython=(0, 1),
-                            yapf_pycode=(0, 1),
-                            save_stats=(0, 1),
-                            np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                            np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                            )
-
-    return config_system
 
 
 class ModelManager:
@@ -238,6 +170,10 @@ class ModelManager:
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
 
+class RoutineManager():
+    pass
+
+
 class System:
     """
     System contains models and routines for modeling and simulation.
@@ -282,8 +218,6 @@ class System:
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
-                 config_path: Optional[str] = None,
-                 default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
                  **kwargs
                  ):
@@ -298,23 +232,6 @@ class System:
         self.switch_dict = OrderedDict()     # time: OrderedDict of associated models
         self.n_switches = 0                  # number of elements in `self.switch_times`
         self.exit_code = 0                   # command-line exit code, 0 - normal, others - error.
-
-        # # get and load default config file
-        # self._config_path = get_config_path()
-        # if config_path is not None:
-        #     self._config_path = config_path
-        # if default_config is True:
-        #     self._config_path = None
-
-        # self._config_object = load_config_rc(self._config_path)
-        # self._update_config_object()
-
-        self.config = create_config_system(config_obj=self._config_object)
-
-        _config_numpy(seed=self.config.seed,
-                      divide=self.config.np_divide,
-                      invalid=self.config.np_invalid,
-                      )
 
         self.files = FileMan(case=case, **self.options)  # file path manager
         self.dae = DAE(system=self)  # numerical DAE storage
@@ -336,52 +253,77 @@ class System:
         # internal flags
         self.is_setup = False  # if system has been setup
 
-    def _update_config_object(self):
-        """
-        Deprecated by ``ConfigManager.load_config_rc()``.
+    def create_config(self, config_obj=None):
 
-        Change config on the fly based on command-line options.
-        """
+        config_system = Config("System")
+        config_system.load(config_obj)
 
-        config_option = self.options.get('config_option', None)
+        # custom configuration for system goes after this line
+        config_system.add(OrderedDict((('freq', 60),
+                                       ('mva', 100),
+                                       ('ipadd', 1),
+                                       ('seed', 'None'),
+                                       ('diag_eps', 1e-8),
+                                       ('sparselib', 'klu'),
+                                       ('linsolve', 0),
+                                       ('warn_limits', 1),
+                                       ('warn_abnormal', 1),
+                                       ('dime_enabled', 0),
+                                       ('dime_name', 'andes'),
+                                       ('dime_address', 'ipc:///tmp/dime2'),
+                                       ('numba', 0),
+                                       ('numba_parallel', 0),
+                                       ('numba_nopython', 0),
+                                       ('yapf_pycode', 0),
+                                       ('save_stats', 0),
+                                       ('np_divide', 'warn'),
+                                       ('np_invalid', 'warn'),
+                                       )))
 
-        if config_option is None:
-            return
+        config_system.add_extra("_help",
+                                freq='base frequency [Hz]',
+                                mva='system base MVA',
+                                ipadd='use spmatrix.ipadd if available',
+                                seed='seed (or None) for random number generator',
+                                diag_eps='small value for Jacobian diagonals',
+                                sparselib="linear sparse solver name",
+                                linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
+                                warn_limits='warn variables initialized at limits',
+                                warn_abnormal='warn initialization out of normal values',
+                                numba='use numba for JIT compilation',
+                                numba_parallel='enable parallel for numba.jit',
+                                numba_nopython='nopython mode for numba',
+                                yapf_pycode='format generated code with yapf',
+                                save_stats='store statistics of function calls',
+                                np_divide='treatment for division by zero',
+                                np_invalid='treatment for invalid floating-point ops.',
+                                )
 
-        if len(config_option) == 0:
-            return
+        config_system.add_extra("_alt",
+                                freq="float",
+                                mva="float",
+                                ipadd=(0, 1),
+                                seed='int or None',
+                                sparselib=("klu", "umfpack", "spsolve", "cupy"),
+                                linsolve=(0, 1),
+                                warn_limits=(0, 1),
+                                warn_abnormal=(0, 1),
+                                numba=(0, 1),
+                                numba_parallel=(0, 1),
+                                numba_nopython=(0, 1),
+                                yapf_pycode=(0, 1),
+                                save_stats=(0, 1),
+                                np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                                np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                                )
 
-        newobj = False
-        if self._config_object is None:
-            self._config_object = configparser.ConfigParser()
-            newobj = True
+        return config_system
 
-        for item in config_option:
-
-            # check the validity of the config field
-            # each field follows the format `SECTION.FIELD = VALUE`
-
-            if item.count('=') != 1:
-                raise ValueError('config_option "{}" must be an assignment expression'.format(item))
-
-            field, value = item.split("=")
-
-            if field.count('.') != 1:
-                raise ValueError('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
-
-            section, key = field.split(".")
-
-            section = section.strip()
-            key = key.strip()
-            value = value.strip()
-
-            if not newobj:
-                self._config_object.set(section, key, value)
-                logger.debug("Existing config option set: %s.%s=%s", section, key, value)
-            else:
-                self._config_object.add_section(section)
-                self._config_object.set(section, key, value)
-                logger.debug("New config option added: %s.%s=%s", section, key, value)
+    def config_apply(self):
+        _config_numpy(seed=self.config.seed,
+                      divide=self.config.np_divide,
+                      invalid=self.config.np_invalid,
+                      )
 
     def reload(self, case, **kwargs):
         """
@@ -696,6 +638,7 @@ class System:
         """
         Store non-inplace adders and setters for variables and equations.
         """
+
         self._clear_adder_setter()
 
         for mdl in models.values():
@@ -1467,9 +1410,9 @@ class System:
                 file = importlib.import_module('andes.routines.' + file)
                 the_class = getattr(file, cls_name)
                 attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=self._config_object)
+                self.__dict__[attr_name] = the_class(system=self, config=None)  # TODO
                 self.routines[attr_name] = self.__dict__[attr_name]
-                self.routines[attr_name].config.check()
+                # self.routines[attr_name].config.check()
 
     def store_switch_times(self, models, eps=1e-4):
         """
@@ -1570,76 +1513,6 @@ class System:
         performs memory preallocation.
         """
         self.call_models('list2array', self.models)
-
-    def set_config(self, config=None):
-        """
-        Set configuration for the System object.
-
-        Config for models are routines are passed directly to their
-        constructors.
-        """
-        if config is not None:
-            # set config for system
-            if self.__class__.__name__ in config:
-                self.config.add(config[self.__class__.__name__])
-                logger.debug("Config: set for System")
-
-    def collect_config(self):
-        """
-        Collect config data from models.
-
-        Returns
-        -------
-        dict
-            a dict containing the config from devices; class names are keys and
-            configs in a dict are values.
-        """
-        config_dict = configparser.ConfigParser()
-        config_dict[self.__class__.__name__] = self.config.as_dict()
-
-        all_with_config = OrderedDict(list(self.routines.items()) +
-                                      list(self.models.items()))
-
-        for name, instance in all_with_config.items():
-            cfg = instance.config.as_dict()
-            if len(cfg) > 0:
-                config_dict[name] = cfg
-        return config_dict
-
-    def save_config(self, file_path=None, overwrite=False):
-        """
-        Save all system, model, and routine configurations to an rc-formatted
-        file.
-
-        Parameters
-        ----------
-        file_path : str, optional
-            path to the configuration file default to `~/andes/andes.rc`.
-        overwrite : bool, optional
-            If file exists, True to overwrite without confirmation. Otherwise
-            prompt for confirmation.
-
-        Warnings
-        --------
-        Saved config is loaded back and populated *at system instance creation
-        time*. Configs from the config file takes precedence over default config
-        values.
-        """
-        if file_path is None:
-            andes_path = os.path.join(os.path.expanduser('~'), '.andes')
-            os.makedirs(andes_path, exist_ok=True)
-            file_path = os.path.join(andes_path, 'andes.rc')
-
-        elif os.path.isfile(file_path):
-            if not confirm_overwrite(file_path, overwrite=overwrite):
-                return
-
-        conf = self.collect_config()
-        with open(file_path, 'w') as f:
-            conf.write(f)
-
-        logger.info('Config written to "%s"', file_path)
-        return file_path
 
     def supported_models(self, export='plain'):
         """

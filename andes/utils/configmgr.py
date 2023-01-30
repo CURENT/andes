@@ -5,6 +5,9 @@ Module for config manager
 import os
 import logging
 
+from collections import OrderedDict
+
+from andes.utils.paths import confirm_overwrite
 from typing import Optional, List
 import configparser
 
@@ -118,3 +121,60 @@ class ConfigManager:
 
     def __getattr__(self, field_name):
         return self._store[field_name]
+
+    def save_config(self, file_path=None, overwrite=False):
+        """
+        Save all system, model, and routine configurations to an rc-formatted
+        file.
+
+        Parameters
+        ----------
+        file_path : str, optional
+            path to the configuration file default to `~/andes/andes.rc`.
+        overwrite : bool, optional
+            If file exists, True to overwrite without confirmation. Otherwise
+            prompt for confirmation.
+
+        Warnings
+        --------
+        Saved config is loaded back and populated *at system instance creation
+        time*. Configs from the config file takes precedence over default config
+        values.
+        """
+        if file_path is None:
+            andes_path = os.path.join(os.path.expanduser('~'), '.andes')
+            os.makedirs(andes_path, exist_ok=True)
+            file_path = os.path.join(andes_path, 'andes.rc')
+
+        elif os.path.isfile(file_path):
+            if not confirm_overwrite(file_path, overwrite=overwrite):
+                return
+
+        conf = self.collect_config()
+        with open(file_path, 'w') as f:
+            conf.write(f)
+
+        logger.info('Config written to "%s"', file_path)
+        return file_path
+
+    def collect_config(self):
+        """
+        Collect config data from models.
+
+        Returns
+        -------
+        dict
+            a dict containing the config from devices; class names are keys and
+            configs in a dict are values.
+        """
+        config_dict = configparser.ConfigParser()
+        config_dict[self.__class__.__name__] = self.config.as_dict()
+
+        all_with_config = OrderedDict(list(self.routines.items()) +
+                                      list(self.models.items()))
+
+        for name, instance in all_with_config.items():
+            cfg = instance.config.as_dict()
+            if len(cfg) > 0:
+                config_dict[name] = cfg
+        return config_dict
