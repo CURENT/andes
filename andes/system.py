@@ -105,6 +105,8 @@ class ModelManager:
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
+
+                # TODO: `system=self` below prevents multiprocessing of codegen
                 self.__dict__[model_name] = the_class(system=self, config=None)  # TODO: config
 
                 self.models[model_name] = self.__dict__[model_name]
