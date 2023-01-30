@@ -71,4 +71,4 @@ class BaseRoutine:
         config_manager.register(self.class_name, self.create_config)
 
     def set_config(self, config_manager):
-        self.config = config_manager._store[self.class_name]
+        self.config = config_manager
