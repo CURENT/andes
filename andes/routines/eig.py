@@ -12,26 +12,13 @@ from scipy.linalg import solve
 
 from andes.io.txt import dump_data
 from andes.plot import set_latex, set_style
-from andes.routines.base import BaseRoutine, create_config_base_routine
+from andes.routines.base import BaseRoutine
 from andes.shared import div, matrix, plt, sparse, spdiag, spmatrix
 from andes.utils.misc import elapsed
 from andes.variables.report import report_info
 
 logger = logging.getLogger(__name__)
 DPI = None
-
-
-def create_config_eig(config_obj):
-    config = create_config_base_routine("EIG",
-                                        config_obj=config_obj)
-    config.add(plot=0, tol=1e-6)
-    config.add_extra("_help",
-                     plot="show plot after computation",
-                     tol="numerical tolerance to treat eigenvalues as zeros")
-
-    config.add_extra("_alt", plot=(0, 1))
-
-    return config
 
 
 class EIG(BaseRoutine):
@@ -41,8 +28,6 @@ class EIG(BaseRoutine):
 
     def __init__(self, system, config):
         super().__init__(system=system)
-
-        self.config = create_config_eig(config)
 
         # internal flags and storage
         self.As = None  # state matrix after removing the ones associated with zero T consts
@@ -62,6 +47,17 @@ class EIG(BaseRoutine):
         self.n_negative = 0
 
         self.x_name = []
+
+    def create_config(self, config_obj):
+        config = self.create_config("EIG", config_obj=config_obj)
+        config.add(plot=0, tol=1e-6)
+        config.add_extra("_help",
+                         plot="show plot after computation",
+                         tol="numerical tolerance to treat eigenvalues as zeros")
+
+        config.add_extra("_alt", plot=(0, 1))
+
+        return config
 
     def calc_As(self, dense=True):
         r"""

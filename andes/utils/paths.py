@@ -153,6 +153,8 @@ def list_cases(rpath='.', no_print=False):
 
 def get_config_path(file_name='andes.rc'):
     """
+    Deprecated by ``ConfigManager.set_path``.
+
     Return the path of the config file to be loaded.
 
     Search Priority: 1. current directory; 2. home directory.

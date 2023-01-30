@@ -2,31 +2,10 @@
 Base class for ANDES calculation routines.
 """
 
-from andes.linsolvers.solverbase import Solver
+from typing import Optional
+
+# from andes.linsolvers.solverbase import Solver
 from andes.core import Config
-from collections import OrderedDict
-
-
-def create_config_base_routine(name, config_obj=None):
-    config = Config(name)
-
-    if config_obj is not None:
-        config.load(config_obj)
-
-    config.add(OrderedDict((('sparselib', 'klu'),
-                            ('linsolve', 0),
-                            )))
-
-    config.add_extra("_help",
-                     sparselib="linear sparse solver name",
-                     linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
-                     )
-    config.add_extra("_alt",
-                     sparselib=("klu", "umfpack", "spsolve", "cupy"),
-                     linsolve=(0, 1),
-                     )
-
-    return config
 
 
 class BaseRoutine:
@@ -39,8 +18,10 @@ class BaseRoutine:
     def __init__(self, system=None):
         self.system = system
 
-        self.config = create_config_base_routine("BaseRoutine")
-        self.solver = Solver(sparselib=self.config.sparselib)
+        self.config: Optional[Config] = None
+
+        # self.solver = Solver(sparselib=self.config.sparselib)
+
         self.exec_time = 0.0  # recorded time to execute the routine in seconds
 
     @property
@@ -76,3 +57,18 @@ class BaseRoutine:
         Report interface.
         """
         raise NotImplementedError
+
+    def create_config(self, name, config_obj=None):
+
+        config = Config(name)
+
+        if config_obj is not None:
+            config.load(config_obj)
+
+        return config
+
+    def register_config(self, config_manager):
+        config_manager.register(self.class_name, self.create_config)
+
+    def set_config(self, config_manager):
+        self.config = config_manager._store[self.class_name]

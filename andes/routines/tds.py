@@ -9,7 +9,7 @@ import sys
 import time
 from collections import OrderedDict
 
-from andes.routines.base import BaseRoutine, create_config_base_routine
+from andes.routines.base import BaseRoutine
 from andes.routines.daeint import Trapezoid, method_map
 from andes.routines.criteria import deltadelta
 from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
@@ -17,103 +17,6 @@ from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
 
 logger = logging.getLogger(__name__)
-
-
-def create_config_tds(config_obj):
-    config = create_config_base_routine("TDS",
-                                        config_obj=config_obj)
-
-    config.add(OrderedDict((('method', 'trapezoid'),
-                            ('tol', 1e-4),
-                            ('t0', 0.0),
-                            ('tf', 20.0),
-                            ('fixt', 1),
-                            ('shrinkt', 1),
-                            ('honest', 0),
-                            ('tstep', 1 / 30),
-                            ('max_iter', 15),
-                            ('refresh_event', 0),
-                            ('test_init', 1),
-                            ('check_conn', 1),
-                            ('check_conn', 1),
-                            ('criteria', 1),
-                            ('ddelta_limit', 180),
-                            ('g_scale', 1),
-                            ('reset_tiny', 1),
-                            ('qrt', 0),
-                            ('kqrt', 1.0),
-                            ('store_z', 0),
-                            ('store_f', 0),
-                            ('store_h', 0),
-                            ('store_i', 0),
-                            ('limit_store', 0),
-                            ('max_store', 900),
-                            ('save_every', 1),
-                            ('save_mode', 'auto'),
-                            ('no_tqdm', 0),
-                            ('chatter_iter', 4),
-                            )))
-    config.add_extra("_help",
-                     method='DAE solution method',
-                     tol="convergence tolerance",
-                     t0="simulation starting time",
-                     tf="simulation ending time",
-                     fixt="use fixed step size (1) or variable (0)",
-                     shrinkt='shrink step size for fixed method if not converged',
-                     honest='honest Newton method that updates Jac at each step',
-                     tstep='integration step size',
-                     max_iter='maximum number of iterations',
-                     refresh_event='refresh events at each step',
-                     test_init='test if initialization passes',
-                     check_conn='re-check connectivity after event',
-                     criteria='use criteria to stop simulation if unstable',
-                     ddelta_limit='delta diff. limit to be considered unstable, in degree',
-                     g_scale='scale algebraic residuals with time step size',
-                     reset_tiny='reset tiny residuals to zero to avoid chattering',
-                     qrt='quasi-real-time stepping',
-                     kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
-                     store_z='store limiter status in TDS output',
-                     store_f='store RHS of diff. equations',
-                     store_h='store RHS of external diff. equations',
-                     store_i='store RHS of external algeb. equations',
-                     limit_store='limit in-memory timeseries storage',
-                     max_store='maximum steps of data stored in memory before offloading',
-                     save_every='save results for one step every "save_every" steps',
-                     save_mode='automatically or manually save output data when done',
-                     no_tqdm='disable tqdm progressbar and outputs',
-                     chatter_iter='minimum iterations to detect chattering',
-                     )
-    config.add_extra("_alt",
-                     method=tuple(method_map.keys()),
-                     tol="float",
-                     t0=">=0",
-                     tf=">t0",
-                     fixt=(0, 1),
-                     shrinkt=(0, 1),
-                     honest=(0, 1),
-                     tstep='float',
-                     max_iter='>=10',
-                     refresh_event=(0, 1),
-                     test_init=(0, 1),
-                     check_conn=(0, 1),
-                     criteria=(0, 1),
-                     g_scale='positive',
-                     reset_tiny=(0, 1),
-                     qrt=(0, 1),
-                     kqrt='positive',
-                     store_z=(0, 1),
-                     store_f=(0, 1),
-                     store_h=(0, 1),
-                     store_i=(0, 1),
-                     limit_store=(0, 1),
-                     max_store='positive integer',
-                     save_every='integer',
-                     save_mode=('auto', 'manual'),
-                     no_tqdm=(0, 1),
-                     chatter_iter='int>=4',
-                     )
-
-    return config
 
 
 class TDS(BaseRoutine):
@@ -127,7 +30,7 @@ class TDS(BaseRoutine):
     def __init__(self, system=None, config=None):
         super().__init__(system)
 
-        self.config = create_config_tds(config_obj=config)
+        # self.config = create_config_tds(config_obj=config)
 
         # overwrite `tf` from command line
         if system.options.get('tf') is not None:
@@ -183,6 +86,101 @@ class TDS(BaseRoutine):
         # set DAE solver
         self.method = Trapezoid()
         self.set_method(self.config.method)
+
+    def create_config(config_obj):
+        config = super().create_config("TDS", config_obj=config_obj)
+
+        config.add(OrderedDict((('method', 'trapezoid'),
+                                ('tol', 1e-4),
+                                ('t0', 0.0),
+                                ('tf', 20.0),
+                                ('fixt', 1),
+                                ('shrinkt', 1),
+                                ('honest', 0),
+                                ('tstep', 1 / 30),
+                                ('max_iter', 15),
+                                ('refresh_event', 0),
+                                ('test_init', 1),
+                                ('check_conn', 1),
+                                ('check_conn', 1),
+                                ('criteria', 1),
+                                ('ddelta_limit', 180),
+                                ('g_scale', 1),
+                                ('reset_tiny', 1),
+                                ('qrt', 0),
+                                ('kqrt', 1.0),
+                                ('store_z', 0),
+                                ('store_f', 0),
+                                ('store_h', 0),
+                                ('store_i', 0),
+                                ('limit_store', 0),
+                                ('max_store', 900),
+                                ('save_every', 1),
+                                ('save_mode', 'auto'),
+                                ('no_tqdm', 0),
+                                ('chatter_iter', 4),
+                                )))
+        config.add_extra("_help",
+                         method='DAE solution method',
+                         tol="convergence tolerance",
+                         t0="simulation starting time",
+                         tf="simulation ending time",
+                         fixt="use fixed step size (1) or variable (0)",
+                         shrinkt='shrink step size for fixed method if not converged',
+                         honest='honest Newton method that updates Jac at each step',
+                         tstep='integration step size',
+                         max_iter='maximum number of iterations',
+                         refresh_event='refresh events at each step',
+                         test_init='test if initialization passes',
+                         check_conn='re-check connectivity after event',
+                         criteria='use criteria to stop simulation if unstable',
+                         ddelta_limit='delta diff. limit to be considered unstable, in degree',
+                         g_scale='scale algebraic residuals with time step size',
+                         reset_tiny='reset tiny residuals to zero to avoid chattering',
+                         qrt='quasi-real-time stepping',
+                         kqrt='quasi-real-time scaling factor; kqrt > 1 means slowing down',
+                         store_z='store limiter status in TDS output',
+                         store_f='store RHS of diff. equations',
+                         store_h='store RHS of external diff. equations',
+                         store_i='store RHS of external algeb. equations',
+                         limit_store='limit in-memory timeseries storage',
+                         max_store='maximum steps of data stored in memory before offloading',
+                         save_every='save results for one step every "save_every" steps',
+                         save_mode='automatically or manually save output data when done',
+                         no_tqdm='disable tqdm progressbar and outputs',
+                         chatter_iter='minimum iterations to detect chattering',
+                         )
+        config.add_extra("_alt",
+                         method=tuple(method_map.keys()),
+                         tol="float",
+                         t0=">=0",
+                         tf=">t0",
+                         fixt=(0, 1),
+                         shrinkt=(0, 1),
+                         honest=(0, 1),
+                         tstep='float',
+                         max_iter='>=10',
+                         refresh_event=(0, 1),
+                         test_init=(0, 1),
+                         check_conn=(0, 1),
+                         criteria=(0, 1),
+                         g_scale='positive',
+                         reset_tiny=(0, 1),
+                         qrt=(0, 1),
+                         kqrt='positive',
+                         store_z=(0, 1),
+                         store_f=(0, 1),
+                         store_h=(0, 1),
+                         store_i=(0, 1),
+                         limit_store=(0, 1),
+                         max_store='positive integer',
+                         save_every='integer',
+                         save_mode=('auto', 'manual'),
+                         no_tqdm=(0, 1),
+                         chatter_iter='int>=4',
+                         )
+
+        return config
 
     def init(self):
         """

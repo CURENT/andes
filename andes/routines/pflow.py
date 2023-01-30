@@ -6,48 +6,11 @@ import logging
 from collections import OrderedDict
 
 from andes.utils.misc import elapsed
-from andes.routines.base import BaseRoutine, create_config_base_routine
+from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
 from andes.shared import np, matrix, sparse, newton_krylov
 
 logger = logging.getLogger(__name__)
-
-
-def create_config_pflow(config_obj=None):
-    config = create_config_base_routine("pflow",
-                                        config_obj=config_obj)
-
-    config.add(OrderedDict((('tol', 1e-6),
-                            ('max_iter', 25),
-                            ('method', 'NR'),
-                            ('check_conn', 1),
-                            ('n_factorize', 4),
-                            ('report', 1),
-                            ('degree', 0),
-                            ('init_tds', 0),
-                            )))
-    config.add_extra("_help",
-                     tol="convergence tolerance",
-                     max_iter="max. number of iterations",
-                     method="calculation method",
-                     check_conn='check connectivity before power flow',
-                     n_factorize="first N iterations to factorize Jacobian in dishonest method",
-                     report="write output report",
-                     degree='use degree in report',
-                     init_tds="initialize TDS after PFlow",
-                     )
-    config.add_extra("_alt",
-                     tol="float",
-                     method=("NR", "dishonest", "NK"),
-                     check_conn=(0, 1),
-                     max_iter=">=10",
-                     n_factorize=">0",
-                     report=(0, 1),
-                     degree=(0, 1),
-                     init_tds=(0, 1),
-                     )
-
-    return config
 
 
 class PFlow(BaseRoutine):
@@ -57,7 +20,7 @@ class PFlow(BaseRoutine):
 
     def __init__(self, system=None, config=None):
         super().__init__(system)
-        self.config = create_config_pflow(config)
+        # self.config = create_config_pflow(config)
 
         self.converged = False
         self.inc = None
@@ -68,6 +31,42 @@ class PFlow(BaseRoutine):
 
         self.x_sol = None
         self.y_sol = None
+
+    def create_config(self, config_obj=None):
+
+        config = super().create_config("pflow", config_obj=config_obj)
+
+        config.add(OrderedDict((('tol', 1e-6),
+                                ('max_iter', 25),
+                                ('method', 'NR'),
+                                ('check_conn', 1),
+                                ('n_factorize', 4),
+                                ('report', 1),
+                                ('degree', 0),
+                                ('init_tds', 0),
+                                )))
+        config.add_extra("_help",
+                         tol="convergence tolerance",
+                         max_iter="max. number of iterations",
+                         method="calculation method",
+                         check_conn='check connectivity before power flow',
+                         n_factorize="first N iterations to factorize Jacobian in dishonest method",
+                         report="write output report",
+                         degree='use degree in report',
+                         init_tds="initialize TDS after PFlow",
+                         )
+        config.add_extra("_alt",
+                         tol="float",
+                         method=("NR", "dishonest", "NK"),
+                         check_conn=(0, 1),
+                         max_iter=">=10",
+                         n_factorize=">0",
+                         report=(0, 1),
+                         degree=(0, 1),
+                         init_tds=(0, 1),
+                         )
+
+        return config
 
     def init(self):
         """

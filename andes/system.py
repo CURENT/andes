@@ -27,7 +27,7 @@ from andes.models.group import GroupBase
 from andes.routines import all_routines
 from andes.shared import (jac_names, matrix, np, sparse, spmatrix)
 from andes.utils.misc import elapsed
-from andes.utils.paths import (confirm_overwrite, get_config_path)
+from andes.utils.paths import confirm_overwrite
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -45,10 +45,11 @@ class ExistingModels:
         self.pflow_tds = OrderedDict()
 
 
-def get_config_system(config: Optional[Dict] = None,
-                      config_parser_obj=None):
+def create_config_system(config: Optional[Dict] = None,
+                         config_obj=None):
+
     config_system = Config("System", dct=config)
-    config_system.load(config_parser_obj)
+    config_system.load(config_obj)
 
     # custom configuration for system goes after this line
     config_system.add(OrderedDict((('freq', 60),
@@ -56,6 +57,8 @@ def get_config_system(config: Optional[Dict] = None,
                                    ('ipadd', 1),
                                    ('seed', 'None'),
                                    ('diag_eps', 1e-8),
+                                   ('sparselib', 'klu'),
+                                   ('linsolve', 0),
                                    ('warn_limits', 1),
                                    ('warn_abnormal', 1),
                                    ('dime_enabled', 0),
@@ -75,6 +78,8 @@ def get_config_system(config: Optional[Dict] = None,
                             ipadd='use spmatrix.ipadd if available',
                             seed='seed (or None) for random number generator',
                             diag_eps='small value for Jacobian diagonals',
+                            sparselib="linear sparse solver name",
+                            linsolve="solve symbolic factorization each step (enable when KLU segfaults)",
                             warn_limits='warn variables initialized at limits',
                             warn_abnormal='warn initialization out of normal values',
                             numba='use numba for JIT compilation',
@@ -85,11 +90,14 @@ def get_config_system(config: Optional[Dict] = None,
                             np_divide='treatment for division by zero',
                             np_invalid='treatment for invalid floating-point ops.',
                             )
+
     config_system.add_extra("_alt",
                             freq="float",
                             mva="float",
                             ipadd=(0, 1),
                             seed='int or None',
+                            sparselib=("klu", "umfpack", "spsolve", "cupy"),
+                            linsolve=(0, 1),
                             warn_limits=(0, 1),
                             warn_abnormal=(0, 1),
                             numba=(0, 1),
@@ -101,7 +109,6 @@ def get_config_system(config: Optional[Dict] = None,
                             np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
                             )
 
-    config_system.check()
     return config_system
 
 
@@ -113,6 +120,7 @@ class ModelManager:
     def __init__(self) -> None:
         self.groups: OrderedDict = OrderedDict()
         self.models: OrderedDict = OrderedDict()
+        self.exist: ExistingModels = ExistingModels()
 
         # alias: model instance
         self.model_aliases = OrderedDict()
@@ -178,6 +186,57 @@ class ModelManager:
             self.model_aliases[key] = self.models[val]
             self.__dict__[key] = self.models[val]
 
+    def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
+        """
+        Find models with at least one of the flags as True.
+
+        Warnings
+        --------
+        Checking the number of devices has been centralized into this function.
+        ``models`` passed to most System calls must be retrieved from here.
+
+        Parameters
+        ----------
+        flag : list, str
+            Flags to find
+
+        skip_zero : bool
+            Skip models with zero devices
+
+        Returns
+        -------
+        OrderedDict
+            model name : model instance
+
+        """
+        if isinstance(flag, str):
+            flag = [flag]
+
+        out = OrderedDict()
+        for name, mdl in self.models.items():
+
+            if skip_zero is True:
+                if (mdl.n == 0) or (mdl.in_use is False):
+                    continue
+
+            for f in flag:
+                if mdl.flags.__dict__[f] is True:
+                    out[name] = mdl
+                    break
+        return out
+
+    def store_existing(self):
+        """
+        Store existing models in `System.existing`.
+
+        TODO: Models with `TimerParam` will need to be stored anyway.
+        This will allow adding switches on the fly.
+        """
+
+        self.exist.pflow = self.find_models('pflow')
+        self.exist.tds = self.find_models('tds')
+        self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
+
 
 class System:
     """
@@ -226,8 +285,6 @@ class System:
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
-                 no_undill: Optional[bool] = False,
-                 autogen_stale: Optional[bool] = True,
                  **kwargs
                  ):
         self.name = name
@@ -236,32 +293,28 @@ class System:
             self.options.update(options)
         if kwargs:
             self.options.update(kwargs)
-        self.models = OrderedDict()          # model names and instances
-        self.groups = OrderedDict()          # group names and instances
         self.routines = OrderedDict()        # routine names and instances
         self.switch_times = np.array([])     # an array of ordered event switching times
         self.switch_dict = OrderedDict()     # time: OrderedDict of associated models
         self.n_switches = 0                  # number of elements in `self.switch_times`
         self.exit_code = 0                   # command-line exit code, 0 - normal, others - error.
 
-        # get and load default config file
-        self._config_path = get_config_path()
-        if config_path is not None:
-            self._config_path = config_path
-        if default_config is True:
-            self._config_path = None
+        # # get and load default config file
+        # self._config_path = get_config_path()
+        # if config_path is not None:
+        #     self._config_path = config_path
+        # if default_config is True:
+        #     self._config_path = None
 
-        self._config_object = load_config_rc(self._config_path)
-        self._update_config_object()
+        # self._config_object = load_config_rc(self._config_path)
+        # self._update_config_object()
 
-        self.config = get_config_system(config_parser_obj=self._config_object)
+        self.config = create_config_system(config_obj=self._config_object)
 
         _config_numpy(seed=self.config.seed,
                       divide=self.config.np_divide,
                       invalid=self.config.np_invalid,
                       )
-
-        self.exist = ExistingModels()
 
         self.files = FileMan(case=case, **self.options)  # file path manager
         self.dae = DAE(system=self)  # numerical DAE storage
@@ -285,10 +338,13 @@ class System:
 
     def _update_config_object(self):
         """
+        Deprecated by ``ConfigManager.load_config_rc()``.
+
         Change config on the fly based on command-line options.
         """
 
         config_option = self.options.get('config_option', None)
+
         if config_option is None:
             return
 
@@ -406,18 +462,6 @@ class System:
         logger.info('System internal structure set up in %s.', s)
 
         return ret
-
-    def store_existing(self):
-        """
-        Store existing models in `System.existing`.
-
-        TODO: Models with `TimerParam` will need to be stored anyway.
-        This will allow adding switches on the fly.
-        """
-
-        self.exist.pflow = self.find_models('pflow')
-        self.exist.tds = self.find_models('tds')
-        self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
     def reset(self, force=False):
         """
@@ -1290,45 +1334,6 @@ class System:
 
         return self.dae.z
 
-    def find_models(self, flag: Optional[Union[str, Tuple]], skip_zero: bool = True):
-        """
-        Find models with at least one of the flags as True.
-
-        Warnings
-        --------
-        Checking the number of devices has been centralized into this function.
-        ``models`` passed to most System calls must be retrieved from here.
-
-        Parameters
-        ----------
-        flag : list, str
-            Flags to find
-
-        skip_zero : bool
-            Skip models with zero devices
-
-        Returns
-        -------
-        OrderedDict
-            model name : model instance
-
-        """
-        if isinstance(flag, str):
-            flag = [flag]
-
-        out = OrderedDict()
-        for name, mdl in self.models.items():
-
-            if skip_zero is True:
-                if (mdl.n == 0) or (mdl.in_use is False):
-                    continue
-
-            for f in flag:
-                if mdl.flags.__dict__[f] is True:
-                    out[name] = mdl
-                    break
-        return out
-
     def _store_tf(self, models):
         """
         Store the inverse time constant associated with equations.
@@ -1772,6 +1777,8 @@ def _config_numpy(seed='None', divide='warn', invalid='warn'):
 
 def load_config_rc(conf_path=None):
     """
+    Deprecated by ``ConfigManager.load_configparser``.
+
     Load config from an rc-formatted file.
 
     Parameters
