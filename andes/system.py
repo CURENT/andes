@@ -41,10 +41,68 @@ class ExistingModels:
 
     def __init__(self):
         self.pflow = OrderedDict()
-
-        # if a model needs to be initialized before TDS, set `flags.tds = True`
-        self.tds = OrderedDict()
+        self.tds = OrderedDict()  # if a model needs to be initialized before TDS, set `flags.tds = True`
         self.pflow_tds = OrderedDict()
+
+
+def get_config_system(config: Optional[Dict] = None,
+                      config_parser_obj=None):
+    config_system = Config("System", dct=config)
+    config_system.load(config_parser_obj)
+
+    # custom configuration for system goes after this line
+    config_system.add(OrderedDict((('freq', 60),
+                            ('mva', 100),
+                            ('ipadd', 1),
+                            ('seed', 'None'),
+                            ('diag_eps', 1e-8),
+                            ('warn_limits', 1),
+                            ('warn_abnormal', 1),
+                            ('dime_enabled', 0),
+                            ('dime_name', 'andes'),
+                            ('dime_address', 'ipc:///tmp/dime2'),
+                            ('numba', 0),
+                            ('numba_parallel', 0),
+                            ('numba_nopython', 0),
+                            ('yapf_pycode', 0),
+                            ('save_stats', 0),
+                            ('np_divide', 'warn'),
+                            ('np_invalid', 'warn'),
+                            )))
+    config_system.add_extra("_help",
+                     freq='base frequency [Hz]',
+                     mva='system base MVA',
+                     ipadd='use spmatrix.ipadd if available',
+                     seed='seed (or None) for random number generator',
+                     diag_eps='small value for Jacobian diagonals',
+                     warn_limits='warn variables initialized at limits',
+                     warn_abnormal='warn initialization out of normal values',
+                     numba='use numba for JIT compilation',
+                     numba_parallel='enable parallel for numba.jit',
+                     numba_nopython='nopython mode for numba',
+                     yapf_pycode='format generated code with yapf',
+                     save_stats='store statistics of function calls',
+                     np_divide='treatment for division by zero',
+                     np_invalid='treatment for invalid floating-point ops.',
+                     )
+    config_system.add_extra("_alt",
+                     freq="float",
+                     mva="float",
+                     ipadd=(0, 1),
+                     seed='int or None',
+                     warn_limits=(0, 1),
+                     warn_abnormal=(0, 1),
+                     numba=(0, 1),
+                     numba_parallel=(0, 1),
+                     numba_nopython=(0, 1),
+                     yapf_pycode=(0, 1),
+                     save_stats=(0, 1),
+                     np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                     np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
+                     )
+
+    config_system.check()
+    return config_system
 
 
 class ModelManager:
@@ -165,7 +223,6 @@ class System:
     def __init__(self,
                  case: Optional[str] = None,
                  name: Optional[str] = None,
-                 config: Optional[Dict] = None,
                  config_path: Optional[str] = None,
                  default_config: Optional[bool] = False,
                  options: Optional[Dict] = None,
@@ -196,61 +253,9 @@ class System:
 
         self._config_object = load_config_rc(self._config_path)
         self._update_config_object()
-        self.config = Config(self.__class__.__name__, dct=config)
-        self.config.load(self._config_object)
 
-        # custom configuration for system goes after this line
-        self.config.add(OrderedDict((('freq', 60),
-                                     ('mva', 100),
-                                     ('ipadd', 1),
-                                     ('seed', 'None'),
-                                     ('diag_eps', 1e-8),
-                                     ('warn_limits', 1),
-                                     ('warn_abnormal', 1),
-                                     ('dime_enabled', 0),
-                                     ('dime_name', 'andes'),
-                                     ('dime_address', 'ipc:///tmp/dime2'),
-                                     ('numba', 0),
-                                     ('numba_parallel', 0),
-                                     ('numba_nopython', 0),
-                                     ('yapf_pycode', 0),
-                                     ('save_stats', 0),
-                                     ('np_divide', 'warn'),
-                                     ('np_invalid', 'warn'),
-                                     )))
-        self.config.add_extra("_help",
-                              freq='base frequency [Hz]',
-                              mva='system base MVA',
-                              ipadd='use spmatrix.ipadd if available',
-                              seed='seed (or None) for random number generator',
-                              diag_eps='small value for Jacobian diagonals',
-                              warn_limits='warn variables initialized at limits',
-                              warn_abnormal='warn initialization out of normal values',
-                              numba='use numba for JIT compilation',
-                              numba_parallel='enable parallel for numba.jit',
-                              numba_nopython='nopython mode for numba',
-                              yapf_pycode='format generated code with yapf',
-                              save_stats='store statistics of function calls',
-                              np_divide='treatment for division by zero',
-                              np_invalid='treatment for invalid floating-point ops.',
-                              )
-        self.config.add_extra("_alt",
-                              freq="float",
-                              mva="float",
-                              ipadd=(0, 1),
-                              seed='int or None',
-                              warn_limits=(0, 1),
-                              warn_abnormal=(0, 1),
-                              numba=(0, 1),
-                              numba_parallel=(0, 1),
-                              numba_nopython=(0, 1),
-                              yapf_pycode=(0, 1),
-                              save_stats=(0, 1),
-                              np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                              np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                              )
+        self.config = get_config_system(config_parser_obj=self._config_object)
 
-        self.config.check()
         _config_numpy(seed=self.config.seed,
                       divide=self.config.np_divide,
                       invalid=self.config.np_invalid,
@@ -258,9 +263,9 @@ class System:
 
         self.exist = ExistingModels()
 
-        self.files = FileMan(case=case, **self.options)    # file path manager
-        self.dae = DAE(system=self)                        # numerical DAE storage
-        self.streaming = Streaming(self)                   # Dime2 streaming
+        self.files = FileMan(case=case, **self.options)  # file path manager
+        self.dae = DAE(system=self)  # numerical DAE storage
+        self.streaming = Streaming(self)  # Dime2 streaming
 
         # dynamic imports of groups, models and routines
         self.import_routines()  # routine imports come after models
@@ -276,7 +281,7 @@ class System:
         self.call_stats = defaultdict(dict)  # call statistics storage
 
         # internal flags
-        self.is_setup = False        # if system has been setup
+        self.is_setup = False  # if system has been setup
 
     def _update_config_object(self):
         """
@@ -375,19 +380,19 @@ class System:
             return ret
 
         self.collect_ref()
-        self._list2array()     # `list2array` must come before `link_ext_param`
+        self._list2array()  # `list2array` must come before `link_ext_param`
         if not self.link_ext_param():
             ret = False
 
-        self.find_devices()    # find or add required devices
+        self.find_devices()  # find or add required devices
 
         # === no device addition or removal after this point ===
-        self.calc_pu_coeff()   # calculate parameters in system per units
+        self.calc_pu_coeff()  # calculate parameters in system per units
         self.store_existing()  # store models with routine flags
 
         # assign address at the end before adding devices and processing parameters
         self.set_address(self.exist.pflow)
-        self.set_dae_names(self.exist.pflow)        # needs perf. optimization
+        self.set_dae_names(self.exist.pflow)  # needs perf. optimization
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
 
@@ -799,7 +804,7 @@ class System:
         self.call_models('l_update_var', models,
                          dae_t=self.dae.t, niter=niter, err=err)
 
-    def l_update_eq(self, models:  OrderedDict, init=False, niter=0):
+    def l_update_eq(self, models: OrderedDict, init=False, niter=0):
         """
         Update equation-dependent limiter discrete components by calling ``l_check_eq`` of models.
         Force set equations after evaluating equations.

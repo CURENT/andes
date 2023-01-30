@@ -31,3 +31,6 @@ class TestConfigOption(unittest.TestCase):
         ss = andes.load(path, config_option=["PQ.pq2z=0", "TDS.tf = 1"], default_config=True)
         self.assertEqual(ss.PQ.config.pq2z, 0)
         self.assertEqual(ss.TDS.config.tf, 1)
+
+        ss = andes.load(path, config_option=["System.mva = 50"], default_config=True)
+        self.assertEqual(ss.config.mva, 50.0)

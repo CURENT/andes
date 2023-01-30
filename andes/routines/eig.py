@@ -12,7 +12,7 @@ from scipy.linalg import solve
 
 from andes.io.txt import dump_data
 from andes.plot import set_latex, set_style
-from andes.routines.base import BaseRoutine
+from andes.routines.base import BaseRoutine, create_config_base_routine
 from andes.shared import div, matrix, plt, sparse, spdiag, spmatrix
 from andes.utils.misc import elapsed
 from andes.variables.report import report_info
@@ -21,27 +21,35 @@ logger = logging.getLogger(__name__)
 DPI = None
 
 
+def create_config_eig(config_obj):
+    config = create_config_base_routine("EIG",
+                                        config_obj=config_obj)
+    config.add(plot=0, tol=1e-6)
+    config.add_extra("_help",
+                     plot="show plot after computation",
+                     tol="numerical tolerance to treat eigenvalues as zeros")
+
+    config.add_extra("_alt", plot=(0, 1))
+
+    return config
+
+
 class EIG(BaseRoutine):
     """
     Eigenvalue analysis routine
     """
 
     def __init__(self, system, config):
-        super().__init__(system=system, config=config)
+        super().__init__(system=system)
 
-        self.config.add(plot=0, tol=1e-6)
-        self.config.add_extra("_help",
-                              plot="show plot after computation",
-                              tol="numerical tolerance to treat eigenvalues as zeros")
-
-        self.config.add_extra("_alt", plot=(0, 1))
+        self.config = create_config_eig(config)
 
         # internal flags and storage
-        self.As = None     # state matrix after removing the ones associated with zero T consts
-        self.Asc = None    # the original complete As without reordering
-        self.mu = None     # eigenvalues
-        self.N = None      # right eigenvectors
-        self.W = None      # left eigenvectors
+        self.As = None  # state matrix after removing the ones associated with zero T consts
+        self.Asc = None  # the original complete As without reordering
+        self.mu = None  # eigenvalues
+        self.N = None  # right eigenvectors
+        self.W = None  # left eigenvectors
         self.pfactors = None
 
         # --- related to states with zero time constants (zs) ---
@@ -255,7 +263,6 @@ class EIG(BaseRoutine):
         self.zstate_idx = np.array([], dtype=int)
 
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
-
             self.zstate_idx = np.where(system.dae.Tf == 0)[0]
             logger.info("%d states are associated with zero time constants. ", len(self.zstate_idx))
             logger.debug([system.dae.x_name[i] for i in self.zstate_idx])
@@ -311,18 +318,18 @@ class EIG(BaseRoutine):
         results = dict()
 
         if not isinstance(params, Iterable):
-            params = (params, )
+            params = (params,)
 
         if not isinstance(values, Iterable):
             logger.error("values must be a list or tuple.")
             return ret
         elif not isinstance(values[0], Iterable):
-            values = (values, )
+            values = (values,)
 
         if isinstance(idxes, str):
-            idxes = (idxes, )
+            idxes = (idxes,)
         elif not isinstance(idxes, Iterable):
-            idxes = (idxes, )
+            idxes = (idxes,)
 
         if len(params) != len(values):
             logger.error("params and values must have the same length.")
@@ -363,7 +370,7 @@ class EIG(BaseRoutine):
 
             self.mu, self.N = mu, N  # save to `EIG` for writing if needed
 
-            results[count] = dict(param_values=val, mu=mu,)
+            results[count] = dict(param_values=val, mu=mu, )
 
         return results
 
