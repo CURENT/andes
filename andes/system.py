@@ -381,13 +381,16 @@ class PyCodeManager:
 
     def __init__(self,
                  models: OrderedDict,
+                 path=None,
                  ) -> None:
+
+        self.models = models
+        self.path: Optional[str] = None
 
         self.generator = PyCodeGenerator(models)
         self.loader = PyCodeLoader(models)
-        self.models = models
 
-        self.pycode_path: Optional[str] = None
+        self.set_path(path)
 
     def set_path(self, path: Optional[str] = None) -> None:
         """
@@ -398,8 +401,8 @@ class PyCodeManager:
             path = os.path.join(get_dot_andes_path(), 'pycode')
 
         os.makedirs(path, exist_ok=True)
-        self.pycode_path = path
-        logger.debug("Using pycode_path: %s", self.pycode_path)
+        self.path = path
+        logger.debug("Using pycode_path: %s", self.path)
 
     def load(self,
              path: Optional[str] = None,
@@ -412,7 +415,7 @@ class PyCodeManager:
 
         if self.regenerate_stale() is True:
 
-            self.loader.load_calls(self.pycode_path)
+            self.loader.load_calls(self.path)
 
         return self.loader.get_calls()
 
@@ -426,14 +429,14 @@ class PyCodeManager:
             True if any model is regenerated.
         """
 
-        self.loader.load_calls(self.pycode_path)
+        self.loader.load_calls(self.path)
         stale_models = self.loader.find_stale()
 
         if len(stale_models) > 0:
             logger.info("Generated code for <%s> is stale.",
                         ', '.join(stale_models.keys()))
 
-            self.generator.run(self.pycode_path,
+            self.generator.run(self.path,
                                quick=True,
                                models=stale_models,
                                )
@@ -467,7 +470,7 @@ class PyCodeManager:
             self.regenerate_stale()
 
         else:
-            self.generator.run(self.pycode_path,
+            self.generator.run(self.path,
                                quick=quick,
                                models=self.models)
 
