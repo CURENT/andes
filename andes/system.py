@@ -32,7 +32,7 @@ from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
                           jac_names, matrix, np, numba, sparse, spmatrix)
 from andes.utils.misc import elapsed
 from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
-                               get_pycode_path)
+                               get_pycode_path, get_dot_andes_path)
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -60,7 +60,9 @@ class ModelManager:
     def __init__(self) -> None:
         self.groups: OrderedDict = OrderedDict()
         self.models: OrderedDict = OrderedDict()
-        self.model_aliases = OrderedDict()   # alias: model instance
+
+        # alias: model instance
+        self.model_aliases = OrderedDict()
 
         self.import_groups()
         self.import_models()
@@ -98,11 +100,12 @@ class ModelManager:
 
         Examples
         --------
-        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the
+        ``self.Bus`` stores the ``Bus`` object, and ``self.GENCLS`` stores the
         classical generator object,
 
-        ``system.models['Bus']`` points the same instance as ``system.Bus``.
+        ``self.models['Bus']`` and ``self.Bus`` are the same object.
         """
+
         for fname, cls_list in file_classes:
             for model_name in cls_list:
                 the_module = importlib.import_module('andes.models.' + fname)
@@ -133,19 +136,15 @@ class PyCodeGenerator:
         self.models = models
         self.options = {} if options is None else options
 
-        # True if generated function calls have been loaded
-        self.with_calls = False
+        self.path = None
 
-        # a dictionary with model names (keys) and their ``calls`` instance
-        self.calls = OrderedDict()
-
-    def prepare(self,
-                quick=False,
-                incremental=False,
-                models=None,
-                nomp=False,
-                ncpu=NCPUS_PHYSICAL,
-                ):
+    def run(self,
+            pycode_path: str,
+            quick: bool = True,
+            models: bool = None,
+            nomp: bool = False,
+            ncpu: int = NCPUS_PHYSICAL,
+            ):
         """
         Generate numerical functions from symbolically defined models.
 
@@ -155,8 +154,6 @@ class PyCodeGenerator:
         ----------
         quick : bool, optional
             True to skip pretty-print generation to reduce code generation time.
-        incremental : bool, optional
-            True to generate only for modified models, incrementally.
         models : list, OrderedDict, None
             List or OrderedList of models to prepare
         nomp : bool
@@ -185,30 +182,7 @@ class PyCodeGenerator:
         prints (SymPy objects) can only exist in the System instance on which
         prepare is called.
         """
-        if incremental is True:
-            mode_text = 'rapid incremental mode'
-        elif quick is True:
-            mode_text = 'quick mode'
-        else:
-            mode_text = 'full mode'
-
-        logger.info('Numerical code generation (%s) started...', mode_text)
-
         t0, _ = elapsed()
-
-        # get `pycode` folder path without automatic creation
-        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
-
-        # determine which models to prepare based on mode and `models` list.
-        if incremental and models is None:
-            if not self.with_calls:
-                self._load_calls()
-            models = self._find_stale_models()
-        elif not incremental and models is None:
-            models = self.models
-        else:
-            models = self._get_models(models)
-
         total = len(models)
         width = len(str(total))
 
@@ -224,7 +198,6 @@ class PyCodeGenerator:
 
         if len(models) > 0:
             self._finalize_pycode(pycode_path)
-            self._store_calls(models)
 
         _, s = elapsed(t0)
         logger.info('Generated numerical code for %d models in %s.', len(models), s)
@@ -276,11 +249,12 @@ class PyCodeGenerator:
 
     def _finalize_pycode(self, pycode_path):
         """
-        Helper function for finalizing pycode generation by
-        writing ``__init__.py`` and reloading ``pycode`` package.
+        Helper function for finalizing pycode generation by writing
+        ``__init__.py``.
         """
 
         init_path = os.path.join(pycode_path, '__init__.py')
+
         with open(init_path, 'w') as f:
             f.write(f"__version__ = '{andes.__version__}'\n\n")
 
@@ -289,18 +263,6 @@ class PyCodeGenerator:
             f.write('\n')
 
         logger.info('Saved generated pycode to "%s"', pycode_path)
-
-    def _find_stale_models(self):
-        """
-        Find models whose ModelCall are stale using md5 checksum.
-        """
-        out = OrderedDict()
-        for model in self.models.values():
-            calls_md5 = getattr(model.calls, 'md5', None)
-            if calls_md5 != model.get_md5():
-                out[model.class_name] = model
-
-        return out
 
     def precompile(self,
                    models: Union[OrderedDict, None] = None,
@@ -383,49 +345,6 @@ class PyCodeGenerator:
 
         return True
 
-    def undill(self, autogen_stale=True):
-        """
-        Reload generated function functions, from either the
-        ``$HOME/.andes/pycode`` folder.
-
-        If no change is made to models, future calls to ``prepare()`` can be
-        replaced with ``undill()`` for acceleration.
-
-        Parameters
-        ----------
-        autogen_stale: bool
-            True to automatically call code generation if stale code is
-            detected. Regardless of this option, codegen is trigger if importing
-            existing code fails.
-        """
-
-        # load equations and jacobian from saved code
-        loaded = self._load_calls()
-
-        stale_models = self._find_stale_models()
-
-        if loaded is False:
-            self.prepare(quick=True, incremental=False)
-            loaded = True
-
-        elif autogen_stale is False:
-            # NOTE: incremental code generation may be triggered due to Python
-            # not invalidating ``.pyc`` caches. If multiprocessing is being
-            # used, code generation will cause nested multiprocessing, which is
-            # not allowed.
-            # The flag ``autogen_stale=False`` is used to prevent nested codegen
-            # and is intended to be used only in multiprocessing.
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            logger.info("Automatic code re-generation manually skipped")
-            loaded = True
-
-        elif len(stale_models) > 0:
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            self.prepare(quick=True, incremental=True, models=stale_models)
-            loaded = True
-
-        return loaded
-
     def _get_models(self, models):
         """
         Helper function for sanitizing the ``models`` input.
@@ -457,81 +376,132 @@ class PyCodeGenerator:
 
         return out
 
-    def _store_calls(self, models: OrderedDict):
-        """
-        Collect and store model calls into system.
-        """
-        logger.debug("Collecting Model.calls into System.")
-
-        self.calls['__version__'] = andes.__version__
-
-        for name, mdl in models.items():
-            self.calls[name] = mdl.calls
-
 
 class PyCodeManager:
 
-    def __init__(self, model) -> None:
-        pass
+    def __init__(self,
+                 models: OrderedDict,
+                 ) -> None:
 
-    def load_pycode(self) -> OrderedDict:
+        self.generator = PyCodeGenerator(models)
+        self.loader = PyCodeLoader(models)
+        self.models = models
+
+        self.pycode_path: Optional[str] = None
+
+    def set_path(self, path: Optional[str] = None) -> None:
         """
-        API for loading generated numerical functions from the ``pycode``
-        """
-
-        # look up pycode_path
-
-        # load only md5 hash from pycode
-
-        # find stale models
-
-        #   compare loaded hash with current hash
-
-        #   for models with mismatched hash, re-generate
-
-        # load all pycode
-
-        pass
-
-    def generate_pycode(self, model_names: Optional[list] = None) -> bool:
-        """
-        API for generating numerical functions from the ``pycode``
+        Get and set path to the ``pycode`` folder.
         """
 
-        # remove invalid names from `model_names`
+        if path is None:
+            path = os.path.join(get_dot_andes_path(), 'pycode')
 
-        # for the valid model names, generate pycode and store to files
+        os.makedirs(path, exist_ok=True)
+        self.pycode_path = path
+        logger.debug("Using pycode_path: %s", self.pycode_path)
 
-        # load all md5 hashes and update the generated ones
+    def load(self,
+             path: Optional[str] = None,
+             ) -> OrderedDict:
+        """
+        Function for loading ``pycode`` into a dict of calls.
+        """
 
-        pass
+        self.set_path(path)
+
+        if self.regenerate_stale() is True:
+
+            self.loader.load_calls(self.pycode_path)
+
+        return self.loader.get_calls()
+
+    def regenerate_stale(self):
+        """
+        Regenerate stale models.
+
+        Returns
+        -------
+        bool
+            True if any model is regenerated.
+        """
+
+        self.loader.load_calls(self.pycode_path)
+        stale_models = self.loader.find_stale()
+
+        if len(stale_models) > 0:
+            logger.info("Generated code for <%s> is stale.",
+                        ', '.join(stale_models.keys()))
+
+            self.generator.run(self.pycode_path,
+                               quick=True,
+                               models=stale_models,
+                               )
+
+            return True
+
+        else:
+            logger.info("All models are up to date. No code regeneration needed.")
+
+            return False
+
+    def generate(self,
+                 quick=False,
+                 incremental=False,
+                 ) -> bool:
+        """
+        Function for generating code and store them into the ``pycode`` module.
+        """
+
+        if incremental is True:
+            mode_text = 'rapid incremental mode'
+        elif quick is True:
+            mode_text = 'quick mode'
+        else:
+            mode_text = 'full mode'
+
+        logger.info('Numerical code generation (%s) started...', mode_text)
+
+        # determine which models to prepare based on mode and `models` list.
+        if incremental:
+            self.regenerate_stale()
+
+        else:
+            self.generator.run(self.pycode_path,
+                               quick=quick,
+                               models=self.models)
 
 
 class PyCodeLoader:
 
     def __init__(self, models) -> None:
         self.models = models
+        self.path = None
 
-    def _load_calls(self):
+        self.pycode_dict = None
+
+    def get_calls(self):
+        """
+        Return the loaded pycode dict.
+        """
+
+        return self.pycode_dict
+
+    def load_calls(self, pycode_path: str):
         """
         Helper function for loading generated numerical functions from the
         ``pycode`` module.
         """
 
-        loaded = False
-        # user_pycode_path = self.options.get("pycode_path")  # TODO
-        user_pycode_path = None
+        pycode_module = import_pycode(user_pycode_path=pycode_path)
 
-        pycode = import_pycode(user_pycode_path=user_pycode_path)
-
-        if pycode:
+        if pycode_module is not None:
             try:
-                self._expand_pycode(pycode)
-                loaded = True
+                self.pycode_dict = self._expand_pycode(pycode_module)
             except KeyError:
                 logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
 
-        return loaded
+        return self.pycode_dict
 
     def _expand_pycode(self, pycode_module):
         """
@@ -543,7 +513,7 @@ class PyCodeLoader:
             The module for generated code for models.
         """
 
-        modelcall_dict = dict()
+        pycode_dict = dict()
 
         for name, model in self.models.items():
             if name not in pycode_module.__dict__:
@@ -591,9 +561,22 @@ class PyCodeLoader:
             for jname in calls.j_names:
                 calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
 
-            modelcall_dict[name] = calls
+            pycode_dict[name] = calls
 
-        return modelcall_dict
+        return pycode_dict
+
+    def find_stale(self):
+        """
+        Find models whose ModelCall are stale using md5 checksum.
+        """
+        out = OrderedDict()
+        for model in self.models.values():
+            calls_md5 = getattr(self.pycode_dict[model.class_name], 'md5', None)
+
+            if calls_md5 != model.get_md5():
+                out[model.class_name] = model
+
+        return out
 
 
 class System:
