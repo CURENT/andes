@@ -33,7 +33,8 @@ disturbances:
 
 import dill
 
-from andes.system import fix_view_arrays, import_pycode
+from andes.system import fix_view_arrays
+from andes.codegen.manager import import_pycode
 
 
 def save_ss(path, system):
