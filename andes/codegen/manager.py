@@ -362,6 +362,7 @@ class PyCodeManager:
     def generate(self,
                  quick=False,
                  incremental=False,
+                 nomp=False,
                  ) -> bool:
         """
         Function for generating code and store them into the ``pycode`` module.
@@ -383,7 +384,9 @@ class PyCodeManager:
         else:
             self.generator.run(self.path,
                                quick=quick,
-                               models=self.models)
+                               nomp=nomp,
+                               models=self.models,
+                               )
 
 
 class PyCodeLoader:

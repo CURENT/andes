@@ -30,7 +30,6 @@ from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
                                 InitChecker, NumReduce, NumRepeat, NumSelect,
                                 ParamCalc, PostInitService, RandomService,
                                 Replace, SubsService, SwBlock, VarService)
-from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
 from andes.shared import jac_full_names, numba
 from andes.utils.func import list_flatten
