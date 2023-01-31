@@ -3,6 +3,12 @@ Module for ModelCache.
 """
 
 
+class ModelCacheManager:
+
+    def __init__(self) -> None:
+        self._store = {}
+
+
 class ModelCache:
     """
     Class for caching the return value of callback functions.
