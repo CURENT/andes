@@ -49,7 +49,7 @@ class EIG(BaseRoutine):
         self.x_name = []
 
     def create_config(self, config_obj):
-        config = self.create_config("EIG", config_obj=config_obj)
+        config = super().create_config("EIG", config_obj=config_obj)
         config.add(plot=0, tol=1e-6)
         config.add_extra("_help",
                          plot="show plot after computation",

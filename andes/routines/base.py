@@ -67,8 +67,9 @@ class BaseRoutine:
 
         return config
 
-    def register_config(self, config_manager):
-        config_manager.register(self.class_name, self.create_config)
-
     def set_config(self, config_manager):
         self.config = config_manager
+
+        # register config generator function.
+        # No call to the function needed if an existing config is used
+        config_manager.register(self.class_name, self.create_config)

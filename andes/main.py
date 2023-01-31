@@ -36,8 +36,6 @@ from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
 from andes.system import System, fix_view_arrays
 from .codegen.manager import import_pycode
 from andes.utils.misc import elapsed, is_interactive
-from andes.utils.configmgr import ConfigManager
-from andes.system import ModelManager
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
 logger = logging.getLogger(__name__)
@@ -371,9 +369,9 @@ def run_case(case, *, routine='pflow', profile=False,
     if profile is True:
         pr.enable()
 
-    config_mgr = ConfigManager()
+    # config_mgr = ConfigManager()
 
-    model_mgr = ModelManager()
+    # model_mgr = ModelManager()
 
     system = load(case,
                   codegen=codegen,

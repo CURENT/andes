@@ -110,10 +110,18 @@ class ConfigManager:
                 self._config_obj.set(section, key, value)
                 logger.debug("New config option added: %s.%s=%s", section, key, value)
 
-    def create(self):
+    def create(self, overwrite=False):
         """
         Create Config object for the given field name.
+
+        Parameters
+        ----------
+        overwrite : bool, optional
+            If True, overwrite existing config object
         """
+
+        if not overwrite and len(self._store) > 0:
+            return
 
         for field in self._registered:
             self._store[field] = self._registered[field](self._config_obj)

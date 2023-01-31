@@ -29,6 +29,10 @@ from andes.utils.misc import elapsed
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
+from andes.utils.configmgr import ConfigManager
+from andes.codegen.manager import PyCodeManager
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,8 +174,55 @@ class ModelManager:
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
 
-class RoutineManager():
-    pass
+class RoutineManager:
+
+    def __init__(self) -> None:
+        self.routines = dict()
+
+        self.import_routines()
+
+    def import_routines(self):
+        """
+        Import routines as defined in ``routines/__init__.py``.
+
+        Routines will be stored as instances with the name as class names.
+        All routines will be stored to dictionary ``System.routines``.
+
+        Examples
+        --------
+        ``System.PFlow`` is the power flow routine instance, and ``System.TDS`` and ``System.EIG`` are
+        time-domain analysis and eigenvalue analysis routines, respectively.
+        """
+        for file, cls_list in all_routines.items():
+            for cls_name in cls_list:
+                file = importlib.import_module('andes.routines.' + file)
+                the_class = getattr(file, cls_name)
+                attr_name = cls_name
+                self.__dict__[attr_name] = the_class(system=self, config=None)  # TODO
+                self.routines[attr_name] = self.__dict__[attr_name]
+                # self.routines[attr_name].config.check()
+
+    def set_config(self, config):
+        for r in self.routines.values():
+            r.set_config(config)
+
+
+class SystemManager:
+
+    def __init__(self) -> None:
+        self.mm = ModelManager()
+        self.pcm = PyCodeManager(self.mm.models)
+        self.cmgr = ConfigManager()
+        self.rmgr = RoutineManager()
+
+    def initialize(self):
+        # below may change at run time
+
+        # depending on codegen options, this can be generate or load
+        self.pcm.load()
+        self.cmgr.set_path()
+        self.rmgr.set_config(self.cmgr)
+        self.cmgr.create()
 
 
 class System:
@@ -1392,27 +1443,6 @@ class System:
             # set model ``in_use`` flag
             if isinstance(model, Model):
                 model.set_in_use()
-
-    def import_routines(self):
-        """
-        Import routines as defined in ``routines/__init__.py``.
-
-        Routines will be stored as instances with the name as class names.
-        All routines will be stored to dictionary ``System.routines``.
-
-        Examples
-        --------
-        ``System.PFlow`` is the power flow routine instance, and ``System.TDS`` and ``System.EIG`` are
-        time-domain analysis and eigenvalue analysis routines, respectively.
-        """
-        for file, cls_list in all_routines.items():
-            for cls_name in cls_list:
-                file = importlib.import_module('andes.routines.' + file)
-                the_class = getattr(file, cls_name)
-                attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=None)  # TODO
-                self.routines[attr_name] = self.__dict__[attr_name]
-                # self.routines[attr_name].config.check()
 
     def store_switch_times(self, models, eps=1e-4):
         """

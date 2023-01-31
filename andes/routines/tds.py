@@ -32,16 +32,17 @@ class TDS(BaseRoutine):
 
         # self.config = create_config_tds(config_obj=config)
 
-        # overwrite `tf` from command line
-        if system.options.get('tf') is not None:
-            self.config.tf = system.options.get('tf')
-        if system.options.get('qrt') is True:
-            self.config.qrt = system.options.get('qrt')
-        if system.options.get('kqrt') is not None:
-            self.config.kqrt = system.options.get('kqrt')
+        # # overwrite `tf` from command line
+        # if system.options.get('tf') is not None:
+        #     self.config.tf = system.options.get('tf')
+        # if system.options.get('qrt') is True:
+        #     self.config.qrt = system.options.get('qrt')
+        # if system.options.get('kqrt') is not None:
+        #     self.config.kqrt = system.options.get('kqrt')
+        #
+        # # if data is from a CSV file instead of simulation
+        # self.from_csv = system.options.get('from_csv')
 
-        # if data is from a CSV file instead of simulation
-        self.from_csv = system.options.get('from_csv')
         self.data_csv = None
         self.k_csv = 0  # row number
 
@@ -53,7 +54,8 @@ class TDS(BaseRoutine):
         self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
-        self.tol_zero = self.config.tol / 1e6
+
+        # self.tol_zero = self.config.tol / 1e6
 
         # internal status
         self.converged = False
@@ -85,9 +87,9 @@ class TDS(BaseRoutine):
 
         # set DAE solver
         self.method = Trapezoid()
-        self.set_method(self.config.method)
+        # self.set_method(self.config.method)
 
-    def create_config(config_obj):
+    def create_config(self, config_obj):
         config = super().create_config("TDS", config_obj=config_obj)
 
         config.add(OrderedDict((('method', 'trapezoid'),
