@@ -208,7 +208,6 @@ class ST2CUTModel(PSSBase):
         return config
 
 
-
 class ST2CUT(ST2CUTData, ST2CUTModel):
     """
     ST2CUT stabilizer model. Automatically adds frequency measurement devices if not provided.

@@ -32,7 +32,7 @@ class SymProcessor:
 
     Parameters
     ----------
-    parent : Model
+    model : Model
         The `Model` instance to process
 
     Attributes
@@ -55,9 +55,10 @@ class SymProcessor:
 
     """
 
-    def __init__(self, parent):
+    def __init__(self, model):
 
-        self.parent = parent
+        self.model = model
+
         # symbols that are input to lambda functions
         # including parameters, variables, services, configs, and scalars (dae_t, sys_f, sys_mva)
         self.inputs_dict = OrderedDict()
@@ -80,10 +81,10 @@ class SymProcessor:
         self.df, self.dg = None, None
 
         # get references to the parent attributes
-        self.calls = parent.calls
-        self.cache = parent.cache
+        self.calls = model.calls
+        self.model.cache = model.cache
         # self.config = parent.config
-        self.class_name = parent.class_name
+        self.class_name = model.class_name
         self.tex_names = OrderedDict()
 
     def generate_symbols(self):
@@ -110,21 +111,21 @@ class SymProcessor:
 
         # process tex_names defined in model
         # -----------------------------------------------------------
-        for key in self.parent.tex_names.keys():
-            self.tex_names[key] = sp.Symbol(self.parent.tex_names[key])
-        for instance in self.parent.discrete.values():
+        for key in self.model.tex_names.keys():
+            self.tex_names[key] = sp.Symbol(self.model.tex_names[key])
+        for instance in self.model.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
                 self.tex_names[name] = tex_name
         # -----------------------------------------------------------
 
-        for var in self.cache.all_params_names:
+        for var in self.model.cache.all_params_names:
             self.inputs_dict[var] = sp.Symbol(var)
 
-        for var in self.cache.all_vars_names:
+        for var in self.model.cache.all_vars_names:
             tmp = sp.Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
-            if var in self.cache.vars_int:
+            if var in self.model.cache.vars_int:
                 self.vars_int_dict[var] = tmp
 
         # TODO
@@ -137,8 +138,8 @@ class SymProcessor:
 
         # store tex names for pretty printing replacement later
         for var in self.inputs_dict:
-            if var in self.parent.__dict__ and self.parent.__dict__[var].tex_name is not None:
-                self.tex_names[sp.Symbol(var)] = sp.Symbol(self.parent.__dict__[var].tex_name)
+            if var in self.model.__dict__ and self.model.__dict__[var].tex_name is not None:
+                self.tex_names[sp.Symbol(var)] = sp.Symbol(self.model.__dict__[var].tex_name)
 
         # additional variables by conventions
         self.inputs_dict['dae_t'] = sp.Symbol('dae_t')
@@ -169,7 +170,7 @@ class SymProcessor:
         """
         Generate expressions for substituting ``SubsService``.
         """
-        for name, instance in self.parent.services_subs.items():
+        for name, instance in self.model.services_subs.items():
             if instance.v_str is not None:
                 expr = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 self.substitution_map[self.inputs_dict[name]] = expr
@@ -198,7 +199,7 @@ class SymProcessor:
         self.calls.f_args = list()
         self.calls.g_args = list()
 
-        vars_list = [self.cache.states_and_ext, self.cache.algebs_and_ext]
+        vars_list = [self.model.cache.states_and_ext, self.model.cache.algebs_and_ext]
         expr_list = [self.f_list, self.g_list]
 
         eqn_names = ['f', 'g']
@@ -267,7 +268,7 @@ class SymProcessor:
         s_calls_nonseq = list()
         s_calls_nonseq_args = list()
 
-        for name, instance in self.parent.services.items():
+        for name, instance in self.model.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
             try:
                 expr = sp.sympify(v_str, locals=self.inputs_dict)
@@ -334,8 +335,8 @@ class SymProcessor:
         self.dg_sparse = sp.SparseMatrix(self.dg_syms)
 
         vars_syms_list = list(self.vars_dict)
-        algebs_and_ext_list = list(self.cache.algebs_and_ext)
-        states_and_ext_list = list(self.cache.states_and_ext)
+        algebs_and_ext_list = list(self.model.cache.algebs_and_ext)
+        states_and_ext_list = list(self.model.cache.states_and_ext)
 
         fg_sparse = [self.df_sparse, self.dg_sparse]
         j_args = defaultdict(list)   # argument list for each jacobian call
@@ -350,8 +351,8 @@ class SymProcessor:
                     eq_name = algebs_and_ext_list[e_idx]
 
                 var_name = vars_syms_list[v_idx]
-                eqn = self.cache.all_vars[eq_name]    # `BaseVar` that corr. to the equation
-                var = self.cache.all_vars[var_name]   # `BaseVar` that corr. to the variable
+                eqn = self.model.cache.all_vars[eq_name]    # `BaseVar` that corr. to the equation
+                var = self.model.cache.all_vars[var_name]   # `BaseVar` that corr. to the variable
                 jname = f'{eqn.e_code}{var.v_code}'
 
                 # jac calls with all arguments and stored individually
@@ -386,12 +387,12 @@ class SymProcessor:
         # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
-        for var in self.parent.cache.all_vars.values():
+        for var in self.model.cache.all_vars.values():
             if var.diag_eps == 0.0:
                 continue
             elif var.diag_eps is True:
                 if self.get_system_config('diag_eps') is not None:
-                    eps = self.parent.system.config.diag_eps
+                    eps = self.model.system.config.diag_eps
                 elif diag_eps is not None:
                     eps = diag_eps  # from function argument
                 else:
@@ -446,7 +447,7 @@ class SymProcessor:
 
         # store init latex strings
         init_latex = OrderedDict()
-        for name, instance in self.cache.all_vars.items():
+        for name, instance in self.model.cache.all_vars.items():
             if instance.v_str is None and instance.v_iter is None:
                 init_latex[name] = ''
             else:
@@ -456,6 +457,28 @@ class SymProcessor:
                     init_latex[name] = sp.latex(self.v_iter_syms[name].subs(self.tex_names))
 
         self.calls.init_latex = init_latex
+
+    def run(self, quick=False, pycode_path=None, yapf_pycode=False):
+        """
+        Symbolic processing and code generation.
+        """
+
+        logger.debug("Generating code for %s", self.class_name)
+
+        self.calls.md5 = self.model.get_md5()
+
+        self.generate_symbols()
+        self.generate_subs_expr()
+        self.generate_equations()
+        self.generate_services()
+        self.generate_jacobians()
+        self.generate_init()
+
+        self.generate_pycode(pycode_path=pycode_path,
+                             yapf_pycode=yapf_pycode,
+                             )
+        if quick is False:
+            self.generate_pretty_print()
 
     def generate_pycode(self, pycode_path, yapf_pycode):
         """
@@ -533,7 +556,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
             fread = ''.join(fread)
             if fread == out_str:
                 logger.debug("<%s>: generated code is up-to-date and not overwritten.",
-                             self.parent.class_name)
+                             self.model.class_name)
                 return
 
         with open(file_path, 'w') as f:
@@ -589,7 +612,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
         deps = OrderedDict()
 
         # convert to symbols
-        for name, instance in self.cache.all_vars.items():
+        for name, instance in self.model.cache.all_vars.items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 sympified = self._do_substitute(sympified)
@@ -614,7 +637,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
             _store_deps(name, expr, self.vars_dict, deps)
 
         # store deps for manually added dependent variables
-        for name, instance in self.cache.vars_int.items():
+        for name, instance in self.model.cache.vars_int.items():
             if instance.deps is not None:
                 deps[name].extend(instance.deps)
 
@@ -633,7 +656,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 continue
 
             for vi in item:
-                if self.cache.all_vars[vi].v_iter is None:
+                if self.model.cache.all_vars[vi].v_iter is None:
                     logger.error("%s: v_iter not defined for %s" % (self.class_name, vi))
 
     def generate_init(self):
@@ -669,7 +692,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
         for item in self.init_seq:
             if isinstance(item, str):
-                instance = self.parent.__dict__[item]
+                instance = self.model.__dict__[item]
                 if instance.v_str is not None:
                     self.init_asn[item] = self.v_str_syms[item]
                 if instance.v_iter is not None:
@@ -682,7 +705,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 self.init_itn[name_concat] = eqn_set
                 self.init_itn_vars[name_concat] = item
                 for vv in item:
-                    instance = self.parent.__dict__[vv]
+                    instance = self.model.__dict__[vv]
                     if instance.v_str is not None:
                         self.init_asn[vv] = self.v_str_syms[vv]
 
@@ -739,8 +762,8 @@ from andes.thirdparty.npfunc import *                               # NOQA
         If System is None, return None.
         """
 
-        if hasattr(self.parent.system, 'config'):
-            return self.parent.system.config.__dict__[name]
+        if hasattr(self.model.system, 'config'):
+            return self.model.system.config.__dict__[name]
 
         return None
 
@@ -760,20 +783,20 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
         if len(self.vars_dict) == 0:
             logger.warning("Symbols not generated. Trying to generate")
-            self.parent.prepare()
+            self.model.prepare()
 
         out = list()
 
         if xyname == 'x':
             if with_ext is True:
-                look_up_from = self.parent.cache.states_and_ext
+                look_up_from = self.model.cache.states_and_ext
             else:
-                look_up_from = self.parent.states
+                look_up_from = self.model.states
         else:
             if with_ext is True:
-                look_up_from = self.parent.cache.algebs_and_ext
+                look_up_from = self.model.cache.algebs_and_ext
             else:
-                look_up_from = self.parent.algebs
+                look_up_from = self.model.algebs
 
         for name, sym in self.vars_dict.items():
             if name in look_up_from:

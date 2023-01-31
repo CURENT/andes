@@ -107,6 +107,7 @@ class TG2(TG2Data, TGBase):
 
     def create_config(self, name, config_obj=None):
         config = super().create_config(name, config_obj)
+
         config.add({'deadband': 0,
                     'hardlimit': 1})
         config.add_extra("_help",
@@ -121,3 +122,5 @@ class TG2(TG2Data, TGBase):
                          deadband="z_{deadband}",
                          hardlimit="z_{hardlimit}",
                          )
+
+        return config

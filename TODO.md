@@ -1,3 +1,23 @@
+# v2.0
+
+[x] separated Routine config into `create_config` and `set_config`.
+
+[x] Move model config into `Model.create_config`. Add `Model.set_config`.
+- Decouple SymProcessor from Model
+- Decouple config from Model
+- Decouple Documenter from Model
+- Decouple data storage from Model
+  - Turn the `adder`, `setter` manager into a class
+  -
+- Decouple addresser from system (?)
+  - Depend on the number of (online) devices and number of variables
+  -
+- Decouple ModelCache from Model
+- Remove `ModelCall` from `Model`
+- Consider consolidating `ModelData` and `Model`
+- Major: move symbolic model definition to `Model.define`.
+
+
 # v1.5
 
 ## Milestones

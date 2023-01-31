@@ -299,8 +299,8 @@ class Model:
         """
         Store a ConfigManager object and register the model's config creation
         method.
-
         """
+
         self.config = config_manager
         config_manager.register(self.class_name, self.create_config)
 
@@ -1279,28 +1279,6 @@ class Model:
         Retrieve model documentation as a string.
         """
         return self.docum.get(max_width=max_width, export=export)
-
-    def prepare(self, quick=False, pycode_path=None, yapf_pycode=False):
-        """
-        Symbolic processing and code generation.
-        """
-
-        logger.debug("Generating code for %s", self.class_name)
-
-        self.calls.md5 = self.get_md5()
-
-        self.syms.generate_symbols()
-        self.syms.generate_subs_expr()
-        self.syms.generate_equations()
-        self.syms.generate_services()
-        self.syms.generate_jacobians()
-        self.syms.generate_init()
-
-        self.syms.generate_pycode(pycode_path=pycode_path,
-                                  yapf_pycode=yapf_pycode,
-                                  )
-        if quick is False:
-            self.syms.generate_pretty_print()
 
     def get_md5(self):
         """

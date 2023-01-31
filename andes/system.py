@@ -174,6 +174,11 @@ class ModelManager:
         self.exist.tds = self.find_models('tds')
         self.exist.pflow_tds = self.find_models(('tds', 'pflow'))
 
+    def set_config(self, config):
+        # set config to all models but not to groups
+        for m in self.models.values():
+            m.set_config(config)
+
 
 class RoutineManager:
 
@@ -219,11 +224,14 @@ class SystemManager:
     def initialize(self):
         # below may change at run time
 
-        # depending on codegen options, this can be generate or load
-        self.pcm.load()
-        self.cmgr.set_path()
         self.rmgr.set_config(self.cmgr)
+        self.mm.set_config(self.cmgr)
+
+        self.cmgr.set_path()
         self.cmgr.create()
+
+        # below can be generate or load
+        # self.pcm.load()
 
 
 class System:

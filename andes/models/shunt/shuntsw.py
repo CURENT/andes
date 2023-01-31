@@ -107,8 +107,8 @@ class ShuntSwModel(ShuntModel):
         self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
                                bsw=self.beff, gsw=self.geff, dt=self.dt,
                                u=self.u,
-                            #    min_iter=self.config.min_iter,
-                            #    err_tol=self.config.err_tol,
+                               #    min_iter=self.config.min_iter,
+                               #    err_tol=self.config.err_tol,
                                info='shunt adjuster')
 
         self.a.e_str = 'u * v**2 * geff'

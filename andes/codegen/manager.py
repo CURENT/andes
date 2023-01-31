@@ -10,6 +10,7 @@ from typing import Union, Optional
 import andes
 from andes.core import Model, ModelCall
 from andes.models import file_classes
+from andes.core.symprocessor import SymProcessor
 from andes.shared import NCPUS_PHYSICAL, Pool, Process, numba, dilled_vars
 from andes.utils.misc import elapsed
 from andes.utils.paths import get_dot_andes_path, get_pycode_path, andes_root
@@ -92,7 +93,9 @@ class PyCodeGenerator:
             for idx, (name, model) in enumerate(models.items()):
                 print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
                       end='\r', flush=True)
-                model.prepare(quick=quick, pycode_path=path, yapf_pycode=with_yapf)
+                # model.prepare(quick=quick, pycode_path=path, yapf_pycode=with_yapf)
+                syms = SymProcessor(model)
+                syms.run(quick=quick, pycode_path=path, yapf_pycode=with_yapf)
 
         if len(models) > 0:
             self._finalize_pycode(path)
@@ -135,10 +138,12 @@ class PyCodeGenerator:
             """
             Wrapper function to call prepare on a model.
             """
-            model.prepare(quick=quick,
-                          pycode_path=pycode_path,
-                          yapf_pycode=with_yapf
-                          )
+            # model.prepare(quick=quick,
+            #               pycode_path=pycode_path,
+            #               yapf_pycode=with_yapf
+            #               )
+            syms = SymProcessor(model)
+            syms.run(quick=quick, pycode_path=pycode_path, yapf_pycode=with_yapf)
 
         Pool(ncpu).map(_prep_model, model_list)
 

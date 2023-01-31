@@ -378,7 +378,7 @@ class PVD1Model(Model):
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
-                        #    enable=self.config.plim,
+                           #    enable=self.config.plim,
                            info='limiter for Psum in [0, pmx]',
                            allow_adjust=False,
                            )
