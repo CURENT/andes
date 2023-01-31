@@ -140,20 +140,6 @@ class Fault(ModelData, Model):
         self.flags.update({'tds': True})
         self.group = 'TimedEvent'
 
-        self.config.add(OrderedDict((('restore', 1),
-                                     ('mode', 1),
-                                     ('scale', 1.0),
-                                     )))
-        self.config.add_extra('_alt',
-                              restore=(0, 1),
-                              mode=(1, 2, 3),
-                              )
-        self.config.add_extra('_help',
-                              restore='restore algebraic variables to pre-fault values',
-                              mode='1. restore all algeb variables, 2. fault bus only',
-                              scale='scaling factor of restored algebraic values',
-                              )
-
         self.gf = ConstService(tex_name='g_{f}',
                                v_str='re(1/(rf + 1j * xf))',
                                )
@@ -185,6 +171,25 @@ class Fault(ModelData, Model):
                           tex_ename='Q',
                           )
         self._vstore = np.array([])
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+
+        config.add(OrderedDict((('restore', 1),
+                                ('mode', 1),
+                                ('scale', 1.0),
+                                )))
+        config.add_extra('_alt',
+                         restore=(0, 1),
+                         mode=(1, 2, 3),
+                         )
+        config.add_extra('_help',
+                         restore='restore algebraic variables to pre-fault values',
+                         mode='1. restore all algeb variables, 2. fault bus only',
+                         scale='scaling factor of restored algebraic values',
+                         )
+
+        return config
 
     def apply_fault(self, is_time: np.ndarray):
         """

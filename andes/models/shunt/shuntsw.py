@@ -97,22 +97,6 @@ class ShuntSwModel(ShuntModel):
     def __init__(self, system, config):
         ShuntModel.__init__(self, system, config)
 
-        self.config.add(OrderedDict((('min_iter', 2),
-                                     ('err_tol', 0.01),
-                                     )))
-        self.config.add_extra("_help",
-                              min_iter="iteration number starting from which to enable switching",
-                              err_tol="iteration error below which to enable switching",
-                              )
-        self.config.add_extra("_alt",
-                              min_iter='int',
-                              err_tol='float',
-                              )
-        self.config.add_extra("_tex",
-                              min_iter="sw_{iter}",
-                              err_tol=r"\epsilon_{tol}",
-                              )
-
         self.beff = SwBlock(init=self.b, ns=self.ns, blocks=self.bs)
         self.geff = SwBlock(init=self.g, ns=self.ns, blocks=self.gs,
                             ext_sel=self.beff)
@@ -123,12 +107,31 @@ class ShuntSwModel(ShuntModel):
         self.adj = ShuntAdjust(v=self.v, lower=self.vlo, upper=self.vup,
                                bsw=self.beff, gsw=self.geff, dt=self.dt,
                                u=self.u,
-                               min_iter=self.config.min_iter,
-                               err_tol=self.config.err_tol,
+                            #    min_iter=self.config.min_iter,
+                            #    err_tol=self.config.err_tol,
                                info='shunt adjuster')
 
         self.a.e_str = 'u * v**2 * geff'
         self.v.e_str = '-u * v**2 * beff'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('min_iter', 2),
+                                ('err_tol', 0.01),
+                                )))
+        config.add_extra("_help",
+                         min_iter="iteration number starting from which to enable switching",
+                         err_tol="iteration error below which to enable switching",
+                         )
+        config.add_extra("_alt",
+                         min_iter='int',
+                         err_tol='float',
+                         )
+        config.add_extra("_tex",
+                         min_iter="sw_{iter}",
+                         err_tol=r"\epsilon_{tol}",
+                         )
+        return config
 
 
 class ShuntSw(ShuntSwData, ShuntSwModel):

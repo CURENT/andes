@@ -259,21 +259,6 @@ class REECA1Model(Model):
         self.flags.tds = True
         self.group = 'RenExciter'
 
-        self.config.add(OrderedDict((('kqs', 2),
-                                     ('kvs', 2),
-                                     ('tpfilt', 0.02),
-                                     )))
-        self.config.add_extra('_help',
-                              kqs='Q PI controller tracking gain',
-                              kvs='Voltage PI controller tracking gain',
-                              tpfilt='Time const. for Pref filter',
-                              )
-        self.config.add_extra('_tex',
-                              kqs='K_{qs}',
-                              kvs='K_{vs}',
-                              tpfilt='T_{pfilt}',
-                              )
-
         # --- Sanitize inputs ---
         self.Imaxr = Replace(self.Imax, flt=lambda x: np.less_equal(x, 0), new_val=1e8,
                              tex_name='I_{maxr}')
@@ -430,8 +415,11 @@ class REECA1Model(Model):
                           )
 
         self.PIQ = PITrackAWFreeze(u='SWV_s1 * Qerr + SWV_s0 * 0',
-                                   kp=self.Kqp, ki=self.Kqi, ks=self.config.kqs,
-                                   lower=self.VMIN, upper=self.VMAX,
+                                   kp=self.Kqp,
+                                   ki=self.Kqi,
+                                   #    ks=self.config.kqs,
+                                   lower=self.VMIN,
+                                   upper=self.VMAX,
                                    freeze=self.Volt_dip,
                                    )
 
@@ -499,8 +487,12 @@ class REECA1Model(Model):
                           unit='p.u.',
                           )
 
-        self.pfilt = LagRate(u=self.Pref, T=self.config.tpfilt, K=1,
-                             rate_lower=self.dPmin, rate_upper=self.dPmax,
+        self.pfilt = LagRate(u=self.Pref,
+                             #  TODO T=self.config.tpfilt,
+                             T=0.02,
+                             K=1,
+                             rate_lower=self.dPmin,
+                             rate_upper=self.dPmax,
                              info='Active power filter with rate limits',
                              tex_name='P_{filt}',
                              )
@@ -649,8 +641,11 @@ class REECA1Model(Model):
 
         self.PIV = PITrackAWFreeze(u='SWQ_s1 * (Vsel_y - s0_y * SWV_s0)',
                                    x0='-SWQ_s1 * Iqcmd0',
-                                   kp=self.Kvp, ki=self.Kvi, ks=self.config.kvs,
-                                   lower=self.Iqmin, upper=self.Iqmax,
+                                   kp=self.Kvp,
+                                   ki=self.Kvi,
+                                   #    ks=self.config.kvs,
+                                   lower=self.Iqmin,
+                                   upper=self.Iqmax,
                                    freeze=self.Volt_dip,
                                    )
 
@@ -670,6 +665,25 @@ class REECA1Model(Model):
         self.IqHL = GainLimiter(u='Qsel + Iqinj',
                                 K=1, R=1,
                                 lower=self.Iqmin, upper=self.Iqmax)
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+
+        config.add(OrderedDict((('kqs', 2),
+                                ('kvs', 2),
+                                ('tpfilt', 0.02),
+                                )))
+        config.add_extra('_help',
+                         kqs='Q PI controller tracking gain',
+                         kvs='Voltage PI controller tracking gain',
+                         tpfilt='Time const. for Pref filter',
+                         )
+        config.add_extra('_tex',
+                         kqs='K_{qs}',
+                         kvs='K_{vs}',
+                         tpfilt='T_{pfilt}',
+                         )
+        return config
 
 
 class REECA1(REECA1Data, REECA1Model):

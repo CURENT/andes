@@ -135,11 +135,6 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
         self.flags.nr_iter = True
-        self.config.add(OrderedDict((('ks', 2),
-                                     )))
-        self.config.add_extra('_help',
-                              ks='Tracking gain for PID controller',
-                              )
 
         self.IN = Algeb(tex_name='I_N',
                         info='Input to FEX',
@@ -176,7 +171,7 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
 
         # chekck y0
         self.PID = PIDTrackAW(u=self.vi, kp=self.kP, ki=self.kI,
-                              ks=self.config.ks,
+                              #   ks=self.config.ks,
                               kd=self.kD, Td=self.Td, x0='VFE / KA',
                               lower=self.VPMIN, upper=self.VPMAX,
                               tex_name='PID', info='PID', name='PID',
@@ -201,6 +196,15 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
 
         self.vout.e_str = 'ue * (FEX_y * INT_y - vout)'
 
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('ks', 2),
+                                )))
+        config.add_extra('_help',
+                         ks='Tracking gain for PID controller',
+                         )
+        return config
+
 
 class AC8B(AC8BData, AC8BModel):
     """
@@ -214,6 +218,7 @@ class AC8B(AC8BData, AC8BModel):
     .. [2] NEPLAN, Exciters Models, [Online], Available:
       https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
+
     def __init__(self, system, config):
         AC8BData.__init__(self)
         AC8BModel.__init__(self, system, config)

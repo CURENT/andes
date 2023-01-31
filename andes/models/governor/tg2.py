@@ -58,20 +58,6 @@ class TG2(TG2Data, TGBase):
     def __init__(self, system, config):
         TG2Data.__init__(self)
         TGBase.__init__(self, system, config)
-        self.config.add({'deadband': 0,
-                         'hardlimit': 1})
-        self.config.add_extra("_help",
-                              deadband="enable input dead band",
-                              hardlimit="enable output hard limit"
-                              )
-        self.config.add_extra("_alt",
-                              deadband=(0, 1),
-                              hardlimit=(0, 1),
-                              )
-        self.config.add_extra("_tex",
-                              deadband="z_{deadband}",
-                              hardlimit="z_{hardlimit}",
-                              )
 
         self.gain = ConstService(v_str='u / R',
                                  tex_name='G',
@@ -86,7 +72,7 @@ class TG2(TG2Data, TGBase):
                                center=self.dbc,
                                lower=self.dbl,
                                upper=self.dbu,
-                               enable=self.config.deadband,
+                               #    enable=self.config.deadband,
                                )
         self.w_dm = Algeb(info='Measured speed deviation after dead band',
                           tex_name=r'\omega_{dm}',
@@ -114,7 +100,24 @@ class TG2(TG2Data, TGBase):
         self.plim = HardLimiter(u=self.pnl,
                                 lower=self.pmin,
                                 upper=self.pmax,
-                                enable=self.config.hardlimit,
+                                # enable=self.config.hardlimit,
                                 )
 
         self.pout.e_str = 'pnl * plim_zi + pmax * plim_zu + pmin * plim_zl - pout'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add({'deadband': 0,
+                    'hardlimit': 1})
+        config.add_extra("_help",
+                         deadband="enable input dead band",
+                         hardlimit="enable output hard limit"
+                         )
+        config.add_extra("_alt",
+                         deadband=(0, 1),
+                         hardlimit=(0, 1),
+                         )
+        config.add_extra("_tex",
+                         deadband="z_{deadband}",
+                         hardlimit="z_{hardlimit}",
+                         )

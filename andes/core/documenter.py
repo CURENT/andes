@@ -22,7 +22,7 @@ class Documenter:
         self.parent = parent
         self.system = parent.system
         self.class_name = parent.class_name
-        self.config = parent.config
+        # self.config = parent.config
         self.cache = parent.cache
         self.params = parent.params
         self.services = parent.services
@@ -404,6 +404,6 @@ class Documenter:
         out += self._service_doc(max_width=max_width, export=export)
         out += self._discrete_doc(max_width=max_width, export=export)
         out += self._block_doc(max_width=max_width, export=export)
-        out += self.config.doc(max_width=max_width, export=export)
+        # out += self.config.doc(max_width=max_width, export=export)
 
         return out

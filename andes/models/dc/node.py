@@ -62,18 +62,6 @@ class Node(NodeData, Model):
         NodeData.__init__(self)
         Model.__init__(self, system=system, config=config)
 
-        self.config.add(OrderedDict((('flat_start', 0),
-                                     )))
-        self.config.add_extra("_help",
-                              flat_start="flat start for voltages",
-                              )
-        self.config.add_extra("_alt",
-                              flat_start=(0, 1),
-                              )
-        self.config.add_extra("_tex",
-                              flat_start="z_{flat}",
-                              )
-
         self.group = 'DCTopology'
         self.category = ['TransNode']
         self.flags.update({'pflow': True})
@@ -87,3 +75,18 @@ class Node(NodeData, Model):
 
         self.v.v_str = 'flat_start*1 + ' \
                        '(1-flat_start)*v0'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('flat_start', 0),
+                                )))
+        config.add_extra("_help",
+                         flat_start="flat start for voltages",
+                         )
+        config.add_extra("_alt",
+                         flat_start=(0, 1),
+                         )
+        config.add_extra("_tex",
+                         flat_start="z_{flat}",
+                         )
+        return config

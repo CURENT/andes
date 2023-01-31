@@ -108,13 +108,11 @@ class ST2CUTModel(PSSBase):
         self.f2 = ExtAlgeb(model='FreqMeasurement', src='f', indexer=self.busfreq2, export=False,
                            info='Bus frequency 2')
 
-        # Config
-        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
-        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
-        self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+        # TODO self.busf.model = self.config.freq_model
+        # TODO self.busf2.model = self.config.freq_model
 
-        self.busf.model = self.config.freq_model
-        self.busf2.model = self.config.freq_model
+        self.busf.model = "BusFreq"
+        self.busf2.model = "BusFreq"
 
         # input signal switch
         self.dv = Derivative(self.v)
@@ -200,6 +198,15 @@ class ST2CUTModel(PSSBase):
         self.OLIM = Limiter(u=self.v, lower=self.VOL, upper=self.VOU, info='output limiter')
 
         self.vsout.e_str = 'OLIM_zi * VSS_y - vsout'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict([('freq_model', 'BusFreq')]))
+        config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+
+        return config
+
 
 
 class ST2CUT(ST2CUTData, ST2CUTModel):

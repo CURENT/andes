@@ -214,19 +214,6 @@ class PVD1Model(Model):
         self.flags.tds = True
         self.group = 'DG'
 
-        self.config.add(OrderedDict((('plim', 1),
-                                     )))
-
-        self.config.add_extra('_help',
-                              plim='enable input power limit check bound by [0, pmx]',
-                              )
-        self.config.add_extra('_tex',
-                              plim='P_{lim}',
-                              )
-        self.config.add_extra('_alt',
-                              plim=(0, 1),
-                              )
-
         self.SWPQ = Switcher(u=self.pqflag, options=(0, 1), tex_name='SW_{PQ}', cache=True)
 
         self.buss = DataSelect(self.igreg, self.bus,
@@ -391,7 +378,7 @@ class PVD1Model(Model):
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
-                           enable=self.config.plim,
+                        #    enable=self.config.plim,
                            info='limiter for Psum in [0, pmx]',
                            allow_adjust=False,
                            )
@@ -510,6 +497,22 @@ class PVD1Model(Model):
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('plim', 1),
+                                )))
+
+        config.add_extra('_help',
+                         plim='enable input power limit check bound by [0, pmx]',
+                         )
+        config.add_extra('_tex',
+                         plim='P_{lim}',
+                         )
+        config.add_extra('_alt',
+                         plim=(0, 1),
+                         )
+        return config
 
     def v_numeric(self, **kwargs):
         """

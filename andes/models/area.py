@@ -20,6 +20,7 @@ class Area(AreaData, Model):
     Area collects back references from the Bus model and
     the ACTopology group.
     """
+
     def __init__(self, system, config):
         AreaData.__init__(self)
         Model.__init__(self, system, config)
@@ -80,16 +81,11 @@ class ACEc(ACEData, Model):
         self.flags.tds = True
         self.group = 'Calculation'
 
-        self.config.add(OrderedDict([('freq_model', 'BusFreq'),
-                                     ]))
-        self.config.add_extra('_help',
-                              {'freq_model': 'default freq. measurement model',
-                               })
-        self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
-
         self.area = ExtParam(model='Bus', src='area', indexer=self.bus, export=False)
 
-        self.busf.model = self.config.freq_model
+        # TODO: self.busf.model = self.config.freq_model
+        self.busf.model = "BusFreq"
+
         self.busfreq = DeviceFinder(self.busf, link=self.bus, idx_name='bus',
                                     default_model='BusFreq')
 
@@ -109,6 +105,17 @@ class ACEc(ACEData, Model):
                          e_str='10 * (bias * imva) * sys_f * (f - 1) - ace',
                          )
 
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict([('freq_model', 'BusFreq'),
+                                ]))
+        config.add_extra('_help',
+                         {'freq_model': 'default freq. measurement model',
+                          })
+        config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+
+        return config
+
 
 class ACE(ACEc):
     """
@@ -127,17 +134,22 @@ class ACE(ACEc):
     def __init__(self, system, config):
         ACEc.__init__(self, system, config)
 
-        self.config.add(OrderedDict([('interval', 4.0),
-                                     ('offset', 0.0),
-                                     ]))
-        self.config.add_extra('_help', {'interval': 'sampling time interval',
-                                        'offset': 'sampling time offset'})
-
         self.fs = Sampling(self.f,
-                           interval=self.config.interval,
-                           offset=self.config.offset,
+                           #    interval=self.config.interval,
+                           #    offset=self.config.offset,
                            tex_name='f_s',
                            info='Sampled freq.',
                            )
 
         self.ace.e_str = '10 * (bias * imva) * sys_f * (fs_v - 1) - ace'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+
+        config.add(OrderedDict([('interval', 4.0),
+                                ('offset', 0.0),
+                                ]))
+
+        config.add_extra('_help', {'interval': 'sampling time interval',
+                                   'offset': 'sampling time offset'})
+        return config

@@ -103,15 +103,6 @@ class GENBase(Model):
         self.flags.update({'tds': True,
                            'nr_iter': False,
                            })
-        self.config.add(vf_lower=1.0,
-                        vf_upper=5.0,
-                        )
-
-        self.config.add_extra("_help",
-                              vf_lower="lower limit for vf warning",
-                              vf_upper="upper limit for vf warning",
-                              )
-
         # state variables
         self.delta = State(info='rotor angle',
                            unit='rad',
@@ -191,8 +182,8 @@ class GENBase(Model):
 
         self._vfc = InitChecker(u=self.vf,
                                 info='(vf range)',
-                                lower=self.config.vf_lower,
-                                upper=self.config.vf_upper,
+                                # lower=self.config.vf_lower,
+                                # upper=self.config.vf_upper,
                                 )
 
         self.XadIfd = Algeb(tex_name='X_{ad}I_{fd}',
@@ -250,6 +241,20 @@ class GENBase(Model):
                         info='reactive power injection',
                         e_str='u * (vq * Id - vd * Iq) - Qe',
                         v_str='u * (vq0 * Id0 - vd0 * Iq0)')
+
+    def create_config(self, name, config_obj=None):
+
+        config = super().create_config(name, config_obj)
+
+        config.add(vf_lower=1.0,
+                   vf_upper=5.0,
+                   )
+
+        config.add_extra("_help",
+                         vf_lower="lower limit for vf warning",
+                         vf_upper="upper limit for vf warning",
+                         )
+        return config
 
     def v_numeric(self, **kwargs):
         """

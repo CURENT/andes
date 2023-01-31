@@ -118,19 +118,6 @@ class ESST4BModel(ExcBase):
     def __init__(self, system, config):
         ExcBase.__init__(self, system, config)
 
-        self.config.add(OrderedDict((('ksr', 2),
-                                     ('ksm', 2),
-                                     )))
-
-        self.config.add_extra('_help',
-                              ksr='Tracking gain for outer PI controller',
-                              ksm='Tracking gain for inner PI controller',
-                              )
-        self.config.add_extra('_tex',
-                              ksr='K_{sr}',
-                              ksm='K_{sm}',
-                              )
-
         self.KPC = ConstService(v_str='KP * exp(1j * radians(THETAP))',
                                 tex_name='K_{PC}',
                                 info='KP polar THETAP',
@@ -236,7 +223,7 @@ class ESST4BModel(ExcBase):
         self.PI1 = PITrackAW(u=self.vi,
                              kp=self.KPR,
                              ki=self.KIR,
-                             ks=self.config.ksr,
+                             #  ks=self.config.ksr,
                              lower=self.VRMIN,
                              upper=self.VRMAX,
                              x0='VG_y'
@@ -248,7 +235,7 @@ class ESST4BModel(ExcBase):
         self.PI2 = PITrackAW(u='LA_y - VG_y',
                              kp=self.KPM,
                              ki=self.KIM,
-                             ks=self.config.ksm,
+                             #  ks=self.config.ksm,
                              lower=self.VMMIN,
                              upper=self.VMMAX,
                              x0='safe_div(vf0, VB_y)',
@@ -257,6 +244,22 @@ class ESST4BModel(ExcBase):
         # TODO: add back LV Gate
 
         self.vout.e_str = 'ue * VB_y * PI2_y - vout'
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('ksr', 2),
+                                ('ksm', 2),
+                                )))
+
+        config.add_extra('_help',
+                         ksr='Tracking gain for outer PI controller',
+                         ksm='Tracking gain for inner PI controller',
+                         )
+        config.add_extra('_tex',
+                         ksr='K_{sr}',
+                         ksm='K_{sm}',
+                         )
+        return config
 
 
 class ESST4B(ESST4BData, ESST4BModel):

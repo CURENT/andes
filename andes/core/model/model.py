@@ -222,28 +222,6 @@ class Model:
         # `in_use` is used by models with `BackRef` when not reference
         self.in_use = True  # True if this model is in use, False removes this model from all calls
 
-        self.config = Config(name=self.class_name)  # `config` that can be exported
-        if config is not None:
-            self.config.load(config)
-
-        # basic configs
-        self.config.add(OrderedDict((('allow_adjust', 1),
-                                    ('adjust_lower', 0),
-                                    ('adjust_upper', 1),
-                                     )))
-
-        self.config.add_extra("_help",
-                              allow_adjust='allow adjusting upper or lower limits',
-                              adjust_lower='adjust lower limit',
-                              adjust_upper='adjust upper limit',
-                              )
-
-        self.config.add_extra("_alt",
-                              allow_adjust=(0, 1),
-                              adjust_lower=(0, 1),
-                              adjust_upper=(0, 1),
-                              )
-
         self.calls = ModelCall()  # callback and LaTeX string storage
         self.triplets = JacTriplet()  # Jacobian triplet storage
         self.syms = SymProcessor(self)  # symbolic processor instance
@@ -285,6 +263,46 @@ class Model:
         self.coeffs = dict()  # pu conversion coefficient storage
         self.bases = dict()   # base storage, such as Vn, Vb, Zn, Zb
         self.debug_equations = list()  # variable names for debugging corresponding equation
+
+    def create_config(self, name, config_obj=None):
+        """
+        Create a Config object for this model by loading the ConfigParser object
+        and inserting this model's default configs.
+        """
+
+        config = Config(name)
+
+        if config_obj is not None:
+            config.load(config_obj)
+
+        # basic configs
+        config.add(OrderedDict((('allow_adjust', 1),
+                                ('adjust_lower', 0),
+                                ('adjust_upper', 1),
+                                )))
+
+        config.add_extra("_help",
+                         allow_adjust='allow adjusting upper or lower limits',
+                         adjust_lower='adjust lower limit',
+                         adjust_upper='adjust upper limit',
+                         )
+
+        config.add_extra("_alt",
+                         allow_adjust=(0, 1),
+                         adjust_lower=(0, 1),
+                         adjust_upper=(0, 1),
+                         )
+
+        return config
+
+    def set_config(self, config_manager):
+        """
+        Store a ConfigManager object and register the model's config creation
+        method.
+
+        """
+        self.config = config_manager
+        config_manager.register(self.class_name, self.create_config)
 
     def _register_attribute(self, key, value):
         """
@@ -1294,8 +1312,8 @@ class Model:
         for name in self.cache.all_params.keys():
             md5.update(str(name).encode())
 
-        for name in self.config.as_dict().keys():
-            md5.update(str(name).encode())
+        # for name in self.config.as_dict().keys():
+        #     md5.update(str(name).encode())
 
         for name, item in self.cache.all_vars.items():
             md5.update(str(name).encode())

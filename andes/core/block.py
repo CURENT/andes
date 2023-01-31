@@ -575,8 +575,13 @@ class PITrackAW(Block):
     PI with tracking anti-windup limiter
     """
 
-    def __init__(self, u, kp, ki, ks, lower, upper, no_lower=False, no_upper=False,
-                 ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
+    def __init__(self, u, kp, ki, lower, upper,
+                 ks=2.0,
+                 no_lower=False,
+                 no_upper=False,
+                 ref=0.0,
+                 x0=0.0,
+                 name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
 
         self.u = dummify(u)
@@ -619,7 +624,9 @@ class PIDTrackAW(PITrackAW):
     PID with tracking anti-windup limiter
     """
 
-    def __init__(self, u, kp, ki, kd, Td, ks, lower, upper, no_lower=False, no_upper=False,
+    def __init__(self, u, kp, ki, kd, Td, lower, upper,
+                 ks=2.0,
+                 no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         PITrackAW.__init__(self, u=u, kp=kp, ki=ki, ks=ks,
                            lower=lower, upper=upper,
@@ -658,7 +665,7 @@ class PITrackAWFreeze(PITrackAW):
     PI controller with tracking anti-windup limiter and state freeze.
     """
 
-    def __init__(self, u, kp, ki, ks, lower, upper, freeze, no_lower=False, no_upper=False,
+    def __init__(self, u, kp, ki, lower, upper, freeze, ks=2.0, no_lower=False, no_upper=False,
                  ref=0.0, x0=0.0, name=None, tex_name=None, info=None):
         PITrackAW.__init__(self, u, kp, ki, ks, lower, upper, no_lower=no_lower, no_upper=no_upper,
                            ref=ref, x0=x0, name=name, tex_name=tex_name, info=info)

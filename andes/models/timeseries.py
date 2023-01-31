@@ -84,20 +84,25 @@ class TimeSeriesModel(Model):
         self.group = 'DataSeries'
         self.flags.tds = True
 
-        self.config.add(OrderedDict((('silent', 1),
-                                     )))
-
-        self.config.add_extra("_help",
-                              silent="suppress output messages if is not zero",
-                              )
-        self.config.add_extra("_alt",
-                              silent=(0, 1),
-                              )
-
         self.SW = Switcher(self.mode, options=(0, 1, 2),
                            info='mode switcher', )
 
         self._data = OrderedDict()  # keys are the idx, and values are the dataframe
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('silent', 1),
+                                )))
+
+        config.add_extra("_help",
+                         silent="suppress output messages if is not zero",
+                         )
+
+        config.add_extra("_alt",
+                         silent=(0, 1),
+                         )
+
+        return config
 
     def list2array(self):
         """

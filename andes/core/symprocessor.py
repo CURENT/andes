@@ -82,7 +82,7 @@ class SymProcessor:
         # get references to the parent attributes
         self.calls = parent.calls
         self.cache = parent.cache
-        self.config = parent.config
+        # self.config = parent.config
         self.class_name = parent.class_name
         self.tex_names = OrderedDict()
 
@@ -127,12 +127,13 @@ class SymProcessor:
             if var in self.cache.vars_int:
                 self.vars_int_dict[var] = tmp
 
+        # TODO
         # store tex names defined in `self.config`
-        for key in self.config.as_dict():
-            tmp = sp.Symbol(key)
-            self.inputs_dict[key] = tmp
-            if key in self.config.tex_names:
-                self.tex_names[tmp] = sp.Symbol(self.config.tex_names[key])
+        # for key in self.config.as_dict():
+        #     tmp = sp.Symbol(key)
+        #     self.inputs_dict[key] = tmp
+        #     if key in self.config.tex_names:
+        #         self.tex_names[tmp] = sp.Symbol(self.config.tex_names[key])
 
         # store tex names for pretty printing replacement later
         for var in self.inputs_dict:

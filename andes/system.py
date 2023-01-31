@@ -108,11 +108,12 @@ class ModelManager:
                 the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
 
-                # TODO: `system=self` below prevents multiprocessing of codegen
+                # Note:
+                # `system=self` below prevents multiprocessing of codegen
                 self.__dict__[model_name] = the_class(system=self, config=None)  # TODO: config
 
                 self.models[model_name] = self.__dict__[model_name]
-                self.models[model_name].config.check()
+                # self.models[model_name].config.check()
 
                 # link to the group
                 group_name = self.__dict__[model_name].group
@@ -1195,24 +1196,25 @@ class System:
         if info is True:
             self.summary()
 
-    def to_ipysheet(self, model: str, vin: bool = False):
-        """
-        Return an ipysheet object for editing in Jupyter Notebook.
-        """
+    # TODO: Move to ipysheet
+    # def to_ipysheet(self, model: str, vin: bool = False):
+    #     """
+    #     Return an ipysheet object for editing in Jupyter Notebook.
+    #     """
 
-        from ipysheet import from_dataframe
+    #     from ipysheet import from_dataframe
 
-        return from_dataframe(self.models[model].as_df(vin=vin))
+    #     return from_dataframe(self.models[model].as_df(vin=vin))
 
-    def from_ipysheet(self, model: str, sheet, vin: bool = False):
-        """
-        Set an ipysheet object back to model.
-        """
+    # def from_ipysheet(self, model: str, sheet, vin: bool = False):
+    #     """
+    #     Set an ipysheet object back to model.
+    #     """
 
-        from ipysheet import to_dataframe
+    #     from ipysheet import to_dataframe
 
-        df = to_dataframe(sheet)
-        self.models[model].update_from_df(df, vin=vin)
+    #     df = to_dataframe(sheet)
+    #     self.models[model].update_from_df(df, vin=vin)
 
     def summary(self):
         """

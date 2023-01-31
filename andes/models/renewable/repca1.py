@@ -210,21 +210,6 @@ class REPCA1Model(Model):
         self.group = 'RenPlant'
         self.flags.tds = True
 
-        self.config.add(OrderedDict((('kqs', 2),
-                                     ('ksg', 2),
-                                     ('freeze', 1),
-                                     )))
-
-        self.config.add_extra('_help',
-                              kqs='Tracking gain for reactive power PI controller',
-                              ksg='Tracking gain for active power PI controller',
-                              freeze='Voltage dip freeze flag; 1-enable, 0-disable',
-                              )
-        self.config.add_extra('_tex',
-                              kqs='K_{qs}',
-                              ksg='K_{sg}',
-                              freeze='f_{rz}')
-
         # --- from RenExciter ---
         self.reg = ExtParam(model='RenExciter', src='reg', indexer=self.ree, export=False,
                             info='Retrieved RenGen idx', vtype=str, default=None,
@@ -407,8 +392,11 @@ class REPCA1Model(Model):
                             )
 
         self.s2 = PITrackAW(u='eHld',
-                            kp=self.Kp, ki=self.Ki, ks=self.config.kqs,
-                            lower=self.Qmin, upper=self.Qmax,
+                            kp=self.Kp,
+                            ki=self.Ki,
+                            # ks=self.config.kqs,
+                            lower=self.Qmin,
+                            upper=self.Qmax,
                             info='PI controller for eHL output',
                             tex_name='s_2',
                             )
@@ -471,8 +459,12 @@ class REPCA1Model(Model):
                             )
 
         feout = '(Perr * feHL_zi + femin * feHL_zl + femax * feHL_zu)'
-        self.s5 = PITrackAW(u=feout, kp=self.Kpg, ki=self.Kig, ks=self.config.ksg,
-                            lower=self.Pmin, upper=self.Pmax,
+        self.s5 = PITrackAW(u=feout,
+                            kp=self.Kpg,
+                            ki=self.Kig,
+                            # ks=self.config.ksg,
+                            lower=self.Pmin,
+                            upper=self.Pmax,
                             tex_name='s_5',
                             info='PI for fe limiter output',
                             )
@@ -489,6 +481,25 @@ class REPCA1Model(Model):
         self.Pext.e_str = Pext
 
         self.Qext.e_str = Qext
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+        config.add(OrderedDict((('kqs', 2),
+                                ('ksg', 2),
+                                ('freeze', 1),
+                                )))
+
+        config.add_extra('_help',
+                         kqs='Tracking gain for reactive power PI controller',
+                         ksg='Tracking gain for active power PI controller',
+                         freeze='Voltage dip freeze flag; 1-enable, 0-disable',
+                         )
+        config.add_extra('_tex',
+                         kqs='K_{qs}',
+                         ksg='K_{sg}',
+                         freeze='f_{rz}')
+
+        return config
 
 
 class REPCA1(REPCA1Data, REPCA1Model):

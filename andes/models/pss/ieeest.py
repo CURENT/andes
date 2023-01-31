@@ -49,11 +49,8 @@ class IEEESTModel(PSSBase):
     def __init__(self, system, config):
         PSSBase.__init__(self, system, config)
 
-        self.config.add(OrderedDict([('freq_model', 'BusFreq')]))
-        self.config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
-        self.config.add_extra('_alt', {'freq_model': ('BusFreq',)})
-
-        self.busf.model = self.config.freq_model
+        # TODO self.busf.model = self.config.freq_model
+        self.busf.model = "BusFreq"
 
         self.dv = Derivative(self.v, tex_name='dV/dt', info='Finite difference of bus voltage')
 
@@ -95,6 +92,16 @@ class IEEESTModel(PSSBase):
         self.OLIM = Limiter(u=self.v, lower=self.VCLr, upper=self.VCUr, info='output limiter')
 
         self.vsout.e_str = 'OLIM_zi * Vss - vsout'
+
+    def create_config(self, name, config_obj=None):
+
+        config = super().create_config(name, config_obj)
+
+        config.add(OrderedDict([('freq_model', 'BusFreq')]))
+        config.add_extra('_help', {'freq_model': 'default freq. measurement model'})
+        config.add_extra('_alt', {'freq_model': ('BusFreq',)})
+
+        return config
 
 
 class IEEEST(IEEESTData, IEEESTModel):

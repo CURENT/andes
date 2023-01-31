@@ -25,17 +25,6 @@ class Slack(SlackData, PVModel):
         SlackData.__init__(self)
         PVModel.__init__(self, system, config)
 
-        self.config.add(OrderedDict((('av2pv', 0),
-                                     )))
-        self.config.add_extra("_help",
-                              av2pv="convert Slack to PV in PFlow at P limits",
-                              )
-        self.config.add_extra("_alt",
-                              av2pv=(0, 1),
-                              )
-        self.config.add_extra("_tex",
-                              av2pv="z_{av2pv}",
-                              )
         self.busa0 = ExtParam(model='Bus', src='a0', indexer=self.bus,
                               export=False, tex_name=r'\theta_{0bus}',
                               )
@@ -58,4 +47,21 @@ class Slack(SlackData, PVModel):
         self.a.e_str = '-u * p'
 
         self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
-                                  enable=self.config.av2pv)
+                                  #   enable=self.config.av2pv,
+                                  )
+
+    def create_config(self, name, config_obj=None):
+        config = super().create_config(name, config_obj)
+
+        config.add(OrderedDict((('av2pv', 0),
+                                )))
+        config.add_extra("_help",
+                         av2pv="convert Slack to PV in PFlow at P limits",
+                         )
+        config.add_extra("_alt",
+                         av2pv=(0, 1),
+                         )
+        config.add_extra("_tex",
+                         av2pv="z_{av2pv}",
+                         )
+        return config
