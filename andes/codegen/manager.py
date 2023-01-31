@@ -125,6 +125,7 @@ class PyCodeGenerator:
 
         model_names = list(models.keys())
         model_list = list()
+        # model_list = list(models.values())
 
         for fname, cls_list in file_classes:
             for model_name in cls_list:
@@ -132,7 +133,11 @@ class PyCodeGenerator:
                     continue
                 the_module = importlib.import_module('andes.models.' + fname)
                 the_class = getattr(the_module, model_name)
-                model_list.append(the_class(system=None, config=None))
+
+                mdl = the_class(system=None, config=None)
+                # mdl.set_config(mdl.create_config())
+
+                model_list.append(mdl)
 
         def _prep_model(model: Model, ):
             """
@@ -329,8 +334,14 @@ class PyCodeManager:
             True if any model is regenerated.
         """
 
-        self.loader.load_calls(self.path)
-        stale_models = self.loader.find_stale()
+        stale_models = OrderedDict()
+
+        try:
+            self.loader.load_calls(self.path)
+            stale_models = self.loader.find_stale()
+        except ImportError:
+            stale_models = self.models
+            logger.debug("No pycode found. Regenerating all models.")
 
         if len(stale_models) > 0:
             logger.info("Generated code for <%s> is stale.",
@@ -398,11 +409,10 @@ class PyCodeLoader:
 
         pycode_module = import_pycode(user_pycode_path=pycode_path)
 
-        if pycode_module is not None:
-            try:
-                self.pycode_dict = self._expand_pycode(pycode_module)
-            except KeyError:
-                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
+        try:
+            self.pycode_dict = self._expand_pycode(pycode_module)
+        except KeyError:
+            logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
 
         return self.pycode_dict
 
@@ -495,13 +505,19 @@ def import_pycode(user_pycode_path=None):
 
     # below are executed serially because of priority
     pycode = reload_submodules('pycode')
-    if not pycode:
+
+    if pycode is None:
         pycode_path = get_pycode_path(user_pycode_path, mkdir=False)
         pycode = _import_pycode_from(pycode_path)
-    if not pycode:
+
+    if pycode is None:
         pycode = reload_submodules('andes.pycode')
-    if not pycode:
+
+    if pycode is None:
         pycode = _import_pycode_from(os.path.join(andes_root(), 'pycode'))
+
+    if pycode is None:
+        raise ImportError("Pycode module import failed")
 
     return pycode
 

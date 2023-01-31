@@ -110,7 +110,7 @@ class ModelManager:
 
                 # Note:
                 # `system=self` below prevents multiprocessing of codegen
-                self.__dict__[model_name] = the_class(system=self, config=None)  # TODO: config
+                self.__dict__[model_name] = the_class(system=None, config=None)  # TODO: config
 
                 self.models[model_name] = self.__dict__[model_name]
                 # self.models[model_name].config.check()
@@ -216,9 +216,9 @@ class RoutineManager:
 class SystemManager:
 
     def __init__(self) -> None:
+        self.cmgr = ConfigManager()
         self.mm = ModelManager()
         self.pcm = PyCodeManager(self.mm.models)
-        self.cmgr = ConfigManager()
         self.rmgr = RoutineManager()
 
     def initialize(self):
@@ -231,7 +231,7 @@ class SystemManager:
         self.cmgr.create()
 
         # below can be generate or load
-        # self.pcm.load()
+        self.pcm.load()
 
 
 class System:

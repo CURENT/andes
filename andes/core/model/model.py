@@ -224,7 +224,7 @@ class Model:
 
         self.calls = ModelCall()  # callback and LaTeX string storage
         self.triplets = JacTriplet()  # Jacobian triplet storage
-        self.syms = SymProcessor(self)  # symbolic processor instance
+        # self.syms = SymProcessor(self)  # symbolic processor instance
         self.docum = Documenter(self)
 
         # cached class attributes
@@ -302,6 +302,7 @@ class Model:
         """
 
         self.config = config_manager
+
         config_manager.register(self.class_name, self.create_config)
 
     def _register_attribute(self, key, value):

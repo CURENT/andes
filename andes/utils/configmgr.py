@@ -127,8 +127,14 @@ class ConfigManager:
             self._store[field] = self._registered[field](self._config_obj)
             self._store[field].check()
 
-    def __getattr__(self, field_name):
-        return self._store[field_name]
+    def __getattr__(self, attr):
+        if attr.startswith('__') and attr.endswith('__'):
+            raise AttributeError
+
+        return self._store[attr]
+
+    # def __getstate__(self):
+        # return super().__getstate__()
 
     def save_config(self, file_path=None, overwrite=False):
         """
