@@ -49,6 +49,7 @@ class ModelMetaParser:
         self.services_icheck = OrderedDict()
 
         self.blocks = OrderedDict()
+        self.dummy = OrderedDict()
 
         self.all_params_names = list()
 
@@ -87,8 +88,8 @@ class ModelMetaParser:
         cls = attr.__class__
 
         while True:
-
             cls_name = cls.__name__
+
             if self._call_processor(name, attr, cls_name) is True:
                 break
 
@@ -96,8 +97,10 @@ class ModelMetaParser:
 
             if base_class.__name__ == cls_name:
                 break
-            elif base_class.__name__ == 'object':
-                raise NotImplementedError(f"Cannot find processor for {cls_name}")
+
+            if base_class.__name__ == 'object':
+                raise NotImplementedError(
+                    f"Cannot find processor for {self.model.class_name}.{name} of {cls_name}")
 
             cls = base_class
 
@@ -302,3 +305,6 @@ class ModelMetaParser:
 
     def _process_AliasState(self, name, attr):
         self.all_vars[name] = attr
+
+    def _process_DummyValue(self, name, attr):
+        self.dummy[name] = attr
