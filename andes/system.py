@@ -238,26 +238,27 @@ class System:
     """
     System contains models and routines for modeling and simulation.
 
-    System contains a several special `OrderedDict` member attributes for housekeeping.
-    These attributes include `models`, `groups`, `routines` and `calls` for loaded models, groups,
-    analysis routines, and generated numerical function calls, respectively.
+    System contains a several special `OrderedDict` member attributes for
+    housekeeping. These attributes include `models`, `groups`, `routines` and
+    `calls` for loaded models, groups, analysis routines, and generated
+    numerical function calls, respectively.
 
     Parameters
     ----------
     no_undill : bool, optional, default=False
-        True to disable the call to ``System.undill()`` at the end of object creation.
-        False by default.
+        True to disable the call to ``System.undill()`` at the end of object
+        creation. False by default.
 
     autogen_stale : bool, optional, default=True
         True to automatically generate code for stale models.
 
     Notes
     -----
-    System stores model and routine instances as attributes.
-    Model and routine attribute names are the same as their class names.
-    For example, `Bus` is stored at ``system.Bus``, the power flow calculation routine is at
-    ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See attributes for the list of
-    attributes.
+    System stores model and routine instances as attributes. Model and routine
+    attribute names are the same as their class names. For example, `Bus` is
+    stored at ``system.Bus``, the power flow calculation routine is at
+    ``system.PFlow``, and the numerical DAE instance is at ``system.dae``. See
+    attributes for the list of attributes.
 
     Attributes
     ----------
@@ -400,6 +401,7 @@ class System:
         """
         Clear adders and setters storage
         """
+
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
         self._setters = dict(f=list(), g=list(), x=list(), y=list())
@@ -429,6 +431,7 @@ class System:
 
         This function is to be called after adding all device data.
         """
+
         ret = True
         t0, _ = elapsed()
 
@@ -473,6 +476,7 @@ class System:
         --------
         If TDS is initialized, reset will lead to unpredictable state.
         """
+
         if self.TDS.initialized is True and not force:
             logger.error('Reset failed because TDS is initialized. \nPlease reload the test case to start over.')
             return
@@ -487,8 +491,10 @@ class System:
         """
         Add a device instance for an existing model.
 
-        This methods calls the ``add`` method of `model` and registers the device `idx` to group.
+        This methods calls the ``add`` method of `model` and registers the
+        device `idx` to group.
         """
+
         if model not in self.models and (model not in self.model_aliases):
             logger.warning("<%s> is not an existing model.", model)
             return
@@ -611,8 +617,8 @@ class System:
 
     def set_dae_names(self, models):
         """
-        Set variable names for differential and algebraic variables,
-        right-hand side of external equations, and discrete flags.
+        Set variable names for differential and algebraic variables, right-hand
+        side of external equations, and discrete flags.
         """
 
         for mdl in models.values():
@@ -742,7 +748,9 @@ class System:
         """
         Store differential variables with ``check_init == False``.
         """
+
         self.no_check_init = list()
+
         for mdl in models.values():
             if mdl.n == 0:
                 continue
@@ -755,6 +763,7 @@ class System:
         """
         Retrieve values for ``ExtParam`` for the given models.
         """
+
         if model is None:
             models = self.models
         else:
@@ -783,6 +792,7 @@ class System:
         This function calculates the per unit conversion factors, stores input
         parameters to `vin`, and perform the conversion.
         """
+
         # `Sb`, `Vb` and `Zb` are the system base, bus base values
         # `Sn`, `Vn` and `Zn` are the device bases
 
@@ -848,6 +858,7 @@ class System:
 
         This function is must be called before any equation evaluation.
         """
+
         self.call_models('l_update_var', models,
                          dae_t=self.dae.t, niter=niter, err=err)
 
@@ -858,6 +869,7 @@ class System:
 
         This function is must be called after differential equation updates.
         """
+
         self.call_models('l_check_eq', models, init=init, niter=niter)
 
     def s_update_var(self, models: OrderedDict):
@@ -867,6 +879,7 @@ class System:
         This function is must be called before any equation evaluation after
         limiter update function `l_update_var`.
         """
+
         self.call_models('s_update_var', models)
 
     def s_update_post(self, models: OrderedDict):
@@ -875,6 +888,7 @@ class System:
 
         This function is called at the end of `System.init()`.
         """
+
         self.call_models('s_update_post', models)
 
     def fg_to_dae(self):
@@ -884,6 +898,7 @@ class System:
         Additionally, the function resets the differential equations associated with variables pegged by
         anti-windup limiters.
         """
+
         self._e_to_dae(('f', 'g'))
 
         # reset mismatches for islanded buses
@@ -903,6 +918,7 @@ class System:
         -----
         Updated equation values remain in models and have not been collected into DAE at the end of this step.
         """
+
         try:
             self.call_models('f_update', models)
         except TypeError as e:
@@ -917,6 +933,7 @@ class System:
         -----
         Like `f_update`, updated values have not collected into DAE at the end of the step.
         """
+
         try:
             self.call_models('g_update', models)
         except TypeError as e:
@@ -927,6 +944,7 @@ class System:
         """
         Reset algebraic mismatches for islanded buses.
         """
+
         if self.Bus.n_islanded_buses == 0:
             return
 
@@ -945,6 +963,7 @@ class System:
         -----
         Updated Jacobians are immediately reflected in the DAE sparse matrices (fx, fy, gx, gy).
         """
+
         self.call_models('j_update', models)
 
         self.dae.restore_sparse()
@@ -976,6 +995,7 @@ class System:
         """
         Set gy diagonals to eps for `a` and `v` variables of islanded buses.
         """
+
         if self.Bus.n_islanded_buses == 0:
             return
 
@@ -1007,6 +1027,7 @@ class System:
         It is a safeguard if the modeling user omitted the diagonal
         term in the equations.
         """
+
         self.call_models('store_sparse_pattern', models)
 
         # add variable jacobian values
@@ -1044,6 +1065,7 @@ class System:
 
         This function clears `DAE.x` and `DAE.y` and collects values from models.
         """
+
         self._v_to_dae('x', model)
         self._v_to_dae('y', model)
 
@@ -1069,6 +1091,7 @@ class System:
         info : bool
             True to log connectivity summary.
         """
+
         logger.debug("Entering connectivity check.")
 
         self.Bus.n_islanded_buses = 0
@@ -1279,6 +1302,7 @@ class System:
         v_code : 'x' or 'y'
             Variable type name
         """
+
         if model.n == 0:
             return
         if model.flags.initialized is False:
@@ -1307,6 +1331,7 @@ class System:
         eq_name : 'x' or 'y' or tuple
             Equation type name
         """
+
         if isinstance(eq_name, str):
             eq_name = [eq_name]
 
@@ -1325,6 +1350,7 @@ class System:
         -------
         numpy.array
         """
+
         if self.TDS.config.store_z != 1:
             return None
 
@@ -1345,6 +1371,7 @@ class System:
         """
         Store the inverse time constant associated with equations.
         """
+
         for mdl in models.values():
             for var in mdl.cache.states_and_ext.values():
                 if var.t_const is not None:
@@ -1368,8 +1395,8 @@ class System:
         Returns
         -------
         The return value of the models in an OrderedDict
-
         """
+
         ret = OrderedDict()
         for name, mdl in models.items():
             ret[name] = getattr(mdl, method)(*args, **kwargs)
@@ -1392,6 +1419,7 @@ class System:
         ------
         KeyError if any parameter or value is not provided
         """
+
         for group in self.groups.values():
             for item in group.common_params:
                 for model in group.models.values():
@@ -1413,6 +1441,7 @@ class System:
         """
         Collect indices into `BackRef` for all models.
         """
+
         models_and_groups = list(self.models.values()) + list(self.groups.values())
 
         # create an empty list of lists for all `BackRef` instances
@@ -1478,6 +1507,7 @@ class System:
         array-like
             self.switch_times
         """
+
         out = np.array([], dtype=float)
 
         if self.options.get('flat') is True:
@@ -1520,6 +1550,7 @@ class System:
 
         This function will not be called if ``flat=True`` is passed to system.
         """
+
         for instance in models.values():
             instance.switch_action(self.dae.t)
 
@@ -1530,6 +1561,7 @@ class System:
         """
         Restore parameters stored in `pin`.
         """
+
         for model in self.models.values():
             for param in model.num_params.values():
                 param.restore()
@@ -1540,6 +1572,7 @@ class System:
 
         This step must be called before calling `f_update` or `g_update` to flush existing values.
         """
+
         self.dae.clear_fg()
         self.call_models('e_clear', models)
 
@@ -1547,6 +1580,7 @@ class System:
         """
         Remove PyCapsule objects in solvers.
         """
+
         for r in self.routines.values():
             r.solver.clear()
 
@@ -1555,6 +1589,7 @@ class System:
         Helper function to call models' ``list2array`` method, which usually
         performs memory preallocation.
         """
+
         self.call_models('list2array', self.models)
 
     def supported_models(self, export='plain'):

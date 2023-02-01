@@ -114,10 +114,11 @@ class ModelMetaParser:
         for name in self.all_params.keys():
             md5.update(str(name).encode())
 
+        # TODO
         # for name in self.config.as_dict().keys():
         #     md5.update(str(name).encode())
 
-        for name, item in list(self.states_and_ext.items()) + list(self.algebs_and_ext.items()):
+        for name, item in self.all_vars.items():
             md5.update(str(name).encode())
 
             if item.v_str is not None:
@@ -129,9 +130,7 @@ class ModelMetaParser:
             if item.diag_eps is not None:
                 md5.update(str(item.diag_eps).encode())
 
-        # TODO: AliasVar not included yet
-
-        for name, item in self.services_const.items():  # TODO
+        for name, item in self.services_const.items():
             md5.update(str(name).encode())
 
             if item.v_str is not None:
