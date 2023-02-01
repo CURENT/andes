@@ -18,16 +18,11 @@ class Documenter:
         The `Model` instance to document
     """
 
-    def __init__(self, parent):
-        self.parent = parent
-        self.system = parent.system
-        self.class_name = parent.class_name
-        # self.config = parent.config
-        self.cache = parent.cache
-        self.params = parent.params
-        self.services = parent.services
-        self.discrete = parent.discrete
-        self.blocks = parent.blocks
+    def __init__(self, model, calls, model_meta):
+        self.model = model
+        self.meta = model_meta
+        self.calls = calls
+        self.class_name = model.class_name
 
     def _param_doc(self, max_width=78, export='plain'):
         """
@@ -46,7 +41,7 @@ class Documenter:
         str
             Tabulated output in a string
         """
-        if len(self.params) == 0:
+        if len(self.meta.params) == 0:
             return ''
 
         # prepare temporary lists
@@ -54,7 +49,7 @@ class Documenter:
         info, defaults, properties = list(), list(), list()
         units_rest = list()
 
-        for p in self.params.values():
+        for p in self.meta.params.values():
             names.append(p.name)
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
@@ -70,11 +65,11 @@ class Documenter:
 
         # symbols based on output format
         if export == 'rest':
-            symbols = [item.tex_name for item in self.params.values()]
+            symbols = [item.tex_name for item in self.meta.params.values()]
             symbols = math_wrap(symbols, export=export)
             title = 'Parameters\n----------'
         else:
-            symbols = [item.name for item in self.params.values()]
+            symbols = [item.name for item in self.meta.params.values()]
             title = 'Parameters'
 
         plain_dict = OrderedDict([('Name', names),
@@ -99,14 +94,14 @@ class Documenter:
 
     def _var_doc(self, max_width=78, export='plain'):
         # variable documentation
-        if len(self.all_vars()) == 0:
+        if len(self.meta.all_vars) == 0:
             return ''
 
         names, symbols, units = list(), list(), list()
         properties, info = list(), list()
         units_rest, ty = list(), list()
 
-        for p in self.all_vars().values():
+        for p in self.meta.all_vars.values():
             names.append(p.name)
             ty.append(p.class_name)
             info.append(p.info if p.info else '')
@@ -125,8 +120,7 @@ class Documenter:
 
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
+            symbols = math_wrap(self.calls.x_latex + self.calls.y_latex, export=export)
             title = 'Variables\n---------'
 
         plain_dict = OrderedDict([('Name', names),
@@ -153,13 +147,13 @@ class Documenter:
         Variable initialization docs.
         """
 
-        if len(self.all_vars()) == 0:
+        if len(self.meta.all_vars) == 0:
             return ''
 
         names, symbols, ivs = list(), list(), list()
         ivs_rest, ty = list(), list()
 
-        for p in self.all_vars().values():
+        for p in self.meta.all_vars.values():
             names.append(p.name)
             ty.append(p.class_name)
             ivs.append(p.v_str if p.v_str else '')
@@ -168,9 +162,8 @@ class Documenter:
 
         # replace with latex math expressions if export is ``rest``
         if export == 'rest':
-            call_store = self.system.calls[self.class_name]
-            symbols = math_wrap(call_store.x_latex + call_store.y_latex, export=export)
-            ivs_rest = math_wrap(call_store.init_latex.values(), export=export)
+            symbols = math_wrap(self.calls.x_latex + self.calls.y_latex, export=export)
+            ivs_rest = math_wrap(self.calls.init_latex.values(), export=export)
             title = 'Initialization Equations\n------------------------'
 
         plain_dict = OrderedDict([('Name', names),
@@ -195,7 +188,7 @@ class Documenter:
         Return equation documentation.
         """
         out = ''
-        if len(self.all_vars()) == 0:
+        if len(self.meta.all_vars) == 0:
             return out
 
         if e_code is None:
@@ -208,8 +201,8 @@ class Documenter:
         e2form = {'f': "T x' = f(x, y)",
                   'g': "0 = g(x, y)"}
 
-        e2dict = {'f': self.cache.states_and_ext,
-                  'g': self.cache.algebs_and_ext}
+        e2dict = {'f': self.meta.states_and_ext,
+                  'g': self.meta.algebs_and_ext}
         for e_name in e_code:
             if len(e2dict[e_name]) == 0:
                 continue
@@ -233,11 +226,10 @@ class Documenter:
                                       ])
             title = f'{e2full[e_name]} Equations'
             if export == 'rest':
-                call_store = self.system.calls[self.class_name]
-                e2var_sym = {'f': call_store.x_latex,
-                             'g': call_store.y_latex}
-                e2eq_sym = {'f': call_store.f_latex,
-                            'g': call_store.g_latex}
+                e2var_sym = {'f': self.calls.x_latex,
+                             'g': self.calls.y_latex}
+                e2eq_sym = {'f': self.calls.f_latex,
+                            'g': self.calls.g_latex}
 
                 symbols = math_wrap(e2var_sym[e_name], export=export)
                 eqs_rest = math_wrap(e2eq_sym[e_name], export=export)
@@ -262,13 +254,13 @@ class Documenter:
         return out
 
     def _service_doc(self, max_width=78, export='plain'):
-        if len(self.services) == 0:
+        if len(self.meta.services) == 0:
             return ''
 
         names, symbols = list(), list()
         eqs, eqs_rest, class_names = list(), list(), list()
 
-        for p in self.services.values():
+        for p in self.meta.services.values():
             names.append(p.name)
             class_names.append(p.class_name)
             symbols.append(p.tex_name if p.tex_name is not None else '')
@@ -276,9 +268,8 @@ class Documenter:
 
         title = 'Services'
         if export == 'rest':
-            call_store = self.system.calls[self.class_name]
             symbols = math_wrap(symbols, export=export)
-            eqs_rest = math_wrap(call_store.s_latex, export=export)
+            eqs_rest = math_wrap(self.calls.s_latex, export=export)
             title = 'Services\n----------'
 
         plain_dict = OrderedDict([('Name', names),
@@ -297,20 +288,20 @@ class Documenter:
                               rest_dict=rest_dict)
 
     def _discrete_doc(self, max_width=78, export='plain'):
-        if len(self.discrete) == 0:
+        if len(self.meta.discrete) == 0:
             return ''
 
         names, symbols, info = list(), list(), list()
         class_names = list()
 
-        for p in self.discrete.values():
+        for p in self.meta.discrete.values():
             names.append(p.name)
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
 
         title = 'Discretes'
         if export == 'rest':
-            symbols = math_wrap([item.tex_name for item in self.discrete.values()], export=export)
+            symbols = math_wrap([item.tex_name for item in self.meta.discrete.values()], export=export)
             title = 'Discretes\n-----------'
 
         plain_dict = OrderedDict([('Name', names),
@@ -332,20 +323,20 @@ class Documenter:
         """
         Documentation for blocks.
         """
-        if len(self.blocks) == 0:
+        if len(self.meta.blocks) == 0:
             return ''
 
         names, symbols, info = list(), list(), list()
         class_names = list()
 
-        for p in self.blocks.values():
+        for p in self.meta.blocks.values():
             names.append(p.name)
             class_names.append(p.class_name)
             info.append(p.info if p.info else '')
 
         title = 'Blocks'
         if export == 'rest':
-            symbols = math_wrap([item.tex_name for item in self.blocks.values()], export=export)
+            symbols = math_wrap([item.tex_name for item in self.meta.blocks.values()], export=export)
             title = 'Blocks\n-------'
 
         plain_dict = OrderedDict([('Name', names),
@@ -390,10 +381,10 @@ class Documenter:
         if export == 'rest':
             out += model_header + f'{self.class_name}\n' + model_header
         else:
-            out += model_header + f'Model <{self.class_name}> in Group <{self.parent.group}>\n' + model_header
+            out += model_header + f'Model <{self.class_name}> in Group <{self.model.group}>\n' + model_header
 
-        if self.parent.__doc__ is not None:
-            out += inspect.cleandoc(self.parent.__doc__)
+        if self.model.__doc__ is not None:
+            out += inspect.cleandoc(self.model.__doc__)
         out += '\n\n'  # this fixes the indentation for the next line
 
         # add tables

@@ -205,8 +205,6 @@ class Model:
         self.in_use = True  # True if this model is in use, False removes this model from all calls
 
         self.calls = ModelCall()  # callback and LaTeX string storage
-        # self.triplets = JacTriplet()  # Jacobian triplet storage
-        # self.docum = Documenter(self)
 
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags, storage only.
@@ -758,11 +756,12 @@ class Model:
         """
         pass
 
-    def doc(self, max_width=78, export='plain'):
-        """
-        Retrieve model documentation as a string.
-        """
-        return self.docum.get(max_width=max_width, export=export)
+    # TODO: move to top level
+    # def doc(self, max_width=78, export='plain'):
+    #     """
+    #     Retrieve model documentation as a string.
+    #     """
+    #     return self.docum.get(max_width=max_width, export=export)
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

@@ -55,6 +55,10 @@ class ModelMetaParser:
         self._skip_classes = ("ModelCall", "ConfigManager")
 
     def process_attr(self):
+        """
+        Entry function to process all attributes in the model.
+        """
+
         for name, attr in self.model.__dict__.items():
             class_module = attr.__class__.__module__.split('.')[0]
             class_name = attr.__class__.__name__
@@ -69,6 +73,16 @@ class ModelMetaParser:
         self.all_params_names = self._process_all_params_names()
 
     def process_one_attr(self, name, attr):
+        """
+        Function to dispatch an attribute to the correct processor.
+
+        Parameters
+        ----------
+        name : str
+            Name of the attribute
+        attr : object
+            Attribute object
+        """
 
         cls = attr.__class__
 
