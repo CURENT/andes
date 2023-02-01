@@ -169,11 +169,6 @@ class Model:
         self.group_param_exception = list()
         self.group_var_exception = list()
 
-        if not hasattr(self, 'num_params'):
-            self.num_params = OrderedDict()
-        # if not hasattr(self, 'cache'):
-        #     self.cache = ModelCache()
-
         # variables
         self.states = OrderedDict()  # internal states
         self.states_ext = OrderedDict()  # external states
@@ -412,36 +407,6 @@ class Model:
                         for i in uid]
 
         return self.__dict__[src].__dict__[attr][uid]
-
-    # def all_vars(self):
-    #     # TODO: this function is used in hot loops so need to be cached
-    #     """
-    #     An OrderedDict of States, ExtStates, Algebs, ExtAlgebs
-    #     """
-    #     return OrderedDict(list(self.states.items()) +
-    #                        list(self.states_ext.items()) +
-    #                        list(self.algebs.items()) +
-    #                        list(self.algebs_ext.items())
-    #                        )
-
-    # def all_params(self):
-
-    #     # TODO: not in a hot loop but need to be cached somehow
-    #     # the service stuff should not be moved to variables.
-    #     return OrderedDict(list(self.num_params.items()) +
-    #                        list(self.services.items()) +
-    #                        list(self.services_ext.items()) +
-    #                        list(self.services_ops.items()) +
-    #                        list(self.services_subs.items()) +
-    #                        list(self.discrete.items())
-    #                        )
-
-    # def all_params_names(self):
-    #     # TODO: used in symprocessor; move out
-    #     out = []
-    #     for instance in self.all_params().values():
-    #         out += instance.get_names()
-    #     return out
 
     def set(self, src, idx, attr, value):
         """

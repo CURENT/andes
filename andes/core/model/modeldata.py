@@ -91,9 +91,6 @@ class ModelData:
         # indexing bases. Most vectorized models only have one base: self.idx
         self.index_bases = []
 
-        # if not hasattr(self, 'cache'):
-        #     self.cache = ModelCache()
-
         if three_params is True:
             self.idx = DataParam(info='unique device idx')
             self.u = NumParam(default=1, info='connection status', unit='bool', tex_name='u')

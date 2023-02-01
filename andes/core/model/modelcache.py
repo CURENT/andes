@@ -1,4 +1,7 @@
 """
+Deprecation warning: This module is deprecated and will be removed in the
+future.
+
 Module for ModelCache.
 """
 
@@ -6,12 +9,6 @@ Module for ModelCache.
 from collections import OrderedDict
 from andes.shared import pd
 import numpy as np
-
-
-class ModelCacheManager:
-
-    def __init__(self) -> None:
-        self._store = {}
 
 
 class ModelCache:
@@ -99,25 +96,6 @@ class ModelCache:
         self.add_callback('dict_in', lambda: self.as_dict(True))
         self.add_callback('df_in', lambda: self.as_df(vin=True))
 
-        # self.add_callback('all_vars', self._all_vars)
-        self.add_callback('iter_vars', self._iter_vars)
-        self.add_callback('input_vars', self._input_vars)
-        self.add_callback('output_vars', self._output_vars)
-
-        self.add_callback('all_vars_names', self._all_vars_names)
-        self.add_callback('all_params', self._all_params)
-        self.add_callback('all_params_names', self._all_params_names)
-        self.add_callback('algebs_and_ext', self._algebs_and_ext)
-        self.add_callback('states_and_ext', self._states_and_ext)
-        self.add_callback('services_and_ext', self._services_and_ext)
-        self.add_callback('vars_ext', self._vars_ext)
-        self.add_callback('vars_int', self._vars_int)
-        self.add_callback('v_getters', self._v_getters)
-        self.add_callback('v_adders', self._v_adders)
-        self.add_callback('v_setters', self._v_setters)
-        self.add_callback('e_adders', self._e_adders)
-        self.add_callback('e_setters', self._e_setters)
-
     def as_dict(self, vin=False):
         """
         Export all parameters as a dict.
@@ -184,58 +162,6 @@ class ModelCache:
             out[name] = instance.v
 
         return pd.DataFrame(out).set_index('uid')
-
-    def _iter_vars(self):
-        """
-        Variables to be iteratively initialized
-        """
-        all_vars = OrderedDict(self.all_vars())
-        for name, instance in self.all_vars().items():
-            if not instance.v_iter:
-                all_vars.pop(name)
-        return all_vars
-
-    def _all_vars_names(self):
-        out = []
-        for instance in self.all_vars().values():
-            out += instance.get_names()
-        return out
-
-    def _all_params(self):
-        # the service stuff should not be moved to variables.
-        return OrderedDict(list(self.num_params.items()) +
-                           list(self.services.items()) +
-                           list(self.services_ext.items()) +
-                           list(self.services_ops.items()) +
-                           list(self.services_subs.items()) +
-                           list(self.discrete.items())
-                           )
-
-    def _all_params_names(self):
-        out = []
-        for instance in self.cache.all_params.values():
-            out += instance.get_names()
-        return out
-
-    def _algebs_and_ext(self):
-        return OrderedDict(list(self.algebs.items()) +
-                           list(self.algebs_ext.items()))
-
-    def _states_and_ext(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()))
-
-    def _services_and_ext(self):
-        return OrderedDict(list(self.services.items()) +
-                           list(self.services_ext.items()))
-
-    def _vars_ext(self):
-        return OrderedDict(list(self.states_ext.items()) +
-                           list(self.algebs_ext.items()))
-
-    def _vars_int(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.algebs.items()))
 
     def _v_getters(self):
         out = OrderedDict()

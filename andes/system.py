@@ -1284,6 +1284,9 @@ class System:
         if model.flags.initialized is False:
             return
 
+        # TODO: cache has been removed; access to adders and setters should be
+        # done via a class for storing runtime information.
+
         for var in model.cache.v_adders.values():
             if var.v_code != v_code:
                 continue

@@ -23,7 +23,6 @@ The following classes are related to models:
 
       ModelData
       Model
-      ModelCache
       ModelCall
 
 

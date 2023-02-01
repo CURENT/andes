@@ -72,15 +72,10 @@ class ModelMetaParser:
 
         cls = attr.__class__
 
-        # if isinstance(attr, Block):
-        #     self._process_Block(name, attr)
-
         while True:
-            cls_name = cls.__name__
 
-            print("calling", cls_name)
+            cls_name = cls.__name__
             if self._call_processor(name, attr, cls_name) is True:
-                # print("is true for ", cls_name)
                 break
 
             base_class = cls.__bases__[0]
@@ -90,17 +85,7 @@ class ModelMetaParser:
             elif base_class.__name__ == 'object':
                 raise NotImplementedError(f"Cannot find processor for {cls_name}")
 
-            # print("new class name", base_class.__name__)
-
             cls = base_class
-
-        # if self._call_processor(name, attr, class_name):
-        #     return
-
-        # for base in class_bases:
-        #     ret = self._call_processor(name, attr, base.__name__)
-        #     if ret:
-        #         break
 
     def _process_all_params_names(self):
 
@@ -278,22 +263,22 @@ class ModelMetaParser:
 
     def _process_Block(self, name, attr):
         self.blocks[name] = attr
-        print("processing block", attr.__class__.__name__)
+        logger.debug("processing block %s", attr.__class__.__name__)
 
-        if attr.namespace == 'local':
-            prepend = attr.name + '_'
-            tex_append = attr.tex_name
-        else:
-            prepend = ''
-            tex_append = ''
+        # if attr.namespace == 'local':
+        #     prepend = attr.name + '_'
+        #     tex_append = attr.tex_name
+        # else:
+        #     prepend = ''
+        #     tex_append = ''
 
-        for var_name, var_instance in attr.export().items():
-            var_instance.name = f'{prepend}{var_name}'
-            var_instance.tex_name = f'{var_instance.tex_name}_{{{tex_append}}}'
-            self.__setattr__(var_instance.name, var_instance)
+        # for var_name, var_instance in attr.export().items():
+        #     var_instance.name = f'{prepend}{var_name}'
+        #     var_instance.tex_name = f'{var_instance.tex_name}_{{{tex_append}}}'
+        #     self.__setattr__(var_instance.name, var_instance)
 
-            print("processing block", var_instance.name, var_instance.__class__.__name__)
-            self.process_one_attr(var_instance.name, var_instance)
+        #     logger.debug(" processing block", var_instance.name, var_instance.__class__.__name__)
+        #     self.process_one_attr(var_instance.name, var_instance)
 
     def _process_BaseService(self, name, attr):
         self.all_params[name] = attr
