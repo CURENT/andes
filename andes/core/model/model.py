@@ -204,8 +204,6 @@ class Model:
         # `in_use` is used by models with `BackRef` when not reference
         self.in_use = True  # True if this model is in use, False removes this model from all calls
 
-        self.calls = ModelCall()  # callback and LaTeX string storage
-
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags, storage only.
         self._rhs_f = OrderedDict()  # RHS of external f
