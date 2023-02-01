@@ -3,8 +3,9 @@
 [x] separated Routine config into `create_config` and `set_config`.
 
 [x] Move model config into `Model.create_config`. Add `Model.set_config`.
-- Decouple SymProcessor from Model
-- Decouple config from Model
+[x] Decouple SymProcessor from Model
+[x] Decouple config from Model
+[x] Decouple ModelCache and __setattr__ hacks from Model.
 - Decouple Documenter from Model
 - Decouple data storage from Model
   - Turn the `adder`, `setter` manager into a class

@@ -21,8 +21,8 @@ class ModelCache:
     Check ``ModelCache.__dict__.keys()`` for fields.
     """
 
-    def __init__(self, models):
-        self.models = models
+    def __init__(self, model):
+        self.model = model
         self._callbacks = {}
 
     def __getattr__(self, item):
@@ -99,7 +99,7 @@ class ModelCache:
         self.add_callback('dict_in', lambda: self.as_dict(True))
         self.add_callback('df_in', lambda: self.as_df(vin=True))
 
-        self.add_callback('all_vars', self._all_vars)
+        # self.add_callback('all_vars', self._all_vars)
         self.add_callback('iter_vars', self._iter_vars)
         self.add_callback('input_vars', self._input_vars)
         self.add_callback('output_vars', self._output_vars)

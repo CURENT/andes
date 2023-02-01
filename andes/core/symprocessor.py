@@ -55,7 +55,7 @@ class SymProcessor:
 
     """
 
-    def __init__(self, model):
+    def __init__(self, model, calls, model_meta):
 
         self.model = model
 
@@ -81,8 +81,8 @@ class SymProcessor:
         self.df, self.dg = None, None
 
         # get references to the parent attributes
-        self.calls = model.calls
-        self.model.cache = model.cache
+        self.calls = calls
+        self.meta = model_meta
         self.config = self.model.create_config(model.class_name)
 
         self.class_name = model.class_name
@@ -114,23 +114,24 @@ class SymProcessor:
         # -----------------------------------------------------------
         for key in self.model.tex_names.keys():
             self.tex_names[key] = sp.Symbol(self.model.tex_names[key])
-        for instance in self.model.discrete.values():
+
+        for instance in self.meta.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
                 self.tex_names[name] = tex_name
         # -----------------------------------------------------------
 
-        for var in self.model.all_params_names():
+        for var in self.meta.all_params_names:
             self.inputs_dict[var] = sp.Symbol(var)
 
         all_vars_names = []
-        for instance in self.model.all_vars().values():
+        for instance in self.meta.all_vars.values():
             all_vars_names += instance.get_names()
 
         for var in all_vars_names:
             tmp = sp.Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
-            if var in self.model.cache.vars_int:
+            if var in self.meta.vars_int:
                 self.vars_int_dict[var] = tmp
 
         # store tex names defined in `self.config`
@@ -174,7 +175,7 @@ class SymProcessor:
         """
         Generate expressions for substituting ``SubsService``.
         """
-        for name, instance in self.model.services_subs.items():
+        for name, instance in self.meta.services_subs.items():
             if instance.v_str is not None:
                 expr = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 self.substitution_map[self.inputs_dict[name]] = expr
@@ -203,7 +204,7 @@ class SymProcessor:
         self.calls.f_args = list()
         self.calls.g_args = list()
 
-        vars_list = [self.model.cache.states_and_ext, self.model.cache.algebs_and_ext]
+        vars_list = [self.meta.states_and_ext, self.meta.algebs_and_ext]
         expr_list = [self.f_list, self.g_list]
 
         eqn_names = ['f', 'g']
@@ -272,7 +273,7 @@ class SymProcessor:
         s_calls_nonseq = list()
         s_calls_nonseq_args = list()
 
-        for name, instance in self.model.services.items():
+        for name, instance in self.meta.services.items():
             v_str = '0' if instance.v_str is None else instance.v_str
             try:
                 expr = sp.sympify(v_str, locals=self.inputs_dict)
@@ -339,8 +340,8 @@ class SymProcessor:
         self.dg_sparse = sp.SparseMatrix(self.dg_syms)
 
         vars_syms_list = list(self.vars_dict)
-        algebs_and_ext_list = list(self.model.cache.algebs_and_ext)
-        states_and_ext_list = list(self.model.cache.states_and_ext)
+        algebs_and_ext_list = list(self.meta.algebs_and_ext)
+        states_and_ext_list = list(self.meta.states_and_ext)
 
         fg_sparse = [self.df_sparse, self.dg_sparse]
         j_args = defaultdict(list)   # argument list for each jacobian call
@@ -355,8 +356,8 @@ class SymProcessor:
                     eq_name = algebs_and_ext_list[e_idx]
 
                 var_name = vars_syms_list[v_idx]
-                eqn = self.model.all_vars()[eq_name]    # `BaseVar` that corr. to the equation
-                var = self.model.all_vars()[var_name]   # `BaseVar` that corr. to the variable
+                eqn = self.meta.all_vars[eq_name]    # `BaseVar` that corr. to the equation
+                var = self.meta.all_vars[var_name]   # `BaseVar` that corr. to the variable
                 jname = f'{eqn.e_code}{var.v_code}'
 
                 # jac calls with all arguments and stored individually
@@ -391,7 +392,7 @@ class SymProcessor:
         # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
-        for var in self.model.all_vars().values():
+        for var in self.meta.all_vars.values():
             if var.diag_eps == 0.0:
                 continue
             elif var.diag_eps is True:
@@ -451,7 +452,7 @@ class SymProcessor:
 
         # store init latex strings
         init_latex = OrderedDict()
-        for name, instance in self.model.all_vars().items():
+        for name, instance in self.meta.all_vars.items():
             if instance.v_str is None and instance.v_iter is None:
                 init_latex[name] = ''
             else:
@@ -469,7 +470,7 @@ class SymProcessor:
 
         logger.debug("Generating code for %s", self.class_name)
 
-        self.calls.md5 = self.model.get_md5()
+        self.calls.md5 = self.meta.get_md5()
 
         self.generate_symbols()
         self.generate_subs_expr()
@@ -616,7 +617,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
         deps = OrderedDict()
 
         # convert to symbols
-        for name, instance in self.model.all_vars().items():
+        for name, instance in self.meta.all_vars.items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 sympified = self._do_substitute(sympified)
@@ -641,7 +642,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
             _store_deps(name, expr, self.vars_dict, deps)
 
         # store deps for manually added dependent variables
-        for name, instance in self.model.cache.vars_int.items():
+        for name, instance in self.meta.vars_int.items():
             if instance.deps is not None:
                 deps[name].extend(instance.deps)
 
@@ -660,7 +661,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 continue
 
             for vi in item:
-                if self.model.all_vars()[vi].v_iter is None:
+                if self.meta.all_vars[vi].v_iter is None:
                     logger.error("%s: v_iter not defined for %s" % (self.class_name, vi))
 
     def generate_init(self):
@@ -766,10 +767,11 @@ from andes.thirdparty.npfunc import *                               # NOQA
         If System is None, return None.
         """
 
-        if hasattr(self.model.system, 'config'):
-            return self.model.system.config.__dict__[name]
+        # if hasattr(self.model.system, 'config'):
+        #     return self.model.system.config.__dict__[name]
 
-        return None
+        # return None
+        pass
 
     def get_var_symbol(self, xyname, *, with_ext=False):
         """
@@ -793,14 +795,14 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
         if xyname == 'x':
             if with_ext is True:
-                look_up_from = self.model.cache.states_and_ext
+                look_up_from = self.meta.states_and_ext
             else:
-                look_up_from = self.model.states
+                look_up_from = self.meta.states
         else:
             if with_ext is True:
-                look_up_from = self.model.cache.algebs_and_ext
+                look_up_from = self.meta.algebs_and_ext
             else:
-                look_up_from = self.model.algebs
+                look_up_from = self.meta.algebs
 
         for name, sym in self.vars_dict.items():
             if name in look_up_from:

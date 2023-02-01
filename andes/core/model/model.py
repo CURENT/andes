@@ -19,13 +19,8 @@ from andes.core.block import Block
 from andes.core.common import Config, ModelFlags
 from andes.core.discrete import Discrete
 from andes.core.model.modelcall import ModelCall
-from andes.core.param import ExtParam
-from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
-                                DeviceFinder, ExtService, FlagValue,
-                                InitChecker, NumReduce, NumRepeat, NumSelect,
-                                ParamCalc, PostInitService, RandomService,
-                                Replace, SubsService, SwBlock, VarService)
-from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
+from andes.core.service import BaseService
+from andes.core.var import BaseVar
 from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)
@@ -284,47 +279,9 @@ class Model:
         Subclass attributes are automatically registered based on the variable type.
         Block attributes will be exported and registered recursively.
         """
-        if isinstance(value, Algeb):
-            self.algebs[key] = value
-        elif isinstance(value, ExtAlgeb):
-            self.algebs_ext[key] = value
-        elif isinstance(value, State):
-            self.states[key] = value
-        elif isinstance(value, ExtState):
-            self.states_ext[key] = value
-        elif isinstance(value, ExtParam):
-            self.params_ext[key] = value
-        elif isinstance(value, Discrete):
-            self.discrete[key] = value
-        elif isinstance(value, ConstService):  # services with only `v_str`
-            self.services[key] = value
-            # store VarService in an additional dict
-            if isinstance(value, VarService):
-                self.services_var[key] = value
-                if value.sequential:
-                    self.services_var_seq[key] = value
-                else:
-                    self.services_var_nonseq[key] = value
-            elif isinstance(value, PostInitService):
-                self.services_post[key] = value
-        elif isinstance(value, SubsService):
-            self.services_subs[key] = value
-        elif isinstance(value, DeviceFinder):
-            self.services_fnd[key] = value
-        elif isinstance(value, BackRef):
-            self.services_ref[key] = value
-        elif isinstance(value, ExtService):
-            self.services_ext[key] = value
-        elif isinstance(value, (NumRepeat, NumReduce, NumSelect,
-                                FlagValue, RandomService,
-                                SwBlock,
-                                ParamCalc, Replace, ApplyFunc)):
-            self.services_ops[key] = value
-        elif isinstance(value, InitChecker):
-            self.services_icheck[key] = value
-        elif isinstance(value, Block):
-            self.blocks[key] = value
-            # pull in sub-variables from control blocks
+        # pull in sub-variables from control blocks
+
+        if isinstance(value, Block):
             if value.namespace == 'local':
                 prepend = value.name + '_'
                 tex_append = value.tex_name
@@ -351,7 +308,7 @@ class Model:
             if not value.tex_name:
                 value.tex_name = key
             if key in self.__dict__:
-                logger.warning(f"{self.class_name}: redefinition of member <{key}>. Likely a modeling error.")
+                logger.warning(f"{self.class_name}: redefinition of member <{key}>.")
 
     def __setattr__(self, key, value):
         """
@@ -366,14 +323,7 @@ class Model:
         """
 
         self._check_attribute(key, value)
-
-        # store the variable declaration order
-        # if isinstance(value, BaseVar):
-        #     value.id = len(self._all_vars())  # NOT in use yet
-        #     self.vars_decl_order[key] = value
-
-        # self._register_attribute(key, value)
-
+        self._register_attribute(key, value)
         super(Model, self).__setattr__(key, value)
 
     def idx2uid(self, idx):
@@ -463,35 +413,35 @@ class Model:
 
         return self.__dict__[src].__dict__[attr][uid]
 
-    def all_vars(self):
-        # TODO: this function is used in hot loops so need to be cached
-        """
-        An OrderedDict of States, ExtStates, Algebs, ExtAlgebs
-        """
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()) +
-                           list(self.algebs.items()) +
-                           list(self.algebs_ext.items())
-                           )
+    # def all_vars(self):
+    #     # TODO: this function is used in hot loops so need to be cached
+    #     """
+    #     An OrderedDict of States, ExtStates, Algebs, ExtAlgebs
+    #     """
+    #     return OrderedDict(list(self.states.items()) +
+    #                        list(self.states_ext.items()) +
+    #                        list(self.algebs.items()) +
+    #                        list(self.algebs_ext.items())
+    #                        )
 
-    def all_params(self):
+    # def all_params(self):
 
-        # TODO: not in a hot loop but need to be cached somehow
-        # the service stuff should not be moved to variables.
-        return OrderedDict(list(self.num_params.items()) +
-                           list(self.services.items()) +
-                           list(self.services_ext.items()) +
-                           list(self.services_ops.items()) +
-                           list(self.services_subs.items()) +
-                           list(self.discrete.items())
-                           )
+    #     # TODO: not in a hot loop but need to be cached somehow
+    #     # the service stuff should not be moved to variables.
+    #     return OrderedDict(list(self.num_params.items()) +
+    #                        list(self.services.items()) +
+    #                        list(self.services_ext.items()) +
+    #                        list(self.services_ops.items()) +
+    #                        list(self.services_subs.items()) +
+    #                        list(self.discrete.items())
+    #                        )
 
-    def all_params_names(self):
-        # TODO: used in symprocessor; move out
-        out = []
-        for instance in self.all_params().values():
-            out += instance.get_names()
-        return out
+    # def all_params_names(self):
+    #     # TODO: used in symprocessor; move out
+    #     out = []
+    #     for instance in self.all_params().values():
+    #         out += instance.get_names()
+    #     return out
 
     def set(self, src, idx, attr, value):
         """
@@ -848,45 +798,6 @@ class Model:
         Retrieve model documentation as a string.
         """
         return self.docum.get(max_width=max_width, export=export)
-
-    def get_md5(self):
-        """
-        Return the md5 hash of concatenated equation strings.
-        """
-        import hashlib
-        md5 = hashlib.md5()
-
-        for name in self.all_params().keys():
-            md5.update(str(name).encode())
-
-        # for name in self.config.as_dict().keys():
-        #     md5.update(str(name).encode())
-
-        for name, item in self.all_vars().items():
-            md5.update(str(name).encode())
-
-            if item.v_str is not None:
-                md5.update(str(item.v_str).encode())
-            if item.v_iter is not None:
-                md5.update(str(item.v_iter).encode())
-            if item.e_str is not None:
-                md5.update(str(item.e_str).encode())
-            if item.diag_eps is not None:
-                md5.update(str(item.diag_eps).encode())
-
-        for name, item in self.services.items():
-            md5.update(str(name).encode())
-
-            if item.v_str is not None:
-                md5.update(str(item.v_str).encode())
-
-            md5.update(str(int(item.sequential)).encode())
-
-        for name, item in self.discrete.items():
-            md5.update(str(name).encode())
-            md5.update(str(','.join(item.export_flags)).encode())
-
-        return md5.hexdigest()
 
     def __repr__(self):
         dev_text = 'device' if self.n == 1 else 'devices'

@@ -99,13 +99,13 @@ class BaseService:
         else:
             return 1
 
-    def __repr__(self):
-        val_str = ''
+    # def __repr__(self):
+    #     val_str = ''
 
-        if (1 <= self.n <= 20) and hasattr(self, 'v'):
-            val_str = f', v={self.v}'
+    #     if (1 <= self.n <= 20) and hasattr(self, 'v'):
+    #         val_str = f', v={self.v}'
 
-        return f'{self.class_name}: {self.owner.class_name}.{self.name}{val_str}'
+    #     return f'{self.class_name}: {self.owner.class_name}.{self.name}{val_str}'
 
 
 class ConstService(BaseService):
