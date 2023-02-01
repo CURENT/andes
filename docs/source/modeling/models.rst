@@ -40,9 +40,9 @@ defined in `ModelData.cache`:
 - `df`: all data in a pandas DataFrame.
 - `df_in`: the same as `df` except that the values are from `v_in`.
 
-Other attributes can be added by registering with `cache.add_callback`.
+Other attributes can be added by registering with `add_callback`.
 
-.. autofunction:: andes.core.model.ModelCache.add_callback
+.. autofunction:: andes.core.model.Modeladd_callback
     :noindex:
 
 Define Voltage Ratings

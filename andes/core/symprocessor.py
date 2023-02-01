@@ -119,10 +119,14 @@ class SymProcessor:
                 self.tex_names[name] = tex_name
         # -----------------------------------------------------------
 
-        for var in self.model.cache.all_params_names:
+        for var in self.model.all_params_names():
             self.inputs_dict[var] = sp.Symbol(var)
 
-        for var in self.model.cache.all_vars_names:
+        all_vars_names = []
+        for instance in self.model.all_vars().values():
+            all_vars_names += instance.get_names()
+
+        for var in all_vars_names:
             tmp = sp.Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
@@ -351,8 +355,8 @@ class SymProcessor:
                     eq_name = algebs_and_ext_list[e_idx]
 
                 var_name = vars_syms_list[v_idx]
-                eqn = self.model.cache.all_vars[eq_name]    # `BaseVar` that corr. to the equation
-                var = self.model.cache.all_vars[var_name]   # `BaseVar` that corr. to the variable
+                eqn = self.model.all_vars()[eq_name]    # `BaseVar` that corr. to the equation
+                var = self.model.all_vars()[var_name]   # `BaseVar` that corr. to the variable
                 jname = f'{eqn.e_code}{var.v_code}'
 
                 # jac calls with all arguments and stored individually
@@ -387,7 +391,7 @@ class SymProcessor:
         # The for-loop below is intended to add an epsilon small value to the diagonal of `gy`.
         # The user should take care of the algebraic equations by using `diag_eps` in `Algeb` definition
 
-        for var in self.model.cache.all_vars.values():
+        for var in self.model.all_vars().values():
             if var.diag_eps == 0.0:
                 continue
             elif var.diag_eps is True:
@@ -447,7 +451,7 @@ class SymProcessor:
 
         # store init latex strings
         init_latex = OrderedDict()
-        for name, instance in self.model.cache.all_vars.items():
+        for name, instance in self.model.all_vars().items():
             if instance.v_str is None and instance.v_iter is None:
                 init_latex[name] = ''
             else:
@@ -612,7 +616,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
         deps = OrderedDict()
 
         # convert to symbols
-        for name, instance in self.model.cache.all_vars.items():
+        for name, instance in self.model.all_vars().items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
                 sympified = self._do_substitute(sympified)
@@ -656,7 +660,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 continue
 
             for vi in item:
-                if self.model.cache.all_vars[vi].v_iter is None:
+                if self.model.all_vars()[vi].v_iter is None:
                     logger.error("%s: v_iter not defined for %s" % (self.class_name, vi))
 
     def generate_init(self):

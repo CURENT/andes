@@ -461,7 +461,7 @@ class PyCodeLoader:
             calls.sns = pycode_model.__dict__.get("sns_update")
 
             # load initialization; assignment
-            for instance in model.cache.all_vars.values():
+            for instance in model.all_vars().values():
                 if instance.v_str is not None:
                     ia_name = f'{instance.name}_ia'
                     calls.ia[instance.name] = pycode_model.__dict__[ia_name]

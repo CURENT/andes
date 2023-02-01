@@ -16,10 +16,8 @@ from typing import Iterable
 
 import numpy as np
 from andes.core.block import Block
-from andes.core.common import Config, JacTriplet, ModelFlags
+from andes.core.common import Config, ModelFlags
 from andes.core.discrete import Discrete
-from andes.core.documenter import Documenter
-from andes.core.model.modelcache import ModelCache
 from andes.core.model.modelcall import ModelCall
 from andes.core.param import ExtParam
 from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
@@ -178,8 +176,8 @@ class Model:
 
         if not hasattr(self, 'num_params'):
             self.num_params = OrderedDict()
-        if not hasattr(self, 'cache'):
-            self.cache = ModelCache()
+        # if not hasattr(self, 'cache'):
+        #     self.cache = ModelCache()
 
         # variables
         self.states = OrderedDict()  # internal states
@@ -217,28 +215,8 @@ class Model:
         self.in_use = True  # True if this model is in use, False removes this model from all calls
 
         self.calls = ModelCall()  # callback and LaTeX string storage
-        self.triplets = JacTriplet()  # Jacobian triplet storage
-        self.docum = Documenter(self)
-
-        # cached class attributes
-        self.cache.add_callback('all_vars', self._all_vars)
-        self.cache.add_callback('iter_vars', self._iter_vars)
-        self.cache.add_callback('input_vars', self._input_vars)
-        self.cache.add_callback('output_vars', self._output_vars)
-
-        self.cache.add_callback('all_vars_names', self._all_vars_names)
-        self.cache.add_callback('all_params', self._all_params)
-        self.cache.add_callback('all_params_names', self._all_params_names)
-        self.cache.add_callback('algebs_and_ext', self._algebs_and_ext)
-        self.cache.add_callback('states_and_ext', self._states_and_ext)
-        self.cache.add_callback('services_and_ext', self._services_and_ext)
-        self.cache.add_callback('vars_ext', self._vars_ext)
-        self.cache.add_callback('vars_int', self._vars_int)
-        self.cache.add_callback('v_getters', self._v_getters)
-        self.cache.add_callback('v_adders', self._v_adders)
-        self.cache.add_callback('v_setters', self._v_setters)
-        self.cache.add_callback('e_adders', self._e_adders)
-        self.cache.add_callback('e_setters', self._e_setters)
+        # self.triplets = JacTriplet()  # Jacobian triplet storage
+        # self.docum = Documenter(self)
 
         self._input = OrderedDict()  # cached dictionary of inputs
         self._input_z = OrderedDict()  # discrete flags, storage only.
@@ -390,11 +368,11 @@ class Model:
         self._check_attribute(key, value)
 
         # store the variable declaration order
-        if isinstance(value, BaseVar):
-            value.id = len(self._all_vars())  # NOT in use yet
-            self.vars_decl_order[key] = value
+        # if isinstance(value, BaseVar):
+        #     value.id = len(self._all_vars())  # NOT in use yet
+        #     self.vars_decl_order[key] = value
 
-        self._register_attribute(key, value)
+        # self._register_attribute(key, value)
 
         super(Model, self).__setattr__(key, value)
 
@@ -484,6 +462,36 @@ class Model:
                         for i in uid]
 
         return self.__dict__[src].__dict__[attr][uid]
+
+    def all_vars(self):
+        # TODO: this function is used in hot loops so need to be cached
+        """
+        An OrderedDict of States, ExtStates, Algebs, ExtAlgebs
+        """
+        return OrderedDict(list(self.states.items()) +
+                           list(self.states_ext.items()) +
+                           list(self.algebs.items()) +
+                           list(self.algebs_ext.items())
+                           )
+
+    def all_params(self):
+
+        # TODO: not in a hot loop but need to be cached somehow
+        # the service stuff should not be moved to variables.
+        return OrderedDict(list(self.num_params.items()) +
+                           list(self.services.items()) +
+                           list(self.services_ext.items()) +
+                           list(self.services_ops.items()) +
+                           list(self.services_subs.items()) +
+                           list(self.discrete.items())
+                           )
+
+    def all_params_names(self):
+        # TODO: used in symprocessor; move out
+        out = []
+        for instance in self.all_params().values():
+            out += instance.get_names()
+        return out
 
     def set(self, src, idx, attr, value):
         """
@@ -609,7 +617,7 @@ class Model:
                 self._input_z[name] = val
 
         # append all variable values
-        for instance in self.cache.all_vars.values():
+        for instance in self.all_vars().values():
             self._input[instance.name] = instance.v
 
         # append config variables as arrays
@@ -686,15 +694,15 @@ class Model:
             for name in source:
                 val[name] = [self._input[arg] for arg in source[name]]
 
-    def get_init_order(self):
-        """
-        Get variable initialization order and send to `logger.info`.
-        """
-        out = []
-        for name in self.vars_decl_order.keys():
-            out.append(name)
+    # def get_init_order(self):
+    #     """
+    #     Get variable initialization order and send to `logger.info`.
+    #     """
+    #     out = []
+    #     for name in self.vars_decl_order.keys():
+    #         out.append(name)
 
-        logger.info(f'Initialization order: \n{", ".join(out)}')
+    #     logger.info(f'Initialization order: \n{", ".join(out)}')
 
     def get_times(self):
         """
@@ -741,142 +749,6 @@ class Model:
         """
         return self.__class__.__name__
 
-    def _all_vars(self):
-        """
-        An OrderedDict of States, ExtStates, Algebs, ExtAlgebs
-        """
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()) +
-                           list(self.algebs.items()) +
-                           list(self.algebs_ext.items())
-                           )
-
-    def _iter_vars(self):
-        """
-        Variables to be iteratively initialized
-        """
-        all_vars = OrderedDict(self.cache.all_vars)
-        for name, instance in self.cache.all_vars.items():
-            if not instance.v_iter:
-                all_vars.pop(name)
-        return all_vars
-
-    def _all_vars_names(self):
-        out = []
-        for instance in self.cache.all_vars.values():
-            out += instance.get_names()
-        return out
-
-    def _all_params(self):
-        # the service stuff should not be moved to variables.
-        return OrderedDict(list(self.num_params.items()) +
-                           list(self.services.items()) +
-                           list(self.services_ext.items()) +
-                           list(self.services_ops.items()) +
-                           list(self.services_subs.items()) +
-                           list(self.discrete.items())
-                           )
-
-    def _all_params_names(self):
-        out = []
-        for instance in self.cache.all_params.values():
-            out += instance.get_names()
-        return out
-
-    def _algebs_and_ext(self):
-        return OrderedDict(list(self.algebs.items()) +
-                           list(self.algebs_ext.items()))
-
-    def _states_and_ext(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.states_ext.items()))
-
-    def _services_and_ext(self):
-        return OrderedDict(list(self.services.items()) +
-                           list(self.services_ext.items()))
-
-    def _vars_ext(self):
-        return OrderedDict(list(self.states_ext.items()) +
-                           list(self.algebs_ext.items()))
-
-    def _vars_int(self):
-        return OrderedDict(list(self.states.items()) +
-                           list(self.algebs.items()))
-
-    def _v_getters(self):
-        out = OrderedDict()
-        for name, var in self.cache.all_vars.items():
-            if var.v_inplace:
-                continue
-            out[name] = var
-        return out
-
-    def _v_adders(self):
-        out = OrderedDict()
-        for name, var in self.cache.all_vars.items():
-            if var.v_inplace is True:
-                continue
-            if var.v_str is None and var.v_iter is None:
-                continue
-            if var.v_setter is True:
-                continue
-
-            out[name] = var
-        return out
-
-    def _v_setters(self):
-        out = OrderedDict()
-        for name, var in self.cache.all_vars.items():
-            if var.v_inplace is True:
-                continue
-            if var.v_str is None and var.v_iter is None:
-                continue
-            if var.v_setter is False:
-                continue
-
-            out[name] = var
-        return out
-
-    def _e_adders(self):
-        out = OrderedDict()
-        for name, var in self.cache.all_vars.items():
-            if var.e_inplace is True:
-                continue
-            if var.e_str is None:
-                continue
-            if var.e_setter is True:
-                continue
-
-            out[name] = var
-        return out
-
-    def _e_setters(self):
-        out = OrderedDict()
-        for name, var in self.cache.all_vars.items():
-            if var.e_inplace is True:
-                continue
-            if var.e_str is None:
-                continue
-            if var.e_setter is False:
-                continue
-
-            out[name] = var
-        return out
-
-    def _input_vars(self):
-        out = list()
-        for name, var in self.cache.all_vars.items():
-            if var.is_input:
-                out.append(name)
-        return out
-
-    def _output_vars(self):
-        out = list()
-        for name, var in self.cache.all_vars.items():
-            if var.is_output:
-                out.append(name)
-        return out
-
     def set_in_use(self):
         """
         Set the `in_use` attribute. Called at the end of ``System.collect_ref``.
@@ -916,7 +788,7 @@ class Model:
         """
         Reset addresses to empty and reset flags.address to ``False``.
         """
-        for var in self.cache.all_vars.values():
+        for var in self.all_vars().values():
             var.reset()
         self.flags.address = False
         self.flags.initialized = False
@@ -925,7 +797,7 @@ class Model:
         """
         Clear equation value arrays associated with all internal variables.
         """
-        for instance in self.cache.all_vars.values():
+        for instance in self.all_vars().values():
             if instance.e_inplace:
                 continue
             instance.e[:] = 0
@@ -984,13 +856,13 @@ class Model:
         import hashlib
         md5 = hashlib.md5()
 
-        for name in self.cache.all_params.keys():
+        for name in self.all_params().keys():
             md5.update(str(name).encode())
 
         # for name in self.config.as_dict().keys():
         #     md5.update(str(name).encode())
 
-        for name, item in self.cache.all_vars.items():
+        for name, item in self.all_vars().items():
             md5.update(str(name).encode())
 
             if item.v_str is not None:

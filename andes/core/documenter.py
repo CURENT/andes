@@ -99,14 +99,14 @@ class Documenter:
 
     def _var_doc(self, max_width=78, export='plain'):
         # variable documentation
-        if len(self.cache.all_vars) == 0:
+        if len(self.all_vars()) == 0:
             return ''
 
         names, symbols, units = list(), list(), list()
         properties, info = list(), list()
         units_rest, ty = list(), list()
 
-        for p in self.cache.all_vars.values():
+        for p in self.all_vars().values():
             names.append(p.name)
             ty.append(p.class_name)
             info.append(p.info if p.info else '')
@@ -153,13 +153,13 @@ class Documenter:
         Variable initialization docs.
         """
 
-        if len(self.cache.all_vars) == 0:
+        if len(self.all_vars()) == 0:
             return ''
 
         names, symbols, ivs = list(), list(), list()
         ivs_rest, ty = list(), list()
 
-        for p in self.cache.all_vars.values():
+        for p in self.all_vars().values():
             names.append(p.name)
             ty.append(p.class_name)
             ivs.append(p.v_str if p.v_str else '')
@@ -195,7 +195,7 @@ class Documenter:
         Return equation documentation.
         """
         out = ''
-        if len(self.cache.all_vars) == 0:
+        if len(self.all_vars()) == 0:
             return out
 
         if e_code is None:

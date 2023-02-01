@@ -232,7 +232,7 @@ class ModelNumerical:
         """
         Get the equation and variable name for a Jacobian type based on the absolute index.
         """
-        var_names_list = list(self.cache.all_vars.keys())
+        var_names_list = list(self.all_vars().keys())
 
         eq_names = {'f': var_names_list[:len(self.cache.states_and_ext)],
                     'g': var_names_list[len(self.cache.states_and_ext):]}

@@ -1400,7 +1400,7 @@ class System:
                                        f'in model <{model.class_name}>')
             for item in group.common_vars:
                 for model in group.models.values():
-                    if item not in model.cache.all_vars:
+                    if item not in model.all_vars():
                         if item in model.group_var_exception:
                             continue
                         raise KeyError(f'Group <{group.class_name}> common var <{item}> does not exist '
@@ -1634,7 +1634,7 @@ class System:
                             model)
                 continue
             mdl_instance = models[model]
-            mdl_all_vars = mdl_instance.cache.all_vars
+            mdl_all_vars = mdl_instance.all_vars()
 
             # check validity of var name
             if var is not None and (var not in mdl_all_vars):

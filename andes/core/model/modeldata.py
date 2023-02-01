@@ -7,10 +7,9 @@ from collections import OrderedDict
 from typing import Iterable, Sized
 
 import numpy as np
-from andes.core.model.modelcache import ModelCache
+
 from andes.core.param import (BaseParam, DataParam, IdxParam, NumParam,
                               TimerParam)
-from andes.shared import pd
 
 logger = logging.getLogger(__name__)
 
@@ -92,12 +91,8 @@ class ModelData:
         # indexing bases. Most vectorized models only have one base: self.idx
         self.index_bases = []
 
-        if not hasattr(self, 'cache'):
-            self.cache = ModelCache()
-        self.cache.add_callback('dict', self.as_dict)
-        self.cache.add_callback('df', lambda: self.as_df())
-        self.cache.add_callback('dict_in', lambda: self.as_dict(True))
-        self.cache.add_callback('df_in', lambda: self.as_df(vin=True))
+        # if not hasattr(self, 'cache'):
+        #     self.cache = ModelCache()
 
         if three_params is True:
             self.idx = DataParam(info='unique device idx')
@@ -163,73 +158,6 @@ class ModelData:
             instance.add(value)
         if len(kwargs) > 0:
             logger.warning("%s: unused data %s", self.class_name, str(kwargs))
-
-    def as_dict(self, vin=False):
-        """
-        Export all parameters as a dict.
-
-        Returns
-        -------
-        dict
-            a dict with the keys being the `ModelData` parameter names
-            and the values being an array-like of data in the order of adding.
-            An additional `uid` key is added with the value default to range(n).
-        """
-        out = dict()
-        out['uid'] = np.arange(self.n)
-
-        for name, instance in self.params.items():
-            # skip non-exported parameters
-            if instance.export is False:
-                continue
-
-            out[name] = instance.v
-
-            # use the original input if `vin` is True
-            if (vin is True) and hasattr(instance, 'vin') and (instance.vin is not None):
-                out[name] = instance.vin
-
-            conv = instance.oconvert
-            if conv is not None:
-                out[name] = np.array([conv(item) for item in out[name]])
-
-        return out
-
-    def as_df(self, vin=False):
-        """
-        Export all parameters as a `pandas.DataFrame` object.
-        This function utilizes `as_dict` for preparing data.
-
-        Returns
-        -------
-        DataFrame
-            A dataframe containing all model data. An `uid` column is added.
-        vin : bool
-            If True, export all parameters from original input (``vin``).
-        """
-        if vin is False:
-            out = pd.DataFrame(self.as_dict()).set_index('uid')
-        else:
-            out = pd.DataFrame(self.as_dict(vin=True)).set_index('uid')
-
-        return out
-
-    def as_df_local(self):
-        """
-        Export local variable values and services to a DataFrame.
-        """
-
-        out = dict()
-        out['uid'] = np.arange(self.n)
-        out['idx'] = self.idx.v
-
-        for name, instance in self.cache.all_vars.items():
-            out[name] = instance.v
-
-        for name, instance in self.services.items():
-            out[name] = instance.v
-
-        return pd.DataFrame(out).set_index('uid')
 
     def update_from_df(self, df, vin=False):
         """
