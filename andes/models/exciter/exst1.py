@@ -106,9 +106,9 @@ class EXST1Model(ExcBase):
 
         self.LL = LeadLag(u=self.vl, T1=self.TC, T2=self.TB, info='Lead-lag compensator', zero_out=True)
 
-        self.LR = Lag(u=self.LL_y, T=self.TA, K=self.KA, info='Regulator')
+        self.LR = Lag(u="LL_y", T=self.TA, K=self.KA, info='Regulator')
 
-        self.WF = Washout(u=self.LR_y, T=self.TF, K=self.KF, info='Stablizing circuit feedback')
+        self.WF = Washout(u="LR_y", T=self.TF, K=self.KF, info='Stablizing circuit feedback')
 
         # the following uses `XadIfd` for `IIFD` in the PSS/E manual
         self.vfmax = Algeb(info='Upper bound of output limiter',
@@ -122,7 +122,7 @@ class EXST1Model(ExcBase):
                            e_str='VRMIN - KC * XadIfd - vfmin',
                            )
 
-        self.HLR = HardLimiter(u=self.WF_y, lower=self.vfmin, upper=self.vfmax,
+        self.HLR = HardLimiter(u="WF_y", lower=self.vfmin, upper=self.vfmax,
                                info='Hard limiter on regulator output')
 
         self.vout.e_str = 'ue * (LR_y*HLR_zi + vfmin*HLR_zl + vfmax*HLR_zu) - vout'

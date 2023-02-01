@@ -490,11 +490,11 @@ class PVD1Model(Model):
                                  )
         self.Iqcmd.lim.allow_adjust = False
 
-        self.Ipout = Lag(u=self.Ipcmd_y, T=self.tip, K=1.0,
+        self.Ipout = Lag(u="Ipcmd_y", T=self.tip, K=1.0,
                          info='Output Ip filter',
                          )
 
-        self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
+        self.Iqout = Lag(u="Iqcmd_y", T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
 

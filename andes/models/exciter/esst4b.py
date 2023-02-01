@@ -229,7 +229,7 @@ class ESST4BModel(ExcBase):
                              x0='VG_y'
                              )
 
-        self.LA = Lag(u=self.PI1_y, T=self.TA, K=1.0,
+        self.LA = Lag(u="PI1_y", T=self.TA, K=1.0,
                       info='Regulation delay',
                       )
         self.PI2 = PITrackAW(u='LA_y - VG_y',

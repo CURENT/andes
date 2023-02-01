@@ -236,7 +236,7 @@ class REGCA1Model(Model):
                       info='Voltage filter with no anti-windup',
                       tex_name='S_2',
                       )
-        self.LVPL = Piecewise(u=self.S2_y,
+        self.LVPL = Piecewise(u="S2_y",
                               points=('Zerox', 'Brkpt'),
                               funs=('0 + 9999*(1-Lvplsw)',
                                     '(S2_y - Zerox) * kLVPL + 9999 * (1-Lvplsw)',
@@ -246,7 +246,7 @@ class REGCA1Model(Model):
                               )
 
         self.S0 = LagAntiWindupRate(u=self.Ipcmd, T=self.Tg, K=1,
-                                    upper=self.LVPL_y, rate_upper=self.Rrpwr,
+                                    upper="LVPL_y", rate_upper=self.Rrpwr,
                                     lower=-9999, rate_lower=-9999,
                                     no_lower=True, rate_no_lower=True,
                                     tex_name='S_0',

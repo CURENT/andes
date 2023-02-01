@@ -72,7 +72,7 @@ class IEESGOModel(TGBase):
                       K=self.K1,
                       )
 
-        self.F2 = LeadLag(u=self.F1_y,
+        self.F2 = LeadLag(u="F1_y",
                           T1=self.T2,
                           T2=self.T3,
                           K=1.0,
@@ -84,13 +84,13 @@ class IEESGOModel(TGBase):
                               lower=self.PMIN,
                               upper=self.PMAX,
                               )
-        self.F3 = Lag(u=self.HL_y, T=self.T4, K=1.0,
+        self.F3 = Lag(u="HL_y", T=self.T4, K=1.0,
                       )
 
-        self.F4 = Lag(u=self.F3_y, T=self.T5, K=self.K2,
+        self.F4 = Lag(u="F3_y", T=self.T5, K=self.K2,
                       )
 
-        self.F5 = Lag(u=self.F4_y, T=self.T6, K=self.K3,
+        self.F5 = Lag(u="F4_y", T=self.T6, K=self.K3,
                       )
 
         self.pout.e_str = 'ue * ((1-K2)*F3_y + (1-K3)*F4_y + F5_y) - pout'

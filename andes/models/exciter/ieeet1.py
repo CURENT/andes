@@ -159,7 +159,7 @@ class IEEET1Model(ExcBase):
                               info='Integrator',
                               )
 
-        self.SL = LessThan(u=self.vout, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        self.SL = LessThan(u=self.vout, bound="SAT_A", equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"S_e(|V_{out}|)", info='saturation output',
                         v_str='Se0',

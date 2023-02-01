@@ -166,7 +166,7 @@ class IEEET3Model(ExcBase, ExcVsum):
                        T=self.TE, K=1, D=self.KE,
                        )
 
-        self.WF = Washout(u=self.LA1_y, T=self.TF, K=self.KF,
+        self.WF = Washout(u="LA1_y", T=self.TF, K=self.KF,
                           info='V_F, stablizing circuit feedback, washout')
 
         self.SQE = Algeb(tex_name=r'SQE', info=r'Square of error after mul',
@@ -179,7 +179,7 @@ class IEEET3Model(ExcBase, ExcVsum):
 
         self.VB = Piecewise(self.SQE, points=(0, ), funs=('ue * LA3_y', 'ue * (sqrt(SQE) + LA3_y)'))
 
-        self.HL = HardLimiter(u=self.VB_y, lower=self.zeros, upper=self.VBMAX,
+        self.HL = HardLimiter(u="VB_y", lower=self.zeros, upper=self.VBMAX,
                               info='Hard limiter for VB',
                               )
 

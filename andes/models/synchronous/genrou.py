@@ -167,7 +167,12 @@ class GENROUModel:
                           )
 
         # `LT` is a reserved keyword for SymPy
-        self.SL = LessThan(u=self.psi2, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        self.SL = LessThan(u=self.psi2,
+                           bound="SAT_A",
+                           equal=False,
+                           enable=True,
+                           cache=False,
+                           )
 
         self.Se = Algeb(tex_name=r"S_e(|\psi_{a}|)", info='saturation output',
                         v_str='u * Se0',

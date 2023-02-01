@@ -154,7 +154,7 @@ class ESDC2AModel(ExcBase):
                          )
 
         self.HG = HVGate(u1=self.UEL,
-                         u2=self.LL_y,
+                         u2="LL_y",
                          info='HVGate for under excitation',
                          )
 
@@ -166,7 +166,7 @@ class ESDC2AModel(ExcBase):
                               )
 
         # TODO: WARNING: HVGate is temporarily skipped
-        self.LA = LagAntiWindup(u=self.LL_y,
+        self.LA = LagAntiWindup(u="LL_y",
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRU,
@@ -175,7 +175,7 @@ class ESDC2AModel(ExcBase):
                                 )  # LA_y == VR
 
         self.SL = LessThan(u=self.vout,
-                           bound=self.SAT_A,
+                           bound="SAT_A",
                            equal=False,
                            enable=True,
                            cache=False,
@@ -200,7 +200,7 @@ class ESDC2AModel(ExcBase):
                               info='Integrator',
                               )
 
-        self.WF = Washout(u=self.INT_y,
+        self.WF = Washout(u="INT_y",
                           T=self.TF1,
                           K=self.KF,
                           info='Feedback to input'

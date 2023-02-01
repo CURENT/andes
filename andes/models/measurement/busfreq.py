@@ -64,13 +64,13 @@ class BusFreq(ModelData, Model):
                      info='digital filter',
                      )
         # the output `WO_y` is the frequency deviation in p.u.
-        self.WO = Washout(u=self.L_y,
+        self.WO = Washout(u="L_y",
                           K=self.iwn,
                           T=self.Tw,
                           info='angle washout',
                           )
-        self.WO_y.info = 'frequency deviation'
-        self.WO_y.unit = 'p.u. (Hz)'
+        self.WO.y.info = 'frequency deviation'
+        self.WO.y.unit = 'p.u. (Hz)'
 
         self.f = Algeb(info='frequency output',
                        unit='p.u. (Hz)',

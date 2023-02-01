@@ -124,9 +124,9 @@ class ESAC5AModel(ExcBase, ExcVsum, ExcACSat):
 
         self.VR = LagAntiWindup(u=self.vi, T=self.TA, K=self.KA, upper=self.VRMAXu, lower=self.VRMINu,)
 
-        self.LL = LeadLag(u=self.VR_y, T1=self.TF3, T2=self.TF2,)
+        self.LL = LeadLag(u="VR_y", T1=self.TF3, T2=self.TF2,)
 
-        self.WF = Washout(u=self.LL_y, T=self.TF1, K=self.KF)
+        self.WF = Washout(u="LL_y", T=self.TF1, K=self.KF)
 
         self.INTin = 'ue * (VR_y - VFE)'
 

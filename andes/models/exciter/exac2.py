@@ -75,7 +75,7 @@ class EXAC2Model(EXAC1Model):
                               )
 
         self.INT.u = 'ue* (VR_y - VFE)'  # this won't propagate to its `y` variable. Need the next line
-        self.INT_y.e_str = 'ue* (VR_y - VFE)'
+        self.INT.y.e_str = 'ue* (VR_y - VFE)'
 
         self.vref.v_str = '(VFE * KL + VFE / KB) / KA + v'
 

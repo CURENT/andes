@@ -612,7 +612,10 @@ class ExtAlgeb(ExtVar):
     v_code = 'y'
 
 
-class AliasAlgeb(ExtAlgeb):
+class AliasVar:
+    pass
+
+class AliasAlgeb(AliasVar):
     """
     Alias algebraic variable. Essentially ``ExtAlgeb`` that links to a a model's
     own variable.
@@ -628,17 +631,19 @@ class AliasAlgeb(ExtAlgeb):
     """
 
     def __init__(self, var, **kwargs):
-        ExtAlgeb.__init__(self,
-                          model=var.owner.class_name,
-                          src=var.name,
-                          indexer=var.owner.idx,
-                          info=f'Alias of {var.name}',
-                          is_input=False,
-                          **kwargs,
-                          )
+        self._alias_of = var
+
+        # ExtAlgeb.__init__(self,
+        #                   model=var.owner.class_name,
+        #                   src=var.name,
+        #                   indexer=var.owner.idx,
+        #                   info=f'Alias of {var.name}',
+        #                   is_input=False,
+        #                   **kwargs,
+        #                   )
 
 
-class AliasState(ExtState):
+class AliasState(AliasVar):
     """
     Alias state variable.
 
@@ -646,11 +651,13 @@ class AliasState(ExtState):
     """
 
     def __init__(self, var, **kwargs):
-        ExtState.__init__(self,
-                          model=var.owner.class_name,
-                          src=var.name,
-                          indexer=var.owner.idx,
-                          info=f'Alias of {var.name}',
-                          is_input=False,
-                          **kwargs,
-                          )
+        self._alias_of = var
+
+        # ExtState.__init__(self,
+        #                   model=model_name,
+        #                   src=var.name,
+        #                   indexer=var.owner.idx,
+        #                   info=f'Alias of {var.name}',
+        #                   is_input=False,
+        #                   **kwargs,
+        #                   )

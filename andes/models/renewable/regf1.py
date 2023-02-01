@@ -327,8 +327,8 @@ class REGFOuterPIModel:
                                  x0='Iq0',
                                  )
 
-        self.Idref = AliasAlgeb(self.PIvd_y)
-        self.Iqref = AliasAlgeb(self.PIvq_y)
+        self.Idref = AliasAlgeb("PIvd_y")
+        self.Iqref = AliasAlgeb("PIvq_y")
 
 
 class REGFInnerPIModel:
@@ -378,8 +378,8 @@ class REGFInnerPIModel:
                          K=1,
                          )
 
-        self.ud = AliasState(self.udLag_y)
-        self.uq = AliasState(self.uqLag_y)
+        self.ud = AliasState("udLag_y")
+        self.uq = AliasState("uqLag_y")
 
 
 class REGF1(REGF1Data, REGF1Model, REGF1Primary,

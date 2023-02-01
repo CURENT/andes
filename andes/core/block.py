@@ -1674,7 +1674,7 @@ class HVGate(Block):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
         self.u2 = dummify(u2)
-        self.enforce_tex_name((u1, u2))
+        self.enforce_tex_name((self.u1, self.u2))
 
         self.lt = LessThan(self.u1, self.u2)
         self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.lt)
@@ -1722,7 +1722,7 @@ class LVGate(Block):
         super().__init__(name=name, tex_name=tex_name, info=info)
         self.u1 = dummify(u1)
         self.u2 = dummify(u2)
-        self.enforce_tex_name((u1, u2))
+        self.enforce_tex_name((self.u1, self.u2))
 
         self.lt = LessThan(self.u1, self.u2)
         self.y = Algeb(info='LVGate output', tex_name='y', discrete=self.lt)
@@ -1845,7 +1845,7 @@ class Piecewise(Block):
     def __init__(self, u, points: Union[List, Tuple], funs: Union[List, Tuple],
                  name=None, tex_name=None, info=None):
         super().__init__(name=name, tex_name=tex_name, info=info)
-        self.u = u
+        self.u = dummify(u)
         self.points = points
         self.funs = funs
 

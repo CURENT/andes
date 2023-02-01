@@ -54,7 +54,7 @@ class REGCP1Model(REGCA1Model):
                              )
 
         delattr(self, 'vd')
-        self.algebs_ext.pop("vd")
+        # self.algebs_ext.pop("vd")
 
         self.vd = Algeb(v_str='v',
                         info='d-axis voltage', tex_name='V_d',

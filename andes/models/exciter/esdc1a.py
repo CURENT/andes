@@ -15,12 +15,12 @@ class ESDC1AModel(ESDC2AModel):
     def __init__(self, system, config):
         ESDC2AModel.__init__(self, system, config)
 
-        self.services.pop("VRU")
-        self.services.pop("VRL")
-        self.services_var.pop("VRU")
-        self.services_var.pop("VRL")
-        self.services_var_seq.pop("VRU")
-        self.services_var_seq.pop("VRL")
+        # self.services.pop("VRU")
+        # self.services.pop("VRL")
+        # self.services_var.pop("VRU")
+        # self.services_var.pop("VRL")
+        # self.services_var_seq.pop("VRU")
+        # self.services_var_seq.pop("VRL")
 
         delattr(self, 'VRU')
         delattr(self, 'VRL')

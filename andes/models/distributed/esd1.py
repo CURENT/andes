@@ -54,7 +54,7 @@ class ESD1Model(PVD1Model):
         PVD1Model.__init__(self, system, config)
 
         # --- Determine whether the energy storage is in charging or discharging mode ---
-        self.LTN = LessThan(self.Ipout_y, 0.0)
+        self.LTN = LessThan("Ipout_y", 0.0)
 
         # --- Add integrator. Assume that state-of-charge is the initial condition ---
         self.pIG = Integrator(u='-LTN_z1*(v * Ipout_y)*EtaC - LTN_z0*(v * Ipout_y)/EtaD',
@@ -63,11 +63,11 @@ class ESD1Model(PVD1Model):
                               )
         self.pIG.info = 'State of charge'
 
-        self.SOC = AliasState(self.pIG_y)
+        self.SOC = AliasState("pIG_y")
         self.SOC.info = 'Alias for state of charge'
 
         # --- Add hard limiter for SOC ---
-        self.SOClim = HardLimiter(u=self.pIG_y, lower=self.SOCmin, upper=self.SOCmax)
+        self.SOClim = HardLimiter(u="pIG_y", lower=self.SOCmin, upper=self.SOCmax)
 
         # --- Add Ipmax, Ipmin, and Ipcmd ---
         self.Ipmax.v_str = '(1-SOClim_zl)*(SWPQ_s1 * ialim + SWPQ_s0 * sqrt(Ipmaxsq0))'

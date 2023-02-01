@@ -296,8 +296,8 @@ class VSGOuterPIModel:
                                  x0='Iq0',
                                  )
 
-        self.Idref = AliasAlgeb(self.PIvd_y)
-        self.Iqref = AliasAlgeb(self.PIvq_y)
+        self.Idref = AliasAlgeb("PIvd_y")
+        self.Iqref = AliasAlgeb("PIvq_y")
 
 
 class VSGInnerPIModel:
@@ -347,8 +347,8 @@ class VSGInnerPIModel:
                          K=1,
                          )
 
-        self.ud = AliasState(self.udLag_y)
-        self.uq = AliasState(self.uqLag_y)
+        self.ud = AliasState("udLag_y")
+        self.uq = AliasState("uqLag_y")
 
 
 class REGCV1(REGCV1Data, VSGOuterPIData, VSGInnerPIData,

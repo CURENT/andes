@@ -369,7 +369,7 @@ class REPCA1Model(Model):
                              )
 
         # --- e Hardlimit and hold logic ---
-        self.eHL = Limiter(u=self.dbd_y, lower=self.emin, upper=self.emax,
+        self.eHL = Limiter(u="dbd_y", lower=self.emin, upper=self.emax,
                            tex_name='e_{HL}',
                            info='Hardlimit on deadband output',
                            )
@@ -401,7 +401,7 @@ class REPCA1Model(Model):
                             tex_name='s_2',
                             )
 
-        self.s3 = LeadLag(u=self.s2_y, T1=self.Tft, T2=self.Tfv, K=1,
+        self.s3 = LeadLag(u="s2_y", T1=self.Tft, T2=self.Tfv, K=1,
                           tex_name='s_3',
                           )  # s3_y == Qext
 
@@ -428,7 +428,7 @@ class REPCA1Model(Model):
                               info='frequency error deadband',
                               )
 
-        self.fdlt0 = LessThan(self.fdbd_y, 0.0,
+        self.fdlt0 = LessThan("fdbd_y", 0.0,
                               tex_name='f_{dlt0}',
                               info='frequency deadband output less than zero',
                               )
@@ -469,7 +469,7 @@ class REPCA1Model(Model):
                             info='PI for fe limiter output',
                             )
 
-        self.s6 = Lag(u=self.s5_y, T=self.Tg, K=1,
+        self.s6 = Lag(u="s5_y", T=self.Tg, K=1,
                       tex_name='s_6',
                       info='Output filter for Pext',
                       )

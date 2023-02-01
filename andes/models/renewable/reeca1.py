@@ -510,7 +510,7 @@ class REECA1Model(Model):
                               tex_name='s5',
                               )
 
-        self.Pord = AliasState(self.s5_y)
+        self.Pord = AliasState("s5_y")
 
         # --- Current limit logic ---
 
@@ -530,12 +530,12 @@ class REECA1Model(Model):
                                   info='True if VDL1 is in service',
                                   )
 
-        self.VDL1 = Piecewise(u=self.s0_y,
+        self.VDL1 = Piecewise(u="s0_y",
                               points=('Vq1', 'Vq2', 'Vq3', 'Vq4'),
                               funs=('Iq1',
-                                    f'({self.s0_y.name} - Vq1) * kVq12 + Iq1',
-                                    f'({self.s0_y.name} - Vq2) * kVq23 + Iq2',
-                                    f'({self.s0_y.name} - Vq3) * kVq34 + Iq3',
+                                    '(s0_y - Vq1) * kVq12 + Iq1',
+                                    '(s0_y - Vq2) * kVq23 + Iq2',
+                                    '(s0_y - Vq3) * kVq34 + Iq3',
                                     'Iq4'),
                               tex_name='V_{DL1}',
                               info='Piecewise linear characteristics of Vq-Iq',
@@ -557,12 +557,12 @@ class REECA1Model(Model):
                                   info='True if VDL2 is in service',
                                   )
 
-        self.VDL2 = Piecewise(u=self.s0_y,
+        self.VDL2 = Piecewise(u="s0_y",
                               points=('Vp1', 'Vp2', 'Vp3', 'Vp4'),
                               funs=('Ip1',
-                                    f'({self.s0_y.name} - Vp1) * kVp12 + Ip1',
-                                    f'({self.s0_y.name} - Vp2) * kVp23 + Ip2',
-                                    f'({self.s0_y.name} - Vp3) * kVp34 + Ip3',
+                                    '(s0_y - Vp1) * kVp12 + Ip1',
+                                    '(s0_y - Vp2) * kVp23 + Ip2',
+                                    '(s0_y - Vp3) * kVp34 + Ip3',
                                     'Ip4'),
                               tex_name='V_{DL2}',
                               info='Piecewise linear characteristics of Vp-Ip',

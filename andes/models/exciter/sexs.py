@@ -71,7 +71,7 @@ class SEXSModel(ExcBase):
 
         self.LL = LeadLag(u=self.vi, T1=self.TA, T2=self.TB, zero_out=True)
 
-        self.LAW = LagAntiWindup(u=self.LL_y,
+        self.LAW = LagAntiWindup(u="LL_y",
                                  T=self.TE,
                                  K=self.K,
                                  lower=self.EMIN,

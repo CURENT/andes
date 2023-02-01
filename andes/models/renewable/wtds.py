@@ -95,9 +95,9 @@ class WTDSModel(Model):
                              )
 
         # make two alias states, `wt` and `wg`, pointing to `s1_y`
-        self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
+        self.wt = AliasState("s1_y", tex_name=r'\omega_t')
 
-        self.wg = AliasState(self.s1_y, tex_name=r'\omega_g')
+        self.wg = AliasState("s1_y", tex_name=r'\omega_g')
 
         self.s3_y = State(info='Unused state variable',
                           tex_name='y_{s3}',

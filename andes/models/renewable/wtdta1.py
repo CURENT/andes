@@ -110,7 +110,7 @@ class WTDTA1Model(Model):
                              y0='wr0',
                              )
 
-        self.wt = AliasState(self.s1_y, tex_name=r'\omega_t')
+        self.wt = AliasState("s1_y", tex_name=r'\omega_t')
 
         # `s2_y` is `wg`
         self.s2 = Integrator(u='-(Pe / s2_y) + s3_y - DAMP * (s2_y - w0) + pd',
@@ -119,7 +119,7 @@ class WTDTA1Model(Model):
                              y0='wr0',
                              )
 
-        self.wg = AliasState(self.s2_y, tex_name=r'\omega_g')
+        self.wg = AliasState("s2_y", tex_name=r'\omega_g')
 
         # `s3_y` gets reinitialized in `WTTQA1`
         self.s3 = Integrator(u='s1_y - s2_y',

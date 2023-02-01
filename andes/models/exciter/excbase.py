@@ -211,7 +211,7 @@ class ExcACSat:
         self.INT.y.v_str = 0.1
         self.INT.y.v_iter = 'INT_y * FEX_y - vf0'
 
-        self.SL = LessThan(u=self.INT_y, bound=self.SAT_A, equal=False, enable=True, cache=False)
+        self.SL = LessThan(u="INT_y", bound="SAT_A", equal=False, enable=True, cache=False)
 
         self.Se = Algeb(tex_name=r"V_{out}*S_e(|V_{out}|)", info='saturation output',
                         v_str='Indicator(INT_y > SAT_A) * SAT_B * (INT_y - SAT_A) ** 2',

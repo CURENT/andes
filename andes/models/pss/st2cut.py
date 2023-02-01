@@ -167,25 +167,25 @@ class ST2CUTModel(PSSBase):
                                T=self.T4,
                                )
 
-        self.LL1 = LeadLag(u=self.WO_y,
+        self.LL1 = LeadLag(u="WO_y",
                            T1=self.T5,
                            T2=self.T6,
                            zero_out=True,
                            )
 
-        self.LL2 = LeadLag(u=self.LL1_y,
+        self.LL2 = LeadLag(u="LL1_y",
                            T1=self.T7,
                            T2=self.T8,
                            zero_out=True,
                            )
 
-        self.LL3 = LeadLag(u=self.LL2_y,
+        self.LL3 = LeadLag(u="LL2_y",
                            T1=self.T9,
                            T2=self.T10,
                            zero_out=True,
                            )
 
-        self.VSS = GainLimiter(u=self.LL3_y,
+        self.VSS = GainLimiter(u="LL3_y",
                                K=1,
                                R=1,
                                lower=self.LSMIN,

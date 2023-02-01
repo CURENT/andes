@@ -126,7 +126,7 @@ class EXDC2Model(ExcBase):
                                      )
 
         self.SL = LessThan(u=self.vout,
-                           bound=self.SAT_A,
+                           bound="SAT_A",
                            equal=False,
                            enable=True,
                            cache=False,
@@ -162,7 +162,7 @@ class EXDC2Model(ExcBase):
                           info='Lead-lag for internal delays',
                           zero_out=True,
                           )
-        self.LA = LagAntiWindup(u=self.LL_y,
+        self.LA = LagAntiWindup(u="LL_y",
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRMAX,

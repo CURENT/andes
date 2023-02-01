@@ -93,7 +93,7 @@ class TGOV1Model(TGBase):
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
-        self.LL = LeadLag(u=self.LAG_y,
+        self.LL = LeadLag(u='LAG_y',
                           T1=self.T2,
                           T2=self.T3,
                           )

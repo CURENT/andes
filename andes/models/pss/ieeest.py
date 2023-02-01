@@ -74,17 +74,17 @@ class IEEESTModel(PSSBase):
 
         self.F1 = Lag2ndOrd(u=self.sig, K=1, T1=self.A1, T2=self.A2)
 
-        self.F2 = LeadLag2ndOrd(u=self.F1_y, T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6, zero_out=True)
+        self.F2 = LeadLag2ndOrd(u="F1_y", T1=self.A3, T2=self.A4, T3=self.A5, T4=self.A6, zero_out=True)
 
-        self.LL1 = LeadLag(u=self.F2_y, T1=self.T1, T2=self.T2, zero_out=True)
+        self.LL1 = LeadLag(u="F2_y", T1=self.T1, T2=self.T2, zero_out=True)
 
-        self.LL2 = LeadLag(u=self.LL1_y, T1=self.T3, T2=self.T4, zero_out=True)
+        self.LL2 = LeadLag(u="LL1_y", T1=self.T3, T2=self.T4, zero_out=True)
 
-        self.Vks = Gain(u=self.LL2_y, K=self.KS)
+        self.Vks = Gain(u="LL2_y", K=self.KS)
 
-        self.WO = WashoutOrLag(u=self.Vks_y, T=self.T6, K=self.T5, name='WO', zero_out=True)  # WO_y == Vss
+        self.WO = WashoutOrLag(u="Vks_y", T=self.T6, K=self.T5, name='WO', zero_out=True)  # WO_y == Vss
 
-        self.VLIM = Limiter(u=self.WO_y, lower=self.LSMIN, upper=self.LSMAX, info='Vss limiter')
+        self.VLIM = Limiter(u="WO_y", lower=self.LSMIN, upper=self.LSMAX, info='Vss limiter')
 
         self.Vss = Algeb(tex_name='V_{ss}', info='Voltage output before output limiter',
                          e_str='VLIM_zi * WO_y + VLIM_zu * LSMAX + VLIM_zl * LSMIN - Vss')

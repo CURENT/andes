@@ -148,12 +148,12 @@ class WTTQA1Model(Model):
                       info='Pe filter',
                       )
 
-        self.fPe = Piecewise(u=self.s1_y,
+        self.fPe = Piecewise(u="s1_y",
                              points=('p1', 'p2', 'p3', 'p4'),
                              funs=('sp1',
-                                   f'sp1 + ({self.s1_y.name} - p1) * kp1',
-                                   f'sp2 + ({self.s1_y.name} - p2) * kp2',
-                                   f'sp3 + ({self.s1_y.name} - p3) * kp3',
+                                   'sp1 + (s1_y - p1) * kp1',
+                                   'sp2 + (s1_y - p2) * kp2',
+                                   'sp3 + (s1_y - p3) * kp3',
                                    'sp4'),
                              tex_name='f_{Pe}',
                              info='Piecewise Pe to wref mapping',
@@ -197,7 +197,7 @@ class WTTQA1Model(Model):
                             )
 
         # `s2_y` is `wref` for WTPTA1
-        self.s2 = Lag(u=self.fPe_y, T=self.Twref, K=1.0,
+        self.s2 = Lag(u="fPe_y", T=self.Twref, K=1.0,
                       tex_name='s_2', info='speed filter',
                       )
 

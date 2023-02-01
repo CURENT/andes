@@ -178,25 +178,25 @@ class ESST1AModel(ExcBase, ExcVsum):
                           e_str='ue * (SWUEL_s2 * UEL + (1 - SWUEL_s2) * llim) - UEL2',
                           )
         self.HVG1 = HVGate(u1=self.UEL2,
-                           u2=self.vil_y,
+                           u2="vil_y",
                            info='HVGate after V_I',
                            )
 
-        self.LL = LeadLag(u=self.HVG1_y,
+        self.LL = LeadLag(u="HVG1_y",
                           T1=self.TC,
                           T2=self.TB,
                           info='Lead-lag compensator',
                           zero_out=True,
                           )
 
-        self.LL1 = LeadLag(u=self.LL_y,
+        self.LL1 = LeadLag(u="LL_y",
                            T1=self.TC1,
                            T2=self.TB1,
                            info='Lead-lag compensator 1',
                            zero_out=True,
                            )
 
-        self.LA = LagAntiWindup(u=self.LL1_y,
+        self.LA = LagAntiWindup(u="LL1_y",
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VAMAX,
@@ -221,7 +221,7 @@ class ESST1AModel(ExcBase, ExcVsum):
                           info='HVGate for under excitation',
                           )
 
-        self.LVG = LVGate(u1=self.HVG_y,
+        self.LVG = LVGate(u1="HVG_y",
                           u2=self.OEL,
                           info='HVGate for over excitation',
                           )
@@ -251,14 +251,14 @@ class ESST1AModel(ExcBase, ExcVsum):
                                sequential=False,
                                )
 
-        self.vol = GainLimiter(u=self.LVG_y,
+        self.vol = GainLimiter(u="LVG_y",
                                K=1, R=1,
                                upper=self.efdu,
                                lower=self.efdl,
                                info='Exciter output limiter',
                                )
 
-        self.WF = Washout(u=self.LVG_y,
+        self.WF = Washout(u="LVG_y",
                           T=self.TF,
                           K=self.KF,
                           info='V_F, Stablizing circuit feedback',

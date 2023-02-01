@@ -134,11 +134,11 @@ class WTPTA1Model(Model):
                                     info='Output lag anti-windup rate limiter')
 
         # remove warning when pitch angle==0
-        self.PIc_hl.warn_flags.pop(0)
-        self.PIc_aw.warn_flags.pop(0)
-        self.PIw_hl.warn_flags.pop(0)
-        self.PIw_aw.warn_flags.pop(0)
-        self.LG_lim.warn_flags.pop(0)
+        self.PIc.hl.warn_flags.pop(0)
+        self.PIc.aw.warn_flags.pop(0)
+        self.PIw.hl.warn_flags.pop(0)
+        self.PIw.aw.warn_flags.pop(0)
+        self.LG.lim.warn_flags.pop(0)
 
 
 class WTPTA1(WTPTA1Data, WTPTA1Model):

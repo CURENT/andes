@@ -255,18 +255,18 @@ class IEEEG1Model(TGBase):
                                         info='Valve position integrator',
                                         )
 
-        self.L4 = Lag(u=self.IAW_y, T=self.T4, K=1,
+        self.L4 = Lag(u="IAW_y", T=self.T4, K=1,
                       info='first process',)
 
-        self.L5 = Lag(u=self.L4_y, T=self.T5, K=1,
+        self.L5 = Lag(u="L4_y", T=self.T5, K=1,
                       info='second (reheat) process',
                       )
 
-        self.L6 = Lag(u=self.L5_y, T=self.T6, K=1,
+        self.L6 = Lag(u="L5_y", T=self.T6, K=1,
                       info='third process',
                       )
 
-        self.L7 = Lag(u=self.L6_y, T=self.T7, K=1,
+        self.L7 = Lag(u="L6_y", T=self.T7, K=1,
                       info='fourth (second reheat) process',
                       )
 

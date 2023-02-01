@@ -159,7 +159,7 @@ class ESAC1AModel(ExcBase, ExcVsum, ExcACSat):
         self.VAMAXu = ConstService('VAMAX * ue + (1-ue) * 999')
         self.VAMINu = ConstService('VAMIN * ue + (1-ue) * -999')
 
-        self.LA = LagAntiWindup(u=self.LL_y,
+        self.LA = LagAntiWindup(u="LL_y",
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VAMAXu,
@@ -168,11 +168,11 @@ class ESAC1AModel(ExcBase, ExcVsum, ExcACSat):
                                 )  # LA_y == VA
 
         self.HVG = HVGate(u1=self.UEL,
-                          u2=self.LA_y,
+                          u2="LA_y",
                           info='HVGate for under excitation',
                           )
 
-        self.LVG = LVGate(u1=self.HVG_y,
+        self.LVG = LVGate(u1="HVG_y",
                           u2=self.OEL,
                           info='HVGate for under excitation',
                           )

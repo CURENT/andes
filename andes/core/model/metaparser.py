@@ -32,7 +32,7 @@ class ModelMetaParser:
 
         self.services_const = OrderedDict()
         self.services_var = OrderedDict()
-        self.sercices_var_seq = OrderedDict()
+        self.services_var_seq = OrderedDict()
         self.services_var_nonseq = OrderedDict()
         self.services_post = OrderedDict()
         self.services_subs = OrderedDict()

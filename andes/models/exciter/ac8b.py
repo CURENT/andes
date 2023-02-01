@@ -177,7 +177,7 @@ class AC8BModel(ExcBase, ExcVsum, ExcACSat):
                               tex_name='PID', info='PID', name='PID',
                               )
 
-        self.LA = LagAntiWindup(u=self.PID_y,
+        self.LA = LagAntiWindup(u="PID_y",
                                 T=self.TA,
                                 K=self.KA,
                                 upper=self.VRMAX,

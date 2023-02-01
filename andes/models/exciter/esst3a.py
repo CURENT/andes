@@ -260,12 +260,12 @@ class ESST3AModel(ExcBase):
                          info='HVGate for under excitation',
                          )
 
-        self.LL = LeadLag(u=self.HG_y, T1=self.TC, T2=self.TB,
+        self.LL = LeadLag(u="HG_y", T1=self.TC, T2=self.TB,
                           info='Regulator',
                           zero_out=True,
                           )  # LL_y == VA
 
-        self.LAW1 = LagAntiWindup(u=self.LL_y,
+        self.LAW1 = LagAntiWindup(u="LL_y",
                                   T=self.TA,
                                   K=self.KA,
                                   lower=self.VRMIN,

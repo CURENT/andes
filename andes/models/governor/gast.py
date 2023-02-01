@@ -100,17 +100,17 @@ class GASTModel(TGBase):
                           info='LVGate',
                           )
 
-        self.LAG = LagAntiWindup(u=self.LVG_y,
+        self.LAG = LagAntiWindup(u="LVG_y",
                                  K=1,
                                  T=self.T1,
                                  lower=self.VMIN,
                                  upper=self.VMAX,
                                  )
 
-        self.LG2 = Lag(u=self.LAG_y, T=self.T2, K=1,
+        self.LG2 = Lag(u="LAG_y", T=self.T2, K=1,
                        info='Lag T2')
 
-        self.LG3 = Lag(u=self.LG2_y, T=self.T3, K=1,
+        self.LG3 = Lag(u="LG2_y", T=self.T3, K=1,
                        info='Lag T3')
 
         self.pout.e_str = 'ue * (LG2_y - Dt * wd) - pout'
