@@ -281,7 +281,6 @@ class AddressManager:
         self.mm = model_manager
 
 
-
 class System:
     """
     System contains models and routines for modeling and simulation.

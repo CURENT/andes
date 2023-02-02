@@ -18,7 +18,6 @@ import numpy as np
 from andes.core.block import Block
 from andes.core.common import Config, ModelFlags
 from andes.core.discrete import Discrete
-from andes.core.model.modelcall import ModelCall
 from andes.core.service import BaseService
 from andes.core.var import BaseVar
 from andes.utils.func import list_flatten

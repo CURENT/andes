@@ -1436,7 +1436,7 @@ class FlagLessThan(FlagCondition):
 class FlagGreaterThan(FlagCondition):
     """
     Deprecated. Not used.
-   
+
     Service for flagging parameters > or >= the given value element-wise.
 
     Parameters that satisfy the comparison (u > or >= value) will flagged as
