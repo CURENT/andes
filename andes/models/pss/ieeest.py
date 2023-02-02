@@ -69,11 +69,11 @@ class IEEESTModel(PSSBase):
                          info='Input signal',
                          )
 
-        self.sig.v_str = 'SW_s1*(omega-1) + SW_s2*0 + SW_s3*(tm0/SnSb) + ' \
-                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*0'
+        self.sig.v_str = 'ue * ( SW_s1*(omega-1) + SW_s2*0 + SW_s3*(tm0/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*0 )'
 
-        self.sig.e_str = 'SW_s1*(omega-1) + SW_s2*(f-1) + SW_s3*(te/SnSb) + ' \
-                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*dv_v - sig'
+        self.sig.e_str = 'ue * ( SW_s1*(omega-1) + SW_s2*(f-1) + SW_s3*(te/SnSb) + ' \
+                         'SW_s4*(tm-tm0) + SW_s5*v + SW_s6*dv_v ) - sig'
 
         self.F1 = Lag2ndOrd(u=self.sig, K=1, T1=self.A1, T2=self.A2)
 
@@ -94,7 +94,7 @@ class IEEESTModel(PSSBase):
 
         self.OLIM = Limiter(u=self.v, lower=self.VCLr, upper=self.VCUr, info='output limiter')
 
-        self.vsout.e_str = 'OLIM_zi * Vss - vsout'
+        self.vsout.e_str = 'ue * OLIM_zi * Vss - vsout'
 
 
 class IEEEST(IEEESTData, IEEESTModel):
