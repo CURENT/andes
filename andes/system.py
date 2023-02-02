@@ -234,6 +234,54 @@ class SystemManager:
         self.pcm.load()
 
 
+class ModelRuntimeData:
+
+    """
+    Class for managing runtime data for model.
+
+    Currently, values are stored in the `v` field of objects. This makes it
+    really convenient to pass values into a service.
+
+    If we no longer use `v` for storing values, I was concerned about how the
+    services can access the value. Still, if the input is memory stable, then
+    the service output needs to retrieved at each step. This is analogous to the
+    refresh_input we do now. Anyway, a small subset of data needs to be
+    refreshed.
+    """
+
+    pass
+
+
+class AddressManager:
+    """
+    Class for assigning addresses based on models.
+
+    The following information is required:
+    - stored metadata (independent of cases) such as variable names and types
+    - loaded case data (number of devices for each model)
+
+    This class should assign addresses to internal variables, discrete flags.
+
+    The remainings are :
+
+    - External variables needs to have addresses assigned based on indexer. That
+      can possibly done by another class for processing linkage.
+
+    - Services: shall they be stored centrally or in each service object? If the
+      former, the service v() functions needs to be updated for in-place
+      alteration. For the latter, the function handle needs to be stored for
+      runtime refresh.
+
+    Should this one manage memory for shared arrays? Maybe this one can count
+    the total number of variables. Then, let another DAE class to manage the
+    content.
+    """
+
+    def __init__(self, model_manager) -> None:
+        self.mm = model_manager
+
+
+
 class System:
     """
     System contains models and routines for modeling and simulation.
