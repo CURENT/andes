@@ -1352,6 +1352,8 @@ class ApplyFunc(BaseService):
 
 class FlagCondition(BaseService):
     """
+    Deprecated.
+
     Class for flagging values based on a condition function.
 
     By default, values whose condition function output equal that equal to
@@ -1406,6 +1408,8 @@ class FlagCondition(BaseService):
 
 class FlagLessThan(FlagCondition):
     """
+    Deprecated.
+
     Service for flagging parameters < or <= the given value element-wise.
 
     Parameters that satisfy the comparison (u < or <= value) will flagged as
@@ -1431,6 +1435,8 @@ class FlagLessThan(FlagCondition):
 
 class FlagGreaterThan(FlagCondition):
     """
+    Deprecated. Not used.
+   
     Service for flagging parameters > or >= the given value element-wise.
 
     Parameters that satisfy the comparison (u > or >= value) will flagged as
