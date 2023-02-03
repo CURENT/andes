@@ -6,14 +6,16 @@
 [x] Decouple SymProcessor from Model
 [x] Decouple config from Model
 [x] Decouple ModelCache and __setattr__ hacks from Model.
+- Think about how the symprocessor output should be stored in a general
+  data structure.
+  - Separate the input to the intermediate processor and the input to the code
+    writer
 - Decouple Documenter from Model
 - Decouple data storage from Model
   - Turn the `adder`, `setter` manager into a class
   -
 - Decouple addresser from system (?)
   - Depend on the number of (online) devices and number of variables
-  -
-- Decouple ModelCache from Model
 - Remove `ModelCall` from `Model`
 - Consider consolidating `ModelData` and `Model`
 - Major: move symbolic model definition to `Model.define`.
