@@ -160,8 +160,8 @@ class ST2CUTModel(PSSBase):
                       )
         self.IN = Algeb(tex_name='I_N',
                         info='Sum of inputs',
-                        v_str='L1_y + L2_y',
-                        e_str='L1_y + L2_y - IN',
+                        v_str='ue * ( L1_y + L2_y )',
+                        e_str='ue * ( L1_y + L2_y )- IN',
                         )
 
         self.WO = WashoutOrLag(u=self.IN,
@@ -199,7 +199,7 @@ class ST2CUTModel(PSSBase):
 
         self.OLIM = Limiter(u=self.v, lower=self.VOL, upper=self.VOU, info='output limiter')
 
-        self.vsout.e_str = 'OLIM_zi * VSS_y - vsout'
+        self.vsout.e_str = 'ue * OLIM_zi * VSS_y - vsout'
 
 
 class ST2CUT(ST2CUTData, ST2CUTModel):
