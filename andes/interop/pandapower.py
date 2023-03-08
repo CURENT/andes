@@ -514,8 +514,26 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
 
 def _verify_pf(ssa, ssp, tol=1e-6):
     """
-    Verify power flow results.
+    Verify power flow results between ANDES and pandapower.
+
+    Parameters
+    ----------
+    tol : float
+        The tolerance of error.
+
+    Returns
+    -------
+    True
+        If the difference between the two results is within the tolerance
+    False
+        If the difference is larger than the tolerance, OR time-domain
+        simulation has been run in the ANDES system. ANDES is not able to run
+        power flow after initializing time-domain simulation.
     """
+
+    if ssa.TDS.initialized:
+        return False
+
     ssa.PFlow.run()
     pp.runpp(ssp)
 
