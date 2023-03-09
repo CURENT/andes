@@ -472,7 +472,8 @@ def to_pandapower(ssa, ctrl=[], verify=True, tol=1e-6):
     -----
     Handling of the following parameters:
       - This interface tracks static power flow model in ANDES: `Bus`, `Line`, `PQ`, `Shunt`, `PV`, and `Slack`.
-        However, it does not track the dynamic models in ANDES, including but not limited to `TurbineGov`, `SynGen`, and `Exciter`.
+        However, it does not track the dynamic models in ANDES, including but not limited to
+        `TurbineGov`, `SynGen`, and `Exciter`.
       - The interface converts the ``Slack`` in ANDES to ``gen`` in pandapower rather than ``ext_gen``.
       - MUST NOT verify power flow after initializing TDS in ANDES. ANDES does not allow running ``PFlow``
         for systems with initialized TDS as it will break variable addressing.
