@@ -492,9 +492,9 @@ class StaticGen(GroupBase):
     Static generator group.
 
     Static generators include PV and Slack, which are used to impose algebraic
-    equations. Static generators used primarily in power flow.
+    equations. Static generators are used primarily for power flow.
 
-    Static generators does not have the modeling details for stability
+    Static generators do not have the modeling details for stability
     simulation. Although some of them can stay for time-domain simulation, most
     of them should be substituted by dynamic generators, including synchronous
     generators and inverter-based resources upon TDS initialization.
@@ -507,7 +507,7 @@ class StaticGen(GroupBase):
 
     TDS initialization will ensure that the dynamic generators impose the same
     amount of power as the static generator. At the end of initialization,
-    `StaticGen`'s that has been substituted will have their connectivity status
+    `StaticGen`'s that have been substituted will have their connectivity status
     ``u`` changed to ``0``.
     """
 
