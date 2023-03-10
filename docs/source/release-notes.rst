@@ -9,7 +9,14 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
-v1.8.6 (2023-01-xx)
+v1.8.7 (2023-03-10)
+-------------------
+- Added IEEE 39-bus test case with dynamics in the ANDES xlsx format.
+  Contributed by @jinningwang.
+- In `interop.pandapower`, the `_verify_pf` function will not be called if TDS
+  has been initialized. This prevents the breaking of variable addresses.
+
+v1.8.6 (2023-02-13)
 -------------------
 - Minor fix in `timeseries.py` for backward compatibility with Python 3.6.
 

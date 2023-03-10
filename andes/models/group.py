@@ -491,13 +491,24 @@ class StaticGen(GroupBase):
     """
     Static generator group.
 
-    Static generators will be replaced by dynamic generators, either synchronous
-    generators or inverter-based resources upon the initialization for dynamics.
-    It is implemented by setting the connectivity status ``u`` of the replaced
-    StaticGen to 0.
+    Static generators include PV and Slack, which are used to impose algebraic
+    equations. Static generators are used primarily for power flow.
 
-    See the notes in :ref:`SynGen` for replacing one StaticGen with multiple
-    dynamic ones.
+    Static generators do not have the modeling details for stability
+    simulation. Although some of them can stay for time-domain simulation, most
+    of them should be substituted by dynamic generators, including synchronous
+    generators and inverter-based resources upon TDS initialization.
+
+    The substitution is done by setting the ``gen`` field of a dynamic generator
+    to refer to the static generator. To replace one StaticGen by multiple
+    dynamic generators, see the notes in :ref:`SynGen`. Generators connected to
+    the same bus need to have their `gammap` and `gammaq`, respectively, summed
+    up to be exactly 1.0.
+
+    TDS initialization will ensure that the dynamic generators impose the same
+    amount of power as the static generator. At the end of initialization,
+    `StaticGen`'s that have been substituted will have their connectivity status
+    ``u`` changed to ``0``.
     """
 
     def __init__(self):
@@ -607,6 +618,11 @@ class RenGen(GroupBase):
 
     See :ref:`SynGen` for the notes on replacing StaticGen and setting the power
     ratio parameters.
+
+    Attention is needed for the power base ``Sn``. When replacing a synchronous
+    generator, the renewable generator should have the same or larger ``Sn``.
+    Improper ``Sn`` will cause the initial values to exceed typical per-unit
+    ranges and cause the initialization to fail.
     """
 
     def __init__(self):
