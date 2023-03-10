@@ -618,6 +618,11 @@ class RenGen(GroupBase):
 
     See :ref:`SynGen` for the notes on replacing StaticGen and setting the power
     ratio parameters.
+
+    Attention is needed for the power base ``Sn``. When replacing a synchronous
+    generator, the renewable generator should have the same or larger ``Sn``.
+    Improper ``Sn`` will cause the initial values to exceed typical per-unit
+    ranges and cause the initialization to fail.
     """
 
     def __init__(self):
