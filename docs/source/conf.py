@@ -104,6 +104,9 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Use a different latex engine due to possible Unicode characters in the documentation:
+# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
+latex_engine = "xelatex"
 
 # -- Options for HTML output ----------------------------------------------
 
