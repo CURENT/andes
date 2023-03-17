@@ -7,13 +7,14 @@ Include a RAW parser and a DYR parser.
 import logging
 import re
 import os
+import yaml
 
 import andes.io
 
 from andes.core.symprocessor import resolve_deps
 from andes.models import file_classes
 from andes.utils.func import list_flatten
-from andes.shared import deg2rad, pd, yaml
+from andes.shared import deg2rad, pd
 from andes.utils.misc import to_number
 from collections import defaultdict
 

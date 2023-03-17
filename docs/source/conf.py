@@ -104,6 +104,9 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Use a different latex engine due to possible Unicode characters in the documentation:
+# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
+latex_engine = "xelatex"
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -157,7 +160,7 @@ htmlhelp_basename = 'andes'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    'preamble': r'\DeclareUnicodeCharacter{2588}{-}',
+    # 'preamble': r'\DeclareUnicodeCharacter{2588}{-}',
     'papersize': 'letterpaper',
 
     # The font size ('10pt', '11pt' or '12pt').
