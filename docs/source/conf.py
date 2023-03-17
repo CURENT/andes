@@ -160,7 +160,7 @@ htmlhelp_basename = 'andes'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    'preamble': r'\DeclareUnicodeCharacter{2588}{-}',
+    # 'preamble': r'\DeclareUnicodeCharacter{2588}{-}',
     'papersize': 'letterpaper',
 
     # The font size ('10pt', '11pt' or '12pt').
