@@ -67,9 +67,13 @@ class PQ(PQData, Model):
 
     .. code-block :: python
 
-        ss.PQ.config.p2p = 1.0 ss.PQ.config.p2i = 0 ss.PQ.config.p2z = 0
+        ss.PQ.config.p2p = 1.0
+        ss.PQ.config.p2i = 0
+        ss.PQ.config.p2z = 0
 
-        ss.PQ.config.q2q = 1.0 ss.PQ.config.q2i = 0 ss.PQ.config.q2z = 0
+        ss.PQ.config.q2q = 1.0
+        ss.PQ.config.q2i = 0
+        ss.PQ.config.q2z = 0
 
     Then, the constant power portion can be altered by changing the ``Ppf`` and
     ``Qpf`` constants for active power and reactive power.

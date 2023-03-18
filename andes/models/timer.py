@@ -108,6 +108,17 @@ class Fault(ModelData, Model):
     Non-convergence can occur in the proximity of a fault due to various reasons,
     including network power transfer capability limitation and parameter issues
     of controllers.
+
+    When a fault gets cleared, algebraic variables change drastically. E.g.,
+    voltages can go from nearly zero back to 1.0. As we are using Newton's
+    method for solving the DAE, the initial values are crucial for the immediate
+    step after fault clearance.
+
+    This Fault model restores the pre-fault values for algebraic variables
+    ``Fault.config.scale`` is the scaling factor to be multiplied to the
+    pre-fault values for adjusting the initial values. Some trial and error are
+    expected for severe disturbances, combined with increasing the fault
+    reactance ``xf``.
     """
 
     def __init__(self, system, config):
