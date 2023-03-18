@@ -92,7 +92,7 @@ class BaseVar:
         self.v_iter = v_iter  # the implicit equation (0 = v_iter) for iterative initialization
         self.e_str = e_str    # residual equation string
 
-        self.discrete = discrete
+        self.discrete = discrete        # discrete component on which this variable depends
         self.v_setter = v_setter        # True if this variable sets the variable value
         self.e_setter = e_setter        # True if this var sets the equation value
         self.v_str_add = v_str_add
