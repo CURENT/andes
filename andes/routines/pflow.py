@@ -270,10 +270,19 @@ class PFlow(BaseRoutine):
     def report(self):
         """
         Write power flow report to a plain-text file.
+
+        Returns
+        -------
+        bool
+            True if report was written, False otherwise.
         """
+
         if self.system.files.no_output is False:
             r = Report(self.system)
             r.write()
+            return True
+
+        return False
 
     def _set_xy(self, xy):
         """
