@@ -307,7 +307,7 @@ def _get_bus_id_caller(bus):
 
     """
 
-    if np.array(bus.idx.v).dtype == np.object:
+    if np.array(bus.idx.v).dtype == object:
         return lambda x: bus.idx2uid(x) + 1
     else:
         return lambda x: x
