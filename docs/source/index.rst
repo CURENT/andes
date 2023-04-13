@@ -15,7 +15,7 @@ ANDES documentation
 
 
 **Useful Links**: `Binary Installer`_ | `Source Repository`_ | `Report Issues`_
-| `Q&A`_ | `Try in Jupyter Notebooks`_
+| `Q&A`_ | `Try in Jupyter Notebooks`_ | `LTB Repository`_
 
 .. _`Source Repository`: https://github.com/CURENT/andes
 .. _`Report Issues`: https://github.com/CURENT/andes/issues
@@ -24,11 +24,12 @@ ANDES documentation
 .. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
 .. _`LTB Repository`: https://github.com/CURENT/
 
-LTB ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
-More information about CURENT LTB can be found at the `LTB Repository`_.
+.. image:: /images/sponsors/curent.jpg
+   :alt: CURENT Logo
 
-ANDES is an open-source Python library for power system modeling, computation,
-analysis, and control. It supports power flows calculation, transient stability
+LTB ANDES is an open-source Python library for power system modeling, computation,
+analysis, and control, serving as the core simulation engine for the CURENT Large scale
+Testbed (LTB). It supports power flows calculation, transient stability
 simulation, and small-signal stability analysis for transmission systems. ANDES
 implements a symbolic-numeric framework for rapid prototyping of
 differential-algebraic equation-based models. In this framework, a comprehensive
