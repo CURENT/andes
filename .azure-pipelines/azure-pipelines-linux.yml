@@ -28,7 +28,6 @@ jobs:
       pip install pytest pytest-azurepipelines
       coverage run -m pytest  # Run the tests and check for test coverage.
       coverage report -m  # Generate test coverage report.
-      codecov  # Upload the report to codecov.
     displayName: 'pytest and coverage'
 
   - script: |
