@@ -1,6 +1,8 @@
-# ANDES
+# LTB ANDES
 
-Python Software for Symbolic Power System Modeling and Numerical Analysis.
+![CURENT ERC](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
+
+Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repository].
 
 |               | Latest                                                                                                                                        | Stable                                                                                                                                        |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -53,7 +55,7 @@ Numerical code will be automatically generated for fast simulation.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png) <br><br> Write into DAEs: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
+| Diagram:  ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png)  Write into DAEs:  ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document.
 ANDES automatically generates model documentation, and the docs always stay up to date.
@@ -107,10 +109,6 @@ We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 ![Idaho National Laboratory](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/inl.jpg)
 
 # Sponsors and Contributors
-ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
-More information about CURENT LTB can be found at the
-[LTB Repository](https://github.com/CURENT/ltb2).
-
 This work was supported in part by the Engineering Research Center
 Program of the National Science Foundation and the Department of Energy
 under NSF Award Number EEC-1041877 and the CURENT Industry Partnership
