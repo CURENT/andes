@@ -24,8 +24,10 @@ ANDES documentation
 .. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
 .. _`LTB Repository`: https://github.com/CURENT/
 
-.. image:: /images/sponsors/curent.jpg
+.. image:: /images/sponsors/CURENT_Logo_Transparent_Name.png
    :alt: CURENT Logo
+   :width: 75px
+   :height: 97.5px
 
 LTB ANDES is an open-source Python library for power system modeling, computation,
 analysis, and control, serving as the core simulation engine for the CURENT Large scale
