@@ -1,6 +1,6 @@
 # LTB ANDES
 
-![CURENT ERC](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
+![CURENT ERC](docs/source/images/sponsors/CURENT_Logo_NameOnTrans.png)
 
 Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repository].
 
