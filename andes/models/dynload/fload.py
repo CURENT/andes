@@ -56,7 +56,9 @@ class FLoadModel(Model):
         self.group = 'DynLoad'
         self.flags.tds = True
 
-        self.bus = ExtParam(model='PQ', src='bus', indexer=self.pq)
+        self.bus = ExtParam(model='PQ', src='bus', indexer=self.pq,
+                            export=False,
+                            )
 
         self.p0 = ExtService(model='PQ', src='Ppf', indexer=self.pq,
                              tex_name='P_0',
