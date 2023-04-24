@@ -1,6 +1,8 @@
-# ANDES
+# LTB ANDES
 
-Python Software for Symbolic Power System Modeling and Numerical Analysis.
+<img src="docs/source/images/sponsors/CURENT_Logo_NameOnTrans.png" alt="CURENT ERC Logo" width="300" height="auto">
+
+Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repository].
 
 |               | Latest                                                                                                                                        | Stable                                                                                                                                        |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -53,7 +55,7 @@ Numerical code will be automatically generated for fast simulation.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png) <br><br> Write into DAEs: <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
+| Diagram:  <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png)  <br>  Write into DAEs:  <br>  ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document.
 ANDES automatically generates model documentation, and the docs always stay up to date.
@@ -100,17 +102,13 @@ H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework for Power Syst
 Please let us know if you are using ANDES for research or projects.
 We kindly request you to cite our [paper][arxiv paper] if you find ANDES useful.
 
-![Natinoal Science Foundation](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/nsf.jpg)
-![US Department of Energy](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/doe.png)
-![CURENT ERC](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/curent.jpg)
-![Lawrence Livermore National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/llnl.jpg)
-![Idaho National Laboratory](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/sponsors/inl.jpg)
+![Natinoal Science Foundation](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/nsf.jpg)
+![US Department of Energy](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/doe.png)
+![CURENT ERC](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/curent.jpg)
+![Lawrence Livermore National Laboratory](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/llnl.jpg)
+![Idaho National Laboratory](https://raw.githubusercontent.com/CURENT/andes/master/docs/source/images/sponsors/inl.jpg)
 
 # Sponsors and Contributors
-ANDES is the core simulation engine for the CURENT Largescale Testbed (LTB).
-More information about CURENT LTB can be found at the
-[LTB Repository](https://github.com/CURENT/ltb2).
-
 This work was supported in part by the Engineering Research Center
 Program of the National Science Foundation and the Department of Energy
 under NSF Award Number EEC-1041877 and the CURENT Industry Partnership
@@ -127,16 +125,17 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 
 * * *
 
-[GitHub releases]:       https://github.com/cuihantao/andes/releases
-[GitHub issues]:         https://github.com/cuihantao/andes/issues
-[Github Discussions]:    https://github.com/cuihantao/andes/discussions
-[GitHub insights]:       https://github.com/cuihantao/andes/pulse
-[GitHub pull requests]:  https://github.com/cuihantao/andes/pulls
-[GitHub contributors]:   https://github.com/cuihantao/andes/graphs/contributors
+[GitHub releases]:       https://github.com/CURENT/andes/releases
+[GitHub issues]:         https://github.com/CURENT/andes/issues
+[Github Discussions]:    https://github.com/CURENT/andes/discussions
+[GitHub insights]:       https://github.com/CURENT/andes/pulse
+[GitHub pull requests]:  https://github.com/CURENT/andes/pulls
+[GitHub contributors]:   https://github.com/CURENT/andes/graphs/contributors
 [readthedocs]:           https://andes.readthedocs.io
 [release notes]:         https://andes.readthedocs.io/en/latest/release-notes.html
 [arxiv paper]:           https://arxiv.org/abs/2002.09455
 [tutorial]:              https://andes.readthedocs.io/en/latest/tutorial.html#interactive-usage
-[examples]:              https://github.com/cuihantao/andes/tree/master/examples
-[verification]:          https://github.com/cuihantao/andes/tree/master/examples/verification
+[examples]:              https://github.com/CURENT/andes/tree/master/examples
+[verification]:          https://github.com/CURENT/andes/tree/master/examples/verification
 [Binder]:                https://mybinder.org/v2/gh/cuihantao/andes/master
+[LTB Repository]:       https://github.com/CURENT

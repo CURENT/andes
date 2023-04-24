@@ -7,7 +7,6 @@
 #
 # Only one `#` is allowed per line. Lines starting with `#` are ignored.
 
-codecov #                      dev
 coverage #                     dev
 pytest==7.0.1 #                dev
 flake8 #                       dev
@@ -24,7 +23,6 @@ pre-commit #                   dev
 numba #                        dev, perf
 
 pandapower #                   interop
-GridCal #                      interop
 
 # below work around a bug with tqdm bar with ipywidgets 8.0.1
 ipywidgets==7.7 #              web
