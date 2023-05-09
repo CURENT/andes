@@ -824,7 +824,7 @@ class System:
 
         self.s_update_post(models)
 
-        # store the inverse of time constants
+        # store time constants associated with differential equations
         self._store_tf(models)
 
     def store_adder_setter(self, models):

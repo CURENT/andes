@@ -89,6 +89,30 @@ class Test5Bus(unittest.TestCase):
         self.assertEqual(self.ss.PV.v0.v[1], 0.98)
         self.ss.PFlow.run()
 
+    def test_alter_param_time_const_before_pflow(self):
+        """
+        Test altering parameter for time constants of diff eq.
+        """
+
+        self.ss.GENCLS.alter("M", [2, 3], [2., 2.])
+        np.testing.assert_array_equal(self.ss.GENCLS.M.v, [8., 6., 4., 12.])
+        self.ss.PFlow.run()
+
+        self.ss.TDS.init()
+        np.testing.assert_array_equal(self.ss.dae.Tf[self.ss.GENCLS.omega.a], [8., 6., 4., 12.])
+
+    def test_alter_param_time_const_after_pflow(self):
+        """
+        Test altering parameter for time constants of diff eq.
+        """
+
+        self.ss.PFlow.run()
+        self.ss.GENCLS.alter("M", [2, 3], [2., 2.])
+        np.testing.assert_array_equal(self.ss.GENCLS.M.v, [8., 6., 4., 12.])
+
+        self.ss.TDS.init()
+        np.testing.assert_array_equal(self.ss.dae.Tf[self.ss.GENCLS.omega.a], [8., 6., 4., 12.])
+
 
 class TestKundur2AreaEIG(unittest.TestCase):
     """
