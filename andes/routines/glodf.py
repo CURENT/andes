@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Apr 24 19:59:15 2023
+Generalized Line Outage Distribution Factors (GLODF)
 
-@author: rvaug
+The GLODFs are useful for analyzing the impact of the failure of multiple
+transmission lines on the power flow of the entire system. The GLODFs are a set
+of coefficients that quantify the proportional change in power flows on all
+other lines due to a change in power flow on a specific line. They are 
+computed using the power transfer distribution factors (PTDFs), which describe 
+the impact of a change in power flow on a specific generator or load on the 
+power flows of all other generators or loads.
 """
 
 import andes
@@ -53,7 +58,7 @@ class GLODF:
             A[l,self.system.Line.bus2.v[l]-1] =  1
         
         # delete all slack rows as required
-        Ar = np.delete(A, np.asarray(self.system.Slack.bus.v)-1, axis=1)
+        Ar = np.delete(A, np.asarray(self.system.Bus.idx2uid(self.system.Slack.bus.v)), axis=1)
         return Ar
     
     def get_reduced_nodal_susceptance(self):
@@ -85,6 +90,11 @@ class GLODF:
         """
         Returns the power transfer distribution factors for the given lines.
         
+        Parameters
+        ----------
+        change_lines : line indeces
+            List of line indices for which the GLODFs are to be computed.
+        
         Returns
         -------
         numpy.ndarray : ptdf
@@ -93,26 +103,41 @@ class GLODF:
         change_lines = np.atleast_1d(change_lines)
         psi = self.get_isf()
         
-        slack = np.array(self.system.Slack.bus.v)
-        non_slack = np.delete(np.arange(self.system.Line.n), slack - 1)
+        slack = np.array(self.system.Bus.idx2uid(self.system.Slack.bus.v))
+        non_slack = np.delete(np.arange(self.system.Line.n), slack)
         
-        # minus ones to make zero indexed
-        bfrom = np.asarray(self.system.Line.bus1.v)[change_lines - 1]
-        bto   = np.asarray(self.system.Line.bus2.v)[change_lines - 1]
+        bfrom = self.system.Bus.idx2uid(self.system.Line.get('bus1', change_lines))
+        bto   = self.system.Bus.idx2uid(self.system.Line.get('bus2', change_lines))
         
         bfrom_idx = np.zeros_like(bfrom)
         bto_idx   = np.zeros_like(bto)
+        
         for i in range(np.size(change_lines)):
-            bfrom_idx[i] = np.argwhere(non_slack == bfrom[i] - 1)
-            bto_idx[i]   = np.argwhere(non_slack == bto[i]   - 1)
+            if (bfrom[i] in slack):
+                bfrom_idx[i] = -1
+            else:
+                bfrom_idx[i] = np.argwhere(non_slack == bfrom[i])
             
-        phi = psi[:,bfrom_idx] - psi[:,bto_idx]
+            if (bto[i] in slack):
+                bto_idx[i] = -1
+            else:
+                bto_idx[i]   = np.argwhere(non_slack == bto[i])
+        
+        # zeros row is needed because power injection at slack bus should yield psi = 0
+        zeros_row = np.zeros((psi.shape[0], 1))
+        psi_zero = np.hstack((psi, zeros_row))
+        phi = psi_zero[:,bfrom_idx] - psi_zero[:,bto_idx]
         return phi
     
     def lodf(self, change_line):
         """
         Returns the line outage distribution factors (LODFs) matrix for single
         line outage
+        
+        Parameters
+        ----------
+        change_line : line index
+            line indix for which the LODFs are to be computed.
         
         Returns
         -------
@@ -122,14 +147,21 @@ class GLODF:
         """
         phi = self.get_ptdf(change_line)
         
-        sigma = phi / (1 - phi[change_line - 1])
-        sigma[change_line - 1] = 0
+        uid_lines = self.system.Line.idx2uid(change_line)
+        
+        sigma = phi / (1 - phi[uid_lines])
+        sigma[uid_lines] = 0
         
         return sigma #[np.arange(sigma.size) != change_line - 1]
         
     def flow_after_lodf(self, change_line):
         """
         Returns the line flows after the line outage
+        
+        Parameters
+        ----------
+        change_line : line index
+            line indix for which the LODFs are to be computed.
         
         Returns
         -------
@@ -138,10 +170,12 @@ class GLODF:
         """
         sigma = np.squeeze(self.lodf(change_line))
         
+        uid_lines = self.system.Line.idx2uid(change_line)
+        
         flow_before = self.system.Line.a1.e
         
-        flow_after = flow_before + flow_before[change_line-1] * sigma
-        flow_after[change_line-1] = 0
+        flow_after = flow_before + flow_before[uid_lines] * sigma
+        flow_after[uid_lines] = 0
         
         return flow_after
     
@@ -150,13 +184,18 @@ class GLODF:
         Returns the generalized line outage distribution factors (GLODFs) 
         matrix for the line outages in the change_lines list.
         
+        Parameters
+        ----------
+        change_lines : line indices
+            List of line indices for which the GLODFs are to be computed.
+            
         Returns
         -------
         numpy.ndarray : glodf
             The o x L injection shift factor matrix, where 'o' is the number of 
             outages.
         """
-        change_lines = np.atleast_1d(change_lines)
+        uid_lines = np.atleast_1d(self.system.Line.idx2uid(change_lines))
         
         phi = self.get_ptdf(change_lines)
         
@@ -164,7 +203,7 @@ class GLODF:
         right_side = phi.T
         
         # left side is identity - Phi of change lines
-        Phi = right_side[:,change_lines-1]
+        Phi = right_side[:,uid_lines]
         left_side = (np.eye(np.shape(Phi)[0]) - Phi)
         
         xi = np.linalg.solve(left_side, right_side)
@@ -175,70 +214,29 @@ class GLODF:
         """
         Returns the line flows after the line outages given in change_lines
         
+        Parameters
+        ----------
+        change_lines : line indices
+            List of line indices for which the GLODFs are to be computed.
+        
         Returns
         -------
         numpy.ndarray : flow_after
             The length L vector of line flows after the outages
         """
-        change_lines = np.atleast_1d(change_lines)
+        xi = self.glodf(change_lines)
+        
+        uid_lines = np.atleast_1d(self.system.Line.idx2uid(change_lines))
         
         flow_before = self.system.Line.a1.e
     
-        xi = self.glodf(change_lines)
         
         #GLODFs times flow before
-        delta_flow = xi.T @ flow_before[change_lines-1]
+        delta_flow = xi.T @ flow_before[uid_lines]
         flow_after = flow_before + delta_flow
         
         # ensure lines that are out have no flow
-        flow_after[change_lines-1] = 0
+        flow_after[uid_lines] = 0
         
         return flow_after
-    
-if __name__ == "__main__":
-    """
-    Example code to test the GLODF class
-    """
-    print("GLODF Test")
-    # load system
-    ss = andes.load(andes.get_case("ieee14/ieee14_linetrip.xlsx"))
-    
-    # solve system
-    ss.PFlow.run()
-    
-    # create GLODF object
-    g = GLODF(ss)
-
-    # lines to be taken out
-    change_lines = [5, 6, 12]
-    
-    lines_before = np.copy(ss.Line.a1.e)
-    lines_after = g.flow_after_glodf(change_lines)
-    
-    np.set_printoptions(precision=5)
-    # print("flow Before:\n" + str(ss.Line.a1.e))
-    # print("flow after GLODF:\n" + str(lines_after))
-    
-    # turn off lines and resolve
-    for i in range(np.size(change_lines)):
-        ss.Line.u.v[change_lines[i]-1] = 0
-    ss.PFlow.run()
-    # print("flow Re-solved:\n" + str(ss.Line.a1.e))
-    
-    lineflows = {
-                 "bus1": ss.Line.bus1.v,
-                 "bus2": ss.Line.bus2.v,
-                 "P1 before": lines_before,
-                 "P1 GLODF": lines_after,
-                 "P1 re-solved": ss.Line.a1.e,
-                 "error": np.abs(lines_after - ss.Line.a1.e)
-                 }
-    
-    df_lineflow = pd.DataFrame(lineflows, index=ss.Line.idx.v)
-    
-    print(df_lineflow)
-    
-    mask = ss.Line.a1.e != 0
-    mape = np.mean(np.abs((ss.Line.a1.e[mask] - lines_after[mask]) / ss.Line.a1.e[mask])) * 100
-    print("mean absolute percent error: {:.3f}%".format(mape))
     
