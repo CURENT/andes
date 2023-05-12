@@ -14,6 +14,7 @@ v1.8.9 (2023-05-xx)
 - Fix `Model.alter()` for parameters that are time constants for differential
   equations. Altered time constants are now properly updated in ``dae.Tf`` and
   will be correctly reflected in simulation results.
+- Fix a bug in connectivity check.
 
 v1.8.8 (2023-04-24)
 -------------------
