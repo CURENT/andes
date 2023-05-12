@@ -1255,6 +1255,7 @@ class System:
                         to + fr + fr + to,
                         (n, n),
                         'd')
+        temp = sparse(temp)  # need to drop allocated zero values
 
         cons = temp[0, :]
         nelm = len(cons.J)
