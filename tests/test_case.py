@@ -113,6 +113,19 @@ class Test5Bus(unittest.TestCase):
         self.ss.TDS.init()
         np.testing.assert_array_equal(self.ss.dae.Tf[self.ss.GENCLS.omega.a], [8., 6., 4., 12.])
 
+    def test_multiple_disconnected_line(self):
+        """
+        Test connectivity check for systems with disconnected lines.
+
+        These disconnected lines (zeros) was not excluded when counting
+        connected buses, causing an out-of-bound error.
+        """
+
+        self.ss.Line.u.v[[0,6]] = 0
+        self.ss.PFlow.run()
+        self.assertEqual(len(self.ss.Bus.islands), 1)
+        self.assertEqual(self.ss.Bus.n_islanded_buses, 0)
+
 
 class TestKundur2AreaEIG(unittest.TestCase):
     """
