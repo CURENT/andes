@@ -121,7 +121,7 @@ class Test5Bus(unittest.TestCase):
         connected buses, causing an out-of-bound error.
         """
 
-        self.ss.Line.u.v[[0,6]] = 0
+        self.ss.Line.u.v[[0, 6]] = 0
         self.ss.PFlow.run()
         self.assertEqual(len(self.ss.Bus.islands), 1)
         self.assertEqual(self.ss.Bus.n_islanded_buses, 0)
