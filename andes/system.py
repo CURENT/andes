@@ -143,7 +143,7 @@ class System:
                                      ('dime_address', 'ipc:///tmp/dime2'),
                                      ('numba', 0),
                                      ('numba_parallel', 0),
-                                     ('numba_nopython', 0),
+                                     ('numba_nopython', 1),
                                      ('yapf_pycode', 0),
                                      ('save_stats', 0),
                                      ('np_divide', 'warn'),

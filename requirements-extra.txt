@@ -20,8 +20,6 @@ myst-parser==0.15.2 #          dev, doc
 myst-nb==0.13.2 #              dev, doc
 pre-commit #                   dev
 
-numba #                        dev, perf
-
 pandapower #                   interop
 
 # below work around a bug with tqdm bar with ipywidgets 8.0.1

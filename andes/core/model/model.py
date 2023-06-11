@@ -1347,7 +1347,7 @@ class Model:
             for item in self.services_icheck.values():
                 item.check()
 
-    def numba_jitify(self, parallel=False, cache=True, nopython=False):
+    def numba_jitify(self, parallel=False, cache=True, nopython=True):
         """
         Convert equation residual calls, Jacobian calls, and variable service
         calls into JIT compiled functions.
@@ -1692,7 +1692,7 @@ def _eval_discrete(instance, allow_adjust=True,
 def to_jit(func: Union[Callable, None],
            parallel: bool = False,
            cache: bool = False,
-           nopython: bool = False,
+           nopython: bool = True,
            ):
     """
     Helper function for converting a function to a numba jit-compiled function.
