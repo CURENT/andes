@@ -9,12 +9,13 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
-v1.8.9 (2023-05-xx)
+v1.8.9 (2023-06-22)
 -------------------
 - Fix `Model.alter()` for parameters that are time constants for differential
   equations. Altered time constants are now properly updated in ``dae.Tf`` and
   will be correctly reflected in simulation results.
 - Fix a bug in connectivity check.
+- Support numba for Python 3.11.
 
 v1.8.8 (2023-04-24)
 -------------------
