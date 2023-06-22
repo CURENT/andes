@@ -14,3 +14,4 @@ coloredlogs
 chardet
 psutil
 texttable
+numba

@@ -9,6 +9,20 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.9 (2023-06-22)
+-------------------
+- Fix `Model.alter()` for parameters that are time constants for differential
+  equations. Altered time constants are now properly updated in ``dae.Tf`` and
+  will be correctly reflected in simulation results.
+- Fix a bug in connectivity check.
+- Support numba for Python 3.11.
+
+v1.8.8 (2023-04-24)
+-------------------
+- Repository transferred to `github.com/curent/andes`.
+- Fix for frequency-dependent load model ``FLoad`` by not exporting the external
+  `bus` parameter.
+
 v1.8.7 (2023-03-10)
 -------------------
 - Added IEEE 39-bus test case with dynamics in the ANDES xlsx format.

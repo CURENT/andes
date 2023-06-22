@@ -502,8 +502,19 @@ class Model:
         bool
             True when successful.
         """
+
         uid = self.idx2uid(idx)
-        self.__dict__[src].__dict__[attr][uid] = value
+        instance = self.__dict__[src]
+
+        instance.__dict__[attr][uid] = value
+
+        # update differential equations' time constants stored in `dae.Tf`
+
+        if attr == "v":
+            for state in self.states.values():
+                if (state.t_const is instance) and len(state.a) > 0:
+                    self.system.dae.Tf[state.a[uid]] = instance.v[uid]
+
         return True
 
     def alter(self, src, idx, value):
@@ -511,12 +522,12 @@ class Model:
         Alter values of input parameters or constant service.
 
         If the method operates on an input parameter, the new data should be in
-        the same base as that in the input file. This function will convert the
-        new value to per unit in the system base.
+        the same base as that in the input file. This function will convert
+        ``value`` to per unit in the system base whenever necessary.
 
-        The values for storing the input data, i.e., the ``vin`` field of the
-        parameter, will be overwritten, thus the update will be reflected in the
-        dumped case file.
+        The values for storing the input data, i.e., the parameter's ``vin``
+        field, will be overwritten. As a result, altered values will be
+        reflected in the dumped case file.
 
         Parameters
         ----------
@@ -527,11 +538,14 @@ class Model:
         value : float
             The desired value
         """
+
         instance = self.__dict__[src]
 
         if hasattr(instance, 'vin') and (instance.vin is not None):
             self.set(src, idx, 'vin', value)
-            instance.v[:] = instance.vin * instance.pu_coeff
+
+            uid = self.idx2uid(idx)
+            self.set(src, idx, 'v', value * instance.pu_coeff[uid])
         else:
             self.set(src, idx, 'v', value)
 
@@ -1333,7 +1347,7 @@ class Model:
             for item in self.services_icheck.values():
                 item.check()
 
-    def numba_jitify(self, parallel=False, cache=True, nopython=False):
+    def numba_jitify(self, parallel=False, cache=True, nopython=True):
         """
         Convert equation residual calls, Jacobian calls, and variable service
         calls into JIT compiled functions.
@@ -1678,7 +1692,7 @@ def _eval_discrete(instance, allow_adjust=True,
 def to_jit(func: Union[Callable, None],
            parallel: bool = False,
            cache: bool = False,
-           nopython: bool = False,
+           nopython: bool = True,
            ):
     """
     Helper function for converting a function to a numba jit-compiled function.
