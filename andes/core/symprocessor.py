@@ -112,9 +112,10 @@ class SymProcessor:
         # -----------------------------------------------------------
         for key in self.parent.tex_names.keys():
             self.tex_names[key] = sp.Symbol(self.parent.tex_names[key])
+
         for instance in self.parent.discrete.values():
             for name, tex_name in zip(instance.get_names(), instance.get_tex_names()):
-                self.tex_names[name] = tex_name
+                self.tex_names[name] = sp.Symbol(tex_name)
         # -----------------------------------------------------------
 
         for var in self.cache.all_params_names:
