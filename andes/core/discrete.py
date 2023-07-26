@@ -111,7 +111,7 @@ class Discrete:
             A list of tex_names for all exported flags.
         """
 
-        return [rf'{flag_tex}^{self.tex_name}' for flag_tex in self.export_flags_tex]
+        return [rf'{flag_tex}^{{{self.tex_name}}}' for flag_tex in self.export_flags_tex]
 
     def get_values(self):
         return [self.__dict__[flag] for flag in self.export_flags]
