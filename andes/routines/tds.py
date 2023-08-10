@@ -84,7 +84,7 @@ class TDS(BaseRoutine):
                               store_i='store RHS of external algeb. equations',
                               limit_store='limit in-memory timeseries storage',
                               max_store='maximum steps of data stored in memory before offloading',
-                              save_every='save results for one step every "save_every" steps',
+                              save_every='save one step to memory every N simulation steps',
                               save_mode='automatically or manually save output data when done',
                               no_tqdm='disable tqdm progressbar and outputs',
                               chatter_iter='minimum iterations to detect chattering',
