@@ -1221,6 +1221,11 @@ class System:
         to.extend(self.Line.a2.a.tolist())
         u.extend(self.Line.u.v.tolist())
 
+        # collect from Jumper
+        fr.extend(self.Jumper.a1.a.tolist())
+        to.extend(self.Jumper.a2.a.tolist())
+        u.extend(self.Jumper.u.v.tolist())
+
         # collect from Fortescue
         fr.extend(self.Fortescue.a.a.tolist())
         to.extend(self.Fortescue.aa.a.tolist())
