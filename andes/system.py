@@ -549,6 +549,9 @@ class System:
         if kwargs is not None:
             param_dict.update(kwargs)
 
+        # remove `uid` field
+        param_dict.pop('uid', None)
+
         idx = param_dict.pop('idx', None)
         if idx is not None and (not isinstance(idx, str) and np.isnan(idx)):
             idx = None

@@ -103,7 +103,7 @@ def read(system, infile):
     """
     df_models = pd.read_excel(infile,
                               sheet_name=None,
-                              index_col=0,
+                              index_col=None,
                               engine='openpyxl',
                               )
 
