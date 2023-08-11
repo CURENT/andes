@@ -549,6 +549,9 @@ class System:
         if kwargs is not None:
             param_dict.update(kwargs)
 
+        # remove `uid` field
+        param_dict.pop('uid', None)
+
         idx = param_dict.pop('idx', None)
         if idx is not None and (not isinstance(idx, str) and np.isnan(idx)):
             idx = None
@@ -1220,6 +1223,11 @@ class System:
         fr.extend(self.Line.a1.a.tolist())
         to.extend(self.Line.a2.a.tolist())
         u.extend(self.Line.u.v.tolist())
+
+        # collect from Jumper
+        fr.extend(self.Jumper.a1.a.tolist())
+        to.extend(self.Jumper.a2.a.tolist())
+        u.extend(self.Jumper.u.v.tolist())
 
         # collect from Fortescue
         fr.extend(self.Fortescue.a.a.tolist())

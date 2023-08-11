@@ -177,7 +177,7 @@ class BaseParam:
         # check for mandatory
         if value is None:
             if self.get_property('mandatory'):
-                raise ValueError(f'Mandatory parameter {self.name} for {self.owner.class_name} missing')
+                raise ValueError(f'Mandatory parameter {self.owner.class_name}.{self.name} is missing')
             else:
                 value = self.default
 

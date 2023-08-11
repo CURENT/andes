@@ -176,6 +176,8 @@ class ModelData:
             An additional `uid` key is added with the value default to range(n).
         """
         out = dict()
+
+        # append 0-indexed `uid`
         out['uid'] = np.arange(self.n)
 
         for name, instance in self.params.items():

@@ -9,6 +9,16 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.8 Notes
 ==========
 
+v1.8.10 (2023-08-10)
+--------------------
+- An internal change to the xlsx parser option. Previously, the index column was
+  set to 0, which assumes the existence of `uid` as the header. Manually input
+  sheets without `uid` will fail. This version unsets the index column when
+  using pandas to parse the xlsx file.
+- `Jumper` is included for connectivity check.
+- Add curly brackets for LaTeX symbols from sub-blocks. Nested symbols with
+  subscripts and superscripts now display properly.
+
 v1.8.9 (2023-06-22)
 -------------------
 - Fix `Model.alter()` for parameters that are time constants for differential
