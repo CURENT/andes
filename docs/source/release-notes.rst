@@ -6,6 +6,14 @@ Release notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.9 Notes
+==========
+
+v1.9.0 (2023-09-XX)
+-------------------
+- Initially, ``dae.t`` is set to ``-1.0`` during power flow calculation. TDS
+  initialization will set ``dae.t = 0.0``.
+
 v1.8 Notes
 ==========
 
