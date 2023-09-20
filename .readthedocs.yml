@@ -17,4 +17,3 @@ python:
         - doc
     - method: setuptools
       path: .
-  system_packages: true
