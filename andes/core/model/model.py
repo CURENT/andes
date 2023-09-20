@@ -514,7 +514,8 @@ class Model:
             for state in self.states.values():
                 if (state.t_const is instance) and len(state.a) > 0:
                     self.system.dae.Tf[state.a[uid]] = instance.v[uid]
-
+                    uid_int = state.a[uid].item()
+                    self.system.TDS.Teye[uid_int, uid_int] = instance.v[uid]
         return True
 
     def alter(self, src, idx, value):
