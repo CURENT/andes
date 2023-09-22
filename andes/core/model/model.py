@@ -514,8 +514,13 @@ class Model:
             for state in self.states.values():
                 if (state.t_const is instance) and len(state.a) > 0:
                     self.system.dae.Tf[state.a[uid]] = instance.v[uid]
-                    uid_int = state.a[uid].item()
-                    self.system.TDS.Teye[uid_int, uid_int] = instance.v[uid]
+                    if  isinstance(uid, (float, int, str, np.integer, np.floating)):
+                        uid_int = state.a[uid].item()
+                        self.system.TDS.Teye[uid_int, uid_int] = instance.v[uid]   
+                    elif isinstance(uid, list):
+                        for ii in uid:
+                            ii_int = state.a[ii].item()
+                            self.system.TDS.Teye[ii_int, ii_int] = instance.v[ii]
 
         return True
 
