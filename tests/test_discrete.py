@@ -73,8 +73,8 @@ class TestDiscrete(unittest.TestCase):
                                  cmp.zu.tolist())
 
         # test when no `n_select` is over range
-        rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper,
-                                           n_select=999)
+        rcmp_noselect = SortedLimiter(self.u, self.lower, self.upper, n_select=999)
+
         rcmp_noselect.list2array(len(self.u.v))
         rcmp_noselect.check_var()
 
