@@ -8,7 +8,7 @@
 # Only one `#` is allowed per line. Lines starting with `#` are ignored.
 
 coverage #                     dev
-pytest==7.0.1 #                dev
+pytest==7.4   #                dev
 flake8 #                       dev
 sphinx #                       dev, doc
 ipython #                      dev
