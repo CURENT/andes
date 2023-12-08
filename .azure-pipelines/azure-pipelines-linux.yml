@@ -10,8 +10,8 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      linux_python3.9:
-        python.version: '3.9'
+      linux_python3.11:
+        python.version: '3.11'
 
   steps:
   - task: UsePythonVersion@0
@@ -20,8 +20,12 @@ jobs:
     displayName: 'Use Python $(python.version)'
 
   - script: |
-      python -m pip install --upgrade pip
-      pip install .[dev,interop]
+      wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+      bash Miniforge3-Linux-x86_64.sh -b
+      export PATH=$PATH:~/bin
+      mamba install -y nbmake pytest-xdist line_profiler
+      mamba install --file requirements.txt --file requirements-extra.txt
+      python -m pip install -e .
     displayName: 'Install dependencies'
 
   - script: |
