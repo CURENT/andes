@@ -31,7 +31,7 @@ ANDES documentation
 
 LTB ANDES is an open-source Python library for power system modeling, computation,
 analysis, and control, serving as the core simulation engine for the CURENT Large scale
-Testbed (LTB). It supports power flows calculation, transient stability
+Testbed (LTB). It supports power flow calculation, transient stability
 simulation, and small-signal stability analysis for transmission systems. ANDES
 implements a symbolic-numeric framework for rapid prototyping of
 differential-algebraic equation-based models. In this framework, a comprehensive
@@ -48,7 +48,7 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
     Getting started
     ^^^^^^^^^^^^^^^
 
-    New to ANDES? Check out the getting started guides. They contain tutorials
+    New to ANDES? Check out the Getting Started guides. They contain tutorials
     to the ANDES command-line interface, scripting usages, as well as guides to
     configure ANDES and work with case files.
 
@@ -65,7 +65,7 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
     ^^^^^^^^
 
     The examples provide in-depth usage of ANDES in a Python scripting
-    environment. Advanced usage and and power system studies are shown with
+    environment. Advanced usage and power system studies are shown with
     explanation.
 
     +++
@@ -80,7 +80,7 @@ second-generation renewable models. Models in ANDES have been :ref:`verified
     Model development guide
     ^^^^^^^^^^^^^^^^^^^^^^^
 
-    Looking to implement new models, algorithms and functionalities in ANDES?
+    Looking to implement new models, algorithms, and functionalities in ANDES?
     The development guide provides in-depth information on the design
     philosophy, data structure, and implementation of the hybrid
     symbolic-numeric framework.

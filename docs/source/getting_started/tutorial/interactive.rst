@@ -3,19 +3,19 @@ Scripting
 =========
 This section is a tutorial for using ANDES in an interactive/scripting
 environment. All scripting shells are supported, including Python shell,
-IPython, Jupyter Notebook and Jupyter Lab. The examples below uses Jupyter
+IPython, Jupyter Notebook, and Jupyter Lab. The examples below use Jupyter
 Notebook.
 
 Jupyter Notebook
 ----------------
-Jupyter notebook is a convenient tool to run Python code and present results.
-Jupyter notebook can be installed with
+Jupyter Notebook is a convenient tool to run Python code and present results.
+Jupyter Notebook can be installed with
 
 .. code:: bash
 
     conda install jupyter notebook
 
-After the installation, change directory to the folder where you wish to store
+After the installation, change the directory to the folder where you wish to store
 notebooks, then start the notebook with
 
 .. code:: bash
@@ -27,8 +27,8 @@ create a new notebook, use the "New" button near the upper-right corner.
 
 .. note::
 
-    In the following, code that starts with ``>>>`` are Python code. and should
-    be run inside Python, IPython, or Jupyter Notebook. Python code should not
+    In the following, code blocks starting with ``>>>`` are Python code and should
+    be executed inside Python, IPython, or Jupyter Notebook. Python code should not
     be entered into Anaconda Prompt or Linux shell.
 
 Import
@@ -55,7 +55,7 @@ or simply
 
     >>> andes.config_logger(10)
 
-The ``stream_level`` uses the same verbosity levels as for the command-line. If
+The ``stream_level`` uses the same verbosity levels as for the command line. If
 not explicitly enabled, the default level 20 (INFO) will apply.
 
 To set a new logging level for the current session, call ``config_logger`` with
@@ -64,10 +64,10 @@ the desired new levels.
 Making a System
 ---------------
 Before running studies, an :py:mod:`andes.system.System` object needs to be
-create to hold the system data. The System object can be created by passing the
-path to the case file the entry-point function.
+created to hold the system data. The System object can be created by passing the
+path to the case file to the entry-point function.
 
-There are multiple ways to create such object, and :py:mod:`andes.main.run` is
+There are multiple ways to create the System object. Among them, :py:mod:`andes.main.run` is
 the most convenient way. For example, to run the file ``kundur_full.xlsx`` in
 the same directory as the notebook, use
 
@@ -93,7 +93,7 @@ system as an object. Outputs will look like ::
 In this example, ``ss`` is an instance of ``andes.System``. It contains member
 attributes for models, routines, and numerical DAE.
 
-Naming convention for the ``System`` attributes are as follows
+The naming convention for the ``System`` attributes is as follows
 
 - Model attributes share the same name as class names. For example, ``ss.Bus``
   is the ``Bus`` instance, and ``ss.GENROU`` is the ``GENROU`` instance.
