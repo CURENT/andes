@@ -45,7 +45,7 @@ For example, after setting up the system, ``Line.x.v`` is the line reactances in
 under the system base.
 
 Values in the ``v`` attribute is what get utilized in computation.
-Writing new values directly to ``vin`` will not affect the values in ``v``afterward.
+Writing new values directly to ``vin`` will not affect the values in ``v`` afterward.
 To alter parameters after setting up, refer to example notebook 2.
 
 Notes
