@@ -1633,8 +1633,13 @@ class ShuntAdjust(Discrete):
             return
 
         # allow unlimited switching in power flow
-        if dae_t == 0.0:
+        if dae_t < 0.0:
             self.t_enable[:] = 1.0
+
+        # reset `t_last` upon TDS initialization
+        elif dae_t == 0.0:
+            self.t_last = np.zeros_like(self.v.v)
+
         # consider delay for time-domain simulation
         else:
             self.t_enable[:] = (dae_t - self.t_last - self.dt.v) >= 0

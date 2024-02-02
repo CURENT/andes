@@ -39,7 +39,7 @@ Quick install
     :card: + install-card
     :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 p-3
 
-    Working with conda?
+    Working with Conda?
     ^^^^^^^^^^^^^^^^^^^
 
     ANDES is available on conda-forge and can be installed with
@@ -69,7 +69,7 @@ Quick install
 
     New to Python?
     ^^^^^^^^^^^^^^
-    Set up a Mambaforge environment following :ref:`Setup Mambaforge`. We
+    Set up a Mambaforge environment by following :ref:`Setup Mambaforge`. We
     recommend Mambaforge on Windows and Apple Silicon for new users.
 
     ---

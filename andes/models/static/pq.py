@@ -211,12 +211,12 @@ class PQ(PQData, Model):
         # To modify P and Q during TDS, use `alter` to set values to `Ppf` and `Qpf`
         # after, before simulation, setting `config.p2p=1` and `config.q2q=1`.
 
-        self.a.e_str = "u * Indicator(dae_t <= 0) * " \
+        self.a.e_str = "u * Indicator(dae_t < 0) * " \
                        "(p0 * vcmp_zi + Rlb * vcmp_zl * v**2 + Rub * vcmp_zu * v**2) + " \
-                       "u * Indicator(dae_t > 0) * " \
+                       "u * Indicator(dae_t >= 0) * " \
                        "(p2p * Ppf + p2i * Ipeq * v + p2z * Req * v**2)"
 
-        self.v.e_str = "u * Indicator(dae_t <= 0) * " \
+        self.v.e_str = "u * Indicator(dae_t < 0) * " \
                        "(q0 * vcmp_zi + Xlb * vcmp_zl * v**2 + Xub * vcmp_zu * v**2) + " \
-                       "u * Indicator(dae_t > 0) * " \
+                       "u * Indicator(dae_t >= 0) * " \
                        "(q2q * Qpf + q2i * Iqeq * v + q2z * Xeq * v**2)"

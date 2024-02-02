@@ -514,6 +514,13 @@ class Model:
             for state in self.states.values():
                 if (state.t_const is instance) and len(state.a) > 0:
                     self.system.dae.Tf[state.a[uid]] = instance.v[uid]
+                    # convert scalar `uid` to list
+                    if isinstance(uid, (float, int, str, np.integer, np.floating)):
+                        uid = [uid]
+                    # set diagonal elements of `Teye` for each element in `uid``
+                    uid_int = state.a.tolist()
+                    for ii in uid:
+                        self.system.TDS.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
 
         return True
 

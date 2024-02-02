@@ -409,6 +409,7 @@ class SymProcessor:
             v_idx = vars_syms_list.index(var.name)
 
             self.calls.append_ijv(f'{var.e_code}{var.v_code}c', e_idx, v_idx, eps)
+            self.calls.need_diag_eps.append(var.name)
 
     def generate_pretty_print(self):
         """
@@ -518,7 +519,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
 
         # variables
         for name in dilled_vars:
-            out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]))
+            out.append(f'{name} = ' + pprint.pformat(self.calls.__dict__[name]) + "\n")
 
         out_str = '\n'.join(out)
 

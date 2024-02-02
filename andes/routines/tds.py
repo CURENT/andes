@@ -197,6 +197,7 @@ class TDS(BaseRoutine):
         # restore power flow solutions
         system.dae.x[:len(system.PFlow.x_sol)] = system.PFlow.x_sol
         system.dae.y[:len(system.PFlow.y_sol)] = system.PFlow.y_sol
+        system.dae.t -= system.dae.t   # set `dae.t` to zero
 
         # Note:
         #   calling `set_address` on `system.exist.pflow_tds` will point all variables
@@ -347,8 +348,8 @@ class TDS(BaseRoutine):
         if no_summary is False and (system.dae.t == 0):
             self.summary()
 
-        # only initializing at t=0 allows to continue when `run` is called again.
-        if system.dae.t == 0:
+        # only initializing at t<0 allows to continue when `run` is called again.
+        if system.dae.t < 0:
             self.init()
         else:  # resume simulation
             self.init_resume()

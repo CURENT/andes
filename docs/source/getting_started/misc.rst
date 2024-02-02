@@ -28,24 +28,24 @@ For example, the Line model :py:mod:`andes.models.line.Line` has parameters ``r`
 as per unit values in the device bases ``Sn``, ``Vn1``, and ``Vn2``.
 It is up to the user to check data consistency.
 For example, line voltage bases are typically the same as bus nominal values.
-If the ``r``, ``x`` and ``b`` are meant to be per unit values under the system base,
+If the ``r``, ``x``, and ``b`` are meant to be per unit values under the system base,
 each Line device should use an ``Sn`` equal to the system base mva.
 
-Parameters in device base will have a property value in the Model References page.
+Parameters in the device base will have a property value in the Model References page.
 For example, ``Line.r`` has a property ``z``, which means it is a per unit impedance
 in the device base.
 To find out all applicable properties, refer to the "Other Parameters" section of
 :py:mod:`andes.core.param.NumParam`.
 
-After setting up the system, these parameters will be converted to per units
+After setting up the system, these parameters will be converted to per-units
 in the bases of system base MVA and bus nominal voltages.
 The parameter values in the system base will be stored to the ``v`` attribute of the ``NumParam``.
 The original inputs in the device base will be moved to the ``vin`` attribute.
 For example, after setting up the system, ``Line.x.v`` is the line reactances in per unit
-under system base.
+under the system base.
 
 Values in the ``v`` attribute is what get utilized in computation.
-Writing new values directly to ``vin`` will not affect the values in ``v`` afterwards.
+Writing new values directly to ``vin`` will not affect the values in ``v`` afterward.
 To alter parameters after setting up, refer to example notebook 2.
 
 Notes
@@ -59,12 +59,12 @@ State Freeze
 
 State freeze is used by converter controllers during fault transients
 to fix a variable at the pre-fault values. The concept of state freeze
-is applicable to both state or algebraic variables.
+applies to both state and algebraic variables.
 For example, in the renewable energy electric control model (REECA),
 the proportional-integral controllers for reactive power error and voltage
 error are subject to state freeze when voltage dip is observed.
 The internal and output states should be frozen when the freeze signal
-turns one and freed when the signal turns back to zero.
+turns one and frees when the signal turns back to zero.
 
 Freezing a state variable can be easily implemented by multiplying the freeze
 signal with the right-hand side (RHS) of the differential equation:
@@ -77,7 +77,7 @@ and :math:`z_f` is the freeze signal. When :math:`z_f` becomes zero
 the differential equation will evaluate to zero, making the increment
 zero.
 
-Freezing an algebraic variable is more complicate to implement.
+Freezing an algebraic variable is more difficult to implement.
 One might consider a similar solution to freezing a differential variable
 by constructing a piecewise equation, for example,
 
@@ -108,10 +108,10 @@ output, the derivatives w.r.t :math:`u`, :math:`x_i` and :math:`y` are
 nonzero in the pre-frozen state. These derivative corrects :math:`y`
 following the changes of :math:`u` and :math:`x`.
 Although :math:`x` has been frozen, if the Jacobian is not rebuilt,
-correction will still be made due to the change of :math:`u`.
+the correction will still be made due to the change of :math:`u`.
 Since this equation is linear, only one iteration is needed to let
 :math:`y` track the changes of :math:`u`.
-For nonlinear algebraic variables, this approach will likely give wrong
+For nonlinear algebraic variables, this approach will likely give the wrong
 results, since the residual is pegged at zero.
 
 To correctly freeze an algebraic variable, the freezing signal needs to
@@ -123,12 +123,12 @@ iteration after discrete components and before equations.
 
 Profiling Import
 ========================================
-To speed up the command-line program, import profiling is used to breakdown the program loading time.
+To speed up the command-line program, import profiling is used to break down the program loading time.
 
-With tool ``profimp``, ``andes`` can be profiled with ``profimp "import andes" --html > andes_import.htm``. The
-report can be viewed in any web browser.
+With tool ``profimp``, ``andes`` can be profiled with ``profimp "import andes" --html > andes_import.htm``. 
+The report can be viewed in any web browser.
 
-What won't not work
+What won't work
 ===================
 
 You might have heard that PyPy is faster than CPython due to a built-in JIT compiler.
