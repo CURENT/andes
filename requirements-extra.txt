@@ -18,6 +18,7 @@ sphinx-panels #                dev, doc
 pydata-sphinx-theme #          dev, doc
 myst-parser>=0.15 #            dev, doc
 myst-nb>=0.13 #                dev, doc
+mdit-py-plugins>=0.3.1,<0.4 #  dev, doc
 pre-commit #                   dev
 
 pandapower #                   interop
