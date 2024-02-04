@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.9 Notes
 ==========
 
+v1.3.1 (2024-02-04)
+-------------------
+This is a hotfix to pass ``pip check`` for KVXOPT version.
+
 v1.9.0 (2024-02-01)
 -------------------
 - Initially, ``dae.t`` is set to ``-1.0`` during power flow calculation. TDS
