@@ -23,6 +23,10 @@ jobs:
         mamba install --file requirements.txt --file requirements-extra.txt
         python -m pip install -e .
     - shell: bash -el {0}
+      name: Run pip check
+      run: |
+        pip check
+    - shell: bash -el {0}
       name: Lint with flake8 for pull requests
       if: github.event_name == 'pull_request'
       run: |
