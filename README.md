@@ -2,7 +2,7 @@
 
 <img src="docs/source/images/sponsors/CURENT_Logo_NameOnTrans.png" alt="CURENT ERC Logo" width="300" height="auto">
 
-Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repository].
+Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repositories].
 
 |               | Latest                                                                                                                                        | Stable                                                                                                                                        |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
