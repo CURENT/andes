@@ -191,7 +191,7 @@ class Fault(ModelData, Model):
                           tex_name=r'V',
                           unit='p.u.(kV)',
                           info='Bus voltage magnitude',
-                          e_str='-u * uf * (v ** 2 * bf)',
+                          e_str='-u * ( uf * (v ** 2 * bf) )',
                           ename='Q',
                           tex_ename='Q',
                           )
@@ -231,6 +231,7 @@ class Fault(ModelData, Model):
                         self.system.dae.y[self.system.Bus.n:] = self._vstore * self.config.scale
                         logger.debug("All algebraic variables restored after fault clearance at t=%.6f",
                                      self.system.dae.t)
+                        logger.debug(self.system.dae.y)
 
                     # TODO: neither mode 2 or 3 works. Pending further investigation.
                     elif self.config.mode == 2:

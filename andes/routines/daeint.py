@@ -172,6 +172,7 @@ class ImplicitIter:
 
             if tds.chatter:
                 tds.converged = True
+                logger.info('Converged due to chattering...')
                 break
 
             # non-convergence cases
@@ -219,8 +220,8 @@ class BackEuler(ImplicitIter):
     def calc_jac(tds, gxs, gys):
         """
         Build full Jacobian matrix ``Ac`` for Trapezoid method.
+        
         """
-
         dae = tds.system.dae
 
         return sparse([[tds.Teye - tds.h * dae.fx, gxs],
