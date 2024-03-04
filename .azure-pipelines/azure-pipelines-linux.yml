@@ -10,8 +10,8 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      linux_python3.9:
-        python.version: '3.9'
+      linux_python3.11:
+        python.version: '3.11'
 
   steps:
   - task: UsePythonVersion@0

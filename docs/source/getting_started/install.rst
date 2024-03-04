@@ -27,15 +27,15 @@ Next, complete the Mambaforge installation on your system.
 .. note::
 
     Mambaforge is a drop-in replacement for conda. If you have an existing
-    conda installation, you can replace all following ``mamba`` commands
-    with ``conda`` and achieve the same functionality.
+    conda installation, you can replace all the following ``mamba`` commands
+    with ``conda`` and achieve the same outcome.
 
     If you are using Anaconda or Miniconda on Windows, you should open
     ``Anaconda Prompt`` instead of ``Miniforge Prompt``.
 
 Step 2:
 
-Open Terminal (on Linux or maxOS) or `Miniforge Prompt` (on Windows, **not cmd!!**).
+Open Terminal (on Linux or macOS) or `Miniforge Prompt` (on Windows, **not cmd!!**).
 Make sure you are in a conda environment - you should see ``(base)`` prepended to the
 command-line prompt, such as ``(base) C:\Users\username>``.
 
@@ -56,15 +56,15 @@ Activate the new environment with
     You will need to activate the ``andes`` environment every time
     in a new Miniforge Prompt or shell.
 
-If these steps complete without error, you now have a working Python environment.
-See the commands at the top to :ref:`getting-started` ANDES.
+If you have completed these steps without error, you now have a working Python environment.
+See the commands at the top for :ref:`getting-started`.
 
 .. _Install_extras:
 
 Extra support package
 =====================
 
-Some ANDES features require extra support packages, which are not installed by
+Some ANDES features require extra support packages that are not installed by
 default. For example, to build the documentation, one will need to install
 development packages. Other packages will be required for interoperability.
 

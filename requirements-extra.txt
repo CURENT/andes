@@ -8,7 +8,7 @@
 # Only one `#` is allowed per line. Lines starting with `#` are ignored.
 
 coverage #                     dev
-pytest==7.0.1 #                dev
+pytest==7.4   #                dev
 flake8 #                       dev
 sphinx #                       dev, doc
 ipython #                      dev
@@ -16,8 +16,9 @@ numpydoc #                     dev, doc
 sphinx-copybutton #            dev, doc
 sphinx-panels #                dev, doc
 pydata-sphinx-theme #          dev, doc
-myst-parser==0.15.2 #          dev, doc
-myst-nb==0.13.2 #              dev, doc
+myst-parser>=0.15 #            dev, doc
+myst-nb>=0.13 #                dev, doc
+mdit-py-plugins>=0.3.1,<0.4 #  dev, doc
 pre-commit #                   dev
 
 pandapower #                   interop

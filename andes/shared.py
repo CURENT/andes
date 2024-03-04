@@ -40,11 +40,10 @@ isqrt3 = math.sqrt(1/3)
 jac_names = ('fx', 'fy', 'gx', 'gy')
 jac_types = ('c', '')
 
-dilled_vars = ['f_args', 'g_args', 'j_args',
-               's_args', 'sns_args',
+dilled_vars = ['f_args', 'g_args', 'j_args', 's_args', 'sns_args',
                'ia_args', 'ii_args', 'ij_args',
-               'ijac', 'jjac', 'vjac', 'j_names',
-               'init_seq']
+               'ijac', 'jjac', 'vjac',
+               'j_names', 'init_seq', "need_diag_eps"]
 
 jac_full_names = list()
 for jname in jac_names:

@@ -2,7 +2,7 @@
 
 <img src="docs/source/images/sponsors/CURENT_Logo_NameOnTrans.png" alt="CURENT ERC Logo" width="300" height="auto">
 
-Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repository].
+Python software for symbolic power system modeling and numerical analysis, serving as the core simulation engine for the [CURENT Largescale Testbed][LTB Repositories].
 
 |               | Latest                                                                                                                                        | Stable                                                                                                                                        |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -11,9 +11,9 @@ Python software for symbolic power system modeling and numerical analysis, servi
 | Badges        |                                                                                                                                                                                                                                                     |                                                                                                                                                                                                            |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Downloads     | [![PyPI Version](https://img.shields.io/pypi/v/andes.svg)](https://pypi.python.org/pypi/andes)                                                                                                                                                      | [![Conda Downloads](https://anaconda.org/conda-forge/andes/badges/downloads.svg)](https://anaconda.org/conda-forge/andes)                                                                                  |
-| Try on Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/cuihantao/andes/master)                                                                                                                                                 |                                                                                                                                                                                                            |
-| Code Quality  | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da)](https://app.codacy.com/app/cuihantao/andes?utm_source=github.com&utm_medium=referral&utm_content=cuihantao/andes&utm_campaign=Badge_Grade_Dashboard) | [![Codecov Coverage](https://codecov.io/gh/cuihantao/andes/branch/master/graph/badge.svg)](https://codecov.io/gh/cuihantao/andes)                                                                          |
-| Build Status  | [![GitHub Action Status](https://github.com/cuihantao/andes/workflows/Python%20application/badge.svg)](https://github.com/cuihantao/andes/actions)                                                                                                  | [![Azure Pipeline build status](https://dev.azure.com/hcui7/hcui7/_apis/build/status/cuihantao.andes?branchName=master)](https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master) |
+| Try on Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/curent/andes/master)                                                                                                                                                 |                                                                                                                                                                                                            |
+| Code Quality  | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/17b8e8531af343a7a4351879c0e6b5da)](https://app.codacy.com/app/curent/andes?utm_source=github.com&utm_medium=referral&utm_content=curent/andes&utm_campaign=Badge_Grade_Dashboard) | [![Codecov Coverage](https://codecov.io/gh/curent/andes/branch/master/graph/badge.svg)](https://codecov.io/gh/curent/andes)                                                                          |
+| Build Status  | [![GitHub Action Status](https://github.com/curent/andes/workflows/Python%20application/badge.svg)](https://github.com/curent/andes/actions)                                                                                                  | [![Azure Pipeline build status](https://dev.azure.com/hcui7/hcui7/_apis/build/status/curent.andes?branchName=master)](https://dev.azure.com/hcui7/hcui7/_build/latest?definitionId=1&branchName=master) |
 
 # Why ANDES
 This software could be of interest to you if you are working on
@@ -47,7 +47,7 @@ Note that TSAT and PSS/E results are not identical, either.
 
 |                                         NPCC Case Study                                                   |                                               WECC Case Study                                           |
 | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-npcc/omega.png)   | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/example-wecc/omega.png) |
+| ![](https://raw.githubusercontent.com/curent/andes/master/docs/source/images/example-npcc/omega.png)   | ![](https://raw.githubusercontent.com/curent/andes/master/docs/source/images/example-wecc/omega.png) |
 
 ANDES provides a descriptive modeling framework in a scripting environment.
 Modeling DAE-based devices is as simple as describing the mathematical equations.
@@ -55,13 +55,13 @@ Numerical code will be automatically generated for fast simulation.
 
 | Controller Model and Equation | ANDES Code |
 | ----------------------------- | ---------- |
-| Diagram:  <br> ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1.png)  <br>  Write into DAEs:  <br>  ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
+| Diagram:  <br> ![](https://raw.githubusercontent.com/curent/andes/master/docs/source/modeling/example-tgov1/tgov1.png)  <br>  Write into DAEs:  <br>  ![](https://raw.githubusercontent.com/curent/andes/master/docs/source/modeling/example-tgov1/tgov1_eqns.png)  | ![](https://raw.githubusercontent.com/curent/andes/master/docs/source/modeling/example-tgov1/tgov1_class.png) |
 
 In ANDES, what you simulate is what you document.
 ANDES automatically generates model documentation, and the docs always stay up to date.
 The screenshot below is the generated documentation for the implemented IEEEG1 model.
 
-![](https://raw.githubusercontent.com/cuihantao/andes/master/docs/source/images/misc/ieeeg1-screenshot.png)
+![](https://raw.githubusercontent.com/curent/andes/master/docs/source/images/misc/ieeeg1-screenshot.png)
 
 In addition, ANDES features
 
@@ -137,5 +137,5 @@ ANDES is licensed under the [GPL v3 License](./LICENSE).
 [tutorial]:              https://andes.readthedocs.io/en/latest/tutorial.html#interactive-usage
 [examples]:              https://github.com/CURENT/andes/tree/master/examples
 [verification]:          https://github.com/CURENT/andes/tree/master/examples/verification
-[Binder]:                https://mybinder.org/v2/gh/cuihantao/andes/master
-[LTB Repository]:       https://github.com/CURENT
+[Binder]:                https://mybinder.org/v2/gh/curent/andes/master
+[LTB Repositories]:      https://github.com/CURENT

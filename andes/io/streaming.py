@@ -198,7 +198,7 @@ class Streaming:
         """Find the positions of foreign keys in the source model index list"""
         if isinstance(fkey, ndarray):
             fkey = fkey.tolist()
-        elif type(fkey) in (int, float):
+        elif isinstance(fkey, (int, float)):
             fkey = [fkey]
 
         ret = []
@@ -254,7 +254,7 @@ class Streaming:
                 )
             sleep(0.5)
         else:
-            if type(recepient) != list:
+            if not isinstance(recepient, list):
                 recepient = [recepient]
             for item in recepient:
                 self.dimec.send_r(item, Varheader=self.Varheader)
@@ -292,7 +292,7 @@ class Streaming:
 
     @staticmethod
     def transpose_matlab_row(a):
-        if type(a) is ndarray:
+        if isinstance(a, ndarray):
             if a.shape[0] == 1:
                 a = a[0]
         return a

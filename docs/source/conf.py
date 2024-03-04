@@ -230,7 +230,7 @@ shutil.rmtree("_examples", ignore_errors=True)
 shutil.copytree("../../examples", "_examples", )
 shutil.rmtree("_examples/demonstration")
 
-jupyter_execute_notebooks = "off"
+nb_execution_mode = "off"
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
 # already loads it

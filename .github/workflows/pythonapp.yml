@@ -4,34 +4,44 @@ on: [push, pull_request]
 
 jobs:
   build:
-
+    name: ANDES Tests
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v1
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.9
-    - name: Install dependencies
+        python-version: 3.11
+        mamba-version: "*"
+        miniforge-version: "latest"
+        channels: conda-forge,defaults
+        channel-priority: true
+        activate-environment: anaconda-client-env
+    - shell: bash -el {0}
+      name: Install dependencies
       run: |
-        # work around a pip issue with extras_require: https://github.com/pypa/pip/issues/8323
-        python -m pip install -U "pip @ git+https://github.com/pypa/pip.git"
-        python -m pip install --upgrade pip
-        python -m pip install .[all]
-        python -m pip install nbmake==0.10 pytest-xdist line_profiler  # add'l packages for notebook tests.
-    - name: Lint with flake8 for pull requests
+        mamba install -y nbmake pytest-xdist line_profiler  # add'l packages for notebook tests.
+        mamba install --file requirements.txt --file requirements-extra.txt
+        python -m pip install -e .
+    - shell: bash -el {0}
+      name: Run pip check
+      run: |
+        pip check
+    - shell: bash -el {0}
+      name: Lint with flake8 for pull requests
       if: github.event_name == 'pull_request'
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 .
-    - name: Test with pytest
+    - shell: bash -el {0}
+      name: Test with pytest
       run: |
-        pytest --log-cli-level=10
-    - name: Test notebooks.
+        pytest
+    - shell: bash -el {0}
+      name: Test notebooks.
       run: |
-        pytest --log-cli-level=10 --nbmake examples --ignore=examples/verification
-    - name: Build a distribution if tagged
+        pytest --nbmake examples --ignore=examples/verification
+    - shell: bash -el {0}
+      name: Build a distribution if tagged
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
         python setup.py sdist

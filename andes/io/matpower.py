@@ -151,7 +151,10 @@ def m2mpc(infile: str) -> dict:
         elif isinstance(val, list):
             if len(val) == 0:
                 continue
-            mpc_array[key] = np.array(val)
+            if "name" in key:
+                mpc_array[key] = np.array(val, dtype=object)
+            else:
+                mpc_array[key] = np.array(val)
         else:
             raise NotImplementedError("Unkonwn type for mpc, ", type(val))
 
