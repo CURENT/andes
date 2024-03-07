@@ -280,9 +280,9 @@ class DAE:
     +-----------+---------------------------------------------+
     | Scalar    |                 Description                 |
     +===========+=============================================+
-    |  m        | The number of state variables/equations |
+    |  m        | The number of algebraic variables/equations |
     +-----------+---------------------------------------------+
-    |  n        | The number of algebraic variables/equations |
+    |  n        | The number of state variables/equations |
     +-----------+---------------------------------------------+
     |  o        | The number of limiter state flags           |
     +-----------+---------------------------------------------+
