@@ -280,7 +280,7 @@ class DAE:
     +-----------+---------------------------------------------+
     | Scalar    |                 Description                 |
     +===========+=============================================+
-    |  m        | The number of algebraic variables/equations |
+    |  m        | The number of state variables/equations |
     +-----------+---------------------------------------------+
     |  n        | The number of algebraic variables/equations |
     +-----------+---------------------------------------------+
