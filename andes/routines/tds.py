@@ -531,7 +531,7 @@ class TDS(BaseRoutine):
             Convergence status in ``self.converged``.
 
         """
-        return self.method.step(self)
+        return self.method.step(self) 
 
     def _csv_step(self):
         """
