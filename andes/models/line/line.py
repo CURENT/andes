@@ -187,6 +187,8 @@ class Line(LineData, Model):
         self.itap = ConstService(tex_name='1/t_{ap}')
         self.itap2 = ConstService(tex_name='1/t_{ap}^2')
 
+        self.Leq = ConstService(v_str='x/(2*pi*60)')
+
         ## declare variables
         # self.omegaa = ConstService(tex_name='omegaa')
         # self.omegaa.v_str = 'u * 2.0'
@@ -247,17 +249,21 @@ class Line(LineData, Model):
         
         # # end modified
 
+        # / ((x+1e-8)/(2*pi*60))
+
 
         ## test (this version is also in implicit form but has the same dq-axis alignment as in ANDES implementation)
         self.idd = State(info='real current',
                          tex_name='idd',
                          v_str='1e-8',
-                         e_str='u * ( -(x+1e-8)*iqq - (r+1e-8)*idd - v2*sin(a2) + v1*sin(a1) ) / (x/(2*pi*60))')
+                         e_str='u * ( -(x+1e-8)*iqq - (r+1e-8)*idd - v2*sin(a2) + v1*sin(a1) )',
+                         t_const=self.Leq)
         
         self.iqq = State(info='real current',
                          tex_name='iqq',
                          v_str='1e-8',
-                         e_str='u * (1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*cos(a2) + v1*cos(a1) ) / (x/(2*pi*60))')
+                         e_str='u * (1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*cos(a2) + v1*cos(a1) )',
+                         t_const=self.Leq)
         
         self.a1.e_str = 'u * (idd*v1*sin(a1) + iqq*v1*cos(a1))'
 
