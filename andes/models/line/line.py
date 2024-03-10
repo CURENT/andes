@@ -253,14 +253,16 @@ class Line(LineData, Model):
         self.idd = State(info='real current',
                          tex_name='idd',
                          v_str='1e-8',
-                         e_str='u * ( -(x+1e-8)*iqq - (r+1e-8)*idd - v2*sin(a2) + v1*sin(a1) )',
-                         t_const=self.Leq)
+                         e_str='u * ( -(x+1e-8)*iqq - (r+1e-8)*idd - v2*sin(a2) + v1*sin(a1) ) + (1-u) * idd',
+                         t_const=self.Leq,
+                         )
 
         self.iqq = State(info='real current',
                          tex_name='iqq',
                          v_str='1e-8',
-                         e_str='u * (1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*cos(a2) + v1*cos(a1) )',
-                         t_const=self.Leq)
+                         e_str='u * (1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*cos(a2) + v1*cos(a1) ) + (1-u) * iqq',
+                         t_const=self.Leq,
+                         )
 
         self.a1.e_str = 'u * (idd*v1*sin(a1) + iqq*v1*cos(a1))'
 
