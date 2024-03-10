@@ -189,10 +189,10 @@ class Line(LineData, Model):
 
         self.Leq = ConstService(v_str='x/(2*pi*60)')
 
-        ## declare variables
+        # declare variables
         # self.omegaa = ConstService(tex_name='omegaa')
         # self.omegaa.v_str = 'u * 2.0'
-        ## end declare
+        # end declare
 
         self.gh.v_str = 'g1 + 0.5 * g'
         self.bh.v_str = 'b1 + 0.5 * b'
@@ -209,36 +209,34 @@ class Line(LineData, Model):
         self.itap.v_str = '1/tap'
         self.itap2.v_str = '1/tap/tap'
 
-        ## begin initialize variables
-        
-        ## original - working - id and iq equations in explicit form 
+        # begin initialize variables
+
+        # original - working - id and iq equations in explicit form
         # self.idd = Algeb(info='real current',
         #                  tex_name='idd',
         #                  v_str='1e-8',
         #                  e_str='u * (((x+1e-8)*v1*sin(a1) - (x+1e-8)*v2*sin(a2) + \
         #                          (r+1e-8)*v1*cos(a1) - (r+1e-8)*v2*cos(a2))/((x+1e-8)**2 + (r+1e-8)**2)) - idd')
-        
+
         # self.iqq = Algeb(info='real current',
         #                  tex_name='iqq',
         #                  v_str='1e-8',
         #                  e_str='u * ((-(x+1e-8)*v1*cos(a1) + (x+1e-8)*v2*cos(a2) + (r+1e-8)*v1*sin(a1) - \
         #                          (r+1e-8)*v2*sin(a2))/((x+1e-8)**2 + (r+1e-8)**2)) - iqq')
-        
-        ## ORIGINAL END
-        
 
+        # ORIGINAL END
 
-        ## modified based on circuit analysis (equations in implicit form)
+        # modified based on circuit analysis (equations in implicit form)
         # self.idd = Algeb(info='real current',
         #                  tex_name='idd',
         #                  v_str='1e-8',
         #                  e_str='u * ( (x+1e-8)*iqq - (r+1e-8)*idd - v2*cos(a2) + v1*cos(a1) ) / (x/(2*pi*60))')
-        
+
         # self.iqq = Algeb(info='real current',
         #                  tex_name='iqq',
         #                  v_str='1e-8',
         #                  e_str='u * ( -1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*sin(a2) + v1*sin(a1) ) / (x/(2*pi*60))')
-        
+
         # self.a1.e_str = 'u * (idd*v1*cos(a1) + 1.0*iqq*v1*sin(a1))'
 
         # self.v1.e_str = 'u * (1.0*idd*v1*sin(a1) - 1.0*iqq*v1*cos(a1))'
@@ -246,25 +244,24 @@ class Line(LineData, Model):
         # self.a2.e_str = 'u * (-idd*v2*cos(a2) - 1.0*iqq*v2*sin(a2))'
 
         # self.v2.e_str = 'u * (-1.0*idd*v2*sin(a2) + 1.0*iqq*v2*cos(a2))'
-        
+
         # # end modified
 
         # / ((x+1e-8)/(2*pi*60))
 
-
-        ## test (this version is also in implicit form but has the same dq-axis alignment as in ANDES implementation)
+        # test (this version is also in implicit form but has the same dq-axis alignment as in ANDES implementation)
         self.idd = State(info='real current',
                          tex_name='idd',
                          v_str='1e-8',
                          e_str='u * ( -(x+1e-8)*iqq - (r+1e-8)*idd - v2*sin(a2) + v1*sin(a1) )',
                          t_const=self.Leq)
-        
+
         self.iqq = State(info='real current',
                          tex_name='iqq',
                          v_str='1e-8',
                          e_str='u * (1*(x+1e-8)*idd - (r+1e-8)*iqq - v2*cos(a2) + v1*cos(a1) )',
                          t_const=self.Leq)
-        
+
         self.a1.e_str = 'u * (idd*v1*sin(a1) + iqq*v1*cos(a1))'
 
         self.v1.e_str = 'u * (-idd*v1*cos(a1) + iqq*v1*sin(a1))'
@@ -272,9 +269,8 @@ class Line(LineData, Model):
         self.a2.e_str = 'u * (-idd*v2*sin(a2) - iqq*v2*cos(a2))'
 
         self.v2.e_str = 'u * (idd*v2*cos(a2) - iqq*v2*sin(a2))'
-        
-        # end modified
 
+        # end modified
 
         # self.idd = Algeb(info='real current',
         #                  tex_name='idd',
@@ -282,15 +278,14 @@ class Line(LineData, Model):
         #                          (r+1e-8)*v1*cos(a1) - (r+1e-8)*v2*cos(a2))/((x+1e-8)**2 + (r+1e-8)**2))',
         #                  e_str='u * (((x+1e-8)*v1*sin(a1) - (x+1e-8)*v2*sin(a2) + \
         #                          (r+1e-8)*v1*cos(a1) - (r+1e-8)*v2*cos(a2))/((x+1e-8)**2 + (r+1e-8)**2)) - idd')
-        
+
         # self.iqq = Algeb(info='real current',
         #                  tex_name='iqq',
         #                  v_iter='u * ((-(x+1e-8)*v1*cos(a1) + (x+1e-8)*v2*cos(a2) + (r+1e-8)*v1*sin(a1) - \
         #                          (r+1e-8)*v2*sin(a2))/((x+1e-8)**2 + (r+1e-8)**2))',
         #                  e_str='u * ((-(x+1e-8)*v1*cos(a1) + (x+1e-8)*v2*cos(a2) + (r+1e-8)*v1*sin(a1) - \
         #                          (r+1e-8)*v2*sin(a2))/((x+1e-8)**2 + (r+1e-8)**2)) - iqq')
-        
-        
+
         # self.a1.e_str = 'u * (idd*v1*cos(a1) + 1.0*iqq*v1*sin(a1))'
 
         # self.v1.e_str = 'u * (1.0*idd*v1*sin(a1) - 1.0*iqq*v1*cos(a1))'
@@ -314,7 +309,6 @@ class Line(LineData, Model):
         # self.v2.e_str = 'u * (1.0*x*v2**2/(1.0*x**2 + (r+1e-8)**2) + \
         #                       v1*v2*(-1.0*x*cos(a1 - a2)/(x**2 + (r+1e-8)**2) + \
         #                       (r+1e-8)*sin(a1 - a2)/(x**2 + (r+1e-8)**2)))'
-        
 
         # self.iqq = Algeb(info='real current',
         #             tex_name='iqq',
@@ -322,7 +316,6 @@ class Line(LineData, Model):
         #             e_str='u * (-x*v1*cos(a1) + x*v2*cos(a2) + \
         #                    r*v1*sin(a1) - r*v2*sin(a2))/(x**2 + r**2) - iqq')
         # end initialization
-
 
         # self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk) * itap2  - \
         #                       v1 * v2 * (ghk * cos(a1 - a2 - phi) + \
@@ -343,8 +336,6 @@ class Line(LineData, Model):
         # self.v2.e_str = 'u * (-v2 ** 2 * (bh + bhk) + \
         #                       v1 * v2 * (ghk * sin(a1 - a2 - phi) + \
         #                                  bhk * cos(a1 - a2 - phi)) * itap)'
-
-
 
     @property
     def istf(self):
