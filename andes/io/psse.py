@@ -402,8 +402,16 @@ def _parse_fshunt_v33(raw, system):
 
 
 def _parse_gen_v33(raw, system, sw):
-    #  0, 1, 2, 3, 4, 5, 6, 7,    8,   9,10,11, 12, 13, 14,   15, 16,17,18,19
-    #  I,ID,PG,QG,QT,QB,VS,IREG,MBASE,ZR,ZX,RT,XT,GTAP,STAT,RMPCT,PT,PB,O1,F1
+    """
+    Helper function for parsing static generator section.
+    """
+
+    # 0,  1,  2,  3,  4,  5,  6,    7,     8,  9, 10, 11, 12,   13,   14,
+    # I, ID, PG, QG, QT, QB, VS, IREG, MBASE, ZR, ZX, RT, XT, GTAP, STAT,
+    #    15, 16, 17, 18, 19, ...,           26,  27
+    # RMPCT, PT, PB, O1, F1, ..., O4, F4, WMOD, WPF
+    # The columns above for v33 is different from the manual of v34.5, which includes two new columns:
+    # `NREG`` at 8 and `BSLOD` before `O1`
 
     mva = system.config.mva
     out = defaultdict(list)
@@ -417,6 +425,7 @@ def _parse_gen_v33(raw, system, sw):
         gen_mva = data[8]
         gen_idx += 1
         status = data[14]
+        wmod = data[26] if len(data) >= 26 else 0
 
         param = {'Sn': gen_mva, 'Vn': vn, 'u': status,
                  'bus': bus, 'subidx': subidx,
@@ -428,6 +437,7 @@ def _parse_gen_v33(raw, system, sw):
                  'v0': data[6],
                  'ra': data[9],   # ra - armature resistance
                  'xs': data[10],  # xs - synchronous reactance
+                 'wmod': wmod,  # generator control mode
                  }
 
         if data[0] in sw.keys():
