@@ -36,6 +36,18 @@ class PVData(ModelData):
         self.ra = NumParam(default=0.0, info='armature resistance', tex_name='r_a')
         self.xs = NumParam(default=0.3, info='armature reactance', tex_name='x_s')
 
+        # `amachint`: data holder for PSS/E file; not yet used in ANDES
+        #    0: conventional
+        #    1: renewable standard QT/ QB limits
+        #    2: renewable +, - Qlimits based on WPF
+        #    3: renewable, fixed Qlimit based on WPF
+        #    4: Infeed machine
+        self.amachint = NumParam(default=0,
+                                 info='Machine ctrl. mode [PSS/E]',
+                                 tex_name=r'a_{machint}',
+                                 export=False,
+                                 )
+
 
 class PVModel(Model):
     """
