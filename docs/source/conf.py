@@ -125,7 +125,7 @@ html_theme_options = {
 
 html_context = {
     "github_url": "https://github.com",
-    "github_user": "cuihantao",
+    "github_user": "curent",
     "github_repo": "andes",
     "github_version": "master",
     "doc_path": "docs/source",

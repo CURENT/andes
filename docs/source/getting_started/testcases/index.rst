@@ -8,7 +8,7 @@ Test Cases
 ANDES ships with with test cases in the ``andes/cases`` folder.
 The cases can be found in the `online repository`_.
 
-.. _`online repository`: https://github.com/cuihantao/andes/tree/master/andes/cases
+.. _`online repository`: https://github.com/curent/andes/tree/master/andes/cases
 
 Summary
 =======

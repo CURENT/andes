@@ -82,7 +82,7 @@ setup(
     long_description_content_type='text/markdown',
     author="Hantao Cui",
     author_email='cuihantao@gmail.com',
-    url='https://github.com/cuihantao/andes',
+    url='https://github.com/curent/andes',
     packages=find_packages(exclude=[]),
     entry_points={
         'console_scripts': [
