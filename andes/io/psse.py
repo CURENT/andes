@@ -453,14 +453,14 @@ def _parse_gen_v33(raw, system, sw):
 
 def _parse_line_v33(raw, system):
     #
-    # 1,2,  3,4,5,6,    7,    8,    9,10,11,12,13,14, 15,16,17
+    # 0,1,  2,3,4,5,    6,    7,    8, 9,10,11,12,13, 14,15,16
     # I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...,O4,F4
     #
 
     out = defaultdict(list)
     for data in raw['branch']:
         param = {
-            'u': data[14],
+            'u': data[13],
             'bus1': data[0], 'bus2': data[1],
             'r': data[3], 'x': data[4], 'b': data[5],
             'rate_a': data[6], 'rate_b': data[7], 'rate_c': data[8],
