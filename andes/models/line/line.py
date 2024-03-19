@@ -3,8 +3,10 @@ AC transmission line and two-winding transformer line.
 """
 
 import numpy as np
+
 from andes.core import (ModelData, IdxParam, NumParam, DataParam,
                         Model, ExtAlgeb, ConstService)
+from andes.shared import spmatrix
 
 
 class LineData(ModelData):
@@ -241,3 +243,30 @@ class Line(LineData, Model):
         """
 
         return np.array(self.idx.v)[self.istf]
+    
+    def build_y(self):
+        """
+        Build bus admittance matrix. Store the matrix in ``self.Y``.
+
+        Returns
+        -------
+        Y : spmatrix
+            Bus admittance matrix.
+        """
+
+        nb = self.system.Bus.n
+        
+        y1 = self.u.v * (self.g1.v + self.b1.v * 1j)
+        y2 = self.u.v * (self.g2.v + self.b2.v * 1j)
+        y12 = self.u.v / (self.r.v + self.x.v * 1j)
+        m = self.tap.v * np.exp(1j * self.phi.v)
+        m2 = self.tap.v**2
+        mconj = np.conj(m)
+
+        # build self and mutual admittances into Y
+        self.Y = spmatrix((y12 + y1 / m2), self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Y -= spmatrix(y12 / mconj, self.a1.a, self.a2.a, (nb, nb), 'z')
+        self.Y -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
+        self.Y += spmatrix(y12 + y2, self.a2.a, self.a2.a, (nb, nb), 'z')
+
+        return self.Y
