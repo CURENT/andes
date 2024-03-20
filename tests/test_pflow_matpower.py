@@ -3,8 +3,9 @@ import unittest
 
 import andes
 import numpy as np
-from andes.utils.paths import get_case
+from andes.linsolvers.scipy import spmatrix_to_csc
 from andes.shared import deg2rad
+from andes.utils.paths import get_case
 
 andes.main.config_logger(30, file=True)
 
@@ -34,8 +35,10 @@ class TestRunMATPOWER(unittest.TestCase):
         andes.run(case_path, no_output=True, ncpu=2, pool=False, verbose=40, default_config=True)
 
 # Note:
-#   On Ubuntu, Octave needs to be installed with `apt`. 
+#   On Ubuntu, Octave needs to be installed with `apt`.
 #   The Octave installed with `snap` will run into I/O error.
+
+
 @unittest.skipUnless(MATPOWER_WORKING, "MATPOWER not available")
 class TestMATPOWEROct2Py(unittest.TestCase):
 
@@ -48,7 +51,8 @@ class TestMATPOWEROct2Py(unittest.TestCase):
 
             ss = andes.run(andes.get_case(os.path.join("matpower", name)),
                            no_output=True,
-                           default_config=True)
+                           default_config=True,
+                           )
 
             m.eval('clear mpc')
             andes.interop.matpower.to_matpower(m, 'mpc', ss)
@@ -63,3 +67,23 @@ class TestMATPOWEROct2Py(unittest.TestCase):
 
             np.testing.assert_almost_equal(v_mpc, v_andes, decimal=5)
             np.testing.assert_almost_equal(a_mpc, a_andes, decimal=5)
+
+    def test_Bdc_against_matpower(self):
+        m = start_instance()
+        cases = ('case5.m', 'case14.m', 'case118.m')
+
+        for name in cases:
+            ss = andes.load(andes.get_case(os.path.join("matpower", name)),
+                            no_output=True,
+                            default_config=True,
+                            )
+            m.eval('clear mpc')
+            andes.interop.matpower.to_matpower(m, 'mpc', ss)
+            m.eval("mpopt = mpoption('verbose', 0, 'out.all', 0);")
+            m.eval('Bdc = makeBdc(mpc, mpopt);')
+            Bdc = m.pull('Bdc')
+
+            ss.Line.build_b("dcpf")
+            Bpp = spmatrix_to_csc(ss.Line.Bpp)
+            
+            assert(np.all(np.abs((Bpp + Bdc).data) < 1e-6))
