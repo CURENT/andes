@@ -33,7 +33,9 @@ class TestRunMATPOWER(unittest.TestCase):
         case_path = [get_case(os.path.join('matpower', item)) for item in self.cases]
         andes.run(case_path, no_output=True, ncpu=2, pool=False, verbose=40, default_config=True)
 
-
+# Note:
+#   On Ubuntu, Octave needs to be installed with `apt`. 
+#   The Octave installed with `snap` will run into I/O error.
 @unittest.skipUnless(MATPOWER_WORKING, "MATPOWER not available")
 class TestMATPOWEROct2Py(unittest.TestCase):
 
