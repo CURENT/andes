@@ -272,12 +272,12 @@ def mpc2system(mpc: dict, system) -> bool:
         if (data[8] == 0.0) or (data[8] == 1.0 and data[9] == 0.0):
             # not a transformer
             tf = False
-            ratio = 1
-            angle = 0
+            tap_raio = 1
+            phase_shift = 0
         else:
             tf = True
-            ratio = data[8]
-            angle = data[9] * deg2rad
+            tap_raio = data[8]
+            phase_shift = data[9] * deg2rad
 
         vf = system.Bus.Vn.v[system.Bus.idx2uid(fbus)]
         vt = system.Bus.Vn.v[system.Bus.idx2uid(tbus)]
@@ -285,7 +285,7 @@ def mpc2system(mpc: dict, system) -> bool:
                    Vn1=vf, Vn2=vt,
                    bus1=fbus, bus2=tbus,
                    r=r, x=x, b=b,
-                   trans=tf, tap=ratio, phi=angle,
+                   trans=tf, tap=tap_raio, phi=phase_shift,
                    rate_a=rate_a, rate_b=rate_b, rate_c=rate_c)
 
     if ('bus_name' in mpc) and (len(mpc['bus_name']) == len(system.Bus.name.v)):
