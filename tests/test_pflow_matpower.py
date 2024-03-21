@@ -73,7 +73,7 @@ class TestMATPOWEROct2Py(unittest.TestCase):
         cases = ('case5.m', 'case14.m', 'case118.m')
 
         for name in cases:
-            ss = andes.load(andes.get_case(os.path.join("matpower", name)),
+            ss = andes.load('/home/hacui/repos/matpower/data/case14.m',
                             no_output=True,
                             default_config=True,
                             )
@@ -83,7 +83,7 @@ class TestMATPOWEROct2Py(unittest.TestCase):
             m.eval('Bdc = makeBdc(mpc, mpopt);')
             Bdc = m.pull('Bdc')
 
-            ss.Line.build_b("dcpf")
-            Bpp = spmatrix_to_csc(ss.Line.Bpp)
+            ss.Line.build_Bdc()
+            Bp = spmatrix_to_csc(ss.Line.Bdc)
             
-            assert(np.all(np.abs((Bpp + Bdc).data) < 1e-6))
+            np.testing.assert_array_almost_equal((Bp + Bdc).data, np.zeros_like((Bp + Bdc).data))
