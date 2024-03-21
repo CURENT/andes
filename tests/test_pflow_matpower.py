@@ -85,5 +85,5 @@ class TestMATPOWEROct2Py(unittest.TestCase):
 
             ss.Line.build_Bdc()
             Bp = spmatrix_to_csc(ss.Line.Bdc)
-            
+
             np.testing.assert_array_almost_equal((Bp + Bdc).data, np.zeros_like((Bp + Bdc).data))

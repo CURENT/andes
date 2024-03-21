@@ -383,7 +383,7 @@ class Line(LineData, Model):
     def build_Bdc(self):
         """
         The MATPOWER-flavor Bdc matrix for DC power flow. Saves results to `self.Bdc`.
-        
+
         The method neglects line charging and line resistance. It retains tap ratio.
 
         Returns
