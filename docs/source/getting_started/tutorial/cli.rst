@@ -252,7 +252,7 @@ Power flow
     If you have cloned the ANDES repository, it can be found in
     ``andes/cases/kundur`` in  the source code folder. You can also download it
     from
-    `here <https://github.com/cuihantao/andes/raw/master/andes/cases/kundur/kundur_full.xlsx>`_.
+    `here <https://github.com/curent/andes/raw/master/andes/cases/kundur/kundur_full.xlsx>`_.
 
 To run power flow, change to the directory containing ``kundur_full.xlsx``, and
 execute the following in the command line:

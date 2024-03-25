@@ -3,8 +3,10 @@ AC transmission line and two-winding transformer line.
 """
 
 import numpy as np
+
 from andes.core import (ModelData, IdxParam, NumParam, DataParam,
                         Model, ExtAlgeb, ConstService)
+from andes.shared import spmatrix
 
 
 class LineData(ModelData):
@@ -241,3 +243,168 @@ class Line(LineData, Model):
         """
 
         return np.array(self.idx.v)[self.istf]
+
+    def build_y(self):
+        """
+        Build bus admittance matrix. Store the matrix in ``self.Y``.
+
+        Returns
+        -------
+        Y : spmatrix
+            Bus admittance matrix.
+        """
+
+        nb = self.system.Bus.n
+
+        y1 = self.u.v * (self.g1.v + self.b1.v * 1j)
+        y2 = self.u.v * (self.g2.v + self.b2.v * 1j)
+        y12 = self.u.v / (self.r.v + self.x.v * 1j)
+        m = self.tap.v * np.exp(1j * self.phi.v)
+        m2 = self.tap.v**2
+        mconj = np.conj(m)
+
+        # build self and mutual admittances into Y
+        self.Y = spmatrix((y12 + y1 / m2), self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Y -= spmatrix(y12 / mconj, self.a1.a, self.a2.a, (nb, nb), 'z')
+        self.Y -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
+        self.Y += spmatrix(y12 + y2, self.a2.a, self.a2.a, (nb, nb), 'z')
+
+        return self.Y
+
+    def build_b(self, method='fdpf'):
+        """
+        build Bp and Bpp matrices for fast decoupled power flow and DC power flow.
+
+        Results are saved to ``self.Bp`` and ``self.Bpp`` without return.
+        """
+        self.build_Bp(method)
+        self.build_Bpp(method)
+
+    def build_Bp(self, method='fdpf'):
+        """
+        Function for building B' matrix.
+
+        The result is saved to ``self.Bp`` and returned
+
+        Parameters
+        ----------
+        method : str
+            Method for building B' matrix. Choose from 'fdpf', 'fdbx', 'dcpf'.
+        Returns
+        -------
+        Bp : spmatrix
+            B' matrix.
+
+        """
+        nb = self.system.Bus.n
+
+        if method not in ("fdpf", "fdbx", "dcpf"):
+            raise ValueError(f"Invalid method {method}; choose from 'fdpf', 'fdbx', 'dcpf'")
+
+        # Build B prime matrix -- FDPF
+        # `y1`` neglects line charging shunt, and g1 is usually 0 in HV lines
+        # `y2`` neglects line charging shunt, and g2 is usually 0 in HV lines
+        y1 = self.u.v * self.g1.v
+        y2 = self.u.v * self.g2.v
+
+        # `m` neglected tap ratio
+        m = np.exp(self.phi.v * 1j)
+        mconj = np.conj(m)
+        m2 = np.ones(self.n)
+
+        if method in ('fdxb', 'dcpf'):
+            # neglect line resistance in Bp in XB method
+            y12 = self.u.v / (self.x.v * 1j)
+        else:
+            y12 = self.u.v / (self.r.v + self.x.v * 1j)
+
+        self.Bdc = spmatrix((y12 + y1) / m2, self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Bdc -= spmatrix(y12 / mconj, self.a1.a, self.a2.a, (nb, nb), 'z')
+        self.Bdc -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
+        self.Bdc += spmatrix(y12 + y2, self.a2.a, self.a2.a, (nb, nb), 'z')
+        self.Bdc = self.Bdc.imag()
+
+        for item in range(nb):
+            if abs(self.Bdc[item, item]) == 0:
+                self.Bdc[item, item] = 1e-6 + 0j
+
+        return self.Bdc
+
+    def build_Bpp(self, method='fdpf'):
+        """
+        Function for building B'' matrix.
+
+        The result is saved to ``self.Bpp`` and returned
+
+        Parameters
+        ----------
+        method : str
+            Method for building B'' matrix. Choose from 'fdpf', 'fdbx', 'dcpf'.
+
+        Returns
+        -------
+        Bpp : spmatrix
+            B'' matrix.
+        """
+
+        nb = self.system.Bus.n
+
+        if method not in ("fdpf", "fdbx", "dcpf"):
+            raise ValueError(f"Invalid method {method}; choose from 'fdpf', 'fdbx', 'dcpf'")
+
+        # Build B double prime matrix
+        # y1 neglected line charging shunt, and g1 is usually 0 in HV lines
+        # y2 neglected line charging shunt, and g2 is usually 0 in HV lines
+        # m neglected phase shifter
+        y1 = self.u.v * (self.g1.v + self.b1.v * 1j)
+        y2 = self.u.v * (self.g2.v + self.b2.v * 1j)
+
+        m = self.tap.v
+        m2 = abs(m)**2
+
+        if method in ('fdbx', 'fdpf', 'dcpf'):
+            # neglect line resistance in Bpp in BX method
+            y12 = self.u.v / (self.x.v * 1j)
+        else:
+            y12 = self.u.v / (self.r.v + self.x.v * 1j)
+
+        self.Bpp = spmatrix((y12 + y1) / m2, self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Bpp -= spmatrix(y12 / np.conj(m), self.a1.a, self.a2.a, (nb, nb), 'z')
+        self.Bpp -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
+        self.Bpp += spmatrix(y12 + y2, self.a2.a, self.a2.a, (nb, nb), 'z')
+        self.Bpp = self.Bpp.imag()
+
+        for item in range(nb):
+            if abs(self.Bpp[item, item]) == 0:
+                self.Bpp[item, item] = 1e-6 + 0j
+
+        return self.Bpp
+
+    def build_Bdc(self):
+        """
+        The MATPOWER-flavor Bdc matrix for DC power flow. Saves results to `self.Bdc`.
+
+        The method neglects line charging and line resistance. It retains tap ratio.
+
+        Returns
+        -------
+        Bdc : spmatrix
+            Bdc matrix.
+        """
+
+        nb = self.system.Bus.n
+
+        y12 = self.u.v / (self.x.v * 1j)
+        y12 = y12 / self.tap.v
+
+        self.Bdc = spmatrix(y12, self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Bdc -= spmatrix(y12, self.a1.a, self.a2.a, (nb, nb), 'z')
+        self.Bdc -= spmatrix(y12, self.a2.a, self.a1.a, (nb, nb), 'z')
+        self.Bdc += spmatrix(y12, self.a2.a, self.a2.a, (nb, nb), 'z')
+        self.Bdc = self.Bdc.imag()
+
+        for item in range(nb):
+            if abs(self.Bdc[item, item]) == 0:
+                self.Bdc[item, item] = 1e-6
+
+        return self.Bdc

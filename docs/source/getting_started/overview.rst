@@ -34,13 +34,13 @@ ANDES is currently under active development. To get involved,
 * Follow the tutorial at
   `https://andes.readthedocs.io <https://andes.readthedocs.io/en/stable/tutorial.html>`_
 * Checkout the Notebook examples in the
-  `examples folder <https://github.com/cuihantao/andes/tree/master/examples>`_
+  `examples folder <https://github.com/curent/andes/tree/master/examples>`_
 * Try ANDES in Jupyter Notebook
-  `with Binder <https://mybinder.org/v2/gh/cuihantao/andes/master>`_
+  `with Binder <https://mybinder.org/v2/gh/curent/andes/master>`_
 * Download the PDF manual at
   `download <https://andes.readthedocs.io/_/downloads/en/stable/pdf/>`_
 * Report issues in the
-  `GitHub issues page <https://github.com/cuihantao/andes/issues>`_
+  `GitHub issues page <https://github.com/curent/andes/issues>`_
 * Learn version control with
   `the command-line git <https://git-scm.com/docs/gittutorial>`_ or
   `GitHub Desktop <https://help.github.com/en/desktop/getting-started-with-github-desktop>`_

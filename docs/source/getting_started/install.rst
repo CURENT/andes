@@ -112,7 +112,7 @@ from either your fork or the original repository. Clone the repository with
 
 .. code:: bash
 
-    git clone https://github.com/cuihantao/andes
+    git clone https://github.com/curent/andes
 
 .. note::
 
@@ -120,7 +120,7 @@ from either your fork or the original repository. Clone the repository with
     update the source code and perform version control.
 
 Alternatively, you can download the ANDES source code from
-https://github.com/cuihantao/andes and extract all files to the path of your
+https://github.com/curent/andes and extract all files to the path of your
 choice. Although works, this method is discouraged because tracking changes and
 pushing back code edits will require significant manual efforts.
 

@@ -1,8 +1,8 @@
 """
-System class for power system data and methods
+System class for power system data and methods.
 """
 
-#  [ANDES] (C)2015-2022 Hantao Cui
+#  [ANDES] (C)2015-2024 Hantao Cui
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
