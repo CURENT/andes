@@ -13,6 +13,7 @@ v1.9.2 (2024-03-XX)
 -------------------
 - Improve PSS/E parser for the `wmod` field in the static generator
   section.
+- Consider line status when parsing PSS/E file.
 - Added functions in `Line` for building network admittance matrix, `Bdc`
   matrix for DC power flow, and `Bp` and `Bpp` matrices for fast decoupled
   power flow. See ``build_y``, ``build_b`` and ``build_Bdc``.
