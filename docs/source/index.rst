@@ -21,7 +21,7 @@ ANDES documentation
 .. _`Report Issues`: https://github.com/CURENT/andes/issues
 .. _`Q&A`: https://github.com/CURENT/andes/discussions
 .. _`Binary Installer`: https://pypi.org/project/andes/
-.. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/cuihantao/andes/master
+.. _`Try in Jupyter Notebooks`: https://mybinder.org/v2/gh/curent/andes/master
 .. _`LTB Repository`: https://github.com/CURENT/
 
 .. image:: /images/sponsors/CURENT_Logo_NameOnTrans.png

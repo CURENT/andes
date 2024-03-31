@@ -103,16 +103,18 @@ class EIG(BaseRoutine):
         spmatrix
             The reduced state matrix
         """
-        gyx = matrix(gx)
-        self.solver.linsolve(gy, gyx)
+        self.gyx = matrix(gx)
+        self.solver.linsolve(gy, self.gyx)
 
         Tfnz = Tf + np.ones_like(Tf) * np.equal(Tf, 0.0)
         iTf = spdiag((1 / Tfnz).tolist())
 
+        self.fxy = (fx - fy * self.gyx)
+
         if dense:
-            return iTf * (fx - fy * gyx)
+            return iTf * self.fxy
         else:
-            return sparse(iTf * (fx - fy * gyx))
+            return sparse(iTf * self.fxy)
 
     def _reorder(self):
         """
