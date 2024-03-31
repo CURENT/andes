@@ -418,6 +418,8 @@ class SymProcessor:
             self.calls.append_ijv(f'{var.e_code}{var.v_code}c', e_idx, v_idx, eps)
             self.calls.need_diag_eps.append(var.name)
 
+        self.calls.need_diag_eps = sorted(list(set(self.calls.need_diag_eps)))
+
     def generate_pretty_print(self):
         """
         Generate pretty print variables and equations.
