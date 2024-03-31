@@ -118,11 +118,18 @@ class SymProcessor:
                 self.tex_names[name] = sp.Symbol(tex_name)
         # -----------------------------------------------------------
 
+        # `all_params_names` include parameters, services, exports from blocks, etc.
         for var in self.cache.all_params_names:
+            is_real = True
+
+            if var in self.parent.services:
+                if self.parent.services[var].vtype == complex:
+                    is_real = False
+
             self.inputs_dict[var] = sp.Symbol(var)
 
         for var in self.cache.all_vars_names:
-            tmp = sp.Symbol(var)
+            tmp = sp.Symbol(var, real=True)  # all DAE variables are real
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
             if var in self.cache.vars_int:
@@ -130,7 +137,7 @@ class SymProcessor:
 
         # store tex names defined in `self.config`
         for key in self.config.as_dict():
-            tmp = sp.Symbol(key)
+            tmp = sp.Symbol(key, real=True)  # not expecting complex numbers in config
             self.inputs_dict[key] = tmp
             if key in self.config.tex_names:
                 self.tex_names[tmp] = sp.Symbol(self.config.tex_names[key])
