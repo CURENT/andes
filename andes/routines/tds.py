@@ -813,7 +813,7 @@ class TDS(BaseRoutine):
 
         # check system connectivity after a switching
         if ret is True and self.config.check_conn == 1:
-            system.connectivity(info=False)
+            system.connectivity(info=False, routine='tds')
 
         return ret
 

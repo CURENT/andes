@@ -9,6 +9,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.9 Notes
 ==========
 
+v1.9.3 (2024-04-XX)
+-------------------
+- In symbolic processor, most variables are assumed to be real, except some
+  services that are specified as complex. This will allow generating simplified
+  expressions.
+
 v1.9.2 (2024-03-25)
 -------------------
 - Improve PSS/E parser for the `wmod` field in the static generator
