@@ -128,7 +128,7 @@ class TDS(BaseRoutine):
             self.config.kqrt = system.options.get('kqrt')
 
         # if data is from a CSV file instead of simulation
-        self.from_csv = system.options.get('from_csv')
+        self.from_csv = None
         self.data_csv = None
         self.k_csv = 0    # row number
 
@@ -323,7 +323,7 @@ class TDS(BaseRoutine):
         logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
         logger.debug("Resuming from t=%.4fs.", system.dae.t)
 
-    def run(self, no_summary=False, **kwargs):
+    def run(self, no_summary=False, from_csv=None, **kwargs):
         """
         Run time-domain simulation using numerical integration.
 
@@ -342,6 +342,10 @@ class TDS(BaseRoutine):
             return succeed
 
         # load from csv is provided
+        if from_csv is not None:
+            self.from_csv = from_csv
+        else:
+            self.from_csv = system.options.get("from_csv")
         if self.from_csv is not None:
             self.data_csv = self._load_csv(self.from_csv)
 
@@ -813,7 +817,7 @@ class TDS(BaseRoutine):
 
         # check system connectivity after a switching
         if ret is True and self.config.check_conn == 1:
-            system.connectivity(info=False)
+            system.connectivity(info=False, routine='tds')
 
         return ret
 
