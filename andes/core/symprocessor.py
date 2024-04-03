@@ -126,7 +126,7 @@ class SymProcessor:
                 if self.parent.services[var].vtype == complex:
                     is_real = False
 
-            self.inputs_dict[var] = sp.Symbol(var)
+            self.inputs_dict[var] = sp.Symbol(var, real=is_real)
 
         for var in self.cache.all_vars_names:
             tmp = sp.Symbol(var, real=True)  # all DAE variables are real
