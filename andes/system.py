@@ -1256,6 +1256,9 @@ class System:
         # store `a` and `v` indices for zeroing out residuals
         self.Bus.islanded_a = np.array(self.Bus.islanded_buses)
         self.Bus.islanded_v = self.Bus.n + self.Bus.islanded_a
+        # `self.Bus.n_islanded_buses` is used to determine if `g_islands`
+        # needs to be call
+        self.Bus.n_islanded_buses = len(self.Bus.islanded_a)
 
         # find islanded areas - Goderya's algorithm
         temp = spmatrix(list(u) * 4,
