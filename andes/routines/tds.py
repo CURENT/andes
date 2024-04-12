@@ -537,12 +537,23 @@ class TDS(BaseRoutine):
     def _csv_step(self):
         """
         Fetch data for the next step from ``data_csv``.
+
+        When `Output` exists, the target variables `x` and `y` are filled with the data,
+        while the remaining variables are set to zero.
         """
 
         system = self.system
         if self.data_csv is not None:
-            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            if system.Output.n < 1:
+                system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+                system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            else:
+                xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
+                _xy = np.zeros(system.dae.n + system.dae.m)
+                _xy[xyidx] = self.data_csv[self.k_csv, 1:]
+                system.dae.x[:] = _xy[:system.dae.n]
+                system.dae.y[:] = _xy[system.dae.n:]
+
             system.vars_to_models()
 
         self.converged = True
@@ -926,8 +937,14 @@ class TDS(BaseRoutine):
         if data.shape[0] < 2:
             logger.warning("CSV data does not contain more than one time step.")
         if data.shape[1] < (self.system.dae.m + self.system.dae.n):
-            logger.warning("CSV data contains fewer variables than required.")
-            logger.warning("Check if the CSV data file is generated from the test case.")
+            if self.system.Output.n < 1:
+                logger.warning("CSV data contains fewer variables than required.")
+                logger.warning("Check if the CSV data file is generated from the test case.")
+            else:
+                logger.info("Output selection detected.")
+                if data.shape[1] - 1 < (len(self.system.Output.xidx + self.system.Output.yidx)):
+                    logger.warning("CSV data contains fewer variables than required.")
+                    logger.warning("Check if the CSV data file is generated with selected output.")
 
         # set start and end times from data
         self.config.t0 = data[0, 0]
