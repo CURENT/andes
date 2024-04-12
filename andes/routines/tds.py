@@ -237,8 +237,15 @@ class TDS(BaseRoutine):
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
-            system.dae.x[:] = self.data_csv[0, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            if system.Output.n < 1:
+                system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+                system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            else:
+                xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
+                _xy = np.zeros(system.dae.n + system.dae.m)
+                _xy[xyidx] = self.data_csv[self.k_csv, 1:]
+                system.dae.x[:] = _xy[:system.dae.n]
+                system.dae.y[:] = _xy[system.dae.n:]
             system.vars_to_models()
 
         # connect to data streaming server
