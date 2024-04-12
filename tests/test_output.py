@@ -1,6 +1,7 @@
 """
 Test output selection.
 """
+import os
 
 import numpy as np
 import unittest
@@ -73,3 +74,56 @@ class TestOutput(unittest.TestCase):
         np.testing.assert_equal(
             ss.dae.ts.get_data(ss.TG2.pout, a=None).shape[1],
             0)
+
+    def test_from_csv(self):
+        """
+        Test from_csv when loading selected output from csv file.
+        """
+        case = andes.get_case("5bus/pjm5bus.json")
+        ss = andes.load(case,
+                        no_output=True,
+                        setup=False,
+                        default_config=True)
+
+        ss.add("Output", {"model": "Bus", "varname": "v"})
+
+        ss.setup()
+
+        ss.PFlow.run()
+        ss.TDS.config.tf = 0.1
+        ss.TDS.run()
+        ss.TDS.load_plotter()
+
+        ss.TDS.plt.export_csv("pjm5bus_selec_out.csv")
+
+        # Test assign CSV in TDS.run()
+        ss2 = andes.load(case,
+                         no_output=True,
+                         setup=False,
+                         default_config=True)
+
+        ss2.add("Output", {"model": "Bus", "varname": "v"})
+
+        ss2.setup()
+
+        ss2.PFlow.run()
+        ss2.TDS.run(from_csv="pjm5bus_selec_out.csv")
+
+        self.assertTrue(ss2.TDS.converged)
+
+        # Test assign CSV in andes.load()
+        ss3 = andes.load(case,
+                         no_output=True,
+                         setup=False,
+                         default_config=True,
+                         from_csv="pjm5bus_selec_out.csv")
+        ss3.add("Output", {"model": "Bus", "varname": "v"})
+
+        ss3.setup()
+
+        ss3.PFlow.run()
+        ss3.TDS.run()
+
+        self.assertTrue(ss3.TDS.converged)
+
+        os.remove("pjm5bus_selec_out.csv")
