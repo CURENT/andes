@@ -29,7 +29,7 @@ class BusFreq(ModelData, Model):
                            unit="sec",
                            tex_name='T_f',
                            )
-        self.Tw = NumParam(default=0.02,
+        self.Tw = NumParam(default=0.1,
                            info="washout time const",
                            unit="sec",
                            tex_name='T_w',
