@@ -73,7 +73,7 @@ class TestMATPOWEROct2Py(unittest.TestCase):
         cases = ('case5.m', 'case14.m', 'case118.m')
 
         for name in cases:
-            ss = andes.load('/home/hacui/repos/matpower/data/case14.m',
+            ss = andes.load(andes.get_case("ieee14/ieee14.raw"),
                             no_output=True,
                             default_config=True,
                             )
