@@ -237,15 +237,8 @@ class TDS(BaseRoutine):
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
-            if system.Output.n < 1:
-                system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-                system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
-            else:
-                xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
-                _xy = np.zeros(system.dae.n + system.dae.m)
-                _xy[xyidx] = self.data_csv[self.k_csv, 1:]
-                system.dae.x[:] = _xy[:system.dae.n]
-                system.dae.y[:] = _xy[system.dae.n:]
+            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
         # connect to data streaming server
@@ -348,14 +341,6 @@ class TDS(BaseRoutine):
             system.exit_code += 1
             return succeed
 
-        # load from csv is provided
-        if from_csv is not None:
-            self.from_csv = from_csv
-        else:
-            self.from_csv = system.options.get("from_csv")
-        if self.from_csv is not None:
-            self.data_csv = self._load_csv(self.from_csv)
-
         if no_summary is False and (system.dae.t == 0):
             self.summary()
 
@@ -364,6 +349,14 @@ class TDS(BaseRoutine):
             self.init()
         else:  # resume simulation
             self.init_resume()
+
+        # load from csv is provided
+        if from_csv is not None:
+            self.from_csv = from_csv
+        else:
+            self.from_csv = system.options.get("from_csv")
+        if self.from_csv is not None:
+            self.data_csv = self._load_csv(self.from_csv)
 
         if system.options.get("init") is True:
             logger.debug("Initialization only is requested and done")
@@ -551,16 +544,8 @@ class TDS(BaseRoutine):
 
         system = self.system
         if self.data_csv is not None:
-            if system.Output.n < 1:
-                system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-                system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
-            else:
-                xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
-                _xy = np.zeros(system.dae.n + system.dae.m)
-                _xy[xyidx] = self.data_csv[self.k_csv, 1:]
-                system.dae.x[:] = _xy[:system.dae.n]
-                system.dae.y[:] = _xy[system.dae.n:]
-
+            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
             system.vars_to_models()
 
         self.converged = True
@@ -943,16 +928,25 @@ class TDS(BaseRoutine):
             raise ValueError("Data from CSV is not 2-dimensional (time versus variable)")
         if data.shape[0] < 2:
             logger.warning("CSV data does not contain more than one time step.")
-        if data.shape[1] < (self.system.dae.m + self.system.dae.n):
-            if self.system.Output.n < 1:
+
+        system = self.system
+        if data.shape[1] < (system.dae.m + system.dae.n):
+            if system.Output.n < 1:
                 logger.warning("CSV data contains fewer variables than required.")
                 logger.warning("Check if the CSV data file is generated from the test case.")
             else:
                 logger.info("Output selection detected.")
                 # NOTE: data has first column as time, so the rest should be `n+m` from `Output`
-                if data.shape[1] - 1 < (len(self.system.Output.xidx + self.system.Output.yidx)):
+                if data.shape[1] - 1 < (len(system.Output.xidx + system.Output.yidx)):
                     logger.warning("CSV data contains fewer variables than required.")
                     logger.warning("Check if the CSV data file is generated with selected output.")
+                else:
+                    # reconstruct data with padding zeros
+                    _xy = np.zeros((data.shape[0], system.dae.n + system.dae.m))
+                    xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
+                    t = data[:, 0]
+                    _xy[:, xyidx] = data[:, 1:]
+                    data = np.hstack((t[:, np.newaxis], _xy))
 
         # set start and end times from data
         self.config.t0 = data[0, 0]
