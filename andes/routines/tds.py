@@ -949,6 +949,7 @@ class TDS(BaseRoutine):
                 logger.warning("Check if the CSV data file is generated from the test case.")
             else:
                 logger.info("Output selection detected.")
+                # NOTE: data has first column as time, so the rest should be `n+m` from `Output`
                 if data.shape[1] - 1 < (len(self.system.Output.xidx + self.system.Output.yidx)):
                     logger.warning("CSV data contains fewer variables than required.")
                     logger.warning("Check if the CSV data file is generated with selected output.")
