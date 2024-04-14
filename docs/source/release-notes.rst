@@ -15,6 +15,7 @@ v1.9.3 (2024-04-XX)
   services that are specified as complex. This will allow generating simplified
   expressions.
 - Adjust `BusFreq.Tw.default` to 0.1.
+- Add parameter from_csv=None in TDS.run() to allow loading data from CSV files at TDS begining.
 - Fix `TDS.init()` and `TDS._csv_step()` to fit loading from CSV when `Output` exists.
 
 v1.9.2 (2024-03-25)
