@@ -540,7 +540,7 @@ class TDS(BaseRoutine):
         while the remaining variables are set to zero.
         """
 
-        self._csv_output()
+        self._csv_data_to_dae()
 
         self.converged = True
         return self.converged
