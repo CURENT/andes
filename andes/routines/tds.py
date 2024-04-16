@@ -237,7 +237,7 @@ class TDS(BaseRoutine):
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
-            self._csv_output()
+            self._csv_data_to_dae()
 
         # connect to data streaming server
         if system.streaming.dimec is None:
@@ -1091,7 +1091,7 @@ class TDS(BaseRoutine):
                          self.config.ddelta_limit)
         return res
 
-    def _csv_output(self):
+    def _csv_data_to_dae(self):
         """
         Helper function to fetch data when replaying from CSV file.
 
