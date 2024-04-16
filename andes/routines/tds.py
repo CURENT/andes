@@ -237,9 +237,7 @@ class TDS(BaseRoutine):
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
-            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
-            system.vars_to_models()
+            self._csv_output()
 
         # connect to data streaming server
         if system.streaming.dimec is None:
@@ -344,19 +342,19 @@ class TDS(BaseRoutine):
         if no_summary is False and (system.dae.t == 0):
             self.summary()
 
-        # only initializing at t<0 allows to continue when `run` is called again.
-        if system.dae.t < 0:
-            self.init()
-        else:  # resume simulation
-            self.init_resume()
-
-        # load from csv is provided
+        # load from csv if provided
         if from_csv is not None:
             self.from_csv = from_csv
         else:
             self.from_csv = system.options.get("from_csv")
         if self.from_csv is not None:
             self.data_csv = self._load_csv(self.from_csv)
+
+        # only initializing at t<0 allows to continue when `run` is called again.
+        if system.dae.t < 0:
+            self.init()
+        else:  # resume simulation
+            self.init_resume()
 
         if system.options.get("init") is True:
             logger.debug("Initialization only is requested and done")
@@ -542,11 +540,7 @@ class TDS(BaseRoutine):
         while the remaining variables are set to zero.
         """
 
-        system = self.system
-        if self.data_csv is not None:
-            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
-            system.vars_to_models()
+        self._csv_output()
 
         self.converged = True
         return self.converged
@@ -940,13 +934,6 @@ class TDS(BaseRoutine):
                 if data.shape[1] - 1 < (len(system.Output.xidx + system.Output.yidx)):
                     logger.warning("CSV data contains fewer variables than required.")
                     logger.warning("Check if the CSV data file is generated with selected output.")
-                else:
-                    # reconstruct data with padding zeros
-                    _xy = np.zeros((data.shape[0], system.dae.n + system.dae.m))
-                    xyidx = system.Output.xidx + [yidx+system.dae.n for yidx in system.Output.yidx]
-                    t = data[:, 0]
-                    _xy[:, xyidx] = data[:, 1:]
-                    data = np.hstack((t[:, np.newaxis], _xy))
 
         # set start and end times from data
         self.config.t0 = data[0, 0]
@@ -1103,3 +1090,22 @@ class TDS(BaseRoutine):
         res = deltadelta(self.system.dae.x[self.system.SynGen.delta_addr],
                          self.config.ddelta_limit)
         return res
+
+    def _csv_output(self):
+        """
+        Helper function to fetch data when replaying from CSV file.
+
+        When loading from a partial CSV file, the recorded data is loaded
+        while the rest of the variables remain to be initial values.
+        """
+        system = self.system
+        if system.Output.n < 1:
+            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+        else:
+            xidx = system.Output.xidx
+            system.dae.x[xidx] = self.data_csv[self.k_csv, 1:len(xidx) + 1]
+            yidx = system.Output.yidx
+            system.dae.y[yidx] = self.data_csv[self.k_csv, len(xidx) + 1:len(xidx) + len(yidx) + 1]
+
+            system.vars_to_models()
