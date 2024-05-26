@@ -396,6 +396,8 @@ class PIDController(PIController):
         The derivative gain parameter instance
     Td : BaseParam
         The derivative time constant parameter instance
+    x0 : BaseParam
+        The initial value of the integrator
     """
 
     def __init__(self, u, kp, ki, kd, Td, name, ref=0.0, x0=0.0, tex_name=None, info=None):
@@ -461,6 +463,8 @@ class PIAWHardLimit(PIController):
         self.upper = dummify(upper)
         self.aw_lower = dummify(aw_lower)
         self.aw_upper = dummify(aw_upper)
+        self.no_lower = no_lower
+        self.no_upper = no_upper
 
         self.aw = AntiWindup(u=self.xi, lower=self.aw_lower, upper=self.aw_upper,
                              no_lower=no_lower, no_upper=no_upper, tex_name='aw'
@@ -587,6 +591,8 @@ class PITrackAW(Block):
         self.upper = dummify(upper)
         self.ref = dummify(ref)
         self.x0 = dummify(x0)
+        self.no_lower = no_lower
+        self.no_upper = no_upper
 
         self.xi = State(info="Integrator output", tex_name='xi')
         self.ys = Algeb(info="PI summation before limit", tex_name='ys')
@@ -1231,6 +1237,10 @@ class LagRate(Block):
         self.K = dummify(K)
         self.D = dummify(D)
 
+        self.rate_lower, self.rate_upper = rate_lower, rate_upper
+        self.rate_no_lower, self.rate_no_upper = rate_no_lower, rate_no_upper
+        self.rate_lower_cond, self.rate_upper_cond = rate_lower_cond, rate_upper_cond
+
         self.enforce_tex_name((self.T, self.K, self.D))
 
         self.y = State(info='State in lag TF', tex_name="y",
@@ -1308,6 +1318,12 @@ class LagAntiWindupRate(Block):
 
         self.lower = dummify(lower)
         self.upper = dummify(upper)
+
+        # register in itself in case of queries
+        self.no_lower, self.no_upper = no_lower, no_upper
+        self.rate_lower, self.rate_upper = rate_lower, rate_upper
+        self.rate_no_lower, self.rate_no_upper = rate_no_lower, rate_no_upper
+        self.rate_lower_cond, self.rate_upper_cond = rate_lower_cond, rate_upper_cond
 
         self.enforce_tex_name((self.T, self.K, self.D))
 
@@ -1775,6 +1791,8 @@ class GainLimiter(Block):
         self.R = dummify(R)
         self.upper = dummify(upper)
         self.lower = dummify(lower)
+
+        self.sign_lower, self.sign_upper = sign_lower, sign_upper
 
         if (no_upper and no_lower) is True:
             raise ValueError("no_upper or no_lower cannot both be True")
