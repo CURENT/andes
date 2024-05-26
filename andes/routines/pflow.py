@@ -235,7 +235,7 @@ class PFlow(BaseRoutine):
         t0, _ = elapsed()
 
         # ---------- Call solution methods ----------
-        if method == 'nr':
+        if method in ('nr', 'dishonest'):
             self.nr_solve()
         elif method == 'nk':
             self.newton_krylov()
