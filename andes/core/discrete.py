@@ -49,7 +49,7 @@ class Discrete:
         self.no_warn = no_warn
 
         # default minimum iteration number and error tolerance to for this
-        # discrete block to be enabled. 
+        # discrete block to be enabled.
         # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
         # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
 
