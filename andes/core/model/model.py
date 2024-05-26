@@ -247,7 +247,7 @@ class Model:
         self.calls = ModelCall()  # callback and LaTeX string storage
         self.triplets = JacTriplet()  # Jacobian triplet storage
         self.syms = SymProcessor(self)  # symbolic processor instance
-        self.docum = Documenter(self)
+        self.docum = Documenter(self)  # documenter instance
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
@@ -285,6 +285,7 @@ class Model:
         self.coeffs = dict()  # pu conversion coefficient storage
         self.bases = dict()   # base storage, such as Vn, Vb, Zn, Zb
         self.debug_equations = list()  # variable names for debugging corresponding equation
+        self.non_top_level = list()  # list of non-top-level components
 
     def _register_attribute(self, key, value):
         """
@@ -346,6 +347,7 @@ class Model:
                 var_instance.name = f'{prepend}{var_name}'
                 var_instance.tex_name = f'{var_instance.tex_name}_{{{tex_append}}}'
                 self.__setattr__(var_instance.name, var_instance)
+                var_instance.not_top_level = True
 
     def _check_attribute(self, key, value):
         """
