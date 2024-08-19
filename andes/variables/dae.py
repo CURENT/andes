@@ -472,8 +472,7 @@ class DAE:
         """
         Helper function for setting time in-place.
         """
-
-        self.t.itemset(t)
+        self.t[...] = np.array(t, dtype=float)
 
     def get_size(self, name):
         """
