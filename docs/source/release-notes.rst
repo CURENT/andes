@@ -11,6 +11,7 @@ v1.9 Notes
 
 v1.9.3 (2024-04-XX)
 -------------------
+- In the `dae`` module, change `self.t.itemset` to array assignment to ensure compatibility with NumPy 2.0.
 - Follow RTD's deprecation of Sphinx context injection at build time
 - In symbolic processor, most variables are assumed to be real, except some
   services that are specified as complex. This will allow generating simplified
