@@ -3,6 +3,7 @@
 from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter, LessThan
 from andes.core.param import NumParam
+from andes.core.service import ConstService
 from andes.core.var import Algeb, AliasState
 from andes.models.distributed.pvd1 import PVD1Data, PVD1Model
 
@@ -52,6 +53,10 @@ class ESD1Model(PVD1Model):
 
     def __init__(self, system, config):
         PVD1Model.__init__(self, system, config)
+
+        self.pmin = ConstService(v_str='-pmx')
+
+        self.PHL.lower = self.pmin
 
         # --- Determine whether the energy storage is in charging or discharging mode ---
         self.LTN = LessThan(self.Ipout_y, 0.0)
