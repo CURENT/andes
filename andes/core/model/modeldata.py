@@ -11,6 +11,7 @@ from andes.core.model.modelcache import ModelCache
 from andes.core.param import (BaseParam, DataParam, IdxParam, NumParam,
                               TimerParam)
 from andes.shared import pd
+from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +278,8 @@ class ModelData:
 
         return out
 
-    def find_idx(self, keys, values, allow_none=False, default=False):
+    def find_idx(self, keys, values, allow_none=False, default=False,
+                 no_flatten=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -292,11 +294,30 @@ class ModelData:
             Allow key, value to be not found. Used by groups.
         default : bool
             Default idx to return if not found (missing)
+        no_flatten : bool
+            If True, return the non-flattened list of idxes. Otherwise, flatten the list.
 
         Returns
         -------
         list
             indices of devices
+
+        Examples
+        --------
+        >>> # Use example case of IEEE 14-bus system with PVD1
+        >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
+
+        >>> # To find the idx of `PVD1` with `name` of 'PVD1_1' and 'PVD1_2'
+        >>> ss.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'])
+        [1, 2]
+
+        >>> # To find the idx of `PVD1` with `gammap` equals to 0.1
+        >>> ss.find_idx(keys='gammap', values=0.1)
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        >>> # To find the idx of `PVD1` with `gammap` equals to 0.1 and `name` of 'PVD1_1'
+        >>> ss.find_idx(keys=['gammap', 'name'], values=[[0.1], ['PVD1_1']])
+        [1]
         """
         if isinstance(keys, str):
             keys = (keys,)
@@ -316,21 +337,33 @@ class ModelData:
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
+            # check if all elements in values have the same length
+            iterator = iter(values)
+            try:
+                first_length = len(next(iterator))
+                ok_len = all(len(element) == first_length for element in iterator)
+            except StopIteration:  # empty iterable
+                ok_len = True
+            if not ok_len:
+                raise ValueError("All elements in values must have the same length")
+
         v_attrs = [self.__dict__[key].v for key in keys]
 
         idxes = []
         for v_search in zip(*values):
-            v_idx = None
+            v_idx_list = []
             for pos, v_attr in enumerate(zip(*v_attrs)):
                 if all([i == j for i, j in zip(v_search, v_attr)]):
-                    v_idx = self.idx.v[pos]
-                    break
-            if v_idx is None:
+                    v_idx_list.append(self.idx.v[pos])
+            if not v_idx_list:
                 if allow_none is False:
                     raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
                 else:
-                    v_idx = default
+                    v_idx_list.append(default)
 
-            idxes.append(v_idx)
+            idxes.append(v_idx_list)
 
-        return idxes
+        if not no_flatten:
+            return list_flatten(idxes)
+        else:
+            return idxes

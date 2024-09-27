@@ -243,31 +243,41 @@ class GroupBase:
 
         return True
 
-    def find_idx(self, keys, values, allow_none=False, default=None):
+    def find_idx(self, keys, values, allow_none=False, default=None,
+                 no_flatten=False):
         """
         Find indices of devices that satisfy the given `key=value` condition.
 
         This method iterates over all models in this group.
         """
-        indices_found = []
-        # `indices_found` contains found indices returned from all models of this group
+        idx_mdls = []
         for model in self.models.values():
-            indices_found.append(model.find_idx(keys, values, allow_none=True, default=default))
+            idx_mdls.append(model.find_idx(keys, values, allow_none=True, default=default,
+                                           no_flatten=True))
 
-        out = []
-        for idx, idx_found in enumerate(zip(*indices_found)):
-            if not allow_none:
-                if idx_found.count(None) == len(idx_found):
-                    missing_values = [item[idx] for item in values]
-                    raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
+        # `indices_found` contains found indices returned from all models of this group
+        # NOTE: if the idx returned to [default] across all models, it means there is
+        # no such idx in this group. If so, return default or raise an key error.
+        indices_found = []
+        uid_missing = []
+        for uid, col in enumerate(zip(*idx_mdls)):
+            if all(item == [default] for item in col):
+                if allow_none:
+                    indices_found.append([default])
+                else:
+                    uid_missing.append(uid)
+            else:
+                col_filter = [item for item in col if item != [default]]
+                indices_found.append(list_flatten(col_filter))
 
-            real_idx = default
-            for item in idx_found:
-                if item is not None:
-                    real_idx = item
-                    break
-            out.append(real_idx)
-        return out
+        if uid_missing:
+            miss_str = f'{keys}={[v[u] for v in values for u in uid_missing]}'
+            raise IndexError(f'Group <{self.class_name}> does not contain device with {miss_str}')
+
+        if not no_flatten:
+            return list_flatten(indices_found)
+        else:
+            return indices_found
 
     def _check_src(self, src: str):
         """
