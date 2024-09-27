@@ -60,17 +60,17 @@ class TestModelMethods(unittest.TestCase):
         mdl = ss.PVD1
 
         # multiple values
-        self.assertEqual(mdl.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'],
-                                      allow_none=False, default=False, no_flatten=False),
-                         [1, 2])
+        self.assertListEqual(mdl.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'],
+                                          allow_none=False, default=False, no_flatten=False),
+                             [1, 2])
         # multiple values, no flatten
-        self.assertEqual(mdl.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'],
-                                      allow_none=False, default=False, no_flatten=True),
-                         [[1], [2]])
+        self.assertListEqual(mdl.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'],
+                                          allow_none=False, default=False, no_flatten=True),
+                             [[1], [2]])
         # non-existing value
-        self.assertEqual(mdl.find_idx(keys='name', values=['PVD1_999'],
-                                      allow_none=True, default=False, no_flatten=False),
-                         [False])
+        self.assertListEqual(mdl.find_idx(keys='name', values=['PVD1_999'],
+                                          allow_none=True, default=False, no_flatten=False),
+                             [False])
 
         # non-existing value is not allowed
         with self.assertRaises(IndexError):
@@ -78,15 +78,15 @@ class TestModelMethods(unittest.TestCase):
                          allow_none=False, default=False, no_flatten=False)
 
         # multiple keys
-        self.assertEqual(mdl.find_idx(keys=['gammap', 'name'],
-                                      values=[[0.1, 0.1], ['PVD1_1', 'PVD1_2']]),
-                         [1, 2])
+        self.assertListEqual(mdl.find_idx(keys=['gammap', 'name'],
+                                          values=[[0.1, 0.1], ['PVD1_1', 'PVD1_2']]),
+                             [1, 2])
 
         # multiple keys, with non-existing values
-        self.assertEqual(mdl.find_idx(keys=['gammap', 'name'],
-                                      values=[[0.1, 0.1], ['PVD1_1', 'PVD1_999']],
-                                      allow_none=True, default='CURENT'),
-                         [1, 'CURENT'])
+        self.assertListEqual(mdl.find_idx(keys=['gammap', 'name'],
+                                          values=[[0.1, 0.1], ['PVD1_1', 'PVD1_999']],
+                                          allow_none=True, default='CURENT'),
+                             [1, 'CURENT'])
 
         # multiple keys, with non-existing values not allowed
         with self.assertRaises(IndexError):
