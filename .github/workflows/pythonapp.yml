@@ -16,8 +16,14 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: true
         activate-environment: anaconda-client-env
-    - name: Configure conda to use default solver
-      run: conda config --set solver classic
+    - shell: bash -el {0}
+      name: Configure conda to use default solver
+      run: |
+        conda config --set solver classic
+    - shell: bash -el {0}
+      name: Install mamba
+      run: |
+        conda install -n base -c conda-forge mamba
     - shell: bash -el {0}
       name: Install dependencies
       run: |
