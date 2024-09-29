@@ -15,11 +15,15 @@ jobs:
         miniforge-version: "latest"
         channels: conda-forge,defaults
         channel-priority: true
-        activate-environment: anaconda-client-env
     - shell: bash -el {0}
       name: Install mamba
       run: |
         conda install -n base -c conda-forge mamba
+    - shell: bash -el {0}
+      name: Create and activate environment
+      run: |
+        mamba create -n anaconda-client-env
+        echo "conda activate anaconda-client-env" >> $GITHUB_ENV
     - shell: bash -el {0}
       name: Install dependencies
       run: |
