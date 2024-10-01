@@ -248,61 +248,26 @@ class GroupBase:
         Find indices of devices that satisfy the given `key=value` condition.
 
         This method iterates over all models in this group.
-
-        Parameters
-        ----------
-        keys : str, array-like, Sized
-            A string or an array-like of strings containing the names of parameters for the search criteria
-        values : array, array of arrays, Sized
-            Values for the corresponding key to search for. If keys is a str, values should be an array of
-            elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_none : bool, Sized
-            Allow key, value to be not found. Used by groups.
-        default : bool
-            Default idx to return if not found (missing)
-
-        Returns
-        -------
-        list
-            A list of lists containing the indices of devices
-
-        Examples
-        --------
-        >>> # Use example case of IEEE 14-bus system with PVD1
-        >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
-
-        >>> # To find the idx of `DG` connected to `Bus` 4 and 5
-        >>> ss.DG.find_idx(keys='bus', values=[4, 5], allow_none=True)
-        [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [None]]
-
-        >>> # To find the idx of `StaticGen` connected to `Bus` 2, 3, and 4
-        >>> ss.StaticGen.find_idx(keys='bus', values=[2, 3, 4])
-        [[2], [3], [6]]
         """
-        idx_mdls = []
-        for model in self.models.values():
-            idx_mdls.append(model.find_idx(keys, values, allow_none=True, default=default))
-
-        # `indices_found` contains found indices returned from all models of this group
-        # NOTE: if the idx returned to [default] across all models, it means there is
-        # no such idx in this group. If so, return default or raise an key error.
         indices_found = []
-        uid_missing = []
-        for uid, col in enumerate(zip(*idx_mdls)):
-            if all(item == [default] for item in col):
-                if allow_none:
-                    indices_found.append([default])
-                else:
-                    uid_missing.append(uid)
-            else:
-                col_filter = [item for item in col if item != [default]]
-                indices_found.append(list_flatten(col_filter))
+        # `indices_found` contains found indices returned from all models of this group
+        for model in self.models.values():
+            indices_found.append(model.find_idx(keys, values, allow_none=True, default=default))
 
-        if uid_missing:
-            miss_str = f'{keys}={[v[u] for v in values for u in uid_missing]}'
-            raise IndexError(f'Group <{self.class_name}> does not contain device with {miss_str}')
+        out = []
+        for idx, idx_found in enumerate(zip(*indices_found)):
+            if not allow_none:
+                if idx_found.count(None) == len(idx_found):
+                    missing_values = [item[idx] for item in values]
+                    raise IndexError(f'{list(keys)} = {missing_values} not found in {self.class_name}')
 
-        return indices_found
+            real_idx = default
+            for item in idx_found:
+                if item is not None:
+                    real_idx = item
+                    break
+            out.append(real_idx)
+        return out
 
     def _check_src(self, src: str):
         """
