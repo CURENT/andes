@@ -296,7 +296,7 @@ class ModelData:
         Returns
         -------
         list
-            indices of devices
+            A list of lists containing the indices of devices
 
         Examples
         --------
