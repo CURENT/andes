@@ -11,7 +11,6 @@ from andes.core.model.modelcache import ModelCache
 from andes.core.param import (BaseParam, DataParam, IdxParam, NumParam,
                               TimerParam)
 from andes.shared import pd
-from andes.utils.func import list_flatten
 
 logger = logging.getLogger(__name__)
 
@@ -278,8 +277,7 @@ class ModelData:
 
         return out
 
-    def find_idx(self, keys, values, allow_none=False, default=False,
-                 no_flatten=False):
+    def find_idx(self, keys, values, allow_none=False, default=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -294,8 +292,6 @@ class ModelData:
             Allow key, value to be not found. Used by groups.
         default : bool
             Default idx to return if not found (missing)
-        no_flatten : bool
-            If True, return the non-flattened list of idxes. Otherwise, flatten the list.
 
         Returns
         -------
@@ -308,16 +304,16 @@ class ModelData:
         >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
 
         >>> # To find the idx of `PVD1` with `name` of 'PVD1_1' and 'PVD1_2'
-        >>> ss.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'])
-        [1, 2]
+        >>> ss.PVD1.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'])
+        [[1], [2]]
 
         >>> # To find the idx of `PVD1` with `gammap` equals to 0.1
-        >>> ss.find_idx(keys='gammap', values=0.1)
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        >>> ss.PVD1.find_idx(keys='gammap', values=[0.1])
+        ss.PVD1.find_idx(keys='gammap', values=[0.1])
 
         >>> # To find the idx of `PVD1` with `gammap` equals to 0.1 and `name` of 'PVD1_1'
-        >>> ss.find_idx(keys=['gammap', 'name'], values=[[0.1], ['PVD1_1']])
-        [1]
+        >>> ss.PVD1.find_idx(keys=['gammap', 'name'], values=[[0.1], ['PVD1_1']])
+        [[1]]
         """
         if isinstance(keys, str):
             keys = (keys,)
@@ -363,7 +359,4 @@ class ModelData:
 
             idxes.append(v_idx_list)
 
-        if not no_flatten:
-            return list_flatten(idxes)
-        else:
-            return idxes
+        return idxes
