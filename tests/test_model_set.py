@@ -59,14 +59,22 @@ class TestModelMethods(unittest.TestCase):
         ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
         mdl = ss.PVD1
 
+        # not allow all matches
+        self.assertListEqual(mdl.find_idx(keys='gammap', values=[0.1], allow_all=False),
+                             [1])
+
+        # allow all matches
+        self.assertListEqual(mdl.find_idx(keys='gammap', values=[0.1], allow_all=True),
+                             [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
+
         # multiple values
         self.assertListEqual(mdl.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'],
                                           allow_none=False, default=False),
-                             [[1], [2]])
+                             [1, 2])
         # non-existing value
         self.assertListEqual(mdl.find_idx(keys='name', values=['PVD1_999'],
                                           allow_none=True, default=False),
-                             [[False]])
+                             [False])
 
         # non-existing value is not allowed
         with self.assertRaises(IndexError):
@@ -76,13 +84,13 @@ class TestModelMethods(unittest.TestCase):
         # multiple keys
         self.assertListEqual(mdl.find_idx(keys=['gammap', 'name'],
                                           values=[[0.1, 0.1], ['PVD1_1', 'PVD1_2']]),
-                             [[1], [2]])
+                             [1, 2])
 
         # multiple keys, with non-existing values
         self.assertListEqual(mdl.find_idx(keys=['gammap', 'name'],
                                           values=[[0.1, 0.1], ['PVD1_1', 'PVD1_999']],
                                           allow_none=True, default='CURENT'),
-                             [[1], ['CURENT']])
+                             [1, 'CURENT'])
 
         # multiple keys, with non-existing values not allowed
         with self.assertRaises(IndexError):

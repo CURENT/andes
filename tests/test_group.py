@@ -86,12 +86,17 @@ class TestGroup(unittest.TestCase):
         # cross Model, given results
         self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
                                                    values=[1, 2, 3, 4]),
+                             [1, 2, 3, 6])
+        self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
+                                                   values=[1, 2, 3, 4],
+                                                   allow_all=True),
                              [[1], [2], [3], [6]])
 
         self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
                                                    values=[1, 2, 3, 4, 2024],
                                                    allow_none=True,
-                                                   default=2011),
+                                                   default=2011,
+                                                   allow_all=True),
                              [[1], [2], [3], [6], [2011]])
 
         # --- get_field ---
