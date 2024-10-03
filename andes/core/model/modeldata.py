@@ -347,6 +347,10 @@ class ModelData:
             if len(keys) != len(values):
                 raise ValueError("keys and values must have the same length")
 
+            if isinstance(values[0], Iterable):
+                if not all([len(val) == len(values[0]) for val in values]):
+                    raise ValueError("All items in values must have the same length")
+
         v_attrs = [self.__dict__[key].v for key in keys]
 
         idxes = []
