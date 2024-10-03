@@ -271,7 +271,7 @@ class GroupBase:
 
         keys, values = validate_keys_values(keys, values)
 
-        n_val, n_pair = len(values), len(values[0])
+        n_mdl, n_pair = len(self.models), len(values[0])
 
         indices_found = []
         # `indices_found` contains found indices returned from all models of this group
@@ -281,7 +281,7 @@ class GroupBase:
         # --- find missing pairs ---
         i_val_miss = []
         for i in range(n_pair):
-            idx_cross_mdls = [indices_found[j][i] for j in range(n_val)]
+            idx_cross_mdls = [indices_found[j][i] for j in range(n_mdl)]
             if all(item == [default] for item in idx_cross_mdls):
                 i_val_miss.append(i)
 
@@ -294,7 +294,7 @@ class GroupBase:
         # --- output ---
         out_pre = []
         for i in range(n_pair):
-            idx_cross_mdls = [indices_found[j][i] for j in range(n_val)]
+            idx_cross_mdls = [indices_found[j][i] for j in range(n_mdl)]
             if all(item == [default] for item in idx_cross_mdls):
                 out_pre.append([default])
                 continue
