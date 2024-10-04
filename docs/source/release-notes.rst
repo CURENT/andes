@@ -21,6 +21,7 @@ v1.9.3 (2024-04-XX)
 - Fix `TDS.init()` and `TDS._csv_step()` to fit loading from CSV when `Output` exists.
 - Add parameter `allow_all=False` to `ModelData.find_idx()` `GroupBase.find_idx()` to allow searching all matches.
 - Add method `GroupBase.get_idx()` to get all indices of a group.
+- Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus `area`, `owner`, and `zone` using the high-voltage bus values.
 
 v1.9.2 (2024-03-25)
 -------------------
