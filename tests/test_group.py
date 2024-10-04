@@ -102,3 +102,9 @@ class TestGroup(unittest.TestCase):
         # --- get_field ---
         ff = ss.DG.get_field('f', list(ss.DG._idx2model.keys()), 'v_code')
         self.assertTrue(any([item == 'y' for item in ff]))
+
+        # --- get group idx ---
+        self.assertSetEqual(set(ss.DG.get_idx()),
+                            set(ss.PVD1.idx.v))
+        self.assertSetEqual(set(ss.StaticGen.get_idx()),
+                            set(ss.PV.idx.v + ss.Slack.idx.v))
