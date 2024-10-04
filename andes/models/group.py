@@ -458,7 +458,7 @@ class GroupBase:
         >>> ss.DG.get_idx()
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-        >>> ss.SynGen.get_idx()
+        >>> ss.StaticGen.get_idx()
         [2, 3, 4, 5, 6, 1]
         """
         all_idx = [mdl.idx.v for mdl in self.models.values()]
