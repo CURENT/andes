@@ -293,7 +293,8 @@ class ModelData:
         default : bool, optional
             Default idx to return if not found (missing)
         allow_all : bool, optional
-            Return all matches if set to True
+            If True, returns a list of lists where each nested list contains all the matches for the
+            corresponding search criteria.
 
         Returns
         -------
@@ -304,8 +305,6 @@ class ModelData:
         -----
         - Only the first match is returned by default.
         - If all matches are needed, set `allow_all` to True.
-        - When `allow_all` is set to True, the function returns a list of lists where each nested list contains
-        all the matches for the corresponding search criteria.
 
         Examples
         --------
