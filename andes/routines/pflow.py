@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 class PFlow(BaseRoutine):
     """
     Power flow calculation routine.
+
+    In power flow analysis, there are reactive power limits for PV generators (see :ref:`PV`), but it does
+    not enforce bus voltage limits. Given the nature of power flow, the solution can still differ from PSS/E.
     """
 
     def __init__(self, system=None, config=None):
