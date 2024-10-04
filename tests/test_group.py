@@ -71,6 +71,7 @@ class TestGroup(unittest.TestCase):
                                 [6, 7, 8, 1])
 
         # --- find_idx ---
+        # same Model
         self.assertListEqual(ss.DG.find_idx('name', ['PVD1_1', 'PVD1_2']),
                              ss.PVD1.find_idx('name', ['PVD1_1', 'PVD1_2']),
                              )
@@ -81,6 +82,22 @@ class TestGroup(unittest.TestCase):
                              ss.PVD1.find_idx(['name', 'Sn'],
                                               [('PVD1_1', 'PVD1_2'),
                                                (1.0, 1.0)]))
+
+        # cross Model, given results
+        self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
+                                                   values=[1, 2, 3, 4]),
+                             [1, 2, 3, 6])
+        self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
+                                                   values=[1, 2, 3, 4],
+                                                   allow_all=True),
+                             [[1], [2], [3], [6]])
+
+        self.assertListEqual(ss.StaticGen.find_idx(keys='bus',
+                                                   values=[1, 2, 3, 4, 2024],
+                                                   allow_none=True,
+                                                   default=2011,
+                                                   allow_all=True),
+                             [[1], [2], [3], [6], [2011]])
 
         # --- get_field ---
         ff = ss.DG.get_field('f', list(ss.DG._idx2model.keys()), 'v_code')

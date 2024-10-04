@@ -4,13 +4,13 @@ Module for ModelData.
 
 import logging
 from collections import OrderedDict
-from typing import Iterable, Sized
 
 import numpy as np
 from andes.core.model.modelcache import ModelCache
 from andes.core.param import (BaseParam, DataParam, IdxParam, NumParam,
                               TimerParam)
 from andes.shared import pd
+from andes.utils.func import validate_keys_values
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +277,7 @@ class ModelData:
 
         return out
 
-    def find_idx(self, keys, values, allow_none=False, default=False):
+    def find_idx(self, keys, values, allow_none=False, default=False, allow_all=False):
         """
         Find `idx` of devices whose values match the given pattern.
 
@@ -288,49 +288,65 @@ class ModelData:
         values : array, array of arrays, Sized
             Values for the corresponding key to search for. If keys is a str, values should be an array of
             elements. If keys is a list, values should be an array of arrays, each corresponds to the key.
-        allow_none : bool, Sized
+        allow_none : bool, Sized, optional
             Allow key, value to be not found. Used by groups.
-        default : bool
+        default : bool, optional
             Default idx to return if not found (missing)
+        allow_all : bool, optional
+            If True, returns a list of lists where each nested list contains all the matches for the
+            corresponding search criteria.
 
         Returns
         -------
         list
             indices of devices
+
+        Notes
+        -----
+        - Only the first match is returned by default.
+        - If all matches are needed, set `allow_all` to True.
+
+        Examples
+        --------
+        >>> # Use example case of IEEE 14-bus system with PVD1
+        >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
+
+        >>> # To find the idx of `PVD1` with `name` of 'PVD1_1' and 'PVD1_2'
+        >>> ss.PVD1.find_idx(keys='name', values=['PVD1_1', 'PVD1_2'])
+        [1, 2]
+
+        >>> # To find the idx of `PVD1` connected to bus 4
+        >>> ss.PVD1.find_idx(keys='bus', values=[4])
+        [1]
+
+        >>> # To find ALL the idx of `PVD1` with `gammap` equals to 0.1
+        >>> ss.PVD1.find_idx(keys='gammap', values=[0.1], allow_all=True)
+        [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
+
+        >>> # To find the idx of `PVD1` with `gammap` equals to 0.1 and `name` of 'PVD1_1'
+        >>> ss.PVD1.find_idx(keys=['gammap', 'name'], values=[[0.1], ['PVD1_1']])
+        [1]
         """
-        if isinstance(keys, str):
-            keys = (keys,)
-            if not isinstance(values, (int, float, str, np.floating)) and not isinstance(values, Iterable):
-                raise ValueError(f"value must be a string, scalar or an iterable, got {values}")
 
-            if len(values) > 0 and not isinstance(values[0], (list, tuple, np.ndarray)):
-                values = (values,)
-
-        elif isinstance(keys, Sized):
-            if not isinstance(values, Iterable):
-                raise ValueError(f"value must be an iterable, got {values}")
-
-            if len(values) > 0 and not isinstance(values[0], Iterable):
-                raise ValueError(f"if keys is an iterable, values must be an iterable of iterables. got {values}")
-
-            if len(keys) != len(values):
-                raise ValueError("keys and values must have the same length")
+        keys, values = validate_keys_values(keys, values)
 
         v_attrs = [self.__dict__[key].v for key in keys]
 
         idxes = []
         for v_search in zip(*values):
-            v_idx = None
+            v_idx = []
             for pos, v_attr in enumerate(zip(*v_attrs)):
                 if all([i == j for i, j in zip(v_search, v_attr)]):
-                    v_idx = self.idx.v[pos]
-                    break
-            if v_idx is None:
+                    v_idx.append(self.idx.v[pos])
+            if not v_idx:
                 if allow_none is False:
                     raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
                 else:
-                    v_idx = default
+                    v_idx = [default]
 
-            idxes.append(v_idx)
+            if allow_all:
+                idxes.append(v_idx)
+            else:
+                idxes.append(v_idx[0])
 
         return idxes
