@@ -11,7 +11,7 @@ v1.9 Notes
 
 v1.9.3 (2024-04-XX)
 -------------------
-- In the `dae`` module, change `self.t.itemset` to array assignment to ensure compatibility with NumPy 2.0.
+- In the ``dae`` module, change `self.t.itemset` to array assignment to ensure compatibility with NumPy 2.0.
 - Follow RTD's deprecation of Sphinx context injection at build time
 - In symbolic processor, most variables are assumed to be real, except some
   services that are specified as complex. This will allow generating simplified
@@ -20,6 +20,7 @@ v1.9.3 (2024-04-XX)
 - Add parameter from_csv=None in TDS.run() to allow loading data from CSV files at TDS begining.
 - Fix `TDS.init()` and `TDS._csv_step()` to fit loading from CSV when `Output` exists.
 - Add parameter `allow_all=False` to `ModelData.find_idx()` `GroupBase.find_idx()` to allow searching all matches.
+- Add method `GroupBase.get_idx()` to get all indices of a group.
 
 v1.9.2 (2024-03-25)
 -------------------
