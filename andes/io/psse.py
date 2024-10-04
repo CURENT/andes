@@ -555,11 +555,20 @@ def _parse_transf_v33(raw, system, max_bus):
                 logger.warning('Added bus <%s> for 3-winding transformer <%s-%s-%s>',
                                new_bus, data[0][0], data[0][1], data[0][2])
 
+            # Assign `area`, `owner`, and `zone` using the high-voltage side bus values
+            high_voltage_bus = data[0][0]
+            area = system.Bus.get(src='area', attr='v', idx=high_voltage_bus)
+            zone = system.Bus.get(src='zone', attr='v', idx=high_voltage_bus)
+            owner = system.Bus.get(src='owner', attr='v', idx=high_voltage_bus)
+
             param = {'idx': new_bus,
                      'name': '_'.join([str(i) for i in data[0][:3]]),
                      'Vn': 1.0,
                      'v0': data[1][-2],
-                     'a0': data[1][-1] * deg2rad
+                     'a0': data[1][-1] * deg2rad,
+                     'area': area,
+                     'owner': owner,
+                     'zone': zone,
                      }
 
             out['Bus'].append(param)
