@@ -438,6 +438,32 @@ class GroupBase:
 
         return idx
 
+    def get_idx(self):
+        """
+        Return all the devices idx in this group.
+
+        Returns
+        -------
+        list
+            List of indices.
+
+        Notes
+        -----
+        The default models sequence depends on the order of the models in the group,
+        which comes from OrderedDict `file_classes` in `models.__init__.py`.
+
+        Examples
+        --------
+        >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
+        >>> ss.DG.get_idx()
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+        >>> ss.SynGen.get_idx()
+        [2, 3, 4, 5, 6, 1]
+        """
+        all_idx = [mdl.idx.v for mdl in self.models.values()]
+        return list_flatten(all_idx)
+
     def doc(self, export='plain'):
         """
         Return the documentation of the group in a string.
