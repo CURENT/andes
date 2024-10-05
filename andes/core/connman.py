@@ -19,11 +19,16 @@ class ConnMan:
         system: system object
         """
         self.system = system
+        self.busu0 = system.Bus.u.v.copy()  # a copy of Bus.u.v for internal use
 
-    def _act(self):
+    def act(self):
         """
         Update the connectivity.
         """
+        if not self.is_act:
+            logger.debug('Connectivity is not need to be updated.')
+            return None
+
         if True:
             self._disconnect()
         else:
