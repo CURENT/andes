@@ -17,8 +17,8 @@ class PFlow(BaseRoutine):
     """
     Power flow calculation routine.
 
-    In power flow analysis, there are reactive power limits for PV generators (see :ref:`PV`), but it does
-    not enforce bus voltage limits. Given the nature of power flow, the solution can still differ from PSS/E.
+    Power flow analysis currently supports limiting reactive power (needs to to be
+    turned on via `config.pv2pq`) but does not enforce voltage limits.
     """
 
     def __init__(self, system=None, config=None):
