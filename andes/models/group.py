@@ -438,7 +438,7 @@ class GroupBase:
 
         return idx
 
-    def get_idx(self):
+    def get_all_idxes(self):
         """
         Return all the devices idx in this group.
 
@@ -455,14 +455,13 @@ class GroupBase:
         Examples
         --------
         >>> ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
-        >>> ss.DG.get_idx()
+        >>> ss.DG.get_all_idxes()
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-        >>> ss.StaticGen.get_idx()
+        >>> ss.StaticGen.get_all_idxes()
         [2, 3, 4, 5, 6, 1]
         """
-        all_idx = [mdl.idx.v for mdl in self.models.values()]
-        return list_flatten(all_idx)
+        return list(self._idx2model.keys())
 
     def doc(self, export='plain'):
         """
