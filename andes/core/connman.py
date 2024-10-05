@@ -19,7 +19,22 @@ class ConnMan:
         system: system object
         """
         self.system = system
-        self.busu0 = system.Bus.u.v.copy()  # a copy of Bus.u.v for internal use
+        self.busu0 = None           # placeholder for Bus.u.v
+        self.is_act = False         # flag for act, True to act
+
+    def init(self):
+        """
+        Initialize the connectivity.
+        """
+        self.busu0 = self.system.Bus.u.v.copy()
+        return None
+
+    def record(self):
+        """
+        Record the bus connectivity in-place.
+        """
+        self.busu0[...] = self.system.Bus.u
+        return None
 
     def act(self):
         """
@@ -29,21 +44,8 @@ class ConnMan:
             logger.debug('Connectivity is not need to be updated.')
             return None
 
-        if True:
-            self._disconnect()
-        else:
-            self._connect()
+        # --- action ---
+        pass
+
         self.system.connectivity(info=True)
         return None
-
-    def _disconnect(self):
-        """
-        Disconnect involved devices.
-        """
-        pass
-        
-    def _connect(self):
-        """
-        Connect involved devices.
-        """
-        pass

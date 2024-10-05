@@ -23,7 +23,7 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import andes.io
-from andes.core import AntiWindup, Config, Model
+from andes.core import AntiWindup, Config, Model, ConnMan
 from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
@@ -193,6 +193,7 @@ class System:
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
         self.streaming = Streaming(self)                   # Dime2 streaming
+        self.conn = ConnMan(system=self)                   # connectivity manager
 
         # dynamic imports of groups, models and routines
         self.import_groups()
@@ -487,6 +488,9 @@ class System:
         self.set_dae_names(self.exist.pflow)        # needs perf. optimization
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
+
+        # init connectivity manager
+        self.conn.init()
 
         if ret is True:
             self.is_setup = True  # set `is_setup` if no error occurred
