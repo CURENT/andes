@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 class PFlow(BaseRoutine):
     """
     Power flow calculation routine.
+
+    Power flow analysis currently supports limiting reactive power (needs to to be
+    turned on via `config.pv2pq`) but does not enforce voltage limits.
     """
 
     def __init__(self, system=None, config=None):
