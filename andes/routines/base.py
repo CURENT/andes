@@ -7,6 +7,17 @@ from andes.core import Config
 from collections import OrderedDict
 
 
+def check_conn(func):
+    """
+    Wrapper function to check connectivity.
+    """
+
+    def wrapper(self, *args, **kwargs):
+        self.system.conn.act()
+        return func(self, *args, **kwargs)
+    return wrapper
+
+
 class BaseRoutine:
     """
     Base routine class.
