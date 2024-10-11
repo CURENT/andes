@@ -12,7 +12,7 @@ from scipy.linalg import solve
 
 from andes.io.txt import dump_data
 from andes.plot import set_latex, set_style
-from andes.routines.base import BaseRoutine
+from andes.routines.base import BaseRoutine, check_conn_before_init
 from andes.shared import div, matrix, plt, sparse, spdiag, spmatrix
 from andes.utils.misc import elapsed
 from andes.variables.report import report_info
@@ -492,6 +492,7 @@ class EIG(BaseRoutine):
 
         return status
 
+    @check_conn_before_init
     def run(self, **kwargs):
         """
         Run small-signal stability analysis.

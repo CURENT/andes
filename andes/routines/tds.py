@@ -9,7 +9,7 @@ import sys
 import time
 from collections import OrderedDict
 
-from andes.routines.base import BaseRoutine
+from andes.routines.base import BaseRoutine, check_conn_before_init
 from andes.routines.daeint import Trapezoid, method_map
 from andes.routines.criteria import deltadelta
 from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
@@ -174,6 +174,7 @@ class TDS(BaseRoutine):
         self.method = Trapezoid()
         self.set_method(self.config.method)
 
+    @check_conn_before_init
     def init(self):
         """
         Initialize the status, storage and values for TDS.
