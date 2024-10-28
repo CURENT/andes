@@ -57,8 +57,8 @@ class ConnMan:
             System object to manage the connectivity.
         """
         self.system = system
-        self.busu0 = None           # placeholder for Bus.u.v
-        self.is_off = False         # flag to indicate if any bus is turned off
+        self.busu0 = None               # placeholder for Bus.u.v
+        self.is_needed = False          # flag to indicate if check is needed
         self.changes = {'on': None, 'off': None}    # dict of bus connectivity changes
 
     def init(self):
@@ -76,7 +76,7 @@ class ConnMan:
         self.changes['off'] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0).astype(int)
 
         if np.any(self.changes['off']):
-            self.is_off = True
+            self.is_needed = True
         return self.changes
 
     def record(self):
@@ -96,7 +96,7 @@ class ConnMan:
         if np.any(self.changes['off']):
             offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
             logger.warning(f'Bus turned off: {offbus_idx}')
-            self.is_off = True
+            self.is_needed = True
 
         # update busu0
         self.busu0[...] = self.system.Bus.u.v
@@ -106,13 +106,18 @@ class ConnMan:
         """
         Update the connectivity.
         """
-        if not self.is_off:
-            logger.debug('Connectivity is not need to be updated.')
-            return None
+        if not self.is_needed:
+            logger.debug('No need to update connectivity.')
+            return True
 
         # --- action ---
-        logger.warning('Entering connectivity update.')
         offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
+
+        # skip if no bus is turned off
+        if len(offbus_idx) == 0:
+            return True
+
+        logger.warning('Entering connectivity update.')
         logger.warning(f'Following bus(es) are turned off: {offbus_idx}')
 
         logger.warning('-> System connectivity update results:')
@@ -133,7 +138,6 @@ class ConnMan:
                                                    idx=devices_flat, value=0)
                 logger.warning(f'In <{grp_name}>, turn off {devices_flat}')
 
-        self.is_off = False     # reset the action flag
-
+        self.is_needed = False     # reset the action flag
         self.system.connectivity(info=True)
-        return None
+        return True
