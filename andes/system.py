@@ -491,8 +491,6 @@ class System:
 
         # init connectivity manager
         self.conn.init()
-        # act on connectivity changes
-        self.conn.act()
 
         if ret is True:
             self.is_setup = True  # set `is_setup` if no error occurred

@@ -77,7 +77,10 @@ class ConnMan:
 
         if np.any(self.changes['off']):
             self.is_needed = True
-        return self.changes
+
+        self.act()
+
+        return True
 
     def record(self):
         """
