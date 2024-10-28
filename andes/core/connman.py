@@ -41,8 +41,8 @@ class ConnMan:
         System object to manage the connectivity.
     busu0: ndarray
         Last recorded bus connection status.
-    is_changed: bool
-        Flag to indicate if bus connectivity is changed.
+    is_needed: bool
+        Flag to indicate if connectivity update is needed.
     changes: dict
         Dictionary to record bus connectivity changes ('on' and 'off').
     """
