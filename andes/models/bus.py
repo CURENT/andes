@@ -133,6 +133,7 @@ class Bus(Model, BusData):
         super().alter(**kwargs)
         _conn_status(self, **kwargs)
 
+
 def _conn_status(self, **kwargs):
     """
     Helper function to determine if connectivity update is needed.
