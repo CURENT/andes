@@ -124,3 +124,25 @@ class Bus(Model, BusData):
                        '(1-flat_start)*a0'
         self.v.v_str = 'flat_start*1 + ' \
                        '(1-flat_start)*v0'
+
+    def set(self, **kwargs):
+        super().set(**kwargs)
+        _conn_status(self, **kwargs)
+
+    def alter(self, **kwargs):
+        super().alter(**kwargs)
+        _conn_status(self, **kwargs)
+
+def _conn_status(self, **kwargs):
+    """
+    Helper function to determine if connectivity update is needed.
+    """
+    src = kwargs.get('src', None)
+    attr = kwargs.get('attr', None)
+    if src == 'u' and attr == 'v':
+        if self.system.is_setup:
+            self.system.conn.record()
+        if not self.system.TDS.initialized:
+            if self.system.PFlow.converged:
+                logger.warning('Bus connectivity is updated, resolve PFlow before running EIG or TDS!')
+                self.system.PFlow.converged = False
