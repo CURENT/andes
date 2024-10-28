@@ -58,7 +58,7 @@ class ConnMan:
         """
         self.system = system
         self.busu0 = None           # placeholder for Bus.u.v
-        self.is_changed = False     # flag to indicate if bus connectivity is changed
+        self.is_off = False         # flag to indicate if any bus is turned off
         self.changes = {'on': None, 'off': None}    # dict of bus connectivity changes
 
     def init(self):
@@ -68,15 +68,15 @@ class ConnMan:
         `ConnMan` is initialized in `System.setup()`, where all buses are considered online
         by default. This method records the initial bus connectivity.
         """
-        self.busu0 = np.ones(self.system.Bus.n, dtype=bool)
+        self.busu0 = np.ones(self.system.Bus.n, dtype=int)
         # NOTE: 'on' means th or 'off'e bus is previous offline and now online
         #       'off' means the bus is previous online and now offline
         #       The bool value for each bus indicates if the bus is 'on'
-        self.changes['on'] = np.zeros(self.system.Bus.n, dtype=bool)
-        self.changes['off'] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0)
+        self.changes['on'] = np.zeros(self.system.Bus.n, dtype=int)
+        self.changes['off'] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0).astype(int)
 
         if np.any(self.changes['off']):
-            self.is_changed = True
+            self.is_off = True
         return self.changes
 
     def record(self):
@@ -91,10 +91,12 @@ class ConnMan:
         if np.any(self.changes['on']):
             onbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["on"])[0]]
             logger.warning(f'Bus turned on: {onbus_idx}')
+            logger.warning('Note that turning on bus(es) does not trigger connectivity update.')
 
         if np.any(self.changes['off']):
             offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
             logger.warning(f'Bus turned off: {offbus_idx}')
+            self.is_off = True
 
         # update busu0
         self.busu0[...] = self.system.Bus.u.v
@@ -104,7 +106,7 @@ class ConnMan:
         """
         Update the connectivity.
         """
-        if not self.is_changed:
+        if not self.is_off:
             logger.debug('Connectivity is not need to be updated.')
             return None
 
@@ -131,7 +133,7 @@ class ConnMan:
                                                    idx=devices_flat, value=0)
                 logger.warning(f'In <{grp_name}>, turn off {devices_flat}')
 
-        self.is_changed = False     # reset the action flag
+        self.is_off = False     # reset the action flag
 
         self.system.connectivity(info=True)
         return None
