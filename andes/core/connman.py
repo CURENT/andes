@@ -69,9 +69,9 @@ class ConnMan:
         by default. This method records the initial bus connectivity.
         """
         self.busu0 = np.ones(self.system.Bus.n, dtype=bool)
-        # NOTE: 'on' means the bus is previous offline and now online
+        # NOTE: 'on' means th or 'off'e bus is previous offline and now online
         #       'off' means the bus is previous online and now offline
-        #       The bool value for each bus indicates if the bus is 'on' or 'off'
+        #       The bool value for each bus indicates if the bus is 'on'
         self.changes['on'] = np.zeros(self.system.Bus.n, dtype=bool)
         self.changes['off'] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0)
 
