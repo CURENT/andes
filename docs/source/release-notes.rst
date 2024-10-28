@@ -11,6 +11,15 @@ v1.9 Notes
 
 v1.9.3 (2024-04-XX)
 -------------------
+Development of connectivity manager `ConnMan`:
+
+- Add case `ieee14_conn.xlsx` for demonstration.
+- Add `ConnMan` class to manage connectivity.
+- Add `ConnMan` to `System` to as an attribute `conn`.
+- Add a demo notebook for `ConnMan`.
+
+Other changes:
+
 - In the ``dae`` module, change `self.t.itemset` to array assignment to ensure compatibility with NumPy 2.0.
 - Follow RTD's deprecation of Sphinx context injection at build time
 - In symbolic processor, most variables are assumed to be real, except some
