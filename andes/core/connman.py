@@ -11,9 +11,11 @@ from andes.shared import np
 logger = logging.getLogger(__name__)
 
 
-# connectivity dependencies for each model
-# TODO: this is not an exhaustive list
-# TODO: DC Topologies are not included yet
+# connectivity dependencies of `Bus`
+# NOTE: only include PFlow models and measurements models
+# cause online status of dynamic models are expected to be handled by their
+# corresponding static models
+# TODO: DC Topologies are not included yet, `Node`, etc
 bus_deps = OrderedDict([
     ('ACLine', ['bus1', 'bus2']),
     ('ACShort', ['bus1', 'bus2']),
