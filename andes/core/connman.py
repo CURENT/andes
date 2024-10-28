@@ -110,9 +110,10 @@ class ConnMan:
 
         # --- action ---
         logger.warning('Entering connectivity update.')
-        logger.warning('-> System connectivity update results:')
-
         offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
+        logger.warning(f'Following bus(es) are turned off: {offbus_idx}')
+
+        logger.warning('-> System connectivity update results:')
         for grp_name, src_list in bus_deps.items():
             devices = []
             for src in src_list:
