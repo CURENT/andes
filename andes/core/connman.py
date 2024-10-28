@@ -110,6 +110,7 @@ class ConnMan:
 
         # --- action ---
         logger.warning('Entering connectivity update.')
+        logger.warning('-> System connectivity update results:')
 
         offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
         for grp_name, src_list in bus_deps.items():
@@ -126,7 +127,7 @@ class ConnMan:
 
             if len(devices_flat) > 0:
                 self.system.__dict__[grp_name].set(src='u', attr='v',
-                                                idx=devices_flat, value=0)
+                                                   idx=devices_flat, value=0)
                 logger.warning(f'In <{grp_name}>, turn off {devices_flat}')
 
         self.is_changed = False     # reset the action flag
