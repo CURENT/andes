@@ -659,7 +659,7 @@ class StaticGen(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
+        self.common_params.extend(('bus', 'Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
         self.common_vars.extend(('q', 'a', 'v'))
 
         self.SynGen = BackRef()
