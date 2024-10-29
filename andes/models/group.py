@@ -244,6 +244,41 @@ class GroupBase:
 
         return True
 
+    def alter(self, src, idx, value):
+        """
+        Alter values of input parameters or constant service for a group of models.
+
+        Parameters
+        ----------
+        src : str
+            The parameter name to alter
+        idx : str, float, int
+            The unique identifier for the device to alter
+        value : float
+            The desired value
+        """
+        self._check_src(src)
+        self._check_idx(idx)
+
+        idx, _ = self._1d_vectorize(idx)
+        models = self.idx2model(idx)
+
+        if isinstance(value, (str, int, float, np.integer, np.floating)):
+            value = [value] * len(idx)
+
+        for mdl, ii, val in zip(models, idx, value):
+            instance = mdl.__dict__[src]
+
+            if hasattr(instance, 'vin') and (instance.vin is not None):
+                mdl.set(src, ii, 'vin', val)
+
+                uid = mdl.idx2uid(ii)
+                mdl.set(src, ii, 'v', val * instance.pu_coeff[uid])
+            else:
+                mdl.set(src, ii, 'v', val)
+
+        return True
+
     def find_idx(self, keys, values, allow_none=False, default=None, allow_all=False):
         """
         Find indices of devices that satisfy the given `key=value` condition.
