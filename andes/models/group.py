@@ -5,6 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 from andes.core.service import BackRef
+from andes.shared import pd
 from andes.utils.func import list_flatten, validate_keys_values
 
 logger = logging.getLogger(__name__)
@@ -462,6 +463,50 @@ class GroupBase:
         [2, 3, 4, 5, 6, 1]
         """
         return list(self._idx2model.keys())
+
+    def as_dict(self, vin=False):
+        """
+        Export common parameters as a dict.
+
+        Returns
+        -------
+        dict
+            a dict with the keys being the `ModelData` parameter names
+            and the values being an array-like of data in the order of adding.
+            Unlike `ModelData.as_dict()`, there is no `uid` field.
+        """
+        out_all = []
+        out_params = self.common_params.copy()
+        out_params.insert(2, 'idx')
+
+        for mdl in self.models.values():
+            if mdl.n <= 0:
+                continue
+            mdl_data = mdl.as_df(vin=True) if vin else mdl.as_dict()
+            mdl_dict = {k: mdl_data.get(k) for k in out_params if k in mdl_data}
+            out_all.append(mdl_dict)
+
+        if not out_all:
+            return {}
+
+        out = {key: np.concatenate([item[key] for item in out_all]) for key in out_all[0].keys()}
+        return out
+
+    def as_df(self, vin=False):
+        """
+        Export common parameters as a `pandas.DataFrame` object.
+
+        Parameters
+        ----------
+        vin : bool
+            If True, export all parameters from original input (``vin``).
+
+        Returns
+        -------
+        DataFrame
+            A dataframe containing all model data. An `uid` column is added.
+        """
+        return pd.DataFrame(self.as_dict(vin=vin))
 
     def doc(self, export='plain'):
         """
