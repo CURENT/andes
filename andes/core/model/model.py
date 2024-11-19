@@ -538,11 +538,6 @@ class Model:
         field, will be overwritten. As a result, altered values will be
         reflected in the dumped case file.
 
-            .. note::
-        This function differs from the `set` function. While changes to ``BaseParam.v``
-        via `set` will not be reflected in the dumped case file, changes to ``BaseParam.v``
-        and ``BaseParam.vin`` will be reflected in the dumped case file when using `alter`.
-
         Parameters
         ----------
         src : str
@@ -556,7 +551,7 @@ class Model:
 
         Notes
         -----
-        New in version 1.9.2: Added the `attr` parameter and the feature to alter
+        New in version 1.9.3: Added the `attr` parameter and the feature to alter
         specific attributes. This feature is useful when you need to manipulate parameter
         values in the system base and ensure that these changes are reflected in the
         dumped case file.

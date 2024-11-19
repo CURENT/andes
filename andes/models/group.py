@@ -248,8 +248,8 @@ class GroupBase:
         """
         Alter values of input parameters or constant service for a group of models.
 
-            .. note::
-        New in version 1.9.3.
+        .. note::
+            New in version 1.9.3.
 
         Parameters
         ----------
@@ -475,8 +475,8 @@ class GroupBase:
         """
         Return all the devices idx in this group.
 
-            .. note::
-        New in version 1.9.3.
+        .. note::
+            New in version 1.9.3.
 
         Returns
         -------
@@ -503,8 +503,8 @@ class GroupBase:
         """
         Export group common parameters as a dictionary.
 
-            .. note::
-        New in version 1.9.3.
+        .. note::
+            New in version 1.9.3.
 
         This method returns a dictionary where the keys are the `ModelData` parameter names
         and the values are array-like structures containing the data in the order they were added.
@@ -541,8 +541,8 @@ class GroupBase:
         """
         Export group common parameters as a `pandas.DataFrame` object.
 
-            .. note::
-        New in version 1.9.3.
+        .. note::
+            New in version 1.9.3.
 
         Parameters
         ----------
