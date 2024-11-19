@@ -244,9 +244,12 @@ class GroupBase:
 
         return True
 
-    def alter(self, src, idx, value):
+    def alter(self, src, idx, value, attr='v'):
         """
         Alter values of input parameters or constant service for a group of models.
+
+            .. note::
+        New in version 1.9.3.
 
         Parameters
         ----------
@@ -256,6 +259,8 @@ class GroupBase:
             The unique identifier for the device to alter
         value : float
             The desired value
+        attr : str, optional
+            The attribute to alter. Default is 'v'.
         """
         self._check_src(src)
         self._check_idx(idx)
@@ -267,15 +272,7 @@ class GroupBase:
             value = [value] * len(idx)
 
         for mdl, ii, val in zip(models, idx, value):
-            instance = mdl.__dict__[src]
-
-            if hasattr(instance, 'vin') and (instance.vin is not None):
-                mdl.set(src, ii, 'vin', val)
-
-                uid = mdl.idx2uid(ii)
-                mdl.set(src, ii, 'v', val * instance.pu_coeff[uid])
-            else:
-                mdl.set(src, ii, 'v', val)
+            mdl.alter(src, ii, val, attr=attr)
 
         return True
 
@@ -501,14 +498,24 @@ class GroupBase:
 
     def as_dict(self, vin=False):
         """
-        Export common parameters as a dict.
+        Export group common parameters as a dictionary.
+
+            .. note::
+        New in version 1.9.3.
+
+        This method returns a dictionary where the keys are the `ModelData` parameter names
+        and the values are array-like structures containing the data in the order they were added.
+        Unlike `ModelData.as_dict()`, this dictionary does not include the `uid` field.
+
+        Parameters
+        ----------
+        vin : bool, optional
+            If True, includes the `vin` attribute in the dictionary. Default is False.
 
         Returns
         -------
         dict
-            a dict with the keys being the `ModelData` parameter names
-            and the values being an array-like of data in the order of adding.
-            Unlike `ModelData.as_dict()`, there is no `uid` field.
+            A dictionary of common parameters.
         """
         out_all = []
         out_params = self.common_params.copy()
@@ -529,7 +536,10 @@ class GroupBase:
 
     def as_df(self, vin=False):
         """
-        Export common parameters as a `pandas.DataFrame` object.
+        Export group common parameters as a `pandas.DataFrame` object.
+
+            .. note::
+        New in version 1.9.3.
 
         Parameters
         ----------
