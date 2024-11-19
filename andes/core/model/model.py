@@ -526,7 +526,7 @@ class Model:
 
         return True
 
-    def alter(self, src, idx, value):
+    def alter(self, src, idx, value, attr='v'):
         """
         Alter values of input parameters or constant service.
 
@@ -538,6 +538,11 @@ class Model:
         field, will be overwritten. As a result, altered values will be
         reflected in the dumped case file.
 
+            .. note::
+        This function differs from the `set` function. While changes to ``BaseParam.v``
+        via `set` will not be reflected in the dumped case file, changes to ``BaseParam.v``
+        and ``BaseParam.vin`` will be reflected in the dumped case file when using `alter`.
+
         Parameters
         ----------
         src : str
@@ -546,17 +551,43 @@ class Model:
             The device to alter
         value : float
             The desired value
+        attr : str
+            The attribute to alter, default is 'v'.
+
+        Notes
+        -----
+        New in version 1.9.2: Added the `attr` parameter and the feature to alter
+        specific attributes. This feature is useful when you need to manipulate parameter
+        values in the system base and ensure that these changes are reflected in the
+        dumped case file.
+
+        Examples
+        --------
+        >>> import andes
+        >>> ss = andes.load(andes.get_case('5bus/pjm5bus.xlsx'), setup=True)
+        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='v')
+        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
+        3.0
+        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='vin')
+        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
+        1.0
         """
 
         instance = self.__dict__[src]
 
-        if hasattr(instance, 'vin') and (instance.vin is not None):
-            self.set(src, idx, 'vin', value)
+        if not hasattr(instance, 'vin'):
+            raise AttributeError(f"{self.class_name}.{src} has no `vin` attribute.")
 
+        if hasattr(instance, 'vin') and (instance.vin is not None):
             uid = self.idx2uid(idx)
-            self.set(src, idx, 'v', value * instance.pu_coeff[uid])
+            if attr == 'vin':
+                self.set(src, idx, 'vin', value / instance.pu_coeff[uid])
+                self.set(src, idx, 'v', value=value)
+            else:
+                self.set(src, idx, 'vin', value)
+                self.set(src, idx, 'v', value * instance.pu_coeff[uid])
         else:
-            self.set(src, idx, 'v', value)
+            self.set(src, idx, attr=attr, value=value)
 
     def get_inputs(self, refresh=False):
         """
