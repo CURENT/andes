@@ -475,6 +475,9 @@ class GroupBase:
         """
         Return all the devices idx in this group.
 
+            .. note::
+        New in version 1.9.3.
+
         Returns
         -------
         list
