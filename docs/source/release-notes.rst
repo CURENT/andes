@@ -22,6 +22,12 @@ v1.9.3 (2024-04-XX)
 - Add parameter `allow_all=False` to `ModelData.find_idx()` `GroupBase.find_idx()` to allow searching all matches.
 - Add method `GroupBase.get_all_idxes()` to get all indices of a group.
 - Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus `area`, `owner`, and `zone` using the high-voltage bus values.
+- Add function signature `attr='v'` to method `Model.alter` for altering parameter values without manual per unit conversion
+- Add following methods to `GroupBase` for easier usage: `get_all_idxes`, `alter`, `as_dict`, and `as_df`
+- Add two demo `add_RenGen.ipynb` and `replace_SynGen.ipynb` to show renewable penetration via code
+- Add a demo `manipulate_params.ipynb` to compare the differnce between `set` and `alter`
+- Extend `SynGen` common parameters with `bus`, `gen`, `Sn`, `Vn`, and `fn`
+- Extend `StaticGen` common parameters with `bus`
 
 v1.9.2 (2024-03-25)
 -------------------
