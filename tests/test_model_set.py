@@ -128,6 +128,6 @@ class TestModelMethods(unittest.TestCase):
         ss.GENCLS.alter(src='M', idx=2, value=1, attr='vin')
         self.assertEqual(ss.GENCLS.M.v[1], 1)
 
-        # alter `vin` on instances without `vin` raises error
-        with self.assertRaises(AttributeError):
-            ss.GENROU.alter(src='p0', idx=2, value=1, attr='vin')
+        # alter `vin` on instances without `vin` falls back to `v`
+        ss.GENCLS.alter(src='p0', idx=2, value=1, attr='vin')
+        self.assertEqual(ss.GENCLS.p0.v[1], 1)

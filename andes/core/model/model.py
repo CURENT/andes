@@ -570,9 +570,6 @@ class Model:
 
         instance = self.__dict__[src]
 
-        if not hasattr(instance, 'vin'):
-            raise AttributeError(f"{self.class_name}.{src} has no `vin` attribute.")
-
         if hasattr(instance, 'vin') and (instance.vin is not None):
             uid = self.idx2uid(idx)
             if attr == 'vin':
@@ -581,6 +578,9 @@ class Model:
             else:
                 self.set(src, idx, 'vin', value)
                 self.set(src, idx, 'v', value * instance.pu_coeff[uid])
+        elif not hasattr(instance, 'vin') and attr == 'vin':
+            logger.warning(f"{self.class_name}.{src} has no `vin` attribute, changing `v`.")
+            self.set(src, idx, 'v', value)
         else:
             self.set(src, idx, attr=attr, value=value)
 
