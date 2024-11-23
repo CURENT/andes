@@ -13,10 +13,10 @@ v1.9.3 (2024-04-XX)
 -------------------
 Development of connectivity manager ``ConnMan``:
 
-- Add case `ieee14_conn.xlsx` for demonstration.
+- Add case ``ieee14_conn.xlsx`` for demonstration.
 - Add ``ConnMan`` class to manage connectivity.
 - Add ``ConnMan`` to `System` to as an attribute ``conn``.
-- Add a demo notebook "ConnMan.ipynb". See folder ``andes/examples/demonstration``.
+- Add a demo notebook ``ConnMan.ipynb``. See folder ``andes/examples/demonstration``.
 
 Other changes:
 
@@ -35,9 +35,9 @@ Other changes:
 - Add function signature ``attr='v'`` to method ``Model.alter`` for altering parameter values without manual
   per unit conversion
 - Add following methods to ``GroupBase`` for easier usage: ``get_all_idxes``, ``alter``, ``as_dict``, and ``as_df``
-- Add two demo "add_RenGen.ipynb" and "replace_SynGen.ipynb" to show how to do renewable penetration via code.
+- Add two demo ``add_RenGen.ipynb`` and ``replace_SynGen.ipynb`` to show how to do renewable penetration via code.
   See folder ``andes/examples/demonstration``
-- Add a demo "manipulate_params.ipynb" to compare the differnce between ``set`` and ``alter``
+- Add a demo ``manipulate_params.ipynb`` to compare the differnce between ``set`` and ``alter``
 - Extend ``SynGen`` common parameters with ``bus``, ``gen``, ``Sn``, ``Vn``, and ``fn``
 - Extend ``StaticGen`` common parameters with ``bus``
 - Fix ``TDS.init()`` and ``TDS._csv_step()`` to fit loading from CSV when ``Output`` exists.
@@ -45,7 +45,7 @@ Other changes:
 - Add method ``GroupBase.get_all_idxes()`` to get all indices of a group.
 - Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus ``area``,
   ``owner``, and ``zone`` using the high-voltage bus values.
-- Specify `multiprocess <=0.70.16` in requirements as 0.70.17 does not support Linux.
+- Specify `multiprocess<=0.70.16` in requirements as 0.70.17 does not support Linux.
 
 v1.9.2 (2024-03-25)
 -------------------
