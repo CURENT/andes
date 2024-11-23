@@ -9,10 +9,10 @@ class TestConnMan(unittest.TestCase):
     """
     Test class `ConnMan`.
     """
+
     def setUp(self) -> None:
         self.ss = andes.load(andes.get_case("ieee14/ieee14_conn.xlsx"),
-                             setup=True, default_config=True, no_output=True,
-                             )
+                             setup=True, default_config=True, no_output=True)
 
     def test_conn_init(self):
         """
@@ -41,23 +41,7 @@ class TestConnMan(unittest.TestCase):
         self.assertEqual(self.ss.StaticLoad.get(src='u', attr='v', idx='PQ_12'), 0)
         self.assertEqual(self.ss.StaticShunt.get(src='u', attr='v', idx='Shunt_3'), 0)
 
-    def test_turn_on(self):
-        """
-        Test if connected devices are not turned on.
-        """
-        # turn on the bus
-        self.ss.Bus.set(src='u', attr='v', idx=15, value=1)
-
-        # assert flag `is_needed` is False, since only diff in `changes['off']` will trigger action
-        self.assertFalse(self.ss.conn.is_needed)
-
-        # assert connected devices are not turned on, since we don't turn on devices automatically
-        self.assertEqual(self.ss.Line.get(src='u', attr='v', idx='Line_21'), 0)
-        self.assertEqual(self.ss.StaticGen.get(src='u', attr='v', idx=6), 0)
-        self.assertEqual(self.ss.StaticLoad.get(src='u', attr='v', idx='PQ_12'), 0)
-        self.assertEqual(self.ss.StaticShunt.get(src='u', attr='v', idx='Shunt_3'), 0)
-
-    def test_turn_off_after_setup(self):
+    def test_turn_off_after_pflow(self):
         """
         Test if `ConnMan` works after solving PFlow.
         """
@@ -73,3 +57,11 @@ class TestConnMan(unittest.TestCase):
         ss.Bus.alter(src='u', idx=15, value=0)
         # flag PFlow.converged should be reset as False by `Bus.set()`
         self.assertFalse(ss.PFlow.converged)
+        self.assertTrue(ss.conn.is_needed)
+
+    def test_turn_on_after_setup(self):
+        """
+        Test if raise NotImplementedError when turning on a bus after system setup.
+        """
+        with self.assertRaises(NotImplementedError):
+            self.ss.Bus.set(src='u', attr='v', idx=15, value=1)

@@ -35,7 +35,8 @@ class ConnMan:
     Define a Connectivity Manager class for System.
 
     Connectivity Manager is used to automatically **turn off**
-    attached devices when a `Bus` is turned off.
+    attached devices when a ``Bus`` is turned off **after** system
+    setup and **before** TDS initializtion.
 
     Attributes
     ----------
@@ -47,6 +48,8 @@ class ConnMan:
         Flag to indicate if connectivity update is needed.
     changes: dict
         Dictionary to record bus connectivity changes ('on' and 'off').
+        'on' means the bus is previous offline and now online.
+        'off' means the bus is previous online and now offline.
     """
 
     def __init__(self, system=None):
@@ -70,10 +73,8 @@ class ConnMan:
         `ConnMan` is initialized in `System.setup()`, where all buses are considered online
         by default. This method records the initial bus connectivity.
         """
+        # NOTE: here, we expect all buses are online before the system setup
         self.busu0 = np.ones(self.system.Bus.n, dtype=int)
-        # NOTE: 'on' means th or 'off'e bus is previous offline and now online
-        #       'off' means the bus is previous online and now offline
-        #       The bool value for each bus indicates if the bus is 'on'
         self.changes['on'] = np.zeros(self.system.Bus.n, dtype=int)
         self.changes['off'] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0).astype(int)
 
@@ -84,27 +85,34 @@ class ConnMan:
 
         return True
 
+    def _update(self):
+        """
+        Helper function for in-place update of bus connectivity.
+        """
+        self.changes['on'][...] = np.logical_and(self.busu0 == 0, self.system.Bus.u.v == 1)
+        self.changes['off'][...] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0)
+        self.busu0[...] = self.system.Bus.u.v
+
     def record(self):
         """
         Record the bus connectivity in-place.
 
         This method should be called if `Bus.set()` or `Bus.alter()` is called.
         """
-        self.changes['on'][...] = np.logical_and(self.busu0 == 0, self.system.Bus.u.v == 1)
-        self.changes['off'][...] = np.logical_and(self.busu0 == 1, self.system.Bus.u.v == 0)
+        self._update()
 
         if np.any(self.changes['on']):
             onbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["on"])[0]]
             logger.warning(f'Bus turned on: {onbus_idx}')
-            logger.warning('Note that turning on bus(es) does not trigger connectivity update.')
+            self.is_needed = True
+            if len(onbus_idx) > 0:
+                raise NotImplementedError('Turning on bus after system setup is not supported yet!')
 
         if np.any(self.changes['off']):
             offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
             logger.warning(f'Bus turned off: {offbus_idx}')
             self.is_needed = True
 
-        # update busu0
-        self.busu0[...] = self.system.Bus.u.v
         return self.changes
 
     def act(self):
@@ -114,6 +122,9 @@ class ConnMan:
         if not self.is_needed:
             logger.debug('No need to update connectivity.')
             return True
+
+        if self.system.TDS.initialized:
+            raise NotImplementedError('Bus connectivity update during TDS is not supported yet!')
 
         # --- action ---
         offbus_idx = [self.system.Bus.idx.v[i] for i in np.nonzero(self.changes["off"])[0]]
@@ -143,6 +154,7 @@ class ConnMan:
                                                    idx=devices_flat, value=0)
                 logger.warning(f'In <{grp_name}>, turn off {devices_flat}')
 
-        self.is_needed = False     # reset the action flag
+        self.is_needed = False      # reset the action flag
+        self._update()              # update but not record
         self.system.connectivity(info=True)
         return True
