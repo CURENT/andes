@@ -124,3 +124,32 @@ class Bus(Model, BusData):
                        '(1-flat_start)*a0'
         self.v.v_str = 'flat_start*1 + ' \
                        '(1-flat_start)*v0'
+
+    def set(self, src, idx, attr, value):
+        super().set(src=src, idx=idx, attr=attr, value=value)
+        _check_conn_status(system=self.system, src=src, attr=attr)
+
+
+def _check_conn_status(system, src, attr):
+    """
+    Helper function to determine if connectivity update is needed.
+
+    Parameters
+    ----------
+    system : System
+        The system object.
+    src : str
+        Name of the model property
+    attr : str
+        The internal attribute of the property to get.
+    """
+    # Check if connectivity update is required
+    if src == 'u' and attr == 'v':
+        if system.is_setup:
+            system.conn.record()  # Record connectivity once setup is confirmed
+
+        if not system.TDS.initialized:
+            # Log a warning if Power Flow needs resolution before EIG or TDS
+            if system.PFlow.converged:
+                logger.warning('Bus connectivity is touched, resolve PFlow before running EIG or TDS!')
+            system.PFlow.converged = False  # Flag Power Flow as not converged

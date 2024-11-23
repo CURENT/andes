@@ -7,6 +7,31 @@ from andes.core import Config
 from collections import OrderedDict
 
 
+def check_conn_before_init(func):
+    """
+    A decorator that ensures the connection is active before calling the `init` or `run`
+    method of a `BaseRoutine` derived class.
+
+    This decorator calls the `act` method on `self.system.conn` to ensure the connection
+    is active before proceeding with the initialization.
+
+    Parameters
+    ----------
+    func : function
+        The `init` method of a `BaseRoutine` derived class.
+
+    Returns
+    -------
+    function
+        The wrapped function with connection check.
+    """
+
+    def wrapper(self, *args, **kwargs):
+        self.system.conn.act()
+        return func(self, *args, **kwargs)
+    return wrapper
+
+
 class BaseRoutine:
     """
     Base routine class.
