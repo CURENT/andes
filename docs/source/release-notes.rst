@@ -31,6 +31,7 @@ Other changes:
 - Add parameter `allow_all=False` to `ModelData.find_idx()` `GroupBase.find_idx()` to allow searching all matches.
 - Add method `GroupBase.get_all_idxes()` to get all indices of a group.
 - Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus `area`, `owner`, and `zone` using the high-voltage bus values.
+- Specify `multiprocess <=0.70.16` in requirements as 0.70.17 does not support Linux.
 
 v1.9.2 (2024-03-25)
 -------------------
