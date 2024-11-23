@@ -127,10 +127,10 @@ class Bus(Model, BusData):
 
     def set(self, src, idx, attr, value):
         super().set(src=src, idx=idx, attr=attr, value=value)
-        _conn_status(system=self.system, src=src, attr=attr)
+        _check_conn_status(system=self.system, src=src, attr=attr)
 
 
-def _conn_status(system, src, attr):
+def _check_conn_status(system, src, attr):
     """
     Helper function to determine if connectivity update is needed.
 
