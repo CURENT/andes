@@ -5,6 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 from andes.core.service import BackRef
+from andes.shared import pd
 from andes.utils.func import list_flatten, validate_keys_values
 
 logger = logging.getLogger(__name__)
@@ -243,6 +244,38 @@ class GroupBase:
 
         return True
 
+    def alter(self, src, idx, value, attr='v'):
+        """
+        Alter values of input parameters or constant service for a group of models.
+
+        .. note::
+            New in version 1.9.3.
+
+        Parameters
+        ----------
+        src : str
+            The parameter name to alter
+        idx : str, float, int
+            The unique identifier for the device to alter
+        value : float
+            The desired value
+        attr : str, optional
+            The attribute to alter. Default is 'v'.
+        """
+        self._check_src(src)
+        self._check_idx(idx)
+
+        idx, _ = self._1d_vectorize(idx)
+        models = self.idx2model(idx)
+
+        if isinstance(value, (str, int, float, np.integer, np.floating)):
+            value = [value] * len(idx)
+
+        for mdl, ii, val in zip(models, idx, value):
+            mdl.alter(src, ii, val, attr=attr)
+
+        return True
+
     def find_idx(self, keys, values, allow_none=False, default=None, allow_all=False):
         """
         Find indices of devices that satisfy the given `key=value` condition.
@@ -442,6 +475,9 @@ class GroupBase:
         """
         Return all the devices idx in this group.
 
+        .. note::
+            New in version 1.9.3.
+
         Returns
         -------
         list
@@ -462,6 +498,63 @@ class GroupBase:
         [2, 3, 4, 5, 6, 1]
         """
         return list(self._idx2model.keys())
+
+    def as_dict(self, vin=False):
+        """
+        Export group common parameters as a dictionary.
+
+        .. note::
+            New in version 1.9.3.
+
+        This method returns a dictionary where the keys are the `ModelData` parameter names
+        and the values are array-like structures containing the data in the order they were added.
+        Unlike `ModelData.as_dict()`, this dictionary does not include the `uid` field.
+
+        Parameters
+        ----------
+        vin : bool, optional
+            If True, includes the `vin` attribute in the dictionary. Default is False.
+
+        Returns
+        -------
+        dict
+            A dictionary of common parameters.
+        """
+        out_all = []
+        out_params = self.common_params.copy()
+        out_params.insert(2, 'idx')
+
+        for mdl in self.models.values():
+            if mdl.n <= 0:
+                continue
+            mdl_data = mdl.as_df(vin=True) if vin else mdl.as_dict()
+            mdl_dict = {k: mdl_data.get(k) for k in out_params if k in mdl_data}
+            out_all.append(mdl_dict)
+
+        if not out_all:
+            return {}
+
+        out = {key: np.concatenate([item[key] for item in out_all]) for key in out_all[0].keys()}
+        return out
+
+    def as_df(self, vin=False):
+        """
+        Export group common parameters as a `pandas.DataFrame` object.
+
+        .. note::
+            New in version 1.9.3.
+
+        Parameters
+        ----------
+        vin : bool
+            If True, export all parameters from original input (``vin``).
+
+        Returns
+        -------
+        DataFrame
+            A dataframe containing all model data. An `uid` column is added.
+        """
+        return pd.DataFrame(self.as_dict(vin=vin))
 
     def doc(self, export='plain'):
         """
@@ -579,7 +672,7 @@ class StaticGen(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
+        self.common_params.extend(('bus', 'Sn', 'Vn', 'p0', 'q0', 'ra', 'xs', 'subidx'))
         self.common_vars.extend(('q', 'a', 'v'))
 
         self.SynGen = BackRef()
@@ -642,7 +735,7 @@ class SynGen(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('Sn', 'Vn', 'fn', 'bus', 'M', 'D', 'subidx'))
+        self.common_params.extend(('bus', 'gen', 'Sn', 'Vn', 'fn', 'M', 'D', 'subidx'))
         self.common_vars.extend(('omega', 'delta', ))
         self.idx_island = []
         self.uid_island = []

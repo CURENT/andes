@@ -202,12 +202,15 @@ class ModelData:
         Export all parameters as a `pandas.DataFrame` object.
         This function utilizes `as_dict` for preparing data.
 
+        Parameters
+        ----------
+        vin : bool
+            If True, export all parameters from original input (``vin``).
+
         Returns
         -------
         DataFrame
             A dataframe containing all model data. An `uid` column is added.
-        vin : bool
-            If True, export all parameters from original input (``vin``).
         """
         if vin is False:
             out = pd.DataFrame(self.as_dict()).set_index('uid')

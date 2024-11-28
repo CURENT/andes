@@ -107,3 +107,27 @@ class TestModelMethods(unittest.TestCase):
         with self.assertRaises(ValueError):
             mdl.find_idx(keys=['gammap', 'name'],
                          values=[[0.1, 0.1], ['PVD1_1']])
+
+    def test_model_alter(self):
+        """
+        Test `Model.alter()` method.
+        """
+
+        ss = andes.run(
+            andes.get_case('5bus/pjm5bus.xlsx'),
+            default_config=True,
+            no_output=True,
+        )
+        ss.TDS.init()
+
+        # alter `v`
+        ss.GENCLS.alter(src='M', idx=2, value=1, attr='v')
+        self.assertEqual(ss.GENCLS.M.v[1], 1 * ss.GENCLS.M.pu_coeff[1])
+
+        # alter `vin`
+        ss.GENCLS.alter(src='M', idx=2, value=1, attr='vin')
+        self.assertEqual(ss.GENCLS.M.v[1], 1)
+
+        # alter `vin` on instances without `vin` falls back to `v`
+        ss.GENCLS.alter(src='p0', idx=2, value=1, attr='vin')
+        self.assertEqual(ss.GENCLS.p0.v[1], 1)
