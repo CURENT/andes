@@ -138,7 +138,7 @@ class TGOV1NDBModel(TGOV1DBModel):
         self.pref.v_str = 'tm0'
         self.pref.e_str = 'pref0 - pref'
 
-        self.pd.e_str = 'ue*(DB_y * gain + pref + paux) - pd'
+        self.pd.e_str = 'ue*(-DB_y * gain + pref + paux) - pd'
 
 
 class TGOV1ModelAlt(TGBase):
