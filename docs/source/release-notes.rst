@@ -45,7 +45,7 @@ Other changes:
 - Add method ``GroupBase.get_all_idxes()`` to get all indices of a group.
 - Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus ``area``,
   ``owner``, and ``zone`` using the high-voltage bus values.
-- Specify `multiprocess<=0.70.16` in requirements as 0.70.17 does not support Linux.
+- Minor fix on model ``TGOV1NDB``
 
 v1.9.2 (2024-03-25)
 -------------------

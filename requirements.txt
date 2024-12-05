@@ -15,4 +15,3 @@ chardet
 psutil
 texttable
 numba
-multiprocess <=0.70.16
