@@ -56,7 +56,7 @@ class ACEData(ModelData):
     def __init__(self):
         ModelData.__init__(self)
         self.bus = IdxParam(model='Bus', info="bus idx for freq. measurement", mandatory=True)
-        self.bias = NumParam(default=1.0, info='bias parameter', tex_name=r'\beta',
+        self.bias = NumParam(default=-1.0, info='bias parameter', tex_name='B',
                              unit='MW/0.1Hz', power=True)
 
         self.busf = IdxParam(info='Optional BusFreq device idx', model='BusFreq',
@@ -65,12 +65,19 @@ class ACEData(ModelData):
 
 class ACEc(ACEData, Model):
     """
-    Area Control Error model.
+    Area Control Error model, where bias (B) is an approximation of the actual frequency response (:math:`\\beta`).
 
     Continuous frequency sampling.
     System base frequency from ``system.config.freq`` is used.
 
     Note: area idx is automatically retrieved from `bus`.
+
+    Reference:
+
+    NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: Bias
+    (B) vs. Frequency Response (Beta)", 2021. Available:
+
+    https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
     """
 
     def __init__(self, system, config):
@@ -106,7 +113,7 @@ class ACEc(ACEData, Model):
         self.ace = Algeb(info='area control error',
                          unit='p.u. (MW)',
                          tex_name='ace',
-                         e_str='10 * (bias * imva) * sys_f * (f - 1) - ace',
+                         e_str='- 10 * (bias * imva) * sys_f * (f - 1) - ace',
                          )
 
 
@@ -122,6 +129,13 @@ class ACE(ACEc):
     can be specified in ``ACE.config.offset``.
 
     Note: area idx is automatically retrieved from `bus`.
+
+    Reference:
+
+    NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: ACE Review",
+    2021. Available:
+
+    https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
     """
 
     def __init__(self, system, config):
@@ -140,4 +154,4 @@ class ACE(ACEc):
                            info='Sampled freq.',
                            )
 
-        self.ace.e_str = '10 * (bias * imva) * sys_f * (fs_v - 1) - ace'
+        self.ace.e_str = '- 10 * (bias * imva) * sys_f * (fs_v - 1) - ace'
