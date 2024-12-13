@@ -46,6 +46,8 @@ Other changes:
 - Enhanced three-winding transformer parsing in PSS/E raw files by assigning the equivalent star bus ``area``,
   ``owner``, and ``zone`` using the high-voltage bus values.
 - Minor fix on model ``TGOV1NDB``
+- Clarification on models ``ACEc`` and ``ACE`` given NERC's definition, as NERC suggesst that both bias and beta
+  should be nevative
 
 v1.9.2 (2024-03-25)
 -------------------
