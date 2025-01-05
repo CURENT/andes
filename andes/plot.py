@@ -10,7 +10,7 @@ import re
 import numpy as np
 
 from andes.core.var import BaseVar
-from andes.shared import find_executable, mpl, plt
+from andes.shared import which, mpl, plt
 from andes.utils.paths import get_dot_andes_path  # NOQA
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def set_latex():
         True for LaTeX on, False for off
     """
 
-    if find_executable('dvipng'):
+    if which('dvipng'):
         mpl.rc('text', usetex=True)
 
         no_warn_file = os.path.join(get_dot_andes_path(), '.no_warn_latex')

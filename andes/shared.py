@@ -15,6 +15,7 @@ import math
 import coloredlogs  # NOQA
 import numpy as np  # NOQA
 import psutil
+from shutil import which  # NOQA
 from kvxopt import printing  # NOQA
 from kvxopt import (div, klu, matrix, mul, sparse, spdiag, spmatrix,  # NOQA
                     umfpack)
@@ -73,7 +74,3 @@ solve_ivp = LazyImport('from scipy.integrate import solve_ivp')
 odeint = LazyImport('from scipy.integrate import odeint')
 
 Oct2PyError = LazyImport('from oct2py import Oct2PyError')
-
-
-# --- Shared functions ---
-find_executable = LazyImport('from distutils.spawn import find_executable')
