@@ -10,18 +10,19 @@ jobs:
     - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.11
-        mamba-version: "*"
-        miniforge-version: "latest"
+        miniforge-variant: Miniforge3
+        miniforge-version: latest
+        use-mamba: true
+        python-version: '3.11'
         channels: conda-forge,defaults
         channel-priority: true
-        activate-environment: anaconda-client-env
+        activate-environment: test-env
     - shell: bash -el {0}
       name: Install dependencies
       run: |
-        mamba install -y nbmake pytest-xdist line_profiler  # add'l packages for notebook tests.
+        mamba install -y nbmake pytest-xdist line_profiler
         mamba install --file requirements.txt --file requirements-extra.txt
-        python -m pip install -e .
+        pip install -e .
     - shell: bash -el {0}
       name: Run pip check
       run: |
@@ -30,14 +31,13 @@ jobs:
       name: Lint with flake8 for pull requests
       if: github.event_name == 'pull_request'
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 .
     - shell: bash -el {0}
       name: Test with pytest
       run: |
         pytest
     - shell: bash -el {0}
-      name: Test notebooks.
+      name: Test notebooks
       run: |
         pytest --nbmake examples --ignore=examples/verification
     - shell: bash -el {0}
