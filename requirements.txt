@@ -1,6 +1,6 @@
 kvxopt>=1.3.2.0
 numpy
-scipy
+scipy<1.14
 sympy>=1.6,!=1.10.0
 pandas
 matplotlib
