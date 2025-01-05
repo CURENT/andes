@@ -20,7 +20,7 @@ jobs:
     - shell: bash -el {0}
       name: Install dependencies
       run: |
-        mamba install -y nbmake pytest-xdist line_profiler
+        mamba install -y nbmake pytest-xdist line_profiler flake8 pytest
         mamba install --file requirements.txt --file requirements-extra.txt
         pip install -e .
     - shell: bash -el {0}
@@ -28,26 +28,22 @@ jobs:
       run: |
         pip check
     - shell: bash -el {0}
-      name: Lint with flake8 for pull requests
+      name: Lint with flake8
       if: github.event_name == 'pull_request'
       run: |
         flake8 .
     - shell: bash -el {0}
-      name: Test with pytest
+      name: Run tests
       run: |
         pytest
-    - shell: bash -el {0}
-      name: Test notebooks
-      run: |
         pytest --nbmake examples --ignore=examples/verification
     - shell: bash -el {0}
-      name: Build a distribution if tagged
+      name: Build and publish if tagged
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
         python setup.py sdist
-    - name: Publish a Python distribution to PyPI if tagged
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+        pip install twine
+        twine upload dist/*
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.pypi_password }}
