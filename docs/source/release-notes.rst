@@ -9,7 +9,7 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.9 Notes
 ==========
 
-v1.9.3 (2024-04-XX)
+v1.9.3 (2025-01-05)
 -------------------
 Development of connectivity manager ``ConnMan``:
 
@@ -48,6 +48,7 @@ Other changes:
 - Minor fix on model ``TGOV1NDB``
 - Clarification on models ``ACEc`` and ``ACE`` given NERC's definition, as NERC suggesst that both bias and beta
   should be nevative
+- Minor fixes for finding `dvipng` executable.
 
 v1.9.2 (2024-03-25)
 -------------------
