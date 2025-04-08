@@ -9,6 +9,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 v1.9 Notes
 ==========
 
+v1.9.4 (2025-xx-xx)
+-------------------
+- Enhance ``Model.set()`` to support assigning values when the destination is a list.
+
 v1.9.3 (2025-01-05)
 -------------------
 Development of connectivity manager ``ConnMan``:

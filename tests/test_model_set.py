@@ -55,6 +55,10 @@ class TestModelMethods(unittest.TestCase):
         np.testing.assert_equal(ss.GENROU.M.v[3], 6.0)
         self.assertEqual(ss.TDS.Teye[omega_addr[3], omega_addr[3]], 6.0)
 
+        # set when destination idx is list
+        ss.Bus.set(src='name', attr='v', idx=(1, 2, 3), value=['A', 'B', 'C'])
+        self.assertEqual(ss.Bus.name.v[:3], ['A', 'B', 'C'])
+
     def test_find_idx(self):
         ss = andes.load(andes.get_case('ieee14/ieee14_pvd1.xlsx'))
         mdl = ss.PVD1
@@ -131,3 +135,7 @@ class TestModelMethods(unittest.TestCase):
         # alter `vin` on instances without `vin` falls back to `v`
         ss.GENCLS.alter(src='p0', idx=2, value=1, attr='vin')
         self.assertEqual(ss.GENCLS.p0.v[1], 1)
+
+        # # alter `v` when destination idx is list
+        ss.Bus.alter(src='name', idx=[0, 1], value=['A', 'B'], attr='vin')
+        np.testing.assert_equal(ss.Bus.name.v[:2], ['A', 'B'])

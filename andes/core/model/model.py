@@ -508,7 +508,17 @@ class Model:
         uid = self.idx2uid(idx)
         instance = self.__dict__[src]
 
-        instance.__dict__[attr][uid] = value
+        # Check if the destination is a list
+        if isinstance(instance.__dict__[attr], list):
+            # Use a for-loop to set values
+            if isinstance(uid, list):
+                for i, u in enumerate(uid):
+                    instance.__dict__[attr][u] = value[i]
+            else:
+                instance.__dict__[attr][uid] = value
+        else:
+            # Default behavior for numpy arrays or other types
+            instance.__dict__[attr][uid] = value
 
         # update differential equations' time constants stored in `dae.Tf`
 
