@@ -11,7 +11,9 @@ v1.9 Notes
 
 v1.9.4 (2025-xx-xx)
 -------------------
-- Enhance ``Model.set()`` to support assigning values when the destination is a list.
+- Enhance ``Model.set()`` to support assigning values when the destination is a
+  list.
+- Fix a bug in line model that causes incorrect admittance matrix.
 
 v1.9.3 (2025-01-05)
 -------------------
