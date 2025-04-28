@@ -1237,9 +1237,18 @@ class InitChecker(OperationService):
             if limit is None:
                 continue
 
+            # Determine the operational status of devices, use ue when applicable
+            ue = self.owner.services.get('ue', self.owner.params.get('u', np.ones(self.owner.n))).v
+
+            # Identify online devices
+            online_devices = np.where(ue == 1)[0]
+
+            # Update the flag for devices violating the condition
             self.v[:] = np.logical_or(self.v, func(self.u.v, limit.v))
 
-            pos = np.argwhere(func(self.u.v, limit.v)).ravel()
+            # Find positions of online devices violating the condition
+            violating_devices = np.argwhere(func(self.u.v, limit.v)).ravel()
+            pos = np.intersect1d(violating_devices, online_devices)
 
             if len(pos) == 0:
                 continue
