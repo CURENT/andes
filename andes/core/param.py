@@ -469,7 +469,8 @@ class NumParam(BaseParam):
             # check for non-zero
             if value == 0.0 and self.get_property('non_zero'):
                 if not self._non_zero_warning_issued:
-                    logger.warning('Non-zero parameter %s.%s corrected to %s',
+                    logger.warning('Non-zero parameter %s.%s corrected to %s. '
+                                   'This warning will be shown only once.',
                                    self.owner.class_name, self.name, self.default)
                     self._non_zero_warning_issued = True
                 value = self.default
@@ -478,6 +479,7 @@ class NumParam(BaseParam):
             if value > 0.0 and self.get_property('non_positive'):
                 if not self._non_positive_warning_issued:
                     logger.warning('Non-Positive parameter %s.%s corrected to %s',
+                                   'This warning will be shown only once.',
                                    self.owner.class_name, self.name, self.default)
                     self._non_positive_warning_issued = True
                 value = self.default
@@ -486,6 +488,7 @@ class NumParam(BaseParam):
             if value < 0.0 and self.get_property('non_negative'):
                 if not self._non_negative_warning_issued:
                     logger.warning('Non-negative parameter %s.%s corrected to %s',
+                                   'This warning will be shown only once.',
                                    self.owner.class_name, self.name, self.default)
                     self._non_negative_warning_issued = True
                 value = self.default
