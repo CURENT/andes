@@ -435,6 +435,9 @@ class NumParam(BaseParam):
         self.vin = None  # values from input
         self.vrange = vrange
         self.vtype = vtype
+        self._non_zero_warning_issued = False
+        self._non_positive_warning_issued = False
+        self._non_negative_warning_issued = False
 
     def add(self, value=None):
         """
@@ -465,20 +468,26 @@ class NumParam(BaseParam):
         if isinstance(value, float):
             # check for non-zero
             if value == 0.0 and self.get_property('non_zero'):
-                logger.warning('Non-zero parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+                if not self._non_zero_warning_issued:
+                    logger.warning('Non-zero parameter %s.%s corrected to %s',
+                                   self.owner.class_name, self.name, self.default)
+                    self._non_zero_warning_issued = True
                 value = self.default
 
             # check for non-positive
             if value > 0.0 and self.get_property('non_positive'):
-                logger.warning('Non-Positive parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+                if not self._non_positive_warning_issued:
+                    logger.warning('Non-Positive parameter %s.%s corrected to %s',
+                                   self.owner.class_name, self.name, self.default)
+                    self._non_positive_warning_issued = True
                 value = self.default
 
             # check for non-negative
             if value < 0.0 and self.get_property('non_negative'):
-                logger.warning('Non-negative parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+                if not self._non_negative_warning_issued:
+                    logger.warning('Non-negative parameter %s.%s corrected to %s',
+                                   self.owner.class_name, self.name, self.default)
+                    self._non_negative_warning_issued = True
                 value = self.default
 
         super(NumParam, self).add(value)
