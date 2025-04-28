@@ -1238,10 +1238,10 @@ class InitChecker(OperationService):
                 continue
 
             # Determine the operational status of devices, use ue when applicable
-            ue = self.owner.services.get('ue', self.owner.params.get('u', np.ones(self.owner.n))).v
-
+            ue = np.asarray(self.owner.services.get(
+                'ue', self.owner.params.get('u', np.ones(self.owner.n))).v).astype(bool)
             # Identify online devices
-            online_devices = np.where(ue == 1)[0]
+            online_devices = np.where(ue)[0]
 
             # Update the flag for devices violating the condition
             self.v[:] = np.logical_or(self.v, func(self.u.v, limit.v))
