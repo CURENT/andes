@@ -100,3 +100,37 @@ class TestDeviceFinder(unittest.TestCase):
 
         # test if the flag for `am` is set to 0 to disable `am` measurement
         self.assertEqual(ss.REGCP1.zam.v[0], 0)
+
+
+def test_init_checker_online(caplog):
+    """
+    Test the initialization checker for online devices.
+
+    This test ensures that the initialization checker raises a warning
+    when a device's parameters are out of the typical range during TDS
+    initialization process.
+    """
+    ss = andes.run(andes.get_case("npcc/npcc.xlsx"),
+                   setup=True,
+                   default_config=True,
+                   no_output=True)
+    with caplog.at_level("WARNING"):
+        ss.TDS.init()
+        assert "GENCLS (vf range) out of typical lower limit." in caplog.text
+
+
+def test_init_checker_offline(caplog):
+    """
+    Test the initialization checker for offline devices.
+
+    This test ensures that the initialization checker does not raise warnings
+    for devices that are offline.
+    """
+    ss = andes.run(andes.get_case("npcc/npcc.xlsx"),
+                   setup=True,
+                   default_config=True,
+                   no_output=True)
+    ss.GENCLS.set(src='u', attr='v', idx=['GENCLS_3', 'GENCLS_4', 'GENCLS_16'], value=0)
+    with caplog.at_level("WARNING"):
+        ss.TDS.init()
+        assert "GENCLS (vf range) out of typical lower limit." not in caplog.text
