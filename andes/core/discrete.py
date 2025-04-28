@@ -494,8 +494,8 @@ class Limiter(Discrete):
         """
 
         if allow_adjust:
-            mask = (val < lower)
-
+            ue = self.owner.services.get('ue', self.owner.params.get('u', np.ones(self.owner.n))).v
+            mask = np.logical_and(val < lower, ue)
             if sum(mask) == 0:
                 return
 
@@ -540,7 +540,8 @@ class Limiter(Discrete):
         """
 
         if allow_adjust:
-            mask = (val > upper)
+            ue = self.owner.services.get('ue', self.owner.params.get('u', np.ones(self.owner.n))).v
+            mask = (val >= ue * upper)
             if sum(mask) == 0:
                 return
 
