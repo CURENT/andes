@@ -106,6 +106,8 @@ class ModelData:
 
             self.index_bases.append(self.idx)
 
+        self._unused_data_warning_issued = False
+
     def __len__(self):
         return self.n
 
@@ -162,7 +164,10 @@ class ModelData:
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:
-            logger.warning("%s: unused data %s", self.class_name, str(kwargs))
+            if not self._unused_data_warning_issued:
+                logger.warning("%s: unused data %s. This warning will be shown only once.",
+                               self.class_name, str(kwargs))
+                self._unused_data_warning_issued = True
 
     def as_dict(self, vin=False):
         """
