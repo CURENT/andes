@@ -16,7 +16,8 @@ v1.9.4 (2025-xx-xx)
 - Fix a bug in line model that causes incorrect admittance matrix.
 - Correct a typo in the PSSE DYR parser, changing "Tprod" to "Tpord".
 - Skip InitChecker logging and limiter adjust for offline devices.
-- In one model, issue a warning only once for NumParam value checks.
+- When reading files, issue a warning only once per model for the following cases: 1) a NumParam value
+  does not meet the expected criteria, or 2) unused data is detected.
 
 v1.9.3 (2025-01-05)
 -------------------
