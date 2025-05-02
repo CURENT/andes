@@ -9,6 +9,12 @@ from functools import wraps
 from andes.shared import pd, rad2deg, deg2rad
 from andes.shared import pandapower as pp
 
+try:
+    nan = np.nan
+except AttributeError:
+    # for older numpy versions
+    nan = np.NAN
+
 logger = logging.getLogger(__name__)
 
 
@@ -315,7 +321,7 @@ def _to_pp_line(ssa, ssp, ssa_bus):
         tf_df['parallel'] = 1
         tf_df['oltc'] = False
         tf_df['tap_phase_shifter'] = False
-        tf_df['tap_step_degree'] = np.NaN
+        tf_df['tap_step_degree'] = np.nan
         tf_df['df'] = 1
         tf_df['std_type'] = None
 

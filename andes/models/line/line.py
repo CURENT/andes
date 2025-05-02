@@ -256,6 +256,7 @@ class Line(LineData, Model):
 
         nb = self.system.Bus.n
 
+        ysh = self.u.v * (self.g.v + self.b.v * 1j) / 2
         y1 = self.u.v * (self.g1.v + self.b1.v * 1j)
         y2 = self.u.v * (self.g2.v + self.b2.v * 1j)
         y12 = self.u.v / (self.r.v + self.x.v * 1j)
@@ -264,10 +265,10 @@ class Line(LineData, Model):
         mconj = np.conj(m)
 
         # build self and mutual admittances into Y
-        self.Y = spmatrix((y12 + y1 / m2), self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Y = spmatrix((y12 + y1) / m2 + ysh, self.a1.a, self.a1.a, (nb, nb), 'z')
         self.Y -= spmatrix(y12 / mconj, self.a1.a, self.a2.a, (nb, nb), 'z')
         self.Y -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
-        self.Y += spmatrix(y12 + y2, self.a2.a, self.a2.a, (nb, nb), 'z')
+        self.Y += spmatrix(y12 + y2 + ysh, self.a2.a, self.a2.a, (nb, nb), 'z')
 
         return self.Y
 
