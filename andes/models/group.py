@@ -971,8 +971,8 @@ class Motor(GroupBase):
     """
 
     def __init__(self):
-        self.common_params.extend(('bus',))
         super().__init__()
+        self.common_params.extend(('bus',))
 
 
 class Information(GroupBase):
