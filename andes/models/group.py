@@ -962,6 +962,7 @@ class PLL(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus',))
         self.common_vars.extend(('am',))
 
 
