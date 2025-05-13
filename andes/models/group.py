@@ -906,7 +906,7 @@ class VoltComp(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('rc', 'xc',))
+        self.common_params.extend(('rc', 'xc', 'avr',))
         self.common_vars.extend(('vcomp',))
 
 
