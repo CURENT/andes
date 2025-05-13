@@ -15,6 +15,7 @@ v1.9.4 (2025-xx-xx)
   list.
 - Fix a bug in line model that causes incorrect admittance matrix.
 - Correct a typo in the PSSE DYR parser, changing "Tprod" to "Tpord".
+- Skip InitChecker logging and limiter adjust for offline devices.
 
 v1.9.3 (2025-01-05)
 -------------------

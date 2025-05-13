@@ -465,19 +465,19 @@ class NumParam(BaseParam):
         if isinstance(value, float):
             # check for non-zero
             if value == 0.0 and self.get_property('non_zero'):
-                logger.warning('Non-zero parameter %s.%s corrected to %s',
+                logger.warning('Non-zero parameter %s.%s corrected to %s.',
                                self.owner.class_name, self.name, self.default)
                 value = self.default
 
             # check for non-positive
             if value > 0.0 and self.get_property('non_positive'):
-                logger.warning('Non-Positive parameter %s.%s corrected to %s',
+                logger.warning('Non-Positive parameter %s.%s corrected to %s. ',
                                self.owner.class_name, self.name, self.default)
                 value = self.default
 
             # check for non-negative
             if value < 0.0 and self.get_property('non_negative'):
-                logger.warning('Non-negative parameter %s.%s corrected to %s',
+                logger.warning('Non-negative parameter %s.%s corrected to %s. ',
                                self.owner.class_name, self.name, self.default)
                 value = self.default
 

@@ -162,7 +162,7 @@ class ModelData:
             value = kwargs.pop(name, None)
             instance.add(value)
         if len(kwargs) > 0:
-            logger.warning("%s: unused data %s", self.class_name, str(kwargs))
+            logger.warning("%s: unused data %s.", self.class_name, str(kwargs))
 
     def as_dict(self, vin=False):
         """
