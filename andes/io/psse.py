@@ -64,6 +64,100 @@ def get_block_lines(b, mdata):
     return line_counts[b]
 
 
+def _parse_csv_with_quotes(line):
+    """
+    Parse a line of PSS/E data that may contain single-quoted strings with commas or slashes.
+    
+    Parameters
+    ----------
+    line : str
+        A line from a PSS/E file that needs parsing
+        
+    Returns
+    -------
+    list
+        List of values with quoted strings preserved as single elements
+    """
+    # Initialize result list and variables
+    result = []
+    current = ""
+    in_quotes = False
+    
+    # Handle empty input
+    if not line:
+        return [""]
+    
+    # Process each character
+    for char in line:
+        if char == "'" and not in_quotes:
+            # Starting quotes
+            in_quotes = True
+            current += char
+        elif char == "'" and in_quotes:
+            # Ending quotes
+            in_quotes = False
+            current += char
+        elif char == ',' and not in_quotes:
+            # Field separator outside quotes
+            result.append(current)
+            current = ""
+        else:
+            # Add character to current field
+            current += char
+    
+    # Add the last field
+    result.append(current)
+    
+    # Process each field to remove quotes and strip whitespace
+    for i in range(len(result)):
+        field = result[i]
+        # Remove quotes and strip
+        if field and len(field) >= 2 and field[0] == "'" and field[-1] == "'":
+            field = field[1:-1]
+        result[i] = field.strip()
+    
+    return result
+
+
+def _split_line_with_quoted_parts(line, separator='/'):
+    """
+    Split a line by a separator character, but preserve the separator inside quoted strings.
+    
+    Parameters
+    ----------
+    line : str
+        Line to split
+    separator : str
+        Character to split by, defaults to '/'
+        
+    Returns
+    -------
+    list
+        List of parts
+    """
+    result = []
+    current = ""
+    in_quotes = False
+    
+    for char in line:
+        if char == "'" and not in_quotes:
+            in_quotes = True
+            current += char
+        elif char == "'" and in_quotes:
+            in_quotes = False
+            current += char
+        elif char == separator and not in_quotes:
+            result.append(current)
+            current = ""
+        else:
+            current += char
+    
+    if current:
+        result.append(current)
+    
+    return result
+
+
 def read(system, file):
     """
     Read PSS/E RAW file v32/v33 formats.
@@ -96,8 +190,8 @@ def read(system, file):
         line = line.strip()
         # get basemva and nominal frequency
         if num == 0:
-            data = line.split('/')[0]
-            data = data.split(',')
+            parts = _split_line_with_quoted_parts(line)
+            data = _parse_csv_with_quotes(parts[0])
 
             mva = float(data[1])
             system.config.mva = mva
@@ -128,7 +222,8 @@ def read(system, file):
                 continue
             elif line[0] == 'Q':  # end of file
                 break
-            data = line.split(',')
+            parts = _split_line_with_quoted_parts(line)
+            data = _parse_csv_with_quotes(parts[0])
 
         data = [to_number(item) for item in data]
         mdata.append(data)
@@ -188,6 +283,7 @@ def _read_dyr_dict(file):
     dyr_dict = dict()   # input data from dyr file
 
     for psse_model, all_rows in input_concat_dict.items():
+        # DYR files are space-separated, not comma-separated
         dev_params_num = [([to_number(cell) for cell in row.split()]) for row in all_rows]
         dyr_dict[psse_model] = pd.DataFrame(dev_params_num)
 
@@ -336,7 +432,6 @@ def _parse_bus_v33(raw, system):
     sw = dict()
 
     for data in raw['bus']:
-
         idx = data[0]
         bus_idx_list.append(idx)
         ty = data[3]
@@ -425,7 +520,7 @@ def _parse_gen_v33(raw, system, sw):
         gen_mva = data[8]
         gen_idx += 1
         status = data[14]
-        wmod = data[26] if len(data) >= 26 else 0
+        wmod = data[26] if len(data) > 26 else 0
 
         param = {'Sn': gen_mva, 'Vn': vn, 'u': status,
                  'bus': bus, 'subidx': subidx,
