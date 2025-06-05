@@ -38,7 +38,8 @@ file_classes = list([
     ('renewable', ['REPCA1']),
     ('renewable', ['WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCV1', 'REGCV2', 'REGF1', 'REGF2', 'REGF3']),
-    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt']),
+    ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt',
+                     'PVD2', 'ESD2']),
     ('coi', ['COI']),
     # ('experimental', ['PI2', 'TestDB1', 'TestPI', 'TestLagAWFreeze', 'FixedGen']),
 ])
