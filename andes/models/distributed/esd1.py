@@ -109,10 +109,10 @@ class ESD1(ESD1Data, ESD1Model):
 
 class ESD2(ESD1Data, ESD1Model):
     """
-    Distributed energy storage model.
+    Distributed energy storage model with bi-directional frequency regulation
+    deadband.
 
-    This model is revised from `ESD1`, where `DB.upper` is set to `-fdbd`
-    to allow bi-directional frequency regulation response.
+    This model is revised from `ESD1`, where `DB.upper` is set to `-fdbd`.
     """
 
     def __init__(self, system, config):

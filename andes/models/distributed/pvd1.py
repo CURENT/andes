@@ -558,16 +558,10 @@ class PVD1(PVD1Data, PVD1Model):
 
 class PVD2(PVD1Data, PVD1Model):
     """
-    WECC Distributed PV model with additional frequency droop.
+    WECC Distributed PV model with bi-directional frequency regulation
+    deadband.
 
-    This model is revised from `PVD1`, where `DB.upper` is set to `-fdbd`
-    to allow bi-directional frequency regulation response.
-
-    Reference:
-    [1] X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from Variable
-        Generation Through Uncertainty Decomposition: An Economic and Reliability
-        Perspective," in IEEE Transactions on Sustainable Energy, vol. 12, no. 4,
-        pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
+    This model is revised from `PVD1`, where `DB.upper` is set to `-fdbd`.
     """
 
     def __init__(self, system, config):
