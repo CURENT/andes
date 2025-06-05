@@ -111,11 +111,11 @@ class ESD2(ESD1Data, ESD1Model):
     """
     Distributed energy storage model.
 
-    Revised from `ESD1`, where `fdbd` is not non-positive to allow
-    bi-directional frequency deviation response.
+    This model is revised from `ESD1`, where `DB.upper` is set to `-fdbd`
+    to allow bi-directional frequency regulation response.
     """
 
     def __init__(self, system, config):
         ESD1Data.__init__(self)
         ESD1Model.__init__(self, system, config)
-        self.fdbd.non_positive = False
+        self.DB.upper = "-fdbd"

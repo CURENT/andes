@@ -556,31 +556,21 @@ class PVD1(PVD1Data, PVD1Model):
         PVD1Model.__init__(self, system, config)
 
 
-class PVD2Data(PVD1Data):
-    """
-    Data for distributed PV with additional frequency droop.
-    """
-
-    def __init__(self):
-        PVD1Data.__init__(self)
-
-        self.fdbd.non_positive = False
-
-
-class PVD2(PVD2Data, PVD1Model):
+class PVD2(PVD1Data, PVD1Model):
     """
     WECC Distributed PV model with additional frequency droop.
 
-    This model is revised from `PVD1`, where `fdbd` is not non-positive to allow
-    bi-directional frequency deviation response.
+    This model is revised from `PVD1`, where `DB.upper` is set to `-fdbd`
+    to allow bi-directional frequency regulation response.
 
     Reference:
-    [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD2), [Online],
-    Available:
-
-    https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd2/
+    [1] X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from Variable
+        Generation Through Uncertainty Decomposition: An Economic and Reliability
+        Perspective," in IEEE Transactions on Sustainable Energy, vol. 12, no. 4,
+        pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
     """
 
     def __init__(self, system, config):
-        PVD2Data.__init__(self)
+        PVD1Data.__init__(self)
         PVD1Model.__init__(self, system, config)
+        self.DB.upper = "-fdbd"
