@@ -567,4 +567,13 @@ class PVD2(PVD1Data, PVD1Model):
     def __init__(self, system, config):
         PVD1Data.__init__(self)
         PVD1Model.__init__(self, system, config)
-        self.DB.upper = "-fdbd"
+
+        self.fdbdn = ConstService(v_str='-fdbd',
+                                  info='-fdbd')
+
+        self.DB2 = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdn,
+                             gain=self.ddn,
+                             info='frequency deviation deadband with gain',
+                             )  # outputs   `Pdrp`
+        self.Psum.v_str = 'u * (Pext + Pref + DB2_y)'
+        self.Psum.e_str = 'u * (Pext + Pref + DB2_y) - Psum'

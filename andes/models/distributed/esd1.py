@@ -1,6 +1,6 @@
 """Distributed energy storage system model"""
 
-from andes.core.block import Integrator
+from andes.core.block import Integrator, DeadBand1
 from andes.core.discrete import HardLimiter, LessThan
 from andes.core.param import NumParam
 from andes.core.service import ConstService
@@ -118,4 +118,13 @@ class ESD2(ESD1Data, ESD1Model):
     def __init__(self, system, config):
         ESD1Data.__init__(self)
         ESD1Model.__init__(self, system, config)
-        self.DB.upper = "-fdbd"
+
+        self.fdbdn = ConstService(v_str='-fdbd',
+                                  info='-fdbd')
+
+        self.DB2 = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdn,
+                             gain=self.ddn,
+                             info='frequency deviation deadband with gain',
+                             )  # outputs   `Pdrp`
+        self.Psum.v_str = 'u * (Pext + Pref + DB2_y)'
+        self.Psum.e_str = 'u * (Pext + Pref + DB2_y) - Psum'
