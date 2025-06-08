@@ -271,16 +271,12 @@ class ESST1A(ESST1AData, ESST1AModel):
     """
     Exciter ESST1A model.
 
-    Reference:
-
-    [1] PowerWorld, Exciter ESST1A, [Online],
-
-    [2] NEPLAN, Exciters Models, [Online],
-
-    Available:
-    https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESST1A.htm
-
-    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
+    References
+    -----------
+    1. PowerWorld, Exciter ESST1A.
+       https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESST1A.htm
+    2. NEPLAN, Exciters Models.
+       https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
 
     def __init__(self, system, config):

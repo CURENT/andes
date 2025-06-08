@@ -206,13 +206,12 @@ class AC8B(AC8BData, AC8BModel):
     """
     Exciter AC8B model.
 
-    Reference: [1]_, [2]_
-
-    .. [1] Powerworld, Exciter AC8B, [Online], Available:
-      https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20AC8B.htm
-
-    .. [2] NEPLAN, Exciters Models, [Online], Available:
-      https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
+    References
+    -----------
+    1. Powerworld, Exciter AC8B.
+       https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20AC8B.htm
+    2. NEPLAN, Exciters Models.
+       https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):
         AC8BData.__init__(self)

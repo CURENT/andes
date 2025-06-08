@@ -101,17 +101,12 @@ class IEEEVC(IEEEVCData, IEEEVCModel):
     """
     Voltage compensator IEEEVC model.
 
-    Reference:
-
-    [1] PowerWorld, Voltage Compensator, IEEEVC, [Online],
-
-    [2] NEPLAN, Exciters Models, [Online],
-
-    Available:
-
-    https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Voltage%20Compensator%20IEEEVC.htm?TocPath=%7C%7C%7CIEEEVC%7C_____0
-
-    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
+    References
+    -----------
+    1. PowerWorld, Voltage Compensator, IEEEVC.
+       https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Voltage%20Compensator%20IEEEVC.htm?TocPath=%7C%7C%7CIEEEVC%7C_____0
+    2. NEPLAN, Exciters Models.
+       https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
     def __init__(self, system, config):
         IEEEVCData.__init__(self)
