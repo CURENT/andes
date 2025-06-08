@@ -1,6 +1,6 @@
 """Distributed energy storage system model"""
 
-from andes.core.block import Integrator, DeadBand1
+from andes.core.block import Integrator
 from andes.core.discrete import HardLimiter, LessThan
 from andes.core.param import NumParam
 from andes.core.service import ConstService
@@ -86,6 +86,8 @@ class ESD1Model(PVD1Model):
         self.Ipcmd.lim.lower = self.Ipmin
         self.Ipcmd.y.deps = ['Ipmin']
 
+        self.fdbdu.default = 0.017
+
 
 class ESD1(ESD1Data, ESD1Model):
     """
@@ -96,6 +98,12 @@ class ESD1(ESD1Data, ESD1Model):
     The state of charge is in state variable ``SOC``,
     which is an alias of ``pIG_y``.
 
+    Notes
+    -----
+    ..  versionchanged:: 1.9.4
+        `DB.upper` is set to be `fdbdu` instead of 0 in order to allow
+        bi-directional frequency regulation deadband.
+
     Reference:
     [1] Powerworld, Renewable Energy Electrical Control Model REEC_C
     Available:
@@ -105,26 +113,3 @@ class ESD1(ESD1Data, ESD1Model):
     def __init__(self, system, config):
         ESD1Data.__init__(self)
         ESD1Model.__init__(self, system, config)
-
-
-class ESD2(ESD1Data, ESD1Model):
-    """
-    Distributed energy storage model with bi-directional frequency regulation
-    deadband.
-
-    This model is revised from `ESD1`, where `DB.upper` is set to `-fdbd`.
-    """
-
-    def __init__(self, system, config):
-        ESD1Data.__init__(self)
-        ESD1Model.__init__(self, system, config)
-
-        self.fdbdn = ConstService(v_str='-fdbd',
-                                  info='-fdbd')
-
-        self.DB2 = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdn,
-                             gain=self.ddn,
-                             info='frequency deviation deadband with gain',
-                             )  # outputs   `Pdrp`
-        self.Psum.v_str = 'u * (Pext + Pref + DB2_y)'
-        self.Psum.e_str = 'u * (Pext + Pref + DB2_y) - Psum'

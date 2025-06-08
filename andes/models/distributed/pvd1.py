@@ -96,6 +96,10 @@ class PVD1Data(ModelData):
                              unit='Hz',
                              non_positive=True,
                              )
+        self.fdbdu = NumParam(default=999, tex_name='f_{dbd,u}',
+                              info='frequency deviation upper deadband, placeholder',
+                              unit='Hz',
+                              non_negative=True)
 
         # added on 11/14/2020: convert to system base pu
         self.ddn = NumParam(default=0.0, tex_name='D_{dn}',
@@ -324,7 +328,7 @@ class PVD1Model(Model):
                           unit='Hz', tex_name='f_{dev}',
                           )
 
-        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=999.0, gain=self.ddn,
+        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdu, gain=self.ddn,
                             info='frequency deviation deadband with gain',
                             )  # outputs   `Pdrp`
         self.DB.db.no_warn = True
@@ -549,6 +553,17 @@ class PVD1(PVD1Data, PVD1Model):
     Available:
 
     https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+
+    Notes
+    -----
+    This model introduces the parameter `fdbdu`, which is set to 999 by default.
+    It enables support for bi-directional frequency regulation deadband in
+    derived models.
+
+    **Important:** Do not modify `fdbdu` when using the `PVD1` model.
+
+    .. versionchanged:: 1.9.4
+        Added the `fdbdu` parameter to support bi-directional deadband control.
     """
 
     def __init__(self, system, config):
@@ -561,19 +576,21 @@ class PVD2(PVD1Data, PVD1Model):
     WECC Distributed PV model with bi-directional frequency regulation
     deadband.
 
-    This model is revised from `PVD1`, where `DB.upper` is set to `-fdbd`.
+    This model is revised from `PVD1`, where `DB.upper` is set to `fdbdu`.
+
+    Reference:
+    [1] X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from
+    Variable Generation Through Uncertainty Decomposition: An Economic and
+    Reliability Perspective," in IEEE Transactions on Sustainable Energy,
+    vol. 12, no. 4, pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
+
+    Notes
+    -----
+    .. versionadded:: 1.9.4
     """
 
     def __init__(self, system, config):
         PVD1Data.__init__(self)
         PVD1Model.__init__(self, system, config)
 
-        self.fdbdn = ConstService(v_str='-fdbd',
-                                  info='-fdbd')
-
-        self.DB2 = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdn,
-                             gain=self.ddn,
-                             info='frequency deviation deadband with gain',
-                             )  # outputs   `Pdrp`
-        self.Psum.v_str = 'u * (Pext + Pref + DB2_y)'
-        self.Psum.e_str = 'u * (Pext + Pref + DB2_y) - Psum'
+        self.fdbdu.default = 0.017
