@@ -562,7 +562,7 @@ class PVD1(PVD1Data, PVD1Model):
     Notes
     -----
     This model introduces the parameter `fdbdu`, which is set to 999 by default.
-    It enables support for bi-directional frequency regulation deadband in
+    It enables support for bi-directional frequency deviation deadband in
     derived models.
 
     **Important:** Do not modify `fdbdu` when using the `PVD1` model.
@@ -578,7 +578,7 @@ class PVD1(PVD1Data, PVD1Model):
 
 class PVD2(PVD1Data, PVD1Model):
     """
-    WECC Distributed PV model with bi-directional frequency regulation
+    WECC Distributed PV model with bi-directional frequency deviation
     deadband.
 
     This model is revised from `PVD1`, where `DB.upper` is set to `fdbdu`.
