@@ -329,7 +329,7 @@ class PVD1Model(Model):
                           )
 
         self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdu, gain=self.ddn,
-                            info='frequency deviation deadband with gain',
+                            info='frequency deviation deadband with gain (DB_y is Pdrp)',
                             )  # outputs   `Pdrp`
         self.DB.db.no_warn = True
 
@@ -379,19 +379,22 @@ class PVD1Model(Model):
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal (for AGC)',
                           v_str='u * Pext0',
-                          e_str='u * Pext0 - Pext'
+                          e_str='u * Pext0 - Pext',
+                          unit='pu',
                           )
 
         self.Pref = Algeb(tex_name='P_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
                           v_str='u * pref0',
-                          e_str='u * pref0 - Pref'
+                          e_str='u * pref0 - Pref',
+                          unit='pu',
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
                           info='Sum of P signals',
                           v_str='u * (Pext + Pref + DB_y)',
                           e_str='u * (Pext + Pref + DB_y) - Psum',
+                          unit='pu',
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
@@ -436,12 +439,14 @@ class PVD1Model(Model):
                           v_str=Qdrp,
                           e_str=f'{Qdrp} - Qdrp',
                           discrete=(self.VQ1, self.VQ2),
+                          unit='pu',
                           )
 
         self.Qref = Algeb(tex_name=r'Q_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
                           v_str='u * qref0',
-                          e_str='u * qref0 - Qref'
+                          e_str='u * qref0 - Qref',
+                          unit='pu',
                           )
 
         self.Qsum = Algeb(tex_name=r'Q_{tot}',
@@ -449,6 +454,7 @@ class PVD1Model(Model):
                           v_str=f'u * (qref0 + {Qdrp})',
                           e_str='u * (Qref + Qdrp) - Qsum',
                           discrete=(self.VQ1, self.VQ2),
+                          unit='pu',
                           )
 
         self.Ipul = Algeb(info='Ipcmd before Ip hard limit',
@@ -548,11 +554,10 @@ class PVD1(PVD1Data, PVD1Model):
     Maximum power limit `pmx` can be disabled by editing the configuration
     file by setting `plim=0`. It cannot be modified in runtime.
 
-    Reference:
-    [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
-    Available:
-
-    https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+    References
+    -----------
+    1. ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1),
+       https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
 
     Notes
     -----
@@ -578,11 +583,12 @@ class PVD2(PVD1Data, PVD1Model):
 
     This model is revised from `PVD1`, where `DB.upper` is set to `fdbdu`.
 
-    Reference:
-    [1] X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from
-    Variable Generation Through Uncertainty Decomposition: An Economic and
-    Reliability Perspective," in IEEE Transactions on Sustainable Energy,
-    vol. 12, no. 4, pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
+    References
+    -----------
+    1. X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from
+       Variable Generation Through Uncertainty Decomposition: An Economic and
+       Reliability Perspective," in IEEE Transactions on Sustainable Energy,
+       vol. 12, no. 4, pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
 
     Notes
     -----
