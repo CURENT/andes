@@ -537,8 +537,13 @@ class System:
         """
         Add a device instance for an existing model.
 
-        This methods calls the ``add`` method of `model` and registers the device `idx` to group.
+        This methods calls the ``add`` method of `model` and registers the
+        device `idx` to group.
+
+        The preferred way is to pass a dictionary of parameters to avoid naming
+        conflicts.
         """
+
         if model not in self.models and (model not in self.model_aliases):
             logger.warning("<%s> is not an existing model.", model)
             return
