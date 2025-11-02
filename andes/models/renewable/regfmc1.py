@@ -108,6 +108,11 @@ class REGFMC1Data(ModelData):
                                   info='Time constant for omega command filter',
                                   unit='s',
                                   )
+        self.Tfrq = NumParam(default=0.02,
+                             tex_name=r'T_{frq}',
+                             info='Time constant for power measurement filter',
+                             unit='s',
+                             )
         self.Hs = NumParam(default=5.0,
                            tex_name='H_s',
                            info='Inertia constant (2H)',
@@ -296,9 +301,24 @@ class REGFMC1Model(Model):
                                 info='GFM series impedance magnitude squared',
                                 )
 
+        # --- External reference variables (to be controlled by plant controller) ---
+        # GFM voltage reference (external input to voltage control)
+        self.Vref_GFM = Algeb(tex_name='V_{ref,GFM}',
+                              info='Voltage reference for GFM branch (from plant controller)',
+                              v_str='v',
+                              e_str='v - Vref_GFM',  # Default: maintain initial bus voltage
+                              )
+
+        # GFM frequency reference (external input to VSM control)
+        self.fref_GFM = Algeb(tex_name='f_{ref,GFM}',
+                              info='Frequency reference for GFM branch (from plant controller)',
+                              v_str='1.0',
+                              e_str='1.0 - fref_GFM',  # Default: maintain nominal frequency
+                              )
+
         # --- GFM Branch: Voltage Control ---
         # Voltage reference filter
-        self.VrefLag = Lag(u='v', T=self.Tvr, K=1,
+        self.VrefLag = Lag(u='Vref_GFM', T=self.Tvr, K=1,
                            info='Voltage reference filter',
                            name='VrefLag',
                            )
@@ -349,18 +369,19 @@ class REGFMC1Model(Model):
 
         # --- GFM Branch: VSM Control ---
         # Omega reference filter
-        self.OmegarefLag = Lag(u='1.0',
+        self.OmegarefLag = Lag(u='fref_GFM',
                                T=self.Tomegar,
                                K=1,
                                info='Omega reference filter',
                                name='OmegarefLag',
                                )
 
-        # Active power reference - set to initial power output (can be altered)
-        self.Pref_GFM = ConstService(v_str='p0',
-                                     tex_name='P_{ref,GFM}',
-                                     info='Active power reference for GFM',
-                                     )
+        # Active power reference - can be controlled by plant controller
+        self.Pref_GFM = Algeb(v_str='0',
+                              e_str='0 - Pref_GFM',  # Defaults to 0, can be overridden externally
+                              tex_name='P_{ref,GFM}',
+                              info='Active power reference for GFM',
+                              )
 
         # Plant controller changes omega_ref (PLACEHOLDER - use constant 1 for now)
         self.omega_ref = Algeb(tex_name=r'\omega_{ref}',
@@ -369,27 +390,29 @@ class REGFMC1Model(Model):
                                e_str='OmegarefLag_y - omega_ref',
                                )
 
-        # Active power error with droop
-        self.dP_GFM = Algeb(tex_name=r'\Delta P_{GFM}',
-                            info='Active power error for GFM',
-                            v_str='0',
-                            e_str='Pinv_GFM - Pref_GFM - dP_GFM',  # Power deviation for droop
-                            )
+        # GFM branch power measurement (for droop feedback)
+        self.Pmv_GFM = Lag(u='PGFM',
+                           T=self.Tfrq,
+                           K=1,
+                           info='Measured GFM power for droop control',
+                           name='Pmv_GFM',
+                           )
 
-        # Omega command filter input (with droop)
-        self.omega_cmd_in = Algeb(tex_name=r'\omega_{cmd,in}',
-                                  info='Omega command input before filter',
-                                  v_str='1.0',
-                                  e_str='omega_ref - mp * dP_GFM - omega_cmd_in',
+        # Frequency droop: converts frequency error to power command
+        # dP_GFM_droop = (omega_ref - omegam) / mp
+        self.dP_GFM_droop = Algeb(tex_name=r'\Delta P_{GFM,droop}',
+                                  info='Power command from frequency droop',
+                                  v_str='0',
+                                  e_str='(OmegarefLag_y - omegam) / mp - dP_GFM_droop',
                                   )
 
-        # Omega command filter
-        self.OmegacmdLag = Lag(u='omega_cmd_in',
-                               T=self.Tomegacmd,
-                               K=1,
-                               info='Omega command filter',
-                               name='OmegacmdLag',
-                               )
+        # Power command for GFM branch
+        # Pcmd_GFM = Pref_GFM + dP_GFM_droop (reference + droop correction)
+        self.Pcmd_GFM = Algeb(tex_name='P_{cmd,GFM}',
+                              info='Power command for GFM branch',
+                              v_str='Pref_GFM',
+                              e_str='Pref_GFM + dP_GFM_droop - Pcmd_GFM',
+                              )
 
         # Damping filter: sD2/(s+omegaD) using Washout
         # Washout implements sK/(1+sT), so we need K=D2, T=1/omegaD
@@ -400,20 +423,22 @@ class REGFMC1Model(Model):
                                 name='DampWash',
                                 )
 
-        # Inverter active power for GFM - measured from total output
+        # Inverter active power for GFM - measured at voltage source (for swing equation)
         self.Pinv_GFM = Algeb(tex_name='P_{inv,GFM}',
-                              info='GFM inverter active power measurement',
-                              v_str='p0',
-                              e_str='Pe - Pinv_GFM',  # Use total power as feedback
+                              info='GFM inverter active power at voltage source',
+                              v_str='0',
+                              e_str='(EVSM * cos(dVSM - a) * Id_VSM + EVSM * sin(dVSM - a) * Iq_VSM) - Pinv_GFM',
                               )
 
         # Virtual machine angular frequency (swing equation)
-        # Tracks omega command with inertial response and damping
+        # Power balance: 2*Hs*d(Δω)/dt = P_cmd - P_inv - D1*Δω - D2*d(Δω)/dt
+        # Since omegam is absolute frequency: Δω = omegam - 1.0
+        # Equation: d(omegam)/dt = (Pcmd_GFM - Pinv_GFM - D1*(omegam-1) - DampWash_y) / (2*Hs)
         self.omegam = State(
             info='Virtual machine angular frequency (pu)',
             tex_name=r'\omega_m',
             v_str='1.0',
-            e_str='(OmegacmdLag_y - omegam - D1 * (omegam - 1.0) - DampWash_y)',
+            e_str='(Pcmd_GFM - Pinv_GFM - D1 * (omegam - 1.0) - DampWash_y) / 2',
             t_const=self.Hs,
         )
 
@@ -441,17 +466,18 @@ class REGFMC1Model(Model):
                               e_str='Vref0 - VinvGFLLag_y - Verr_GFL',
                               )
 
-        # Active and reactive power commands (PLACEHOLDER - variables)
+        # Active and reactive power commands (controlled by plant controller)
+        # Default equations lock to p0/q0, but can be overridden externally
         self.Pcmd_GFL = Algeb(tex_name='P_{cmd,GFL}',
                               info='Active power command for GFL',
                               v_str='p0',
-                              e_str='p0 - Pcmd_GFL',  # Variable, initialize to p0
+                              e_str='p0 - Pcmd_GFL',  # Defaults to p0, can be overridden externally
                               )
 
         self.Qcmd_GFL = Algeb(tex_name='Q_{cmd,GFL}',
                               info='Reactive power command for GFL',
                               v_str='q0',
-                              e_str='q0 - Qcmd_GFL',  # Variable, initialize to q0
+                              e_str='q0 - Qcmd_GFL',  # Defaults to q0, can be overridden externally
                               )
 
         # Current commands (PLACEHOLDER - TODO: add limiters and PQ priority)
@@ -537,17 +563,20 @@ class REGFMC1Model(Model):
                             e_str='(EVSM * sin(dVSM - a) * Rs - (EVSM * cos(dVSM - a) - v) * Xs) / Zs2 - Iq_VSM',
                             )
 
-        # GFM branch power: P = Ed*Id + Eq*Iq, Q = Eq*Id - Ed*Iq
+        # GFM branch power at bus terminals (for bus injection)
+        # In dq frame aligned with bus: Vd=v, Vq=0
+        # P = Vd*Id + Vq*Iq = v*Id_VSM
+        # Q = Vq*Id - Vd*Iq = -v*Iq_VSM (negative sign for generator convention)
         self.PGFM = Algeb(tex_name='P_{GFM}',
-                          info='GFM branch active power',
+                          info='GFM branch active power at bus',
                           v_str='0',
-                          e_str='(EVSM * cos(dVSM - a) * Id_VSM + EVSM * sin(dVSM - a) * Iq_VSM) - PGFM',
+                          e_str='v * Id_VSM - PGFM',
                           )
 
         self.QGFM = Algeb(tex_name='Q_{GFM}',
-                          info='GFM branch reactive power',
+                          info='GFM branch reactive power at bus',
                           v_str='0',
-                          e_str='(EVSM * sin(dVSM - a) * Id_VSM - EVSM * cos(dVSM - a) * Iq_VSM) - QGFM',
+                          e_str='-v * Iq_VSM - QGFM',
                           )
 
         # GFL branch power
