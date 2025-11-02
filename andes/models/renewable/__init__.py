@@ -20,3 +20,4 @@ from andes.models.renewable.regf1 import REGF1  # NOQA
 from andes.models.renewable.regf2 import REGF2  # NOQA
 from andes.models.renewable.regf3 import REGF3  # NOQA
 from andes.models.renewable.regfmc1 import REGFMC1  # NOQA
+from andes.models.renewable.repcgfmc1 import REPCGFMC1  # NOQA
