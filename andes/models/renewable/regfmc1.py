@@ -341,20 +341,15 @@ class REGFMC1Model(Model):
                            name='VinvLag',
                            )
 
-        # Reactive power measurement path (PLACEHOLDER - simplified)
-        # self.Iqref_GFM = Algeb(tex_name='I_{qref,GFM}',
-        #                        info='Reactive current reference for GFM',
-        #                        v_str='0',
-        #                        e_str='0 - Iqref_GFM',  # Initialize to zero
-        #                        )
-
+        # Reactive power measurement path (per diagram: Iq_GFM filtered through 1/(Tif*s+1))
         self.Iq_VSMLag = Lag(u='Iq_VSM', T=self.TIf, K=1, info='Filter for I_q GFM', name='Iq_VSMLag')
 
-        # Voltage magnitude error
+        # Voltage magnitude error - TESTING POSITIVE SIGN
+        # Testing: Verr = (Vref - Vinv) * kq/mq + Iq_VSMLag_y
         self.Verr = Algeb(tex_name='V_{err}',
                           info='Voltage magnitude error',
                           v_str='0',
-                          e_str='(VrefLag_y - VinvLag_y) * kq / mq - Iq_VSMLag_y - Verr',
+                          e_str='(VrefLag_y - VinvLag_y) * kq / mq + Iq_VSMLag_y - Verr',
                           )
 
         # PI controller for voltage magnitude
