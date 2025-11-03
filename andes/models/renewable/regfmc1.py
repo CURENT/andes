@@ -58,6 +58,12 @@ class REGFMC1Data(ModelData):
                             info='Time constant for Vref filter',
                             unit='s',
                             )
+        self.Tomegam = NumParam(default=0.02,
+                                tex_name=r'T_{\omega m}',
+                                info='Time constant for omegam filter',
+                                unit='s',
+                                )
+
         self.kq = NumParam(default=1.0,
                            tex_name='k_q',
                            info='Reactive power gain in voltage control',
@@ -99,6 +105,12 @@ class REGFMC1Data(ModelData):
                                 info='Time constant for omega_ref filter',
                                 unit='s',
                                 )
+        self.TIf = NumParam(default=0.02,
+                            tex_name=r'T_{If}',
+                            info='Time constant for I_d and I_q filter',
+                            unit='s',
+                            )
+
         self.mp = NumParam(default=0.05,
                            tex_name='m_p',
                            info='Active power droop gain',
@@ -330,17 +342,19 @@ class REGFMC1Model(Model):
                            )
 
         # Reactive power measurement path (PLACEHOLDER - simplified)
-        self.Iqref_GFM = Algeb(tex_name='I_{qref,GFM}',
-                               info='Reactive current reference for GFM',
-                               v_str='0',
-                               e_str='0 - Iqref_GFM',  # Initialize to zero
-                               )
+        # self.Iqref_GFM = Algeb(tex_name='I_{qref,GFM}',
+        #                        info='Reactive current reference for GFM',
+        #                        v_str='0',
+        #                        e_str='0 - Iqref_GFM',  # Initialize to zero
+        #                        )
+
+        self.Iq_VSMLag = Lag(u='Iq_VSM', T=self.TIf, K=1, info='Filter for I_q GFM', name='Iq_VSMLag')
 
         # Voltage magnitude error
         self.Verr = Algeb(tex_name='V_{err}',
                           info='Voltage magnitude error',
                           v_str='0',
-                          e_str='(VrefLag_y - VinvLag_y) * kq / mq + Iqref_GFM - Verr',
+                          e_str='(VrefLag_y - VinvLag_y) * kq / mq - Iq_VSMLag_y - Verr',
                           )
 
         # PI controller for voltage magnitude
@@ -383,12 +397,14 @@ class REGFMC1Model(Model):
                               info='Active power reference for GFM',
                               )
 
-        # Plant controller changes omega_ref (PLACEHOLDER - use constant 1 for now)
-        self.omega_ref = Algeb(tex_name=r'\omega_{ref}',
-                               info='Omega reference',
-                               v_str='1.0',
-                               e_str='OmegarefLag_y - omega_ref',
-                               )
+        # TODO: USE `fref_GFM` as the input terminal for frequency reference
+
+        # # Plant controller changes omega_ref (PLACEHOLDER - use constant 1 for now)
+        # self.omega_ref = Algeb(tex_name=r'\omega_{ref}',
+        #                        info='Omega reference',
+        #                        v_str='1.0',
+        #                        e_str='OmegarefLag_y - omega_ref',
+        #                        )
 
         # GFM branch power measurement (for droop feedback)
         self.Pmv_GFM = Lag(u='PGFM',
@@ -399,12 +415,16 @@ class REGFMC1Model(Model):
                            )
 
         # Frequency droop: converts frequency error to power command
-        # dP_GFM_droop = (omega_ref - omegam) / mp
+        # dP_GFM_droop = (omegarefLag_y - omegamLag_y) / mp
         self.dP_GFM_droop = Algeb(tex_name=r'\Delta P_{GFM,droop}',
                                   info='Power command from frequency droop',
                                   v_str='0',
-                                  e_str='(OmegarefLag_y - omegam) / mp - dP_GFM_droop',
+                                  e_str='(OmegarefLag_y - omegamLag_y) / mp - dP_GFM_droop',
                                   )
+
+
+        # TODO: CONSIDER `FFlag` to allow turning off the droop control
+        # FFlag = 0: `dP_GFM_droop` = 0 -- this is currently missing
 
         # Power command for GFM branch
         # Pcmd_GFM = Pref_GFM + dP_GFM_droop (reference + droop correction)
@@ -441,6 +461,8 @@ class REGFMC1Model(Model):
             e_str='(Pcmd_GFM - Pinv_GFM - D1 * (omegam - 1.0) - DampWash_y) / 2',
             t_const=self.Hs,
         )
+
+        self.omegamLag = Lag(u='omegam', T=self.Tomegam, K=1, info='Filter for omegam', name='omegamLag')
 
         # Virtual synchronous machine angle (integration of omega deviation)
         self.dVSM = State(

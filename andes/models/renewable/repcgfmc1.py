@@ -11,7 +11,7 @@ from collections import OrderedDict
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Limiter, Model, ModelData, NumParam,
                         Piecewise, State, Switcher)
-from andes.core.block import DeadBand1, GainLimiter, PIController, Washout
+from andes.core.block import DeadBand1, GainLimiter, IntegratorAntiWindup, PIController, Washout
 from andes.core.service import NumSelect, VarService
 
 
@@ -288,6 +288,11 @@ class REPCGFMC1Data(ModelData):
         self.Kp_vc = NumParam(default=1.0,
                               tex_name='K_{p,vc}',
                               info='Voltage control proportional gain',
+                              )
+
+        self.Ki_vc = NumParam(default=0.0,
+                              tex_name='K_{i,vc}',
+                              info='Voltage control integral gain',
                               )
 
         self.Tvc = NumParam(default=0.02,
@@ -681,11 +686,23 @@ class REPCGFMC1Model(Model):
                                   e_str='Vdbd_y * Verr_lim_zi + Verr_max * Verr_lim_zu + Verr_min * Verr_lim_zl - Verr_lim_val',
                                   )
 
-        # Voltage control with gain
+        # Integral path with anti-windup
+        self.Qvc_int = IntegratorAntiWindup(u=self.Verr_lim_val,
+                                            T=1.0,
+                                            K=self.Ki_vc,
+                                            y0=0,
+                                            lower=self.Qvc_min,
+                                            upper=self.Qvc_max,
+                                            name='Qvc_int',
+                                            tex_name='Q_{vc,int}',
+                                            info='Voltage control integrator with anti-windup',
+                                            )
+
+        # Voltage control PI output (proportional + integral)
         self.Qvc = Algeb(tex_name='Q_{vc}',
-                         info='Voltage control output',
+                         info='Voltage control PI output',
                          v_str='0',
-                         e_str='Kp_vc * Verr_lim_val - Qvc',
+                         e_str='Kp_vc * Verr_lim_val + Qvc_int_y - Qvc',
                          )
 
         # Apply voltage control limits
