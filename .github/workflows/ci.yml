@@ -43,9 +43,7 @@ jobs:
       uses: astral-sh/setup-uv@v3
       with:
         enable-cache: true
-        cache-dependency-glob: |
-          **/requirements*.txt
-          **/pyproject.toml
+        cache-dependency-glob: "**/pyproject.toml"
 
     # Cache uv's package cache
     # This stores downloaded packages and built wheels
@@ -56,31 +54,20 @@ jobs:
           ~/.cache/uv
           ${{ runner.os == 'Windows' && '~\AppData\Local\uv\cache' || '' }}
           ${{ runner.os == 'macOS' && '~/Library/Caches/uv' || '' }}
-        key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('requirements.txt', 'requirements-extra.txt', 'pyproject.toml') }}
+        key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           uv-${{ runner.os }}-py${{ matrix.python-version }}-
           uv-${{ runner.os }}-
 
     # Create a virtual environment and install all dependencies
-    - name: Create virtual environment
-      run: uv venv
-
-    # Install dependencies using uv (much faster than pip)
+    # Single source of truth: pyproject.toml
     - name: Install dependencies
       run: |
-        # Install core dependencies
-        uv pip install -r requirements.txt
-
-        # Install dev dependencies
-        uv pip install -r requirements-extra.txt
-
+        uv venv
+        # Install ANDES with all dev dependencies from pyproject.toml
+        uv pip install -e ".[dev]"
         # Install additional test tools
-        uv pip install pytest pytest-xdist nbmake coverage[toml] pytest-cov
-
-    # Install ANDES in editable mode
-    - name: Install ANDES
-      run: |
-        uv pip install -e . --no-deps
+        uv pip install nbmake pytest-xdist line_profiler
 
     # Show installed packages and versions
     - name: Show environment info

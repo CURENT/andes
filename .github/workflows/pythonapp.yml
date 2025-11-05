@@ -25,32 +25,26 @@ jobs:
         enable-cache: true
 
     # Cache uv packages with smart invalidation
-    # Cache key changes when requirements files change
+    # Cache key changes when pyproject.toml changes (single source of truth)
     - name: Cache uv packages
       uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: uv-${{ runner.os }}-py3.11-${{ hashFiles('requirements.txt', 'requirements-extra.txt', 'pyproject.toml') }}
+        key: uv-${{ runner.os }}-py3.11-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           uv-${{ runner.os }}-py3.11-
           uv-${{ runner.os }}-
 
     # Install dependencies using uv (10-100x faster than pip)
+    # Single source of truth: pyproject.toml
     - name: Install dependencies
       run: |
         # Create virtual environment
         uv venv
 
-        # Install all dependencies at once (faster)
-        uv pip install -r requirements.txt -r requirements-extra.txt
-
-        # Install test tools
-        uv pip install nbmake pytest-xdist line_profiler pytest-cov
-
-    # Install ANDES in editable mode
-    - name: Install ANDES
-      run: |
-        uv pip install -e . --no-deps
+        # Install ANDES with all dev dependencies
+        # This reads from pyproject.toml [project.dependencies] and [project.optional-dependencies]
+        uv pip install -e ".[dev]"
 
     # Verify installation
     - name: Verify installation
