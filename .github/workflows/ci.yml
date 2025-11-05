@@ -61,16 +61,13 @@ jobs:
           uv-${{ runner.os }}-py${{ matrix.python-version }}-
           uv-${{ runner.os }}-
 
-    # Create a virtual environment
+    # Create a virtual environment and install all dependencies
     - name: Create virtual environment
       run: uv venv
 
     # Install dependencies using uv (much faster than pip)
     - name: Install dependencies
       run: |
-        # Activate virtual environment
-        ${{ runner.os == 'Windows' && '.venv\Scripts\activate' || 'source .venv/bin/activate' }}
-
         # Install core dependencies
         uv pip install -r requirements.txt
 
@@ -79,63 +76,52 @@ jobs:
 
         # Install additional test tools
         uv pip install pytest pytest-xdist nbmake coverage[toml] pytest-cov
-      shell: bash
 
     # Install ANDES in editable mode
     - name: Install ANDES
       run: |
-        ${{ runner.os == 'Windows' && '.venv\Scripts\activate' || 'source .venv/bin/activate' }}
         uv pip install -e . --no-deps
-      shell: bash
 
     # Show installed packages and versions
     - name: Show environment info
       run: |
-        ${{ runner.os == 'Windows' && '.venv\Scripts\activate' || 'source .venv/bin/activate' }}
         echo "=== Python version ==="
-        python --version
+        uv run python --version
         echo ""
         echo "=== ANDES version ==="
-        python -c "import andes; print(f'ANDES {andes.__version__}')"
+        uv run python -c "import andes; print(f'ANDES {andes.__version__}')"
         echo ""
         echo "=== Key package versions ==="
-        uv pip list | grep -E "andes|numpy|scipy|pandas|matplotlib|sympy" || true
+        uv pip list
         echo ""
         echo "=== Verify dependencies ==="
         uv pip check || true
-      shell: bash
 
     # Lint with flake8 (only on PRs, only Python 3.11)
     - name: Lint with flake8
       if: github.event_name == 'pull_request' && matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
       run: |
-        ${{ runner.os == 'Windows' && '.venv\Scripts\activate' || 'source .venv/bin/activate' }}
-        flake8 andes tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 andes tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
-      shell: bash
+        uv run flake8 andes tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 andes tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
 
     # Run tests with pytest
     - name: Run tests
       run: |
-        ${{ runner.os == 'Windows' && '.venv\Scripts\activate' || 'source .venv/bin/activate' }}
-        pytest -v --tb=short --durations=10
-      shell: bash
+        uv run pytest -v --tb=short --durations=10
       timeout-minutes: 15
 
     # Run notebook tests (only on Python 3.11 Ubuntu to save time)
     - name: Test notebooks
       if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
       run: |
-        source .venv/bin/activate
-        pytest --nbmake examples --ignore=examples/verification -v
+        uv run pytest --nbmake examples --ignore=examples/verification -v
       timeout-minutes: 10
 
     # Upload coverage (only Python 3.11 Ubuntu)
     - name: Generate coverage report
       if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
       run: |
-        source .venv/bin/activate
-        pytest --cov=andes --cov-report=xml --cov-report=term
+        uv run pytest --cov=andes --cov-report=xml --cov-report=term
       continue-on-error: true
 
     - name: Upload coverage to Codecov

@@ -40,7 +40,6 @@ jobs:
       run: |
         # Create virtual environment
         uv venv
-        source .venv/bin/activate
 
         # Install all dependencies at once (faster)
         uv pip install -r requirements.txt -r requirements-extra.txt
@@ -51,46 +50,42 @@ jobs:
     # Install ANDES in editable mode
     - name: Install ANDES
       run: |
-        source .venv/bin/activate
         uv pip install -e . --no-deps
+
     # Verify installation
     - name: Verify installation
       run: |
-        source .venv/bin/activate
-        python -c "import andes; print(f'✓ ANDES {andes.__version__}')"
+        uv run python -c "import andes; print(f'✓ ANDES {andes.__version__}')"
+        uv run python -c "import line_profiler; print('✓ line_profiler installed')"
         uv pip check || echo "Warning: dependency check failed"
 
     # Lint with flake8
     - name: Lint with flake8
       if: github.event_name == 'pull_request'
       run: |
-        source .venv/bin/activate
-        flake8 andes tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 andes tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+        uv run flake8 andes tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 andes tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
 
     # Run tests
     - name: Run unit tests
       run: |
-        source .venv/bin/activate
-        pytest -v --tb=short --durations=10
+        uv run pytest -v --tb=short --durations=10
       timeout-minutes: 15
 
     # Run notebook tests
     - name: Test notebooks
       run: |
-        source .venv/bin/activate
-        pytest --nbmake examples --ignore=examples/verification -v
+        uv run pytest --nbmake examples --ignore=examples/verification -v
       timeout-minutes: 10
 
     # Build and publish if tagged
     - name: Build and publish to PyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
-        source .venv/bin/activate
         uv pip install build twine
-        python -m build
-        twine check dist/*
-        twine upload dist/*
+        uv run python -m build
+        uv run twine check dist/*
+        uv run twine upload dist/*
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

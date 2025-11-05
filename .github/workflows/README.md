@@ -222,6 +222,7 @@ numpy>=2.2.5,<2.3  # Allow patches only
     uv venv
     uv pip install -r requirements.txt  # 30 sec
     uv pip install -e .
+    uv run pytest  # No manual activation needed!
 ```
 
 **Benefits:**
@@ -229,7 +230,29 @@ numpy>=2.2.5,<2.3  # Allow patches only
 - ✅ Simpler (no conda environment)
 - ✅ More reliable
 - ✅ Better caching
+- ✅ Cross-platform (Windows, macOS, Linux)
+- ✅ No manual venv activation needed (`uv run` handles it)
 - ✅ Standard Python packaging
+
+## Key Feature: `uv run`
+
+Instead of manually activating virtual environments (which differs by platform):
+
+```yaml
+# ❌ OLD: Platform-specific, error-prone
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+pytest
+
+# ✅ NEW: Works everywhere
+uv run pytest
+```
+
+`uv run` automatically:
+- Finds the virtual environment
+- Activates it
+- Runs the command
+- Works identically on all platforms
 
 ## Advanced Usage
 
