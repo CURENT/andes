@@ -97,9 +97,12 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.8 and up. Check
+3. The pull request should work for Python 3.9 and up. Check
    https://github.com/curent/andes/actions
    and make sure that the tests pass for all supported Python versions.
+
+   Note: Python 3.8 and earlier are no longer supported as they have
+   reached end-of-life.
 
 ============
 Known Issues

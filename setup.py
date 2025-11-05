@@ -1,110 +1,68 @@
-import re
+"""
+Minimal setup.py shim for backwards compatibility.
+
+Modern Python packaging now uses pyproject.toml (PEP 517/518/621).
+All configuration is defined in pyproject.toml.
+
+This file is kept for:
+1. Backwards compatibility with older pip versions
+2. Editable installs (pip install -e .)
+3. Versioneer integration
+
+For new installations, pyproject.toml is the source of truth.
+"""
+
 import sys
 import os
-from collections import defaultdict
 
-from setuptools import find_packages, setup
-
-import versioneer
-
-if sys.version_info < (3, 6):
+# Enforce minimum Python version
+if sys.version_info < (3, 9):
     error = """
-andes does not support Python <= {0}.{1}.
-Python 3.6 and above is required. Check your Python version like so:
+ANDES requires Python 3.9 or later.
 
-python3 --version
+Python 3.8 and earlier are no longer supported as they have reached
+end-of-life. Please upgrade your Python installation.
 
-This may be due to an out-of-date pip. Make sure you have pip >= 9.0.1.
-Upgrade pip like so:
+Current Python version: {}.{}
+Required: Python >= 3.9
 
-pip install --upgrade pip
-""".format(3, 6)
+Check your Python version:
+    python3 --version
+
+To upgrade pip (if needed):
+    pip install --upgrade pip
+""".format(sys.version_info.major, sys.version_info.minor)
     sys.exit(error)
 
-here = os.path.abspath(os.path.dirname(__file__))
+# Import setuptools
+from setuptools import setup
 
-with open(os.path.join(here, 'README.md'), encoding='utf-8') as readme_file:
-    readme = readme_file.read()
+# Try to import versioneer for dynamic versioning
+# If versioneer is not available (e.g., in isolated build), use fallback
+try:
+    # Add current directory to path to find versioneer.py
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import versioneer
+    version = versioneer.get_version()
+    cmdclass = versioneer.get_cmdclass()
+except (ImportError, ModuleNotFoundError):
+    # Fallback: read version from _version.py if it exists
+    version_file = os.path.join(os.path.dirname(__file__), 'andes', '_version.py')
+    if os.path.exists(version_file):
+        with open(version_file) as f:
+            for line in f:
+                if line.startswith('__version__'):
+                    version = line.split('=')[1].strip().strip('"').strip("'")
+                    break
+            else:
+                version = "0.0.0+unknown"
+    else:
+        version = "0.0.0+unknown"
+    cmdclass = {}
 
-
-def parse_requires(filename):
-    with open(os.path.join(here, filename)) as requirements_file:
-        reqs = [
-            line for line in requirements_file.read().splitlines()
-            if not line.startswith('#')
-        ]
-    return reqs
-
-
-def get_extra_requires(filename, add_all=True):
-    """
-    Build ``extras_require`` from an invert requirements file.
-
-    See:
-    https://hanxiao.io/2019/11/07/A-Better-Practice-for-Managing-extras-require-Dependencies-in-Python/
-    """
-
-    with open(os.path.join(here, filename)) as fp:
-        extra_deps = defaultdict(set)
-        for k in fp:
-            if k.strip() and not k.startswith('#'):
-                tags = set()
-                if '#' in k:
-                    if k.count("#") > 1:
-                        raise ValueError("Invalid line: {}".format(k))
-
-                    k, v = k.split('#')
-                    tags.update(vv.strip() for vv in v.split(','))
-
-                tags.add(re.split('[<=>]', k)[0])
-                for t in tags:
-                    extra_deps[t].add(k)
-
-        # add tag `all` at the end
-        if add_all:
-            extra_deps['all'] = set(vv for v in extra_deps.values() for vv in v)
-
-    return extra_deps
-
-
-extras_require = get_extra_requires("requirements-extra.txt")
-
-# --- update `extras_conda` to include packages only available in PyPI ---
-extras_require["interop"].add("pypowsybl")
-extras_require["all"].add("pypowsybl")
-
+# Call setup with versioneer integration
+# All other configuration is in pyproject.toml
 setup(
-    name='andes',
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
-    description="Python software for symbolic power system modeling and numerical analysis.",
-    long_description=readme,
-    long_description_content_type='text/markdown',
-    author="Hantao Cui",
-    author_email='cuihantao@gmail.com',
-    url='https://github.com/curent/andes',
-    packages=find_packages(exclude=[]),
-    entry_points={
-        'console_scripts': [
-            'andes = andes.cli:main',
-        ],
-    },
-    include_package_data=True,
-    package_data={
-        'andes': [
-            # When adding files here, remember to update MANIFEST.in as well,
-            # or else they will not be included in the distribution on PyPI!
-            # 'path/to/data_file',
-        ]
-    },
-    install_requires=parse_requires('requirements.txt'),
-    extras_require=extras_require,
-    license="GNU Public License v3",
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Environment :: Console',
-    ],
+    version=version,
+    cmdclass=cmdclass,
 )

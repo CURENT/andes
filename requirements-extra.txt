@@ -7,21 +7,24 @@
 #
 # Only one `#` is allowed per line. Lines starting with `#` are ignored.
 
-coverage #                     dev
-pytest==7.4   #                dev
-flake8 #                       dev
-sphinx #                       dev, doc
-ipython #                      dev
-numpydoc #                     dev, doc
-sphinx-copybutton #            dev, doc
-sphinx-panels #                dev, doc
-pydata-sphinx-theme #          dev, doc
-myst-parser>=0.15 #            dev, doc
-myst-nb>=0.13 #                dev, doc
-mdit-py-plugins>=0.3.1,<0.4 #  dev, doc
-pre-commit #                   dev
+# Development dependencies with enforced version constraints
+coverage>=6.0,<8.0 #                 dev
+pytest>=7.4,<8.0 #                   dev
+flake8>=6.0,<8.0 #                   dev
+sphinx>=5.0,<8.0 #                   dev, doc
+ipython>=8.0,<10.0 #                 dev
+numpydoc>=1.4,<2.0 #                 dev, doc
+sphinx-copybutton>=0.5,<1.0 #        dev, doc
+sphinx-panels>=0.4,<1.0 #            dev, doc
+pydata-sphinx-theme>=0.13,<1.0 #     dev, doc
+myst-parser>=0.15,<3.0 #             dev, doc
+myst-nb>=0.13,<2.0 #                 dev, doc
+mdit-py-plugins>=0.3.1,<0.4 #        dev, doc
+pre-commit>=3.0,<4.0 #               dev
 
-pandapower #                   interop
+# Interoperability dependencies
+pandapower>=2.10,<3.0 #              interop
 
+# Web interface dependencies
 # below work around a bug with tqdm bar with ipywidgets 8.0.1
-ipywidgets==7.7 #              web
+ipywidgets==7.7.* #                  web
