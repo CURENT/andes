@@ -14,10 +14,9 @@ sphinx:
 
 python:
   install:
-    - requirements: requirements.txt
+    # Install ANDES with documentation dependencies
+    # All dependencies defined in pyproject.toml (single source of truth)
     - method: pip
       path: .
       extra_requirements:
         - doc
-    - method: setuptools
-      path: .
