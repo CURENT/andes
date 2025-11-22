@@ -17,6 +17,8 @@ v1.9.4 (2025-xx-xx)
 - Correct a typo in the PSSE DYR parser, changing "Tprod" to "Tpord".
 - Fix a bug in PSSE RAW parser in incorrect handling of 3WT. Also fixes issue in
   handling quoted strings with commas and slashes.
+- Add a demo ``QSTS.ipynb`` to show how to run QSTS simulation in ANDES.
+  See folder ``andes/examples/demonstration``.
 
 v1.9.3 (2025-01-05)
 -------------------
