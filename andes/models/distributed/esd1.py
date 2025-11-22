@@ -86,6 +86,8 @@ class ESD1Model(PVD1Model):
         self.Ipcmd.lim.lower = self.Ipmin
         self.Ipcmd.y.deps = ['Ipmin']
 
+        self.fdbdu.default = 0.017
+
 
 class ESD1(ESD1Data, ESD1Model):
     """
@@ -96,11 +98,20 @@ class ESD1(ESD1Data, ESD1Model):
     The state of charge is in state variable ``SOC``,
     which is an alias of ``pIG_y``.
 
-    Reference:
-    [1] Powerworld, Renewable Energy Electrical Control Model REEC_C
-    Available:
+    Unlink PVD1, frequency deviation deadband upper limit is
+    set to `fdbdu` instead of 0, allowing bi-directional
+    frequency deviation deadband.
 
-    https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20REEC_C.htm
+    References
+    -----------
+    1. ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1),
+       https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+
+    Notes
+    -----
+    ..  versionchanged:: 1.9.4
+        `DB.upper` is set to be `fdbdu` instead of 0 in order to allow
+        bi-directional frequency deviation deadband.
     """
     def __init__(self, system, config):
         ESD1Data.__init__(self)

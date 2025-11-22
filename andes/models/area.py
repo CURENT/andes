@@ -73,12 +73,11 @@ class ACEc(ACEData, Model):
 
     Note: area idx is automatically retrieved from `bus`.
 
-    Reference:
-
-    NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: Bias
-    (B) vs. Frequency Response (Beta)", 2021. Available:
-
-    https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
+    References
+    -----------
+    1. NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: Bias
+       (B) vs. Frequency Response (Beta)", 2021.
+       https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
     """
 
     def __init__(self, system, config):
@@ -133,12 +132,11 @@ class ACE(ACEc):
 
     Note: area idx is automatically retrieved from `bus`.
 
-    Reference:
-
-    NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: ACE Review",
-    2021. Available:
-
-    https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
+    References
+    -----------
+    1. NERC, "Balancing and Frequency Control Reference Document, Chapter 1 Balancing Fundamentals: ACE Review",
+       2021.
+       https://www.nerc.com/comm/RSTC_Reliability_Guidelines/Reference_Document_NERC_Balancing_and_Frequency_Control.pdf
     """
 
     def __init__(self, system, config):

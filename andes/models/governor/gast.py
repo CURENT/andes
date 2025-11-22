@@ -120,13 +120,10 @@ class GAST(GASTData, GASTModel):
     """
     GAST turbine governor model.
 
-    Reference:
-
-    [1] Neplan, TURBINE-GOVERNOR GAST, [Online],
-
-    Available:
-
-    https://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf
+    References
+    -----------
+    1. Neplan, TURBINE-GOVERNOR GAST.
+       http://www.neplan.ch/wp-content/uploads/2015/08/Nep_TURBINES_GOV.pdf
     """
 
     def __init__(self, system, config):

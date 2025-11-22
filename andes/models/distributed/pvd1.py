@@ -96,6 +96,10 @@ class PVD1Data(ModelData):
                              unit='Hz',
                              non_positive=True,
                              )
+        self.fdbdu = NumParam(default=999, tex_name='f_{dbd,u}',
+                              info='frequency deviation upper deadband, placeholder',
+                              unit='Hz',
+                              non_negative=True)
 
         # added on 11/14/2020: convert to system base pu
         self.ddn = NumParam(default=0.0, tex_name='D_{dn}',
@@ -324,8 +328,8 @@ class PVD1Model(Model):
                           unit='Hz', tex_name='f_{dev}',
                           )
 
-        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=0.0, gain=self.ddn,
-                            info='frequency deviation deadband with gain',
+        self.DB = DeadBand1(u=self.Fdev, center=0.0, lower=self.fdbd, upper=self.fdbdu, gain=self.ddn,
+                            info='frequency deviation deadband with gain (DB_y is Pdrp)',
                             )  # outputs   `Pdrp`
         self.DB.db.no_warn = True
 
@@ -375,19 +379,22 @@ class PVD1Model(Model):
         self.Pext = Algeb(tex_name='P_{ext}',
                           info='External power signal (for AGC)',
                           v_str='u * Pext0',
-                          e_str='u * Pext0 - Pext'
+                          e_str='u * Pext0 - Pext',
+                          unit='pu',
                           )
 
         self.Pref = Algeb(tex_name='P_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
                           v_str='u * pref0',
-                          e_str='u * pref0 - Pref'
+                          e_str='u * pref0 - Pref',
+                          unit='pu',
                           )
 
         self.Psum = Algeb(tex_name='P_{tot}',
                           info='Sum of P signals',
                           v_str='u * (Pext + Pref + DB_y)',
                           e_str='u * (Pext + Pref + DB_y) - Psum',
+                          unit='pu',
                           )  # `DB_y` is `Pdrp` (f droop)
 
         self.PHL = Limiter(u=self.Psum, lower=0.0, upper=self.pmx,
@@ -432,12 +439,14 @@ class PVD1Model(Model):
                           v_str=Qdrp,
                           e_str=f'{Qdrp} - Qdrp',
                           discrete=(self.VQ1, self.VQ2),
+                          unit='pu',
                           )
 
         self.Qref = Algeb(tex_name=r'Q_{ref}',
                           info='Reference power signal (for scheduling setpoint)',
                           v_str='u * qref0',
-                          e_str='u * qref0 - Qref'
+                          e_str='u * qref0 - Qref',
+                          unit='pu',
                           )
 
         self.Qsum = Algeb(tex_name=r'Q_{tot}',
@@ -445,6 +454,7 @@ class PVD1Model(Model):
                           v_str=f'u * (qref0 + {Qdrp})',
                           e_str='u * (Qref + Qdrp) - Qsum',
                           discrete=(self.VQ1, self.VQ2),
+                          unit='pu',
                           )
 
         self.Ipul = Algeb(info='Ipcmd before Ip hard limit',
@@ -544,13 +554,49 @@ class PVD1(PVD1Data, PVD1Model):
     Maximum power limit `pmx` can be disabled by editing the configuration
     file by setting `plim=0`. It cannot be modified in runtime.
 
-    Reference:
-    [1] ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1), [Online],
-    Available:
+    References
+    -----------
+    1. ESIG, WECC Distributed and Small PV Plants Generic Model (PVD1),
+       https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
 
-    https://www.esig.energy/wiki-main-page/wecc-distributed-and-small-pv-plants-generic-model-pvd1/
+    Notes
+    -----
+    This model introduces the parameter `fdbdu`, which is set to 999 by default.
+    It enables support for bi-directional frequency deviation deadband in
+    derived models.
+
+    **Important:** Do not modify `fdbdu` when using the `PVD1` model.
+
+    .. versionchanged:: 1.9.4
+        Added the `fdbdu` parameter to support bi-directional deadband control.
     """
 
     def __init__(self, system, config):
         PVD1Data.__init__(self)
         PVD1Model.__init__(self, system, config)
+
+
+class PVD2(PVD1Data, PVD1Model):
+    """
+    WECC Distributed PV model with bi-directional frequency deviation
+    deadband.
+
+    This model is revised from `PVD1`, where `DB.upper` is set to `fdbdu`.
+
+    References
+    -----------
+    1. X. Fang, H. Yuan and J. Tan, "Secondary Frequency Regulation from
+       Variable Generation Through Uncertainty Decomposition: An Economic and
+       Reliability Perspective," in IEEE Transactions on Sustainable Energy,
+       vol. 12, no. 4, pp. 2019-2030, Oct. 2021, doi: 10.1109/TSTE.2021.3076758.
+
+    Notes
+    -----
+    .. versionadded:: 1.9.4
+    """
+
+    def __init__(self, system, config):
+        PVD1Data.__init__(self)
+        PVD1Model.__init__(self, system, config)
+
+        self.fdbdu.default = 0.017

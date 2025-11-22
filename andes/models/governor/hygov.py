@@ -250,9 +250,9 @@ class HYGOV(HYGOVData, HYGOVModel):
 
     Implements the PSS/E HYGOV model without deadband.
 
-    Reference:
-
-    [1] PSSE, Model Library, HYGOV
+    References
+    -----------
+    1. PSSE, Model Library, HYGOV.
     """
 
     def __init__(self, system, config):

@@ -67,12 +67,12 @@ def get_block_lines(b, mdata):
 def _parse_csv_with_quotes(line):
     """
     Parse a line of PSS/E data that may contain single-quoted strings with commas or slashes.
-    
+
     Parameters
     ----------
     line : str
         A line from a PSS/E file that needs parsing
-        
+
     Returns
     -------
     list
@@ -82,11 +82,11 @@ def _parse_csv_with_quotes(line):
     result = []
     current = ""
     in_quotes = False
-    
+
     # Handle empty input
     if not line:
         return [""]
-    
+
     # Process each character
     for char in line:
         if char == "'" and not in_quotes:
@@ -104,10 +104,10 @@ def _parse_csv_with_quotes(line):
         else:
             # Add character to current field
             current += char
-    
+
     # Add the last field
     result.append(current)
-    
+
     # Process each field to remove quotes and strip whitespace
     for i in range(len(result)):
         field = result[i]
@@ -115,21 +115,21 @@ def _parse_csv_with_quotes(line):
         if field and len(field) >= 2 and field[0] == "'" and field[-1] == "'":
             field = field[1:-1]
         result[i] = field.strip()
-    
+
     return result
 
 
 def _split_line_with_quoted_parts(line, separator='/'):
     """
     Split a line by a separator character, but preserve the separator inside quoted strings.
-    
+
     Parameters
     ----------
     line : str
         Line to split
     separator : str
         Character to split by, defaults to '/'
-        
+
     Returns
     -------
     list
@@ -138,7 +138,7 @@ def _split_line_with_quoted_parts(line, separator='/'):
     result = []
     current = ""
     in_quotes = False
-    
+
     for char in line:
         if char == "'" and not in_quotes:
             in_quotes = True
@@ -151,10 +151,10 @@ def _split_line_with_quoted_parts(line, separator='/'):
             current = ""
         else:
             current += char
-    
+
     if current:
         result.append(current)
-    
+
     return result
 
 
@@ -612,11 +612,11 @@ def _parse_transf_v33(raw, system, max_bus):
                 # CZ=3: Load loss & |Z|
                 # Convert power loss and impedance magnitude to R and X on winding base
                 Sn = data[1][2]  # Use winding base MVA
-                
+
                 # Convert load loss (W) to R (pu on winding base)
                 # R = W / (SBASE_winding * 1e6)
                 r_pu_wb = data[1][0] / (Sn * 1e6)
-                
+
                 # Calculate X from |Z| and R: X = sqrt(|Z|^2 - R^2)
                 # Handle numeric issues - ensure we don't get imaginary numbers
                 if data[1][1]**2 > r_pu_wb**2:
@@ -626,11 +626,11 @@ def _parse_transf_v33(raw, system, max_bus):
                     logger.warning(f"Branch {data[0][0]}-{data[0][1]}:")
                     logger.warning("  CZ=3 conversion issue: |Z|^2 < R^2. Setting X to small value.")
                     x_pu_wb = 1e-6
-                
+
                 # Replace the data[1][0] and data[1][1] with calculated R and X
                 data[1][0] = r_pu_wb
                 data[1][1] = x_pu_wb
-                
+
                 # Now it's in CZ=2 format and will be processed accordingly
             else:
                 logger.warning('Unknown impedance code %s', data[0][5])
@@ -640,18 +640,18 @@ def _parse_transf_v33(raw, system, max_bus):
                 # CM=2: No load loss & exc. loss
                 mag1 = data[0][7]  # No-load loss in watts
                 mag2 = data[0][8]  # Excitation current in pu
-                
+
                 # Vbase for winding 1 (kV)
                 Vn1 = data[2][1] if data[2][1] != 0.0 else bus_Vn1
-                
+
                 # Step 1: Convert power loss to conductance (G) in Siemens
                 # G [S] = MAG1 / VNOM1_kV^2 / 1e6
-                g_s = mag1 / (Vn1 **2) / 1e6
-                
+                g_s = mag1 / (Vn1 ** 2) / 1e6
+
                 # Step 2: Calculate B in Siemens from excitation current
                 # First convert excitation current to |Y| in Siemens
                 y_mag_s = abs(mag2) * system.config.mva / (Vn1**2)
-                
+
                 # B [S] = sqrt(|Y|^2 - G^2)
                 # Handle numeric issues
                 if y_mag_s**2 > g_s**2:
@@ -661,11 +661,11 @@ def _parse_transf_v33(raw, system, max_bus):
                     # If |Y| is too small compared to G, assume B is very small
                     logger.warning("CM=2 conversion issue: |Y|^2 < G^2. Setting B to small value.")
                     b_s = 1e-6
-                
+
                 # Convert back to per unit on system base
                 g_pu = g_s * (Vn1**2) / system.config.mva
                 b_pu = b_s * (Vn1**2) / system.config.mva
-                
+
                 # Replace MAG1 and MAG2 with calculated G and B in pu
                 data[0][7] = g_pu
                 data[0][8] = b_pu
@@ -704,7 +704,7 @@ def _parse_transf_v33(raw, system, max_bus):
                 data = _process_3wt_cz3(data, system)
                 # After processing, treat this as CZ=2
                 data[0][5] = 2
-            
+
             if data[0][6] == 2:  # CM=2
                 data = _process_3wt_cm2(data, system)
                 # After processing, treat this as CM=1
@@ -715,7 +715,7 @@ def _parse_transf_v33(raw, system, max_bus):
             if new_bus in system.Bus.idx.v:
                 new_bus = max_bus + xf_3_count
                 logger.debug('Added bus <%s> for 3-winding transformer <%s-%s-%s>',
-                              new_bus, data[0][0], data[0][1], data[0][2])
+                             new_bus, data[0][0], data[0][1], data[0][2])
 
             # Assign `area`, `owner`, and `zone` using the high-voltage side bus values
             high_voltage_bus = data[0][0]
@@ -742,7 +742,7 @@ def _parse_transf_v33(raw, system, max_bus):
             x_23 = data[1][4]
             r_31 = data[1][6]
             x_31 = data[1][7]
-            
+
             # Convert to system base if CZ=2
             if data[0][5] == 2:
                 # Convert from winding base to system base
@@ -753,7 +753,7 @@ def _parse_transf_v33(raw, system, max_bus):
                 x_23 = x_23 * sbase / data[1][5]
                 r_31 = r_31 * sbase / data[1][8]  # SBASE3-1
                 x_31 = x_31 * sbase / data[1][8]
-            
+
             # Calculate star-point resistances and reactances
             # These values are on system base after the conversion above
             r = []
@@ -768,7 +768,7 @@ def _parse_transf_v33(raw, system, max_bus):
             for i in range(0, 3):
                 # Always use system base after conversion
                 Sn = system.config.mva
-                
+
                 # Set magnetizing conductance and susceptance for winding 1 only (first branch)
                 if i == 0:
                     g1_value = data[0][7]  # Magnetizing conductance (G)
@@ -776,7 +776,7 @@ def _parse_transf_v33(raw, system, max_bus):
                 else:
                     g1_value = 0.0         # No magnetization for other windings
                     b1_value = 0.0         # No magnetization for other windings
-                
+
                 param = {'trans': True,
                          'bus1': data[0][i],
                          'bus2': new_bus,
@@ -915,16 +915,16 @@ def sort_psse_models(dyr_yaml, system):
 def _process_3wt_cz3(data, system):
     """
     Process 3-winding transformer data with CZ=3 (Load loss & |Z|).
-    
+
     Converts power loss (W) and impedance magnitude to R and X on winding base (CZ=2).
-    
+
     Parameters
     ----------
     data : list
         Multi-line transformer data
     system : System
         The ANDES system object
-        
+
     Returns
     -------
     list
@@ -933,23 +933,23 @@ def _process_3wt_cz3(data, system):
     # For each winding pair, convert load loss and |Z| to R and X
     # Winding pairs are 1-2, 2-3, and 3-1
     sbase = [data[1][2], data[1][5], data[1][8]]  # SBASE1-2, SBASE2-3, SBASE3-1
-    
+
     # Data indices for each winding pair
     indices = [
         (0, 1),  # R1-2, X1-2 indices
         (3, 4),  # R2-3, X2-3 indices
         (6, 7),  # R3-1, X3-1 indices
     ]
-    
+
     for i, (loss_idx, z_idx) in enumerate(indices):
         # Load loss in watts
         loss = data[1][loss_idx]
         # |Z| in pu on winding base
         z_mag = data[1][z_idx]
-        
+
         # Convert load loss to R in pu on winding base
         r_pu = loss / (sbase[i] * 1e6)
-        
+
         # Calculate X from |Z| and R: X = sqrt(|Z|^2 - R^2)
         # Handle numeric issues - ensure we don't get imaginary numbers
         if z_mag**2 > r_pu**2:
@@ -958,27 +958,27 @@ def _process_3wt_cz3(data, system):
             # If |Z| is too small compared to R, assume X is very small
             logger.warning(f"CZ=3 conversion issue: |Z|^2 < R^2 for winding pair {i+1}. Setting X to small value.")
             x_pu = 1e-6
-        
+
         # Replace the original values with calculated R and X
         data[1][loss_idx] = r_pu
         data[1][z_idx] = x_pu
-    
+
     return data
 
 
 def _process_3wt_cm2(data, system):
     """
     Process 3-winding transformer data with CM=2 (No load loss & exc. loss).
-    
+
     Converts no-load loss and excitation current to G and B on system base (CM=1).
-    
+
     Parameters
     ----------
     data : list
         Multi-line transformer data
     system : System
         The ANDES system object
-        
+
     Returns
     -------
     list
@@ -987,18 +987,18 @@ def _process_3wt_cm2(data, system):
     # Get no-load loss in watts and excitation current in pu
     mag1 = data[0][7]  # No-load loss in watts
     mag2 = data[0][8]  # Excitation current in pu
-    
+
     # Get the rated voltage of winding 1 (kV)
     Vn1 = data[2][1] if data[2][1] != 0.0 else system.Bus.get(src='Vn', idx=data[0][0], attr='v')
-    
+
     # Convert power loss to conductance (G) in Siemens
     # G [S] = MAG1 / VNOM1_V^2 / 1e6
-    g_s = mag1 / (Vn1 **2) / 1e6
-    
+    g_s = mag1 / (Vn1 ** 2) / 1e6
+
     # Convert |Y| pu to actual in Siemens
     # |Y| [S] = |MAG2| * SBASE_MVA / NOMV1_kV^2
     y_mag_s = abs(mag2) * system.config.mva / (Vn1**2)
-    
+
     # Calculate B in Siemens
     # B [S] = sqrt(|Y|^2 - G^2)
     # Handle numeric issues
@@ -1010,13 +1010,13 @@ def _process_3wt_cm2(data, system):
         logger.warning(f"Branch {data[0][0]}-{data[0][1]}-{data[0][2]}:")
         logger.warning("  CM=2 conversion issue: |Y|^2 < G^2. Setting B to small value.")
         b_s = 1e-6
-    
+
     # Convert G and B to per unit on system base
     g_pu = g_s * (Vn1**2) / system.config.mva
     b_pu = b_s * (Vn1**2) / system.config.mva
-    
+
     # Replace MAG1 and MAG2 with calculated G and B in pu
     data[0][7] = g_pu
     data[0][8] = b_pu
-    
+
     return data

@@ -526,12 +526,11 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
     `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
     `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
 
-    Reference:
-
-    NERC. Bulk Power System Reliability Perspectives on the Adoption of IEEE 1547-2018.
-    March 2020. Available:
-
-    https://www.nerc.com/comm/PC_Reliability_Guidelines_DL/Guideline_IEEE_1547-2018_BPS_Perspectives.pdf
+    References
+    -----------
+    1. NERC. Bulk Power System Reliability Perspectives on the Adoption of IEEE 1547-2018.
+       March 2020,
+       https://www.nerc.com/comm/PC_Reliability_Guidelines_DL/Guideline_IEEE_1547-2018_BPS_Perspectives.pdf
     """
 
     def __init__(self, system, config):
@@ -605,12 +604,11 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
     `(vu1, vu2), Tvu1` [(1.10, 1.20), 1s]\n
     `(vu2, vu3), Tvu2` [(1.20, 2.00), 0.16s]\n
 
-    Reference:
-
-    NERC. Bulk Power System Reliability Perspectives on the Adoption of IEEE 1547-2018.
-    March 2020. Available:
-
-    https://www.nerc.com/comm/PC_Reliability_Guidelines_DL/Guideline_IEEE_1547-2018_BPS_Perspectives.pdf
+    References
+    -----------
+    1. NERC. Bulk Power System Reliability Perspectives on the Adoption of IEEE 1547-2018.
+       March 2020.
+       https://www.nerc.com/comm/PC_Reliability_Guidelines_DL/Guideline_IEEE_1547-2018_BPS_Perspectives.pdf
     """
 
     def __init__(self, system, config):
