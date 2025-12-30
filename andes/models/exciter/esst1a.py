@@ -278,7 +278,7 @@ class ESST1A(ESST1AData, ESST1AModel):
     [2] NEPLAN, Exciters Models, [Online],
 
     Available:
-    https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Exciter%20ESST1A.htm
+    https://www.powerworld.com/WebHelp/#TransientModels_HTML/Exciter%20ESST1A%20and%20ESST1A_GE.htm
 
     https://www.neplan.ch/wp-content/uploads/2015/08/Nep_EXCITERS1.pdf
     """
