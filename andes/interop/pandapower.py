@@ -56,18 +56,20 @@ def build_group_table(ssa, group, columns, mdl_name=[]):
 
         The output Dataframe contains the columns from the device
     """
-    group_df = pd.DataFrame(columns=columns)
+    dfs = []
     group = getattr(ssa, group)
     if not mdl_name:
         mdl_dict = getattr(group, 'models')
         for key in mdl_dict:
             mdl = getattr(ssa, key)
-            group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
+            dfs.append(mdl.as_df()[columns])
     else:
         for key in mdl_name:
             mdl = getattr(ssa, key)
-            group_df = pd.concat([group_df, mdl.as_df()[columns]], axis=0)
-    return group_df.reset_index(drop=True)
+            dfs.append(mdl.as_df()[columns])
+    if dfs:
+        return pd.concat(dfs, axis=0, ignore_index=True)
+    return pd.DataFrame(columns=columns)
 
 
 def make_link_table(ssa):
@@ -121,7 +123,8 @@ def make_link_table(ssa):
                         right=ssa_dg[['stg_idx', 'dg_idx']])
     ssa_key0 = pd.merge(left=ssa_key0, how='left', on='stg_idx',
                         right=ssa_rg[['stg_idx', 'rg_idx']])
-    ssa_key0.fillna(False, inplace=True)
+    with pd.option_context('future.no_silent_downcasting', True):
+        ssa_key0 = ssa_key0.fillna(False).infer_objects(copy=False)
     ssa_key0['dyr'] = ssa_key0['syg_idx'].astype(
         bool) + ssa_key0['dg_idx'].astype(bool) + ssa_key0['rg_idx'].astype(bool)
     ssa_key0['dyr'] = 1 - ssa_key0['dyr'].astype(int)
@@ -129,7 +132,7 @@ def make_link_table(ssa):
     ssa_dyr0 = ssa_key0[ssa_key0.dyr].drop(['dyr'], axis=1)
     ssa_dyr0['gammap'] = 1
     ssa_dyr0['gammaq'] = 1
-    ssa_key = pd.concat([ssa_syg, ssa_dg, ssa_rg, ssa_dyr0], axis=0)
+    ssa_key = pd.concat([ssa_syg, ssa_dg, ssa_rg, ssa_dyr0], axis=0, ignore_index=True)
     ssa_key = pd.merge(left=ssa_key,
                        right=ssa_exc.rename(columns={'idx': 'exc_idx', 'syn': 'syg_idx'}),
                        how='left', on='syg_idx')
@@ -297,15 +300,15 @@ def _to_pp_line(ssa, ssp, ssa_bus):
         tf_df['in_service'] = tf_df['in_service'].astype('bool')
 
         tf_df['hv_bus'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
-            lambda x: x[0] if x[2] >= x[3] else x[1], axis=1)
+            lambda x: x.iloc[0] if x.iloc[2] >= x.iloc[3] else x.iloc[1], axis=1)
         tf_df['lv_bus'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
-            lambda x: x[0] if x[2] < x[3] else x[1], axis=1)
+            lambda x: x.iloc[0] if x.iloc[2] < x.iloc[3] else x.iloc[1], axis=1)
         tf_df[['hv_bus', 'lv_bus']] = tf_df[['hv_bus', 'lv_bus']].astype('int')
         tf_df['vn_hv_kv'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
-            lambda x: x[2] if x[2] >= x[3] else x[3], axis=1)
+            lambda x: x.iloc[2] if x.iloc[2] >= x.iloc[3] else x.iloc[3], axis=1)
         tf_df['vn_lv_kv'] = tf_df[['from_bus', 'to_bus', 'Vn1', 'Vn2']].apply(
-            lambda x: x[2] if x[2] < x[3] else x[3], axis=1)
-        tf_df['tap_side'] = tf_df[['Vn1', 'Vn2']].apply(lambda x: 'hv' if x[0] >= x[1] else 'lv', axis=1)
+            lambda x: x.iloc[2] if x.iloc[2] < x.iloc[3] else x.iloc[3], axis=1)
+        tf_df['tap_side'] = tf_df[['Vn1', 'Vn2']].apply(lambda x: 'hv' if x.iloc[0] >= x.iloc[1] else 'lv', axis=1)
 
         tf_df['zk'] = (tf_df['r'] ** 2 + tf_df['x'] ** 2) ** 0.5
         tf_df['sn_mva'] = 99999
@@ -320,7 +323,8 @@ def _to_pp_line(ssa, ssp, ssa_bus):
         tf_df['tap_neutral'] = 0
         tf_df['parallel'] = 1
         tf_df['oltc'] = False
-        tf_df['tap_phase_shifter'] = False
+        tf_df['tap_changer_type'] = 'Ratio'  # pandapower 3.0+: replaces tap_phase_shifter
+        tf_df['tap_dependency_table'] = False  # pandapower 3.0+: required column
         tf_df['tap_step_degree'] = np.nan
         tf_df['df'] = 1
         tf_df['std_type'] = None
@@ -329,8 +333,8 @@ def _to_pp_line(ssa, ssp, ssa_bus):
                       'vn_lv_kv', 'vk_percent', 'vkr_percent', 'pfe_kw', 'i0_percent',
                       'shift_degree', 'tap_side', 'tap_neutral',
                       'tap_step_percent', 'tap_pos', 'in_service',
-                      'max_loading_percent', 'parallel', 'tap_phase_shifter',
-                      'tap_step_degree', 'df', 'std_type']
+                      'max_loading_percent', 'parallel', 'tap_changer_type',
+                      'tap_dependency_table', 'tap_step_degree', 'df', 'std_type']
 
         tf_df[trafo_cols].reset_index(drop=True)
         setattr(ssp, 'trafo', tf_df[trafo_cols].reset_index(drop=True))
@@ -411,7 +415,7 @@ def _to_pp_gen(ssa, ssp, ctrl=[]):
 
     # assign slack bus
     ssa_sg["slack"] = False
-    ssa_sg["slack"][ssa_sg["bus_idx"] == ssa.Slack.bus.v[0]] = True
+    ssa_sg.loc[ssa_sg["bus_idx"] == ssa.Slack.bus.v[0], "slack"] = True
 
     # compute the actual value
     stg_calc_cols = ['p0', 'q0', 'pmax', 'pmin', 'qmax', 'qmin']
@@ -638,7 +642,7 @@ def _verifyGSF(ppn, gsf, tol=1e-4):
     # --- DCPF results ---
     rl = pd.concat([ppn.res_line['p_from_mw'], ppn.line[['from_bus', 'to_bus']]], axis=1)
     rp = _sumPF_ppn(ppn)
-    rl_c = np.array(np.matrix(gsf) * np.matrix(rp.ngen).T)
+    rl_c = gsf @ rp.ngen.values
     res_gap = rl.p_from_mw.values - rl_c.flatten()
     if np.abs(res_gap).max() <= tol:
         logger.info("GSF is consistent.")

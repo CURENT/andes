@@ -58,8 +58,10 @@ class TestPandapower(unittest.TestCase):
         c_exc = link_table['exc_idx'].iloc[ridx].astype(str) == 'ESST3A_2'
         c_stg = link_table['stg_idx'].iloc[ridx].astype(str) == '1'
         c_gov = link_table['gov_idx'].iloc[ridx].astype(str) == 'TGOV1_1'
-        c = c_bus.values[0] and c_exc.values[0] and c_stg.values[0] and c_gov.values[0]
-        return c
+        self.assertTrue(c_bus.values[0])
+        self.assertTrue(c_exc.values[0])
+        self.assertTrue(c_stg.values[0])
+        self.assertTrue(c_gov.values[0])
 
     def test_make_GSF(self):
         """
@@ -71,8 +73,8 @@ class TestPandapower(unittest.TestCase):
                           no_output=True,
                           default_config=True)
         sp39 = to_pandapower(sa39)
-        make_GSF(sp39)
-        return True
+        gsf = make_GSF(sp39)
+        self.assertIsNotNone(gsf)
 
 
 def _test_to_pandapower_single(case, **kwargs):
