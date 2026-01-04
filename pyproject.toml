@@ -72,7 +72,7 @@ doc = [
     "mdit-py-plugins>=0.3.1,<0.4",
 ]
 interop = [
-    "pandapower==3.3",
+    "pandapower>=3,<=3.3",
     "pypowsybl",
 ]
 web = [

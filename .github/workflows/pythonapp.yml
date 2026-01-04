@@ -62,7 +62,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install dependencies
-      run: pip install -e .[dev]
+      run: pip install -e .[dev,interop]
 
     - name: Run notebook tests
       run: pytest --nbmake examples --ignore=examples/verification
@@ -80,7 +80,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install dependencies
-      run: pip install -e .[dev]
+      run: pip install -e .[dev,interop]
 
     - name: Build docs
       run: make -C docs html
