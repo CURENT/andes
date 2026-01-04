@@ -46,7 +46,10 @@ dependencies = [
 dev = [
     "coverage",
     "pytest==7.4",
+    "pytest-xdist",
+    "nbmake",
     "flake8",
+    "line_profiler",
     "sphinx",
     "ipython",
     "numpydoc",
