@@ -1348,7 +1348,8 @@ class System:
                     lg_island = item
 
             lg_bus_idx = [self.Bus.idx.v[ii] for ii in lg_island]
-            self.SynGen.store_idx_island(lg_bus_idx)
+            if self.SynGen.n > 0:  # only do when there is at least one SynGen
+                self.SynGen.store_idx_island(lg_bus_idx)
 
         if info is True:
             self.summary()
