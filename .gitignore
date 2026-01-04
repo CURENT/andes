@@ -108,6 +108,9 @@ benchmarks/andes
 # generated pycode
 andes/pycode
 
+# setuptools-scm generated version file
+andes/_version.py
+
 # testfile
 icebar
 

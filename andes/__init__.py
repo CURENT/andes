@@ -1,5 +1,7 @@
-from . import _version
-__version__ = _version.get_versions()['version']
+try:
+    from andes._version import version as __version__
+except ImportError:
+    __version__ = "0.0.0+unknown"
 
 from andes import io         # NOQA
 from andes import core       # NOQA
