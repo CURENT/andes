@@ -33,6 +33,7 @@ dependencies = [
     "dill",
     "pathos",
     "tqdm",
+    "ipywidgets",
     "pyyaml",
     "coloredlogs",
     "chardet",
