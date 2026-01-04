@@ -1,5 +1,5 @@
 """
-Simple pandapower (2.7.0) interface
+Simple pandapower (3.3) interface
 """
 
 import logging
@@ -352,8 +352,10 @@ def _to_pp_load(ssa, ssp, ssa_bus):
     load_df['sn_mva'] = ssp.sn_mva
     load_df['controllable'] = False
     load_df['type'] = None
-    load_df['const_i_percent'] = 0
-    load_df['const_z_percent'] = 0
+    load_df['const_i_p_percent'] = 0
+    load_df['const_i_q_percent'] = 0
+    load_df['const_z_p_percent'] = 0
+    load_df['const_z_q_percent'] = 0
     load_df['scaling'] = 1
     load_df.drop(['idx'], axis=1, inplace=True)
     setattr(ssp, 'load', load_df)
