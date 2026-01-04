@@ -10,8 +10,8 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      win_python3.9:
-        python.version: '3.9'
+      win_python3.11:
+        python.version: '3.11'
 
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"

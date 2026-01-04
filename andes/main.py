@@ -28,8 +28,6 @@ from subprocess import call
 from time import sleep
 from typing import Optional, Union
 
-from ._version import get_versions
-
 import andes
 from andes.routines import routine_cli
 from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
@@ -869,7 +867,7 @@ def versioninfo():
     import kvxopt
 
     versions = {'Python': platform.python_version(),
-                'andes': get_versions()['version'],
+                'andes': andes.__version__,
                 'numpy': np.__version__,
                 'kvxopt': kvxopt.__version__,
                 'sympy': sympy.__version__,

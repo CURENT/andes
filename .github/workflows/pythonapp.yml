@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for setuptools-scm
     - uses: conda-incubator/setup-miniconda@v3
       with:
         miniforge-variant: Miniforge3
@@ -20,9 +22,8 @@ jobs:
     - shell: bash -el {0}
       name: Install dependencies
       run: |
-        mamba install -y nbmake pytest-xdist line_profiler flake8 pytest
-        mamba install --file requirements.txt --file requirements-extra.txt
-        pip install -e .
+        mamba install -y nbmake pytest-xdist line_profiler flake8 pytest build
+        pip install -e .[dev]
     - shell: bash -el {0}
       name: Run pip check
       run: |
@@ -41,7 +42,7 @@ jobs:
       name: Build and publish if tagged
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       run: |
-        python setup.py sdist
+        python -m build
         pip install twine
         twine upload dist/*
       env:

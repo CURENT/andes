@@ -43,7 +43,7 @@ Create an environment for ANDES (recommended)
 
 .. code:: bash
 
-     mamba create --name andes python=3.8
+     mamba create --name andes python=3.11
 
 Activate the new environment with
 
@@ -92,8 +92,8 @@ To install all extra packages, do:
 
     pip install andes[all]
 
-One can also inspect the ``requirements-extra.txt`` to identify the packages
-for manual installation.
+One can also inspect the ``[project.optional-dependencies]`` section in
+``pyproject.toml`` to identify the packages for manual installation.
 
 .. _Develop Install:
 
@@ -126,26 +126,12 @@ pushing back code edits will require significant manual efforts.
 
 .. _`Step 2`:
 
-Step 2: Install dependencies
+Step 2: Install ANDES in development mode
 
 In the Mambaforge environment, use ``cd`` to change directory to the ANDES root folder.
-The folder should contain the ``setup.py`` file.
+The folder should contain the ``pyproject.toml`` file.
 
-Install dependencies with
-
-.. code:: bash
-
-    mamba install --file requirements.txt
-    mamba install --file requirements-extra.txt
-
-Alternatively, you can install them with ``pip``:
-
-.. code:: bash
-
-    pip install -r requirements.txt
-    pip install -r requirements-extra.txt
-
-Step 3: Install ANDES in the development mode using
+Install ANDES in development mode with all dependencies using
 
 .. code:: bash
 
@@ -155,21 +141,17 @@ Note the dot at the end. Pip will take care of the rest.
 
 .. note::
 
-    The ANDES version number shown in ``pip list``
-    will stuck at the version that was intalled, unless
-    ANDES is develop-installed again.
-    It will not update automatically with ``git pull``.
+    ANDES uses ``setuptools-scm`` for versioning based on git tags.
+    The version will update automatically when you ``git pull`` new changes.
 
-    To check the latest version number, check the preamble
-    by running the ``andes`` command or chek the output of
+    To check the version, run ``andes`` or
     ``python -c "import andes; print(andes.__version__)"``
 
 .. note::
 
-    ANDES updates may infrequently introduce new package
-    requirements. If you see an ``ImportError`` after updating
-    ANDES, you can manually install the missing dependencies
-    or redo `Step 2`_.
+    ANDES updates may infrequently introduce new package requirements.
+    If you see an ``ImportError`` after updating, reinstall with
+    ``pip install -e .`` to get the new dependencies.
 
 .. note::
 

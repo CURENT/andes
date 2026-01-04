@@ -1,0 +1,106 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "andes"
+dynamic = ["version"]
+description = "Python software for symbolic power system modeling and numerical analysis."
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+authors = [{name = "Hantao Cui", email = "cuihantao@gmail.com"}]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Environment :: Console",
+]
+
+dependencies = [
+    "kvxopt>=1.3.2.0",
+    "numpy",
+    "scipy<1.14",
+    "sympy>=1.6,!=1.10.0",
+    "pandas",
+    "matplotlib",
+    "openpyxl",
+    "xlsxwriter",
+    "dill",
+    "pathos",
+    "tqdm",
+    "pyyaml",
+    "coloredlogs",
+    "chardet",
+    "psutil",
+    "texttable",
+    "numba",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pytest==7.4",
+    "flake8",
+    "sphinx",
+    "ipython",
+    "numpydoc",
+    "sphinx-copybutton",
+    "sphinx-panels",
+    "pydata-sphinx-theme",
+    "myst-parser>=0.15",
+    "myst-nb>=0.13",
+    "mdit-py-plugins>=0.3.1,<0.4",
+    "pre-commit",
+]
+doc = [
+    "sphinx",
+    "numpydoc",
+    "sphinx-copybutton",
+    "sphinx-panels",
+    "pydata-sphinx-theme",
+    "myst-parser>=0.15",
+    "myst-nb>=0.13",
+    "mdit-py-plugins>=0.3.1,<0.4",
+]
+interop = [
+    "pandapower",
+    "pypowsybl",
+]
+web = [
+    "ipywidgets==7.7",
+]
+all = [
+    "andes[dev,doc,interop,web]",
+]
+
+[project.scripts]
+andes = "andes.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/curent/andes"
+Documentation = "https://docs.andes.app/"
+Repository = "https://github.com/curent/andes"
+
+[tool.setuptools.packages.find]
+include = ["andes*"]
+
+[tool.setuptools.package-data]
+andes = [
+    "cases/**/*.xlsx",
+    "cases/**/*.m",
+    "cases/**/*.raw",
+    "cases/**/*.dyr",
+    "cases/**/*.py",
+    "cases/**/*.json",
+    "io/*.yaml",
+]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "node-and-date"
+write_to = "andes/_version.py"
