@@ -6,19 +6,54 @@ Release notes
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+v1.10 Notes
+===========
+
+v1.10.0 (2025-xx-xx)
+--------------------
+This release modernizes the build system and adds Pandapower 3 compatibility.
+
+Build system changes:
+
+- Migrate to ``pyproject.toml`` and remove ``setup.py`` support.
+- Remove Azure Pipelines configuration; CI is now handled entirely by GitHub Actions.
+- Remove ``versioneer.py`` in favor of modern versioning.
+
+Pandapower compatibility:
+
+- Update pandapower interface to version 3.x compatibility.
+- Fix interop and tests to be compatible with Pandapower 3.
+
+PSS/E parser improvements:
+
+- Refactor PSS/E data parsing functions to improve readability and maintainability.
+- Enhance PSS/E RAW parser to support 3-winding transformers with ``CZ=3`` and ``CM=2``.
+  Implement conversion of load loss and impedance to R and X, and no-load loss and
+  excitation current to G and B.
+- Enhance PSS/E RAW parser to correctly handle quoted strings with commas and slashes.
+- Correct a typo in the PSS/E DYR parser, changing "Tprod" to "Tpord".
+
+Bug fixes:
+
+- Fix ``PVD1`` frequency deadband to only respond to downward frequency deviations.
+  Contributed by @J-K-Peng.
+- Fix a bug in line model that causes incorrect admittance matrix.
+- Fix NumPy NaN compatibility issue in ``Model.set()``.
+- In connectivity check, only call ``SynGen.store_idx_island`` when there is at
+  least one SynGen.
+
+Other changes:
+
+- Enhance ``Model.set()`` to support assigning values when the destination is a list.
+  Contributed by @jinningwang.
+- Add ``ipywidgets`` to dependencies.
+- Update dependencies in ``pyproject.toml`` for compatibility and version constraints.
+- Add a demo ``QSTS.ipynb`` to show how to run QSTS simulation in ANDES.
+  See folder ``andes/examples/demonstration``. Contributed by @jinningwang.
+- Update broken link to ESST1A exciter documentation. Contributed by @isilber.
+
 v1.9 Notes
 ==========
-
-v1.9.4 (2025-xx-xx)
--------------------
-- Enhance ``Model.set()`` to support assigning values when the destination is a
-  list.
-- Fix a bug in line model that causes incorrect admittance matrix.
-- Correct a typo in the PSSE DYR parser, changing "Tprod" to "Tpord".
-- Fix a bug in PSSE RAW parser in incorrect handling of 3WT. Also fixes issue in
-  handling quoted strings with commas and slashes.
-- Add a demo ``QSTS.ipynb`` to show how to run QSTS simulation in ANDES.
-  See folder ``andes/examples/demonstration``.
 
 v1.9.3 (2025-01-05)
 -------------------
