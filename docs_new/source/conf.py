@@ -30,6 +30,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_design',              # Modern cards, tabs, grids
     'sphinx_copybutton',          # Copy button for code blocks
+    'sphinx_selective_exclude.eager_only',  # Process {only} during parsing
     'numpydoc',
 ]
 
@@ -185,7 +186,11 @@ latex_engine = "xelatex"
 latex_elements = {
     'papersize': 'letterpaper',
     'pointsize': '11pt',
-    'preamble': r'\setcounter{tocdepth}{3}',  # Show chapters, sections, subsections in TOC
+    'preamble': r'''
+\setcounter{tocdepth}{3}
+\setlength{\headheight}{13.6pt}
+\addtolength{\topmargin}{-1.6pt}
+''',  # Show chapters, sections, subsections in TOC; fix fancyhdr warning
 }
 
 latex_documents = [
