@@ -432,7 +432,7 @@ class PIDController(PIController):
 
         .. math ::
             \dot{x_i} &= k_i * (u - ref) \\
-            xd &= Washout(u - ref)
+            xd &= Washout(u - ref) \\
             y &= x_i + k_p * (u - ref) + xd
         """
         self.uin.v_str = f'({self.u.name} - {self.ref.name})'
