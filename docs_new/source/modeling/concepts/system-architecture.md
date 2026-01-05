@@ -379,7 +379,7 @@ self.v = ExtAlgeb(model='Bus', src='v', indexer=self.bus,
 - **Toggle**: Negates the `u` (connectivity) field of any device at time `t`
 - **Alter**: Applies arithmetic operations (`+`, `-`, `*`, `/`, `=`) to any parameter or service
 
-For practical examples of adding disturbances, see {doc}`../../tutorials/04-time-domain`.
+For practical examples of adding disturbances, see {doc}`/tutorials/04-time-domain`.
 
 ## See Also
 

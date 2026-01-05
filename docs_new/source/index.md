@@ -2,7 +2,7 @@
 
 **Python Software for Symbolic Power System Modeling and Numerical Analysis**
 
-```{image} ../../docs/source/images/sponsors/CURENT_Logo_NameOnTrans.png
+```{image} images/sponsors/CURENT_Logo_NameOnTrans.png
 :alt: CURENT Logo
 :width: 300px
 ```

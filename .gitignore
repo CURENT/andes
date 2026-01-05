@@ -69,6 +69,12 @@ docs/jupyter_execute/
 docs/source/_build/
 _generated
 
+# Generated model/config reference docs (docs_new will become docs)
+docs/source/reference/models/
+docs/source/reference/config.rst
+docs_new/source/reference/models/
+docs_new/source/reference/config.rst
+
 # pytest
 .pytest_cache/
 
