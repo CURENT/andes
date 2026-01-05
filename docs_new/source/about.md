@@ -1,61 +1,30 @@
 # About ANDES
 
-ANDES is an open-source Python library for power system modeling, computation, analysis, and control.
+ANDES is an open-source Python library for power system modeling, computation, analysis, and control. It serves as the dynamic simulation engine for the CURENT Large Scale Testbed (LTB), supporting power flow calculation, transient stability simulation, and small-signal stability analysis for transmission systems.
 
-## Key Features
+## Symbolic-Numeric Framework
 
-- **Power flow** calculation using Newton-Raphson method
-- **Time-domain simulation** (transient stability) with implicit trapezoidal integration
-- **Eigenvalue analysis** (small-signal stability) with participation factor computation
-- **Symbolic-numeric framework** for rapid model prototyping
-- **Full second-generation renewable energy models** following WECC specifications
+At its core, ANDES implements a hybrid symbolic-numeric framework that separates model description from numerical implementation. Device models are written as symbolic equations in Python, which ANDES processes using SymPy to generate optimized numerical code automatically. This allows researchers to prototype new models without manually deriving Jacobians or writing simulation code. The generated code is cached and reused, so the symbolic overhead is incurred only once.
 
-## Design Philosophy
+## What's Included
 
-ANDES uses a hybrid symbolic-numeric approach where:
-
-1. Device models are defined symbolically using Python classes
-2. Equations are processed by SymPy to generate optimized numerical code
-3. Numerical simulation uses the generated code for performance
-
-This approach enables:
-
-- Rapid prototyping of new device models
-- Automatic Jacobian derivation
-- Self-documenting models with LaTeX equation export
+- **Comprehensive model library** — synchronous generators, exciters, turbine governors, PSS, and full second-generation renewable models (solar PV, Type 3 and Type 4 wind) following WECC specifications
+- **Verified results** — models produce identical time-domain simulation results against commercial software for IEEE 14-bus and NPCC systems with GENROU and multiple controllers
+- **Industry file formats** — PSS/E raw and dyr parsing for direct use of standard case files
+- **Production performance** — 20-second transient simulation of a 2000-bus system completes in seconds on a typical desktop, achieved through vectorized NumPy operations and sparse matrix handling
 
 ## Citation
 
-If you use ANDES in your research, please cite:
+If ANDES is used in your research, please cite:
 
 > H. Cui, F. Li and K. Tomsovic, "Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis," *IEEE Transactions on Power Systems*, vol. 36, no. 2, pp. 1373-1384, March 2021. [DOI: 10.1109/TPWRS.2020.3017019](https://doi.org/10.1109/TPWRS.2020.3017019)
 
-BibTeX entry:
-
-```bibtex
-@article{cui2021hybrid,
-  author={Cui, Hantao and Li, Fangxing and Tomsovic, Kevin},
-  journal={IEEE Transactions on Power Systems},
-  title={Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis},
-  year={2021},
-  volume={36},
-  number={2},
-  pages={1373-1384},
-  doi={10.1109/TPWRS.2020.3017019}
-}
-```
-
 ## Acknowledgments
 
-ANDES is developed at the [CURENT](https://curent.utk.edu/) research center, a National Science Foundation Engineering Research Center for Ultra-Wide-Area Resilient Electric Energy Transmission Networks.
+This work was supported in part by the Engineering Research Center Program of the National Science Foundation and the Department of Energy under NSF Award Number EEC-1041877 and the CURENT Industry Partnership Program.
+
+ANDES is developed and maintained by [Hantao Cui](https://cui.eecps.com). See the [GitHub repository](https://github.com/CURENT/andes) for a full list of contributors.
 
 ## License
 
-ANDES is released under the GPL-3.0 license. See the [LICENSE](https://github.com/CURENT/andes/blob/master/LICENSE) file for details.
-
-## Links
-
-- **Source Code**: [github.com/CURENT/andes](https://github.com/CURENT/andes)
-- **Documentation**: [docs.andes.app](https://docs.andes.app)
-- **PyPI**: [pypi.org/project/andes](https://pypi.org/project/andes/)
-- **Issue Tracker**: [GitHub Issues](https://github.com/CURENT/andes/issues)
+ANDES is released under the [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html).

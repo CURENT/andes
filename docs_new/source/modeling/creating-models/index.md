@@ -2,17 +2,6 @@
 
 Step-by-step guide to implementing new device models in ANDES.
 
-```{toctree}
-:maxdepth: 1
-
-model-structure
-example-static
-example-dynamic
-example-tgov1
-example-ieeest
-testing-models
-```
-
 ## Examples Overview
 
 The examples progress from simple to advanced:
@@ -31,3 +20,14 @@ The examples progress from simple to advanced:
 3. **Register with System** - Add to model registry
 4. **Generate code** - Run `andes prepare`
 5. **Test** - Validate against reference implementations
+
+```{toctree}
+:maxdepth: 1
+
+model-structure
+example-static
+example-dynamic
+example-tgov1
+example-ieeest
+testing-models
+```

@@ -18,23 +18,3 @@ discrete
 blocks
 groups
 ```
-
-## Component Types
-
-### Parameters
-Input data for models: `NumParam`, `IdxParam`, `ExtParam`, `DataParam`.
-
-### Variables
-State and algebraic variables: `State`, `Algeb`, `ExtState`, `ExtAlgeb`.
-
-### Services
-Intermediate calculations: `ConstService`, `VarService`, `ExtService`.
-
-### Discrete Components
-Non-smooth logic: `Limiter`, `DeadBand`, `Switcher`, `AntiWindup`.
-
-### Transfer Function Blocks
-Control system blocks: `Lag`, `LeadLag`, `Washout`, `PIController`, `Integrator`.
-
-### Groups
-Model classification and interface conventions.
