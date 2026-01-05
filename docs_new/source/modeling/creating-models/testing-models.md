@@ -275,4 +275,4 @@ ss.TDS.run()
 ## See Also
 
 - {doc}`model-structure` - Model structure reference
-- {doc}`/verification/methodology` - Verification approach
+- {doc}`/verification/index` - Verification approach
