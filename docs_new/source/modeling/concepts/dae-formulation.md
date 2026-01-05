@@ -95,9 +95,11 @@ Written in the form: $M \dot{x} = f(x, y)$
 
 ```python
 # Swing equation: M * d(omega)/dt = Tm - Te - D*(omega-1)
-self.omega = State(e_str='Tm - Te - D*(omega - 1)')
-# M is specified separately
+self.omega = State(e_str='Tm - Te - D*(omega - 1)',
+                   t_const=self.M)
 ```
+
+The time constant `t_const` specifies the coefficient on the left-hand side of the differential equation (the mass matrix diagonal entry). It is not included in `e_str`, which only defines the right-hand side $f(x, y)$.
 
 ### Algebraic Equations
 
@@ -152,14 +154,17 @@ self.y = Algeb(e_str='x * lim_zi + upper * lim_zu + lower * lim_zl')
 
 ## Mass Matrix
 
-For most models, $\mathbf{M} = \mathbf{I}$ (identity).
+The mass matrix $\mathbf{M}$ is diagonal and stored in `dae.Tf`. Each `State` variable's `t_const` value populates the corresponding diagonal entry. For states without `t_const`, the entry defaults to 1 (identity).
 
-Some models use non-unity mass matrix entries:
+Model developers do not need to manipulate the mass matrix directly. Simply specify `t_const` when defining state variables:
 
 ```python
-self.omega = State(e_str='(Tm - Te) / M')
-# Equivalent to: M * d(omega)/dt = Tm - Te
+# t_const value goes to dae.Tf[omega.a], where omega.a is the address
+self.omega = State(e_str='Tm - Te - D*(omega - 1)',
+                   t_const=self.M)
 ```
+
+This automatically handles the left-hand side coefficient, keeping `e_str` focused on the physics.
 
 ## Eigenvalue Analysis
 

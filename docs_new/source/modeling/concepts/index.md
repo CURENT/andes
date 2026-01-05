@@ -2,6 +2,7 @@
 
 Foundational concepts for understanding the ANDES modeling framework.
 
+````{only} html
 ## Key Ideas
 
 ### Hybrid Symbolic-Numeric Framework
@@ -20,6 +21,7 @@ Power system dynamics are modeled as differential-algebraic equations:
 
 ### System Architecture
 The `System` class orchestrates models, routines, and the DAE arrays.
+````
 
 ```{toctree}
 :maxdepth: 1

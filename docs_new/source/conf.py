@@ -105,6 +105,7 @@ html_context = {
 }
 
 html_static_path = ['_static']
+html_logo = 'images/andes_logo.svg'
 html_favicon = 'images/curent.ico'
 html_title = f'ANDES {version}'
 

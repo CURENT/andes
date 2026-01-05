@@ -29,6 +29,12 @@ ANDES is an open-source Python library for power system modeling, computation, a
 
       Framework internals: inspect model equations, understand the symbolic-numeric framework, and create new device models.
 
+   .. grid-item-card:: Verification
+      :link: verification/index
+      :link-type: doc
+
+      Validated against commercial tools including PSS/E and TSAT. Side-by-side comparison results demonstrate numerical accuracy for algorithms and models.
+
    .. grid-item-card:: Reference
       :link: reference/index
       :link-type: doc
@@ -76,7 +82,7 @@ Quick Example
    import andes
 
    # Load a test case and run power flow
-   ss = andes.load(andes.get_case('ieee14/ieee14.json'))
+   ss = andes.load(andes.get_case('ieee14/ieee14_fault.xlsx'))
    ss.PFlow.run()
 
    # Run time-domain simulation
@@ -101,14 +107,12 @@ Learning Paths
 
    .. grid-item-card:: Power System Analyst
 
-      1. Complete New User path
-      2. :doc:`tutorials/05-data-and-formats`
-      3. :doc:`tutorials/07-eigenvalue-analysis`
-      4. :doc:`tutorials/08-parameter-sweeps`
+      1. :doc:`tutorials/05-data-and-formats`
+      2. :doc:`tutorials/07-eigenvalue-analysis`
+      3. :doc:`tutorials/08-parameter-sweeps`
 
    .. grid-item-card:: Model Developer
 
-      1. Complete Analyst path
-      2. :doc:`tutorials/inspecting-models`
-      3. :doc:`modeling/concepts/framework-overview`
-      4. :doc:`modeling/creating-models/index`
+      1. :doc:`tutorials/inspecting-models`
+      2. :doc:`modeling/concepts/framework-overview`
+      3. :doc:`modeling/creating-models/index`

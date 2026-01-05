@@ -26,11 +26,11 @@ uv pip install andes
 
 ## New to Python
 
-### Setting Up Mambaforge
+### Setting Up miniforge
 
-If you are new to Python and want to get started quickly, use Mambaforge, a conda-like package manager configured with conda-forge.
+If you are new to Python and want to get started quickly, use miniforge, a conda-like package manager configured with conda-forge.
 
-**Step 1:** Download the latest Mambaforge for your platform from [miniforge releases](https://github.com/conda-forge/miniforge#mambaforge).
+**Step 1:** Download the latest miniforge for your platform from [miniforge releases](https://github.com/conda-forge/miniforge#miniforge).
 
 - Most users: `x86_64(amd64)` for Intel and AMD processors
 - Mac with Apple Silicon: `arm64(Apple Silicon)` for best performance
@@ -38,7 +38,7 @@ If you are new to Python and want to get started quickly, use Mambaforge, a cond
 Complete the installation on your system.
 
 :::{note}
-Mambaforge is a drop-in replacement for conda. If you have an existing conda installation, you can replace all `mamba` commands with `conda`.
+miniforge is a drop-in replacement for conda. If you have an existing conda installation, you can replace all `mamba` commands with `conda`.
 
 If you are using Anaconda or Miniconda on Windows, open `Anaconda Prompt` instead of `Miniforge Prompt`.
 :::
@@ -167,6 +167,11 @@ conda install -c conda-forge --yes andes
 pip install --upgrade andes
 ```
 
+**uv:**
+```bash
+uv pip install --upgrade andes
+```
+
 Check [Release Notes](../reference/release-notes.md) before updating for breaking changes.
 
 ## Troubleshooting
@@ -189,7 +194,7 @@ If you see:
 ImportError: DLL load failed: The specified module could not be found.
 ```
 
-This is a Windows Python path issue. The easiest fix is to install ANDES in a Conda/Mambaforge environment.
+This is a Windows Python path issue. The easiest fix is to install ANDES in a Conda/miniforge environment.
 
 ## Next Steps
 
