@@ -1,6 +1,3 @@
-# ANDES Documentation
-
-````{only} html
 **Python Software for Symbolic Power System Modeling and Numerical Analysis**
 
 ```{image} images/sponsors/CURENT_Logo_NameOnTrans.png
@@ -122,21 +119,3 @@ ss.TDS.plt.plot(ss.GENROU.omega)
 :::
 
 ::::
-````
-
-````{only} latex
-ANDES is an open-source Python library for power system modeling, computation, analysis, and control. It supports power flow calculation, time-domain simulation, and eigenvalue analysis with a hybrid symbolic-numeric framework.
-
-See the {doc}`about` chapter for an introduction and citation information, or jump directly to {doc}`tutorials/index` to get started.
-````
-
-```{toctree}
-:maxdepth: 2
-:hidden:
-
-about
-tutorials/index
-modeling/index
-reference/index
-verification/index
-```
