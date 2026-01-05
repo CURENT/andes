@@ -140,10 +140,34 @@ class FileMan:
                 return os.path.join(self.input_path, path, name)
 
 
-def add_suffix(fullname, suffix):
+def add_suffix(name, suffix):
     """
-    Add suffix to a full file name.
-    """
+    Add suffix to a file name, preserving any real file extension.
 
-    name, ext = os.path.splitext(fullname)
-    return name + '_' + suffix + ext
+    Parameters
+    ----------
+    name : str
+        File name, with or without extension.
+    suffix : str
+        Suffix to append (e.g., 'out', 'prof', 'eig').
+
+    Returns
+    -------
+    str
+        Name with suffix inserted before extension (e.g., 'case_out.xlsx')
+        or appended if no extension (e.g., 'case_out').
+
+    Notes
+    -----
+    Only treats the trailing part as an extension if it contains at least
+    one letter (e.g., '.xlsx', '.txt'). Numeric suffixes like '.59' in
+    'case_1.59' are not treated as extensions.
+    """
+    base, ext = os.path.splitext(name)
+
+    # Only treat as extension if it contains letters (e.g., .xlsx, .txt)
+    # Not if it's purely numeric (e.g., .59 from 'case_1.59')
+    if ext and any(c.isalpha() for c in ext):
+        return base + '_' + suffix + ext
+    else:
+        return name + '_' + suffix
