@@ -60,19 +60,19 @@ class ESAC5AData(ExcBaseData):
         self.TF1 = NumParam(info='Lag Time Constant',
                             default=1.0,
                             unit='p.u',
-                            tex_name='T_F_1',
+                            tex_name='T_{F1}',
                             )
 
         self.TF2 = NumParam(info='Lead-Lag Time Constant (pole)',
                             default=0.8,
                             unit='p.u',
-                            tex_name='T_F_2',
+                            tex_name='T_{F2}',
                             )
 
         self.TF3 = NumParam(info='Lead-Lag Time Constant (zero)',
                             default=1,
                             unit='p.u',
-                            tex_name='T_F_3',
+                            tex_name='T_{F3}',
                             )
 
         self.KE = NumParam(info='Exciter Feedback Gain',

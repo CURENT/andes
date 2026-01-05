@@ -69,6 +69,10 @@ docs/jupyter_execute/
 docs/source/_build/
 _generated
 
+# Generated model/config reference docs
+docs/source/reference/models/
+docs/source/reference/config.rst
+
 # pytest
 .pytest_cache/
 

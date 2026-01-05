@@ -1,4 +1,5 @@
 import logging
+import sys
 from time import time
 
 from decimal import ROUND_DOWN, Decimal
@@ -93,6 +94,73 @@ def is_interactive():
     import __main__ as main
 
     return not hasattr(main, '__file__') or ipython
+
+
+def is_tty():
+    """
+    Check if stdout is connected to a TTY (interactive terminal).
+
+    This is useful for detecting batch execution environments like Sphinx
+    latexpdf builds where notebooks are executed programmatically but
+    `is_notebook()` still returns True.
+
+    Returns
+    -------
+    bool
+        True if stdout is a TTY, False otherwise.
+    """
+    return sys.stdout.isatty()
+
+
+def is_nbconvert():
+    """
+    Check if running inside nbconvert (e.g., during Sphinx doc builds).
+
+    Detection methods:
+    1. Parent process contains 'nbconvert'
+    2. Kernel's parent header has 'execute_request' but no frontend comms
+
+    Returns
+    -------
+    bool
+        True if running in nbconvert, False otherwise.
+    """
+    import os
+
+    try:
+        import psutil
+        parent = psutil.Process(os.getpid()).parent()
+        cmdline = ' '.join(parent.cmdline())
+        if 'nbconvert' in cmdline:
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
+def has_notebook_frontend():
+    """
+    Check if running in a Jupyter notebook with an active frontend connection.
+
+    This distinguishes between:
+    - Interactive Jupyter Lab/Notebook (has frontend) -> Returns True
+    - nbconvert/Sphinx execution (no frontend) -> Returns False
+
+    Returns
+    -------
+    bool
+        True if in an interactive notebook with frontend, False otherwise.
+    """
+    if not is_notebook():
+        return False
+
+    # Explicitly check for nbconvert (most reliable)
+    if is_nbconvert():
+        return False
+
+    # If we're in a notebook and not in nbconvert, assume we have a frontend
+    return True
 
 
 class cached:

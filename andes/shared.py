@@ -55,6 +55,46 @@ for jname in jac_names:
 tqdm = LazyImport('from tqdm import tqdm')
 tqdm_nb = LazyImport('from tqdm.notebook import tqdm')
 
+
+def get_tqdm(no_tqdm=False):
+    """
+    Get the appropriate tqdm progress bar for the current environment.
+
+    Returns a tuple of (tqdm_class, disable_flag) where:
+    - tqdm_class: tqdm or tqdm_nb depending on environment
+    - disable_flag: True if progress bar should be disabled
+
+    Environment behavior:
+    - Terminal (TTY): CLI tqdm, enabled
+    - Interactive Jupyter: tqdm_nb widget, enabled
+    - Batch execution (nbconvert, scripts): CLI tqdm, disabled
+
+    Parameters
+    ----------
+    no_tqdm : bool
+        If True, always disable the progress bar.
+
+    Returns
+    -------
+    tuple
+        (tqdm_class, disable_flag)
+    """
+    from andes.utils.misc import has_notebook_frontend, is_tty
+
+    if no_tqdm:
+        return tqdm, True
+
+    if has_notebook_frontend():
+        # Interactive Jupyter with working widgets
+        return tqdm_nb, False
+    elif is_tty():
+        # Terminal with TTY
+        return tqdm, False
+    else:
+        # Batch execution (nbconvert, Sphinx, scripts) - disabled
+        return tqdm, True
+
+
 pd = LazyImport('import pandas')
 numba = LazyImport('import numba')
 cupy = LazyImport('import cupy')

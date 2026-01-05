@@ -109,44 +109,44 @@ class IEEEG1Model(TGBase):
         TGBase.__init__(self, system, config, add_sn=False)
 
         # check if K1-K8 sums up to 1
-        self._sumK18 = ConstService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
-                                    info='summation of K1-K8',
-                                    tex_name=r"\sum_{i=1}^8 K_i"
-                                    )
+        self.sumK18 = ConstService(v_str='K1+K2+K3+K4+K5+K6+K7+K8',
+                                   info='summation of K1-K8',
+                                   tex_name=r"\sum_{i=1}^8 K_i"
+                                   )
 
-        self._Kcoeff = ConstService(v_str='1/_sumK18',
-                                    info='normalization factor to be multiplied to K1-K8',
-                                    tex_name='K_{coeff}',
-                                    )
-        self.K1n = ConstService(v_str='K1 * _Kcoeff',
+        self.Kcoeff = ConstService(v_str='1/sumK18',
+                                   info='normalization factor to be multiplied to K1-K8',
+                                   tex_name='K_{coeff}',
+                                   )
+        self.K1n = ConstService(v_str='K1 * Kcoeff',
                                 info='normalized K1',
                                 tex_name='K_{1n}',
                                 )
-        self.K2n = ConstService(v_str='K2 * _Kcoeff',
+        self.K2n = ConstService(v_str='K2 * Kcoeff',
                                 info='normalized K2',
                                 tex_name='K_{2n}',
                                 )
-        self.K3n = ConstService(v_str='K3 * _Kcoeff',
+        self.K3n = ConstService(v_str='K3 * Kcoeff',
                                 info='normalized K3',
                                 tex_name='K_{3n}',
                                 )
-        self.K4n = ConstService(v_str='K4 * _Kcoeff',
+        self.K4n = ConstService(v_str='K4 * Kcoeff',
                                 info='normalized K4',
                                 tex_name='K_{4n}',
                                 )
-        self.K5n = ConstService(v_str='K5 * _Kcoeff',
+        self.K5n = ConstService(v_str='K5 * Kcoeff',
                                 info='normalized K5',
                                 tex_name='K_{5n}',
                                 )
-        self.K6n = ConstService(v_str='K6 * _Kcoeff',
+        self.K6n = ConstService(v_str='K6 * Kcoeff',
                                 info='normalized K6',
                                 tex_name='K_{6n}',
                                 )
-        self.K7n = ConstService(v_str='K7 * _Kcoeff',
+        self.K7n = ConstService(v_str='K7 * Kcoeff',
                                 info='normalized K7',
                                 tex_name='K_{7n}',
                                 )
-        self.K8n = ConstService(v_str='K8 * _Kcoeff',
+        self.K8n = ConstService(v_str='K8 * Kcoeff',
                                 info='normalized K8',
                                 tex_name='K_{8n}',
                                 )

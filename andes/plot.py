@@ -805,7 +805,10 @@ class TDSData:
 
             # use supplied file name
             if isinstance(savefig, str):
-                outfile = savefig + '.' + save_format
+                if savefig.endswith('.' + save_format):
+                    outfile = savefig
+                else:
+                    outfile = savefig + '.' + save_format
             # or generate a new name
             else:
                 count = 1

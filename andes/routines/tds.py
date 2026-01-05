@@ -12,7 +12,7 @@ from collections import OrderedDict
 from andes.routines.base import BaseRoutine, check_conn_before_init
 from andes.routines.daeint import Trapezoid, method_map
 from andes.routines.criteria import deltadelta
-from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
+from andes.shared import get_tqdm, matrix, np, pd, spdiag, tqdm
 from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
 
@@ -361,12 +361,10 @@ class TDS(BaseRoutine):
             logger.debug("Initialization only is requested and done")
             return self.initialized
 
-        if is_notebook():
-            self.pbar = tqdm_nb(total=100, unit='%', file=sys.stdout,
-                                disable=self.config.no_tqdm)
-        else:
-            self.pbar = tqdm(total=100, unit='%', ncols=80, ascii=True,
-                             file=sys.stdout, disable=self.config.no_tqdm)
+        # Get appropriate tqdm based on environment (terminal, notebook, or batch)
+        tqdm_cls, disable = get_tqdm(self.config.no_tqdm)
+        self.pbar = tqdm_cls(total=100, unit='%', ncols=80, ascii=True,
+                             file=sys.stdout, disable=disable)
 
         # set initial pbar percentage; also works for resumed simulation
         perc = round((dae.t - config.t0) / (config.tf - config.t0) * 100, 2)
