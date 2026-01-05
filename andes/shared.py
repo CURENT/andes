@@ -94,6 +94,7 @@ def get_tqdm(no_tqdm=False):
         # Batch execution (nbconvert, Sphinx, scripts) - disabled
         return tqdm, True
 
+
 pd = LazyImport('import pandas')
 numba = LazyImport('import numba')
 cupy = LazyImport('import cupy')
