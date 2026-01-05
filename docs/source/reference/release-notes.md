@@ -12,9 +12,10 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 ## v1.10 Notes
 
-### v1.10.0 (2025-xx-xx)
+### v1.10.0 (2026-01-05)
 
 This release modernizes the build system and adds Pandapower 3 compatibility.
+The release also includes a major documentation overhaul.
 
 Build system changes:
 
@@ -44,6 +45,10 @@ Bug fixes:
 - Fix NumPy NaN compatibility issue in `Model.set()`.
 - In connectivity check, only call `SynGen.store_idx_island` when there is at
   least one SynGen.
+
+Documentation improvements:
+
+- Overhaul the documentation to use MyST and Sphinx 7.0.
 
 Other changes:
 
