@@ -84,6 +84,11 @@ html_theme_options = {
     'secondary_sidebar_items': ['page-toc', 'edit-this-page'],
     'icon_links': [
         {
+            'name': 'PDF Manual',
+            'url': 'https://docs.andes.app/_/downloads/en/stable/pdf/',
+            'icon': 'fa-solid fa-file-pdf',
+        },
+        {
             'name': 'GitHub',
             'url': 'https://github.com/CURENT/andes',
             'icon': 'fa-brands fa-github',

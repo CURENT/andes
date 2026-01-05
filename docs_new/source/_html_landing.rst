@@ -97,6 +97,50 @@ been continually supported by startup funds and grants.
 
 ----
 
+Useful Links
+------------
+
+.. grid:: 2 4 4 4
+   :gutter: 2
+
+   .. grid-item::
+
+      .. button-link:: https://github.com/CURENT/andes/issues
+         :color: primary
+         :outline:
+         :expand:
+
+         :octicon:`issue-opened` Report Issues
+
+   .. grid-item::
+
+      .. button-link:: https://github.com/CURENT/andes/discussions
+         :color: primary
+         :outline:
+         :expand:
+
+         :octicon:`comment-discussion` Q&A
+
+   .. grid-item::
+
+      .. button-link:: https://mybinder.org/v2/gh/CURENT/andes/master
+         :color: primary
+         :outline:
+         :expand:
+
+         :octicon:`rocket` Try Online
+
+   .. grid-item::
+
+      .. button-link:: https://github.com/CURENT
+         :color: primary
+         :outline:
+         :expand:
+
+         :octicon:`repo` LTB Repository
+
+----
+
 Quick Install
 -------------
 
