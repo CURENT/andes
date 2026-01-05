@@ -176,3 +176,18 @@ Use the navigation to browse models by group.
 
 # Disable smartquotes for double dashes
 smartquotes = False
+
+# -- Options for LaTeX output ------------------------------------------------
+
+# Use xelatex for Unicode support
+latex_engine = "xelatex"
+
+latex_elements = {
+    'papersize': 'letterpaper',
+    'pointsize': '11pt',
+    'preamble': r'\setcounter{tocdepth}{3}',  # Show chapters, sections, subsections in TOC
+}
+
+latex_documents = [
+    (master_doc, 'andes.tex', 'ANDES Manual', 'Hantao Cui', 'manual'),
+]

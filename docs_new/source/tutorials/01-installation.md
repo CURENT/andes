@@ -16,6 +16,12 @@ pip install andes
 ```
 :::
 
+:::{tab-item} uv
+```bash
+uv pip install andes
+```
+:::
+
 ::::
 
 ## New to Python
@@ -55,6 +61,42 @@ mamba activate andes
 
 :::{note}
 You will need to activate the `andes` environment every time in a new terminal session.
+:::
+
+## Using uv
+
+[uv](https://docs.astral.sh/uv/) is a fast Python package installer and resolver. If you're already familiar with uv, you can use it to install ANDES.
+
+**Install into current environment:**
+
+```bash
+uv pip install andes
+```
+
+**Create a new virtual environment with ANDES:**
+
+```bash
+uv venv --python 3.12
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install andes
+```
+
+**With extras:**
+
+```bash
+uv pip install andes[dev]
+```
+
+**Development install:**
+
+```bash
+git clone https://github.com/curent/andes
+cd andes
+uv pip install -e .[dev]
+```
+
+:::{tip}
+For uv installation and detailed usage, see the [uv documentation](https://docs.astral.sh/uv/).
 :::
 
 ## Extra Packages

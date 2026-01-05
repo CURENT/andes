@@ -61,6 +61,12 @@ pip install andes
 ```
 :::
 
+:::{tab-item} uv
+```bash
+uv pip install andes
+```
+:::
+
 :::{tab-item} development
 ```bash
 git clone https://github.com/CURENT/andes
