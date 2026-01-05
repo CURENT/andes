@@ -1,9 +1,5 @@
 **Python Software for Symbolic Power System Modeling and Numerical Analysis**
 
-.. image:: images/sponsors/CURENT_Logo_NameOnTrans.png
-   :alt: CURENT Logo
-   :width: 300px
-
 ANDES is an open-source Python library for power system modeling, computation, analysis, and control. It supports:
 
 - **Power flow** calculation
@@ -40,6 +36,64 @@ ANDES is an open-source Python library for power system modeling, computation, a
       :link-type: doc
 
       CLI commands, configuration options, model reference (auto-generated), and API documentation.
+
+----
+
+Sponsors
+--------
+
+ANDES was initially developed at the `CURENT Engineering Research Center
+<https://curent.utk.edu>`_ at the University of Tennessee, Knoxville, and has
+been continually supported by startup funds and grants.
+
+.. grid:: 1
+   :gutter: 2
+   :class-container: sponsor-logos
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/CURENT_Logo_NameOnTrans.png
+         :height: 80px
+         :alt: CURENT
+
+.. grid:: 2 3 5 5
+   :gutter: 4
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/nsf.jpg
+         :height: 80px
+         :alt: NSF
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/doe.png
+         :height: 80px
+         :alt: DOE
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/national_academies.png
+         :height: 80px
+         :alt: National Academies
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/nlr.webp
+         :height: 80px
+         :alt: NLR
+
+   .. grid-item::
+      :class: sd-text-center
+
+      .. image:: images/sponsors/nc_state.png
+         :height: 80px
+         :alt: NC State University
 
 ----
 
