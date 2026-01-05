@@ -2,6 +2,12 @@
 
 # Release notes
 
+````{only} latex
+```{raw} latex
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+```
+````
+
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
 ## v1.10 Notes
@@ -1097,3 +1103,9 @@ This release contains important documentation fixes and two new blocks.
 - Version 0.6.9 is the last version for the numeric-only modeling framework.
 - This version will not be updated any more.
   But, models, routines and functions will be ported to the new version.
+
+````{only} latex
+```{raw} latex
+\addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
+```
+````
