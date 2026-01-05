@@ -1516,7 +1516,7 @@ class Sampling(Discrete):
         Initially, store `v` and `_last_v`.
 
         - If time progresses and `dae_t` is a multiple of `period`, update `_last_v` and then `v`.
-        Record `_last_t`.
+          Record `_last_t`.
 
         - If time does not progress, update `v`.
 
