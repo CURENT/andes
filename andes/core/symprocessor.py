@@ -544,6 +544,9 @@ from andes.thirdparty.npfunc import *                               # NOQA
             if fread == out_str:
                 logger.debug("<%s>: generated code is up-to-date and not overwritten.",
                              self.parent.class_name)
+                # Touch the file to update mtime, ensuring Python invalidates
+                # any stale .pyc bytecode cache on next import
+                os.utime(file_path, None)
                 return
 
         with open(file_path, 'w') as f:
