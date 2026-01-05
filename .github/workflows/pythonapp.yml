@@ -85,9 +85,6 @@ jobs:
     - name: Build docs
       run: make -C docs html
 
-    - name: Build docs_new (with notebook execution)
-      run: make -C docs_new html
-
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
