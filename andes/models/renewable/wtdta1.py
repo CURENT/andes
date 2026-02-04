@@ -29,9 +29,8 @@ class WTDTA1Data(ModelData):
                              power=True,
                              )
 
-        self.Htfrac = NumParam(default=0.5, tex_name='D_{shaft}',
+        self.Htfrac = NumParam(default=0.5, tex_name='H_{tfrac}',
                                info='Turbine inertia fraction (Hturb/H)',
-                               power=True,
                                vrange='[0, 1]',
                                )
 
