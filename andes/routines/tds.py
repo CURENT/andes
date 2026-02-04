@@ -86,7 +86,7 @@ class TDS(BaseRoutine):
                               max_store='maximum steps of data stored in memory before offloading',
                               save_every='save one step to memory every N simulation steps',
                               save_mode='automatically or manually save output data when done',
-                              no_tqdm='disable tqdm progressbar and outputs',
+                              no_tqdm='disable tqdm progressbar',
                               chatter_iter='minimum iterations to detect chattering',
                               )
         self.config.add_extra("_alt",
@@ -272,7 +272,8 @@ class TDS(BaseRoutine):
             logger.warning("Initialization results were not verified.")
 
         if system.dae.n == 0:
-            tqdm.write('No differential equation detected.')
+            if system.options.get("verbose", 20) <= 20:
+                tqdm.write('No differential equation detected.')
         return system.dae.xy
 
     def summary(self):

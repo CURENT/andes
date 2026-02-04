@@ -84,16 +84,6 @@ class TimeSeriesModel(Model):
         self.group = 'DataSeries'
         self.flags.tds = True
 
-        self.config.add(OrderedDict((('silent', 1),
-                                     )))
-
-        self.config.add_extra("_help",
-                              silent="suppress output messages if is not zero",
-                              )
-        self.config.add_extra("_alt",
-                              silent=(0, 1),
-                              )
-
         self.SW = Switcher(self.mode, options=(0, 1, 2),
                            info='mode switcher', )
 
@@ -229,7 +219,7 @@ class TimeSeriesModel(Model):
                 value = value[0]
                 self.system.__dict__[model].set(dest, dev_idx, 'v', value)
 
-                if not self.config.silent:
+                if self.system.options.get("verbose", 20) <= 20:
                     tqdm.write("<TimeSeries %s> set %s=%g for %s.%s at t=%g" %
                                (idx, dest, value, model, dev_idx, t))
 

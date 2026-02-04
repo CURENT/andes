@@ -81,9 +81,10 @@ class Toggle(ToggleData, Model):
             u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
             instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
             action = True
-            tqdm.write(f'<Toggle {self.idx.v[i]}>: '
-                       f'{self.model.v[i]}.{self.dev.v[i]} status '
-                       f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
+            if self.system.options.get("verbose", 20) <= 20:
+                tqdm.write(f'<Toggle {self.idx.v[i]}>: '
+                           f'{self.model.v[i]}.{self.dev.v[i]} status '
+                           f'changed to {1-u0:g} at t={self.t.v[i]} sec.')
         return action
 
 
@@ -210,8 +211,9 @@ class Fault(ModelData, Model):
             self.uf.v[i] = 1
             self._vstore = np.array(self.system.dae.y[self.system.Bus.n:])
             logger.debug("Pre-fault algebraic variables:\n" + str(self._vstore))
-            tqdm.write(f'<Fault {self.idx.v[i]}>: '
-                       f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
+            if self.system.options.get("verbose", 20) <= 20:
+                tqdm.write(f'<Fault {self.idx.v[i]}>: '
+                           f'Applying fault on Bus (idx={self.bus.v[i]}) at t={self.tf.v[i]} sec.')
 
             action = True
         return action
@@ -247,8 +249,9 @@ class Fault(ModelData, Model):
                     else:
                         logger.error("Unsupport fault voltage restoration mode")
 
-                tqdm.write(f'<Fault {self.idx.v[i]}>: '
-                           f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]} sec.')
+                if self.system.options.get("verbose", 20) <= 20:
+                    tqdm.write(f'<Fault {self.idx.v[i]}>: '
+                               f'Clearing fault on Bus (idx={self.bus.v[i]}) at t={self.tc.v[i]} sec.')
 
                 action = True
         return action
@@ -318,12 +321,10 @@ class AlterModel(Model):
             try:
                 v0 = model.get(src=src, idx=idx, attr=attr)
             except KeyError as e:
-                tqdm.write("\nError: <%s %s> cannot find idx=%s or src=%s in model <%s>. " % (
-                    self.class_name, self.idx.v[ii],
-                    idx, src, self.model.v[ii],
-                ))
-                tqdm.write("<%s %s> disabled due to %s.\n" %
-                           (self.class_name, self.idx.v[ii], repr(e)))
+                logger.error("<%s %s> cannot find idx=%s or src=%s in model <%s>.",
+                             self.class_name, self.idx.v[ii], idx, src, self.model.v[ii])
+                logger.error("<%s %s> disabled due to %s.",
+                             self.class_name, self.idx.v[ii], repr(e))
                 self.u.v[ii] = 0
                 continue
 
@@ -339,17 +340,17 @@ class AlterModel(Model):
             elif self.SW.s4[ii] == 1:
                 vnew = amount
             else:
-                tqdm.write('Error: <%s %s>: undefined method "%s". <%s, %s> disabled.' % (
-                    self.class_name, self.idx.v[ii], self.method.v[ii],
-                    self.class_name, self.idx.v[ii]
-                ))
+                logger.error('<%s %s>: undefined method "%s". <%s, %s> disabled.',
+                             self.class_name, self.idx.v[ii], self.method.v[ii],
+                             self.class_name, self.idx.v[ii])
                 self.u.v[ii] = 0
                 continue
 
             model.set(src=src, idx=idx, attr=attr, value=vnew)
-            tqdm.write('<Alter %s>: set %s.%s.%s.%s=%.6g at t=%.6g. Previous value was %.6g.' % (
-                self.idx.v[ii], self.model.v[ii], idx, src, attr, vnew, self.t.v[ii], v0
-            ))
+            if self.system.options.get("verbose", 20) <= 20:
+                tqdm.write('<Alter %s>: set %s.%s.%s.%s=%.6g at t=%.6g. Previous value was %.6g.' % (
+                    self.idx.v[ii], self.model.v[ii], idx, src, attr, vnew, self.t.v[ii], v0
+                ))
             action = True
 
         return action
