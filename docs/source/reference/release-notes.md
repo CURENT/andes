@@ -12,6 +12,11 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 ## v1.10 Notes
 
+### v1.10.1 (2026-02-04)
+
+- Fix PSS/E convention for tap ratios in `_parse_transf_v33`; zero taps default to 1.0 pu.
+- Suppress `tqdm` output when logging level is higher than INFO.
+
 ### v1.10.0 (2026-01-05)
 
 This release modernizes the build system and adds Pandapower 3 compatibility.
