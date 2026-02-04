@@ -603,6 +603,10 @@ def _parse_transf_v33(raw, system, max_bus):
             elif data[0][4] == 3:
                 tap = tap * (Vn1 / bus_Vn1) / (Vn2 / bus_Vn2)
 
+            # PSS/E convention: WINDV=0 means use nominal (1.0 per-unit tap ratio)
+            if tap == 0.0:
+                tap = 1.0
+
             # CZ - Z code, 1-system base, 2-winding base, 3-load loss and |z|
             if data[0][5] == 1:
                 Sn = system.config.mva
@@ -777,6 +781,9 @@ def _parse_transf_v33(raw, system, max_bus):
                     g1_value = 0.0         # No magnetization for other windings
                     b1_value = 0.0         # No magnetization for other windings
 
+                # PSS/E convention: WINDV=0 means use nominal (1.0 per-unit tap ratio)
+                tap_value = data[2+i][0] if data[2+i][0] != 0.0 else 1.0
+
                 param = {'trans': True,
                          'bus1': data[0][i],
                          'bus2': new_bus,
@@ -784,7 +791,7 @@ def _parse_transf_v33(raw, system, max_bus):
                          'b1': b1_value,
                          'r': r[i],
                          'x': x[i],
-                         'tap': data[2+i][0],
+                         'tap': tap_value,
                          'phi': data[2+i][2] * deg2rad,
                          'Vn1': system.Bus.get(src='Vn', idx=data[0][i], attr='v'),
                          'Vn2': 1.0,
