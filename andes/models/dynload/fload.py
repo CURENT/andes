@@ -106,6 +106,17 @@ class FLoadModel(Model):
 class FLoad(FLoadData, FLoadModel):
     """
     Voltage and frequency dependent load.
+
+    FLoad replaces the linked PQ load (set to u=0) and computes power as
+    ``P = pv0 * v^ap * f^bp``, ``Q = qv0 * v^aq * f^bq``.
+
+    ``pv0`` and ``qv0`` are ConstService values computed once at TDS init
+    from the PQ's solved power flow values (``Ppf``, ``Qpf``). To adjust
+    power injection during TDS, alter ``pv0``/``qv0`` on FLoad directly::
+
+        Alter(model='FLoad', src='pv0', dev=fl_idx, t=5, method='+', amount=0.1)
+
+    Altering the linked PQ's ``Ppf`` has no effect since PQ is disabled.
     """
 
     def __init__(self, system, config):
