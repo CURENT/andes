@@ -120,3 +120,6 @@ icebar
 
 # example excel files cache
 ~$*.xlsx
+
+# sandbox folder
+scratch/
