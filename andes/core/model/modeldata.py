@@ -3,7 +3,7 @@ Module for ModelData.
 """
 
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 from andes.core.model.modelcache import ModelCache
@@ -88,6 +88,7 @@ class ModelData:
         self.timer_params = OrderedDict()
         self.n = 0
         self.uid = {}
+        self._param_corrections = defaultdict(list)  # {(param_name, violation): [idx, ...]}
 
         # indexing bases. Most vectorized models only have one base: self.idx
         self.index_bases = []
@@ -160,9 +161,29 @@ class ModelData:
 
         for name, instance in self.params.items():
             value = kwargs.pop(name, None)
-            instance.add(value)
+            violation = instance.add(value)
+            if violation is not None:
+                self._param_corrections[(name, violation)].append(idx)
         if len(kwargs) > 0:
             logger.warning("%s: unused data %s", self.class_name, str(kwargs))
+
+    def report_corrections(self):
+        """
+        Emit grouped warnings for parameter corrections accumulated during ``add`` calls.
+
+        Called once from ``System.setup`` after all devices have been added.
+        Each unique (param_name, violation_type) combination produces one log line
+        listing the affected device indices.
+        """
+        if not self._param_corrections:
+            return
+
+        for (param, violation), idxes in self._param_corrections.items():
+            default = self.params[param].default
+            logger.warning('%s: %d device(s) had %s param <%s> corrected to %s. idx=%s',
+                           self.class_name, len(idxes), violation, param, default, idxes)
+
+        self._param_corrections.clear()
 
     def as_dict(self, vin=False):
         """

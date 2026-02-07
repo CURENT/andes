@@ -28,16 +28,19 @@ class BusFreq(ModelData, Model):
                            info="input digital filter time const",
                            unit="sec",
                            tex_name='T_f',
+                           non_negative=True,
                            )
         self.Tw = NumParam(default=0.1,
                            info="washout time const",
                            unit="sec",
                            tex_name='T_w',
+                           non_negative=True,
                            )
         self.fn = NumParam(default=60.0,
                            info="nominal frequency",
                            unit='Hz',
                            tex_name='f_n',
+                           non_negative=True,
                            )
 
         # Variables

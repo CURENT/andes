@@ -478,6 +478,7 @@ class System:
             ret = False
 
         self.find_devices()    # find or add required devices
+        self._report_param_corrections()
 
         # === no device addition or removal after this point ===
         self.calc_pu_coeff()   # calculate parameters in system per units
@@ -1968,6 +1969,16 @@ class System:
         performs memory preallocation.
         """
         self.call_models('list2array', self.models)
+
+    def _report_param_corrections(self):
+        """
+        Report parameter corrections for all models.
+
+        Emits grouped warnings for parameter values that were corrected
+        during device addition (e.g., non-zero, non-positive, non-negative violations).
+        """
+        for mdl in self.models.values():
+            mdl.report_corrections()
 
     def set_config(self, config=None):
         """

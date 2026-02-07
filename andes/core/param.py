@@ -442,6 +442,12 @@ class NumParam(BaseParam):
 
         In addition to ``BaseParam.add``, this method checks for non-zero property and reset to default if is zero.
 
+        Returns
+        -------
+        str or None
+            The violation type string ('non_zero', 'non_positive', 'non_negative') if a correction
+            was applied, or None if no correction was needed.
+
         See Also
         --------
         BaseParam.add : the add method of BaseParam
@@ -462,26 +468,21 @@ class NumParam(BaseParam):
             else:
                 value = self.default
 
-        if isinstance(value, float):
-            # check for non-zero
+        violation = None
+
+        if isinstance(value, (int, float)):
             if value == 0.0 and self.get_property('non_zero'):
-                logger.warning('Non-zero parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+                violation = 'non_zero'
                 value = self.default
-
-            # check for non-positive
-            if value > 0.0 and self.get_property('non_positive'):
-                logger.warning('Non-Positive parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+            elif value > 0.0 and self.get_property('non_positive'):
+                violation = 'non_positive'
                 value = self.default
-
-            # check for non-negative
-            if value < 0.0 and self.get_property('non_negative'):
-                logger.warning('Non-negative parameter %s.%s corrected to %s',
-                               self.owner.class_name, self.name, self.default)
+            elif value < 0.0 and self.get_property('non_negative'):
+                violation = 'non_negative'
                 value = self.default
 
         super(NumParam, self).add(value)
+        return violation
 
     def to_array(self):
         """
