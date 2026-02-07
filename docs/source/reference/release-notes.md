@@ -16,6 +16,9 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 - Fix PSS/E convention for tap ratios in `_parse_transf_v33`; zero taps default to 1.0 pu.
 - Suppress `tqdm` output when logging level is higher than INFO.
+- Batch parameter correction warnings during setup. Instead of logging one warning per
+  device, corrections (non-zero, non-positive, non-negative) are now grouped and
+  reported once per violation type after all devices are added.
 
 ### v1.10.0 (2026-01-05)
 
