@@ -1201,7 +1201,7 @@ class System:
             if var.n > 0:
                 var.v[:] = self.dae.x[var.a]
 
-    def connectivity(self, info=True):
+    def connectivity(self, info=True, routine='pflow'):
         """
         Perform connectivity check for system.
 
@@ -1229,6 +1229,11 @@ class System:
         fr.extend(self.Line.a1.a.tolist())
         to.extend(self.Line.a2.a.tolist())
         u.extend(self.Line.u.v.tolist())
+
+        if routine == 'tds':
+            fr.extend(self.DPLine.a1.a.tolist())
+            to.extend(self.DPLine.a2.a.tolist())
+            u.extend(self.DPLine.u.v.tolist())
 
         # collect from Jumper
         fr.extend(self.Jumper.a1.a.tolist())

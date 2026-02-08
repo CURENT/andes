@@ -18,7 +18,7 @@ file_classes = list([
     ('static', ['PQ', 'PV', 'Slack']),
     ('shunt', ['Shunt', "ShuntTD", 'ShuntSw']),
     ('interface', ['Fortescue']),
-    ('line', ['Line', 'Jumper']),
+    ('line', ['Line', 'Jumper', 'DPLine']),
     ('area', ['Area', 'ACE', 'ACEc']),
     ('dynload', ['ZIP', 'FLoad']),
     ('synchronous', ['GENCLS', 'GENROU', 'PLBVFU1']),
