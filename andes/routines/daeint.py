@@ -32,6 +32,13 @@ class ImplicitIter:
         This function has an internal Newton-Raphson loop for algebraized semi-explicit DAE.
         The function returns the convergence status when done but does NOT progress simulation time.
 
+        When ``tds.config.linesearch`` is enabled, applies nonmonotone backtracking
+        line search using ``‖qg‖₂²`` as the merit function.  The ``g_scale * h``
+        scaling ensures differential and algebraic residuals are comparable.
+        The trial-point ``fg_update`` at the end of iteration *k* doubles as the
+        initial evaluation for iteration *k+1*, making it zero-cost when the full
+        step is accepted.
+
         Returns
         -------
         bool
@@ -55,9 +62,14 @@ class ImplicitIter:
         tds.y0[:] = dae.y
         tds.f0[:] = dae.f
 
-        while True:
-            tds.fg_update(models=system.exist.pflow_tds)
+        use_ls = tds.config.linesearch
+        if use_ls:
+            merit_history = []
 
+        # initial residual evaluation (reused by first iteration)
+        tds.fg_update(models=system.exist.pflow_tds)
+
+        while True:
             # lazy Jacobian update
 
             reason = ''
@@ -148,20 +160,53 @@ class ImplicitIter:
             # chattering detection
             if tds.niter > tds.config.chatter_iter:
                 if (abs(sum(tds.mis_inc[-2:])) < 1e-6) and abs(tds.mis_inc[-1]) > 1e-4:
-                    # chattering occurs -- flag the event and skip this time
-                    # step. At the next step, the maximum allowable step size
-                    # will be used to prevent chattering.
                     tds.chatter = True
 
                     logger.debug("Chattering detected at t=%s s", dae.t)
                     logger.debug("Chattering variable: %s", dae.xy_name[mis_arg])
 
-            # set new values
-            dae.x -= inc[:dae.n].ravel()
-            dae.y -= inc[dae.n: dae.n + dae.m].ravel()
+            # --- apply step ---
+            inc_x = inc[:dae.n].ravel()
+            inc_y = inc[dae.n: dae.n + dae.m].ravel()
 
-            # synchronize solutions to model internal storage
-            system.vars_to_models()
+            if use_ls:
+                merit_old = np.dot(tds.qg, tds.qg)
+                merit_history.append(merit_old)
+                merit_ref = max(merit_history[-3:])
+
+                tds.xs[:] = dae.x
+                tds.ys[:] = dae.y
+
+                alpha = 1.0
+                for _ in range(4):
+                    dae.x[:] = tds.xs - alpha * inc_x
+                    dae.y[:] = tds.ys - alpha * inc_y
+                    system.vars_to_models()
+                    tds.fg_update(models=system.exist.pflow_tds)
+
+                    # recompute qg at trial point
+                    tds.qg[:dae.n] = tds.method.calc_q(
+                        dae.x, dae.f, dae.Tf, tds.h, tds.x0, tds.f0)
+                    for item in system.antiwindups:
+                        for key, _, eqval in item.x_set:
+                            np.put(tds.qg, key, eqval)
+                    if tds.config.g_scale > 0:
+                        tds.qg[dae.n:] = tds.config.g_scale * tds.h * dae.g
+                    else:
+                        tds.qg[dae.n:] = dae.g
+
+                    merit_new = np.dot(tds.qg, tds.qg)
+                    if merit_new < merit_ref:
+                        break
+
+                    alpha *= 0.5
+                    logger.debug("TDS line search backtrack: alpha=%.4g at t=%.6f",
+                                 alpha, dae.t)
+            else:
+                dae.x -= inc_x
+                dae.y -= inc_y
+                system.vars_to_models()
+                tds.fg_update(models=system.exist.pflow_tds)
 
             tds.niter += 1
 

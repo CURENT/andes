@@ -58,6 +58,7 @@ class TDS(BaseRoutine):
                                      ('save_mode', 'auto'),
                                      ('no_tqdm', 0),
                                      ('chatter_iter', 4),
+                                     ('linesearch', 1),
                                      )))
         self.config.add_extra("_help",
                               method='DAE solution method',
@@ -88,6 +89,7 @@ class TDS(BaseRoutine):
                               save_mode='automatically or manually save output data when done',
                               no_tqdm='disable tqdm progressbar',
                               chatter_iter='minimum iterations to detect chattering',
+                              linesearch='nonmonotone backtracking line search',
                               )
         self.config.add_extra("_alt",
                               method=tuple(method_map.keys()),
@@ -117,6 +119,7 @@ class TDS(BaseRoutine):
                               save_mode=('auto', 'manual'),
                               no_tqdm=(0, 1),
                               chatter_iter='int>=4',
+                              linesearch=(0, 1),
                               )
 
         # overwrite `tf` from command line
@@ -167,6 +170,8 @@ class TDS(BaseRoutine):
         self.x0 = None
         self.y0 = None
         self.f0 = None
+        self.xs = None
+        self.ys = None
         self.Ac = None
         self.inc = None
 
@@ -263,6 +268,8 @@ class TDS(BaseRoutine):
         self.x0 = np.zeros_like(system.dae.x)
         self.y0 = np.zeros_like(system.dae.y)
         self.f0 = np.zeros_like(system.dae.f)
+        self.xs = np.zeros_like(system.dae.x)
+        self.ys = np.zeros_like(system.dae.y)
 
         _, s1 = elapsed(t0)
 
