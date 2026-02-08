@@ -21,6 +21,9 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 - Extract config runtime logic into `SystemConfigRuntime` (`andes.system.config_runtime`); prefer
   `system.config_runtime.*` over facade-level helpers. Legacy wrappers in `andes.system.facade`
   are deprecated and scheduled for removal in v3.0.
+- Extract model evaluator logic into `ModelEvaluator` (`andes.core.model.model_evaluator`) using composition.
+  Keep `Model` methods (`f_update`, `g_update`, `j_update`, service/discrete updates, and input refreshers)
+  as delegate wrappers to preserve call sites.
 
 ## v1.10 Notes
 
