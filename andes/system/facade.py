@@ -19,8 +19,7 @@ from typing import Dict, Optional, Tuple, Union
 import andes.io
 from andes.core import AntiWindup, Model, ConnMan
 from andes.io.streaming import Streaming
-from andes.shared import (NCPUS_PHYSICAL, jac_names, matrix, np, sparse,
-                          spmatrix)
+from andes.shared import NCPUS_PHYSICAL, jac_names, np, spmatrix
 from andes.system.codegen import CodegenManager
 from andes.system.config_runtime import SystemConfigRuntime
 from andes.system.dae_compactor import DAECompactor
@@ -988,157 +987,9 @@ class System:
 
     def connectivity(self, info=True):
         """
-        Perform connectivity check for system.
-
-        Parameters
-        ----------
-        info : bool
-            True to log connectivity summary.
+        Delegate to :meth:`ConnMan.check_connectivity`.
         """
-        logger.debug("Entering connectivity check.")
-
-        self.Bus.n_islanded_buses = 0
-        self.Bus.islanded_buses = list()
-        self.Bus.island_sets = list()
-        self.Bus.nosw_island = list()
-        self.Bus.msw_island = list()
-        self.Bus.islands = list()
-
-        n = self.Bus.n
-
-        # collect from-bus and to-bus indices
-        fr, to, u = list(), list(), list()
-
-        # TODO: generalize it to all serial devices
-        # collect from Line
-        fr.extend(self.Line.a1.a.tolist())
-        to.extend(self.Line.a2.a.tolist())
-        u.extend(self.Line.u.v.tolist())
-
-        # collect from Jumper
-        fr.extend(self.Jumper.a1.a.tolist())
-        to.extend(self.Jumper.a2.a.tolist())
-        u.extend(self.Jumper.u.v.tolist())
-
-        # collect from Fortescue
-        fr.extend(self.Fortescue.a.a.tolist())
-        to.extend(self.Fortescue.aa.a.tolist())
-        u.extend(self.Fortescue.u.v.tolist())
-
-        fr.extend(self.Fortescue.a.a.tolist())
-        to.extend(self.Fortescue.ab.a.tolist())
-        u.extend(self.Fortescue.u.v.tolist())
-
-        fr.extend(self.Fortescue.a.a.tolist())
-        to.extend(self.Fortescue.ac.a.tolist())
-        u.extend(self.Fortescue.u.v.tolist())
-
-        os = [0] * len(u)
-
-        # find islanded buses
-        diag = list(matrix(spmatrix(u, to, os, (n, 1), 'd') +
-                           spmatrix(u, fr, os, (n, 1), 'd')))
-
-        for idx in range(n):
-            if diag[idx] == 0:
-                self.Bus.islanded_buses.append(idx)
-
-        # store `a` and `v` indices for zeroing out residuals
-        self.Bus.islanded_a = np.array(self.Bus.islanded_buses)
-        self.Bus.islanded_v = self.Bus.n + self.Bus.islanded_a
-        # `self.Bus.n_islanded_buses` is used to determine if `g_islands`
-        # needs to be call
-        self.Bus.n_islanded_buses = len(self.Bus.islanded_a)
-
-        # find islanded areas - Goderya's algorithm
-        temp = spmatrix(list(u) * 4,
-                        fr + to + fr + to,
-                        to + fr + fr + to,
-                        (n, n),
-                        'd')
-        temp = sparse(temp)  # need to drop allocated zero values
-
-        # Translated find_islanded_areas from goderya.jl into Python
-        conn = spmatrix([], [], [], (1, n), 'd')
-        island_sets = []
-        starting_bus = 0
-        visit_idx = 0
-
-        while True:
-            if starting_bus in self.Bus.islanded_buses:
-                starting_bus += 1
-                continue
-
-            cons = temp[starting_bus, :]
-            nelm = len(cons.J)
-
-            while True:
-                cons = cons * temp
-                cons = sparse(cons)  # remove zero values
-                new_nelm = len(cons.J)
-                if new_nelm == nelm:
-                    break
-                nelm = new_nelm
-
-            island_sets.append(list(cons.J))
-            conn += cons
-
-            if len(conn.J) >= (n - len(self.Bus.islanded_buses)):
-                break
-
-            # Increment `starting_bus` until it's not in `conn.J` and
-            # `self.Bus.islanded_buses`
-            for i in range(visit_idx, self.Bus.n):
-                if i in conn.J or i in self.Bus.islanded_buses:
-                    i += 1
-                else:
-                    visit_idx = i
-                    break
-
-            starting_bus = visit_idx
-
-        self.Bus.island_sets = island_sets
-
-        # --- check if all areas have a slack generator ---
-        if len(self.Bus.island_sets) > 0:
-            for idx, island in enumerate(self.Bus.island_sets):
-                nosw = 1
-                slack_bus_uid = self.Bus.idx2uid(self.Slack.bus.v)
-                slack_u = self.Slack.u.v
-                for u, item in zip(slack_u, slack_bus_uid):
-                    if (u == 1) and (item in island):
-                        nosw -= 1
-                if nosw == 1:
-                    self.Bus.nosw_island.append(idx)
-                elif nosw < 0:
-                    self.Bus.msw_island.append(idx)
-
-        # --- Post processing ---
-        # 1. extend islanded buses, each in a list
-        if len(self.Bus.islanded_buses) > 0:
-            self.Bus.islands.extend([[item] for item in self.Bus.islanded_buses])
-
-        if len(self.Bus.island_sets) == 0:
-            self.Bus.islands.append(list(range(n)))
-        else:
-            self.Bus.islands.extend(self.Bus.island_sets)
-
-        # 2. find generators in the largest island
-        if self.TDS.config.criteria and self.TDS.initialized:
-            lg_island = None
-            for item in self.Bus.islands:
-                if lg_island is None:
-                    lg_island = item
-                    continue
-                if len(item) > len(lg_island):
-                    lg_island = item
-
-            lg_bus_idx = [self.Bus.idx.v[ii] for ii in lg_island]
-            if self.SynGen.n > 0:  # only do when there is at least one SynGen
-                self.SynGen.store_idx_island(lg_bus_idx)
-
-        if info is True:
-            self.summary()
+        return self.conn.check_connectivity(info=info)
 
     def to_ipysheet(self, model: str, vin: bool = False):
         """
@@ -1161,44 +1012,9 @@ class System:
 
     def summary(self):
         """
-        Print out system summary.
+        Delegate to :meth:`ConnMan.summary`.
         """
-
-        island_sets = self.Bus.island_sets
-        nosw_island = self.Bus.nosw_island
-        msw_island = self.Bus.msw_island
-        n_islanded_buses = self.Bus.n_islanded_buses
-
-        logger.info("-> System connectivity check results:")
-        if n_islanded_buses == 0:
-            logger.info("  No islanded bus detected.")
-        else:
-            logger.info("  %d islanded bus detected.", n_islanded_buses)
-            logger.debug("  Islanded Bus indices (0-based): %s", self.Bus.islanded_buses)
-
-        if len(island_sets) == 0:
-            logger.info("  No island detected.")
-        elif len(island_sets) == 1:
-            logger.info("  System is interconnected.")
-            logger.debug("  Bus indices in interconnected system (0-based): %s", island_sets)
-        else:
-            logger.info("  System contains %d island(s).", len(island_sets))
-            logger.debug("  Bus indices in islanded areas (0-based): %s", island_sets)
-
-        if len(nosw_island) > 0:
-            logger.warning('  Slack generator is not defined/enabled for %d island(s).',
-                           len(nosw_island))
-            logger.debug("  Bus indices in no-Slack areas (0-based): %s",
-                         [island_sets[item] for item in nosw_island])
-
-        if len(msw_island) > 0:
-            logger.warning('  Multiple slack generators are defined/enabled for %d island(s).',
-                           len(msw_island))
-            logger.debug("  Bus indices in multiple-Slack areas (0-based): %s",
-                         [island_sets[item] for item in msw_island])
-
-        if len(self.Bus.nosw_island) == 0 and len(self.Bus.msw_island) == 0:
-            logger.info('  Each island has a slack bus correctly defined and enabled.')
+        return self.conn.summary()
 
     def _v_to_dae(self, v_code, model):
         """
