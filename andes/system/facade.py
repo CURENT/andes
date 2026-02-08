@@ -9,7 +9,7 @@ System class for power system data and methods.
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  File name: system.py
+#  File name: system/facade.py
 
 import configparser
 import logging
@@ -19,12 +19,13 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import andes.io
-from andes.codegen_manager import CodegenManager
 from andes.core import AntiWindup, Config, Model, ConnMan
 from andes.io.streaming import Streaming
-from andes.registry_loader import RegistryLoader
 from andes.shared import (NCPUS_PHYSICAL, jac_names, matrix, np, sparse,
                           spmatrix)
+from andes.system.codegen import CodegenManager
+from andes.system.dae_compactor import DAECompactor
+from andes.system.registry import RegistryLoader
 from andes.utils.misc import elapsed
 from andes.utils.paths import confirm_overwrite, get_config_path
 from andes.utils.tab import Tab
@@ -190,6 +191,7 @@ class System:
         self.conn = ConnMan(system=self)                   # connectivity manager
         self.registry = RegistryLoader(self)               # model/group/routine loading
         self.codegen = CodegenManager(self)                # symbolic code generation/loading
+        self.dae_compactor = DAECompactor(self)            # DAE algebraic compaction
 
         # dynamic imports of groups, models and routines
         self.registry.load_all()
@@ -272,7 +274,7 @@ class System:
 
     def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=NCPUS_PHYSICAL):
         """
-        Delegate to :class:`andes.codegen_manager.CodegenManager`.
+        Delegate to :class:`andes.system.codegen.CodegenManager`.
         """
         return self.codegen.prepare(quick=quick,
                                     incremental=incremental,
@@ -282,7 +284,7 @@ class System:
 
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._mp_prepare() is deprecated and will be removed in v3.0. "
@@ -297,7 +299,7 @@ class System:
 
     def _finalize_pycode(self, pycode_path):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._finalize_pycode() is deprecated and will be removed in v3.0. "
@@ -309,7 +311,7 @@ class System:
 
     def _find_stale_models(self):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._find_stale_models() is deprecated and will be removed in v3.0. "
@@ -590,7 +592,7 @@ class System:
 
     def _init_numba(self, models: OrderedDict):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._init_numba() is deprecated and will be removed in v3.0. "
@@ -605,7 +607,7 @@ class System:
                    nomp: bool = False,
                    ncpu: int = NCPUS_PHYSICAL):
         """
-        Delegate to :class:`andes.codegen_manager.CodegenManager`.
+        Delegate to :class:`andes.system.codegen.CodegenManager`.
         """
         return self.codegen.precompile(models=models, nomp=nomp, ncpu=ncpu)
 
@@ -1375,13 +1377,13 @@ class System:
 
     def undill(self, autogen_stale=True):
         """
-        Delegate to :class:`andes.codegen_manager.CodegenManager`.
+        Delegate to :class:`andes.system.codegen.CodegenManager`.
         """
         return self.codegen.undill(autogen_stale=autogen_stale)
 
     def _load_calls(self):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._load_calls() is deprecated and will be removed in v3.0. "
@@ -1393,7 +1395,7 @@ class System:
 
     def _expand_pycode(self, pycode_module):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._expand_pycode() is deprecated and will be removed in v3.0. "
@@ -1477,7 +1479,7 @@ class System:
 
     def check_group_common(self):
         """
-        Delegate to :class:`andes.registry_loader.RegistryLoader`.
+        Delegate to :class:`andes.system.registry.RegistryLoader`.
         """
         return self.registry.check_group_common()
 
@@ -1531,7 +1533,7 @@ class System:
 
     def import_groups(self):
         """
-        Delegate to :class:`andes.registry_loader.RegistryLoader`.
+        Delegate to :class:`andes.system.registry.RegistryLoader`.
         """
         warnings.warn(
             "System.import_groups() is deprecated and will be removed in v3.0. "
@@ -1543,7 +1545,7 @@ class System:
 
     def import_models(self):
         """
-        Delegate to :class:`andes.registry_loader.RegistryLoader`.
+        Delegate to :class:`andes.system.registry.RegistryLoader`.
         """
         warnings.warn(
             "System.import_models() is deprecated and will be removed in v3.0. "
@@ -1555,7 +1557,7 @@ class System:
 
     def import_routines(self):
         """
-        Delegate to :class:`andes.registry_loader.RegistryLoader`.
+        Delegate to :class:`andes.system.registry.RegistryLoader`.
         """
         warnings.warn(
             "System.import_routines() is deprecated and will be removed in v3.0. "
@@ -1660,7 +1662,7 @@ class System:
 
     def _store_calls(self, models: OrderedDict):
         """
-        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
+        Deprecated wrapper to :class:`andes.system.codegen.CodegenManager`.
         """
         warnings.warn(
             "System._store_calls() is deprecated and will be removed in v3.0. "
@@ -1876,206 +1878,34 @@ class System:
 
     @staticmethod
     def _break_var_contiguity(var):
-        """Mark a variable as non-contiguous so ``set_var_arrays`` allocates standalone arrays."""
-        var._contiguous = False
-        var.v_inplace = False
-        var.e_inplace = False
+        """Backward-compatible wrapper to :class:`andes.system.dae_compactor.DAECompactor`."""
+        DAECompactor._break_var_contiguity(var)
 
     def compact_dae(self):
         """
-        Detect replaced static devices and compact ``dae.y`` by removing
-        their algebraic variable slots.
-
-        Called during TDS initialization after ``init()``.
+        Delegate to :class:`andes.system.dae_compactor.DAECompactor`.
         """
-        excluded = self._detect_replaced_devices()
-        if not excluded:
-            return
-
-        old_to_new, new_m, need_sink, all_replaced_models = \
-            self._build_y_compaction_map(excluded)
-
-        self._compact_dae_y(old_to_new, new_m, need_sink,
-                            all_replaced_models)
+        return self.dae_compactor.compact_dae()
 
     def _detect_replaced_devices(self):
         """
-        Scan TDS models for ``IdxParam`` with ``replaces=True``, mark
-        referenced static devices as ``_replaced``, and set ``u=0``.
-
-        Returns
-        -------
-        dict
-            ``{model_name: set_of_replaced_uids}``
+        Delegate to :class:`andes.system.dae_compactor.DAECompactor`.
         """
-        excluded = {}
-
-        for mdl in self.exist.tds.values():
-            if mdl.n == 0:
-                continue
-            for p_instance in mdl.idx_params.values():
-                if not p_instance.replaces:
-                    continue
-
-                group = self.groups[p_instance.model]
-
-                for i in range(mdl.n):
-                    # only consider online dynamic devices as replacements
-                    if hasattr(mdl, 'u') and mdl.u.v[i] != 1:
-                        continue
-                    target_idx = p_instance.v[i]
-                    if target_idx is None:
-                        continue
-
-                    target_model = group.idx2model(target_idx)
-                    target_uid = target_model.idx2uid(target_idx)
-                    model_name = target_model.class_name
-
-                    if target_model._replaced is None:
-                        target_model._replaced = np.zeros(target_model.n, dtype=bool)
-                    target_model._replaced[target_uid] = True
-
-                    excluded.setdefault(model_name, set()).add(target_uid)
-
-        # set u=0 on all replaced devices
-        for model_name, uids in excluded.items():
-            mdl = self.__dict__[model_name]
-            for uid in uids:
-                mdl.u.v[uid] = 0
-
-        return excluded
+        return self.dae_compactor._detect_replaced_devices()
 
     def _build_y_compaction_map(self, excluded):
         """
-        Build mapping from old ``dae.y`` indices to new compact indices.
-
-        Parameters
-        ----------
-        excluded : dict
-            ``{model_name: set_of_replaced_uids}`` from ``_detect_replaced_devices``
-
-        Returns
-        -------
-        old_to_new : np.ndarray
-            Mapping array (``-1`` for removed indices).
-        new_m : int
-            New algebraic variable count (excluding sink).
-        need_sink : bool
-            Whether a sink slot is needed for partial replacement.
-        all_replaced_models : set
-            Model names where every device is replaced.
+        Delegate to :class:`andes.system.dae_compactor.DAECompactor`.
         """
-        old_m = self.dae.m
-        remove_indices = set()
-        all_replaced_models = set()
-
-        for model_name, uids in excluded.items():
-            mdl = self.__dict__[model_name]
-
-            if len(uids) == mdl.n:
-                all_replaced_models.add(model_name)
-
-            # collect internal Algeb addresses for replaced devices
-            for var in mdl.algebs.values():
-                for uid in uids:
-                    remove_indices.add(var.a[uid])
-
-        # build old-to-new mapping
-        old_to_new = np.full(old_m, -1, dtype=int)
-        new_idx = 0
-        for old_idx in range(old_m):
-            if old_idx not in remove_indices:
-                old_to_new[old_idx] = new_idx
-                new_idx += 1
-        new_m = new_idx
-
-        # need sink if any model has partial replacement
-        need_sink = len(all_replaced_models) < len(excluded)
-
-        return old_to_new, new_m, need_sink, all_replaced_models
+        return self.dae_compactor._build_y_compaction_map(excluded)
 
     def _compact_dae_y(self, old_to_new, new_m, need_sink,
                        all_replaced_models):
         """
-        Compact ``dae.y`` by removing replaced devices' algebraic variable
-        slots, remap addresses, and refresh model bindings.
-
-        Parameters
-        ----------
-        old_to_new : np.ndarray
-            Mapping from old to new indices (``-1`` for removed).
-        new_m : int
-            New algebraic variable count (excluding sink).
-        need_sink : bool
-            Whether a sink slot is needed.
-        all_replaced_models : set
-            Models where every device is replaced.
+        Delegate to :class:`andes.system.dae_compactor.DAECompactor`.
         """
-        old_m = self.dae.m
-        keep = old_to_new >= 0
-
-        # --- resize / compact arrays ---
-
-        if need_sink:
-            sink_idx = new_m
-            self.dae.m = new_m + 1
-        else:
-            sink_idx = None
-            self.dae.m = new_m
-
-        self._y_sink_idx = sink_idx
-        self._all_replaced_models = all_replaced_models
-
-        new_y = np.zeros(self.dae.m)
-        new_y[old_to_new[keep]] = self.dae.y[keep]
-        self.dae.y = new_y
-        self.dae.g = np.zeros(self.dae.m)
-
-        old_y_name = self.dae.y_name[:]
-        old_y_tex_name = self.dae.y_tex_name[:]
-        self.dae.y_name = [''] * self.dae.m
-        self.dae.y_tex_name = [''] * self.dae.m
-        for old_idx in np.where(keep)[0]:
-            ni = old_to_new[old_idx]
-            self.dae.y_name[ni] = old_y_name[old_idx]
-            self.dae.y_tex_name[ni] = old_y_tex_name[old_idx]
-
-        # --- remap var.a and break contiguity ---
-
-        def remap_a(a):
-            new_a = old_to_new[a]
-            if need_sink:
-                new_a[new_a == -1] = sink_idx
-            return new_a
-
-        for mdl in self.exist.pflow_tds.values():
-            if mdl.n == 0 or mdl.class_name in all_replaced_models:
-                continue
-            for var in mdl.cache.algebs_and_ext.values():
-                var.a = remap_a(var.a)
-                self._break_var_contiguity(var)
-
-        # break contiguity for all-replaced models so set_var_arrays
-        # allocates fresh arrays instead of in-place views into dae.y
-        for model_name in all_replaced_models:
-            mdl = self.__dict__[model_name]
-            for var in mdl.cache.vars_int.values():
-                self._break_var_contiguity(var)
-
-        # --- rebind views and refresh model inputs ---
-
-        fix_view_arrays(self, models=self.exist.pflow_tds)
-
-        # --- log ---
-
-        n_removed = np.count_nonzero(old_to_new == -1)
-        logger.info("DAE compaction: removed %d algebraic variable slots "
-                    "(m: %d -> %d)", n_removed, old_m, self.dae.m)
-        if need_sink:
-            logger.debug("  Sink slot at index %d", sink_idx)
-        if all_replaced_models:
-            logger.debug("  All-replaced models: %s",
-                         ', '.join(sorted(all_replaced_models)))
+        return self.dae_compactor._compact_dae_y(old_to_new, new_m, need_sink,
+                                                 all_replaced_models)
 
 
 # --------------- Helper Functions ---------------
@@ -2151,25 +1981,25 @@ def fix_view_arrays(system, models=None):
 
 def import_pycode(user_pycode_path=None):
     """
-    Backward-compatible wrapper to :func:`andes.codegen_manager.import_pycode`.
+    Backward-compatible wrapper to :func:`andes.system.codegen.import_pycode`.
     """
-    from andes.codegen_manager import import_pycode as _import_pycode
+    from andes.system.codegen import import_pycode as _import_pycode
     return _import_pycode(user_pycode_path=user_pycode_path)
 
 
 def _import_pycode_from(pycode_path):
     """
-    Backward-compatible wrapper to :func:`andes.codegen_manager._import_pycode_from`.
+    Backward-compatible wrapper to :func:`andes.system.codegen._import_pycode_from`.
     """
-    from andes.codegen_manager import _import_pycode_from as _import_pycode_from_impl
+    from andes.system.codegen import _import_pycode_from as _import_pycode_from_impl
     return _import_pycode_from_impl(pycode_path)
 
 
 def reload_submodules(module_name):
     """
-    Backward-compatible wrapper to :func:`andes.codegen_manager.reload_submodules`.
+    Backward-compatible wrapper to :func:`andes.system.codegen.reload_submodules`.
     """
-    from andes.codegen_manager import reload_submodules as _reload_submodules
+    from andes.system.codegen import reload_submodules as _reload_submodules
     return _reload_submodules(module_name)
 
 
