@@ -21,7 +21,9 @@ class REGF1Data(ModelData):
                             mandatory=True,
                             )
         self.gen = IdxParam(info="static generator index",
+                            model='StaticGen',
                             mandatory=True,
+                            replaces=True,
                             )
         self.Sn = NumParam(default=100.0, tex_name='S_n',
                            info='Model MVA base',
@@ -284,12 +286,6 @@ class REGF1Model(Model):
                         v_str='Iq0',
                         diag_eps=True,
                         )
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class REGF1Primary:

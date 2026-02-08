@@ -20,6 +20,7 @@ class PLBVFU1Data(ModelData):
         self.gen = IdxParam(info="static generator index",
                             model='StaticGen',
                             mandatory=True,
+                            replaces=True,
                             )
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
@@ -216,10 +217,3 @@ class PLBVFU1(PLBVFU1Model, PLBVFU1Data):
     def __init__(self, system, config):
         PLBVFU1Data.__init__(self)
         PLBVFU1Model.__init__(self, system, config)
-
-    def v_numeric(self, **kwargs):
-        """
-        Numeric initialization to disable corresponding ``StaticGen``.
-        """
-
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)

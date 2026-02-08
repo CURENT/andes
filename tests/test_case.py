@@ -448,3 +448,76 @@ class TestCaseInit(unittest.TestCase):
         ss.TDS.init()
 
         self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+
+class TestDAECompaction(unittest.TestCase):
+    """Test DAE compaction for replaced static generators."""
+
+    def test_full_replacement(self):
+        """
+        Test that all-replaced models are fully compacted
+        (no sink slot needed).
+        """
+        ss = andes.load(
+            get_case('5bus/pjm5bus.json'),
+            default_config=True,
+            no_output=True,
+        )
+        ss.setup()
+        ss.PFlow.run()
+
+        ss.TDS.config.tf = 0.1
+        ss.TDS.run()
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+        # all PV and Slack devices should be replaced
+        self.assertTrue(ss.PV._all_replaced)
+        self.assertTrue(ss.Slack._all_replaced)
+
+        # no sink needed when all devices are replaced
+        self.assertIsNone(ss._y_sink_idx)
+
+        # dae.m should have shrunk by the number of removed internal algebs
+        # PV: 1 algeb (q) * 3 devices = 3, Slack: 2 algebs (p, q) * 1 = 2
+        n_removed = ss.PV.n * len(ss.PV.algebs) + ss.Slack.n * len(ss.Slack.algebs)
+        self.assertGreater(n_removed, 0)
+
+    def test_partial_replacement_sink(self):
+        """
+        Test partial replacement: disable one dynamic generator so its
+        static counterpart is NOT replaced, triggering the sink-address path.
+        """
+        ss = andes.load(
+            get_case('5bus/pjm5bus.json'),
+            default_config=True,
+            no_output=True,
+        )
+        ss.setup()
+        ss.PFlow.run()
+
+        # disable GENCLS[0] and its TG2[0] so PV idx=0 is NOT replaced
+        ss.GENCLS.u.v[0] = 0
+        ss.TG2.u.v[0] = 0
+
+        ss.config.warn_limits = 0
+        ss.config.warn_abnormal = 0
+
+        ss.TDS.config.tf = 0.1
+        ss.TDS.run()
+
+        self.assertEqual(ss.exit_code, 0, "Exit code is not 0.")
+
+        # PV should be partially replaced (only 2 of 3)
+        self.assertFalse(ss.PV._all_replaced)
+        self.assertIsNotNone(ss.PV._replaced)
+        self.assertFalse(ss.PV._replaced[0])   # PV idx=0 NOT replaced
+        self.assertTrue(ss.PV._replaced[1])     # PV idx=2 replaced
+        self.assertTrue(ss.PV._replaced[2])     # PV idx=4 replaced
+
+        # Slack should still be all-replaced
+        self.assertTrue(ss.Slack._all_replaced)
+
+        # sink slot must be set for partial replacement
+        self.assertIsNotNone(ss._y_sink_idx)
+        self.assertIsInstance(ss._y_sink_idx, int)

@@ -287,6 +287,13 @@ class Model:
         self.debug_equations = list()  # variable names for debugging corresponding equation
         self.non_top_level = list()  # list of non-top-level components
 
+        self._replaced = None  # bool array marking devices replaced by dynamic models
+
+    @property
+    def _all_replaced(self):
+        """Return True if all devices in this model are replaced by dynamic models."""
+        return self._replaced is not None and np.all(self._replaced)
+
     def _register_attribute(self, key, value):
         """
         Register a pair of attributes to the model instance.
@@ -901,6 +908,10 @@ class Model:
         if self.flags.address is False:
             return
 
+        # skip models where all devices have been replaced
+        if self._all_replaced:
+            return
+
         # store model-level user-defined Jacobians
         if self.flags.j_num is True:
             self.j_numeric()
@@ -980,6 +991,9 @@ class Model:
         Non-in-place equations: in-place set to internal array to
         overwrite old values (and avoid clearing).
         """
+        if self._all_replaced:
+            return
+
         if callable(self.calls.f):
             f_ret = self.calls.f(*self.f_args)
             for i, var in enumerate(self.cache.states_and_ext.values()):
@@ -1002,6 +1016,9 @@ class Model:
         """
         Evaluate algebraic equations.
         """
+        if self._all_replaced:
+            return
+
         if callable(self.calls.g):
             g_ret = self.calls.g(*self.g_args)
             for i, var in enumerate(self.cache.algebs_and_ext.values()):
@@ -1030,6 +1047,9 @@ class Model:
         -------
         None
         """
+        if self._all_replaced:
+            return
+
         for jname, jfunc in self.calls.j.items():
             ret = jfunc(*self.j_args[jname])
 

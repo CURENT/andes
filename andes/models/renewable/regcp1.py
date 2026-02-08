@@ -68,12 +68,6 @@ class REGCP1Model(REGCA1Model):
 
         self.Qe.e_str = '(vd * Iqout_y - vq * Ipout) - Qe'
 
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
-
 
 class REGCP1(REGCP1Data, REGCP1Model):
     """

@@ -14,7 +14,9 @@ class FixedGenData(ModelData):
                             mandatory=True,
                             )
         self.gen = IdxParam(info="static generator index",
+                            model='StaticGen',
                             mandatory=True,
+                            replaces=True,
                             )
 
 
@@ -55,12 +57,6 @@ class FixedGenModel(Model):
                              indexer=self.gen,
                              tex_name='Q_0',
                              )
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class FixedGen(FixedGenData, FixedGenModel):

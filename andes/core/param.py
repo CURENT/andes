@@ -282,6 +282,7 @@ class IdxParam(BaseParam):
                  model: Optional[str] = None,
                  iconvert: Optional[Callable] = None,
                  oconvert: Optional[Callable] = None,
+                 replaces: bool = False,
                  ):
         super().__init__(default=default, name=name, tex_name=tex_name,
                          info=info, unit=unit, mandatory=mandatory,
@@ -289,6 +290,7 @@ class IdxParam(BaseParam):
                          )
         self.property['unique'] = unique
         self.model = model  # must be a `Model` name for building BackRef - Not checked yet
+        self.replaces = replaces  # True if this model replaces the referenced device
 
     def add(self, value=None):
         if self.get_property('unique'):

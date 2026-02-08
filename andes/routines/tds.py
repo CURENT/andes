@@ -206,14 +206,21 @@ class TDS(BaseRoutine):
         system.set_address(models=system.exist.pflow_tds)
         system.set_dae_names(models=system.exist.tds)
         system.set_output_subidx(models=system.exist.pflow_tds)
-
-        system.dae.clear_ts()
-        system.store_sparse_pattern(models=system.exist.pflow_tds)
-        system.store_adder_setter(models=system.exist.pflow_tds)
         system.store_no_check_init(models=system.exist.pflow_tds)
+
+        # lightweight setup for init(): only _getters/_setters for vars_to_models
+        system.store_getters(models=system.exist.pflow_tds)
         system.vars_to_models()
 
         system.init(system.exist.tds, routine='tds')
+
+        system.compact_dae()
+
+        # full setup after compaction (sparse patterns, adders, antiwindups)
+        system.dae.clear_ts()
+        system.store_sparse_pattern(models=system.exist.pflow_tds)
+        system.store_adder_setter(models=system.exist.pflow_tds)
+        system.vars_to_models()
 
         self.fg_update(system.exist.tds, init=True)
 

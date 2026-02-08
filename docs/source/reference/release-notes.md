@@ -10,6 +10,13 @@
 
 The APIs before v3.0.0 are in beta and may change without prior notice.
 
+## v2.0 Notes
+
+### v2.0.0
+
+- Add DAE compaction to remove replaced static generators' algebraic variables from the
+  Newton-Raphson system during TDS, reducing system size for dynamics-heavy cases.
+
 ## v1.10 Notes
 
 ### v1.10.1 (2026-02-04)

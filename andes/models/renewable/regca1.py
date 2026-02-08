@@ -24,7 +24,9 @@ class REGCA1Data(ModelData):
                             mandatory=True,
                             )
         self.gen = IdxParam(info="static generator index",
+                            model='StaticGen',
                             mandatory=True,
+                            replaces=True,
                             )
         self.Sn = NumParam(default=100.0, tex_name='S_n',
                            info='Model MVA base',
@@ -279,12 +281,6 @@ class REGCA1Model(Model):
                         v_str='p0', e_str='Ipout * v - Pe')
         self.Qe = Algeb(tex_name='Q_e', info='Reactive power output',
                         v_str='q0', e_str='Iqout_y * v - Qe')
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class REGCA1(REGCA1Data, REGCA1Model):

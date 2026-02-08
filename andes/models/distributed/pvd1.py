@@ -26,7 +26,9 @@ class PVD1Data(ModelData):
                             )
 
         self.gen = IdxParam(info="static generator index",
+                            model='StaticGen',
                             mandatory=True,
+                            replaces=True,
                             )
 
         self.Sn = NumParam(default=100.0, tex_name='S_n',
@@ -510,12 +512,6 @@ class PVD1Model(Model):
         self.Iqout = Lag(u=self.Iqcmd_y, T=self.tiq, K=1.0,
                          info='Output Iq filter',
                          )
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the corresponding `StaticGen`s.
-        """
-        self.system.groups['StaticGen'].set(src='u', idx=self.gen.v, attr='v', value=0)
 
 
 class PVD1(PVD1Data, PVD1Model):
