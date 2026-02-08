@@ -139,7 +139,7 @@ class Discrete:
 
     def save_unconstrained(self):
         """Save the input variable's unconstrained value (call after init pass 1)."""
-        if hasattr(self, 'u') and hasattr(self.u, 'v'):
+        if self.warn_flags and hasattr(self, 'u') and hasattr(self.u, 'v'):
             self._v_unconstrained = np.array(self.u.v, dtype=float)
 
     def get_limit_report(self):

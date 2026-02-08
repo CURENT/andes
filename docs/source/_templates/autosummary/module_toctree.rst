@@ -56,7 +56,6 @@
 
 
 .. autosummary::
-   :recursive:
    :toctree:
 
 {% for item in modules %}
