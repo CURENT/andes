@@ -188,10 +188,14 @@ class DAECompactor:
         old_y_tex_name = system.dae.y_tex_name[:]
         system.dae.y_name = [''] * system.dae.m
         system.dae.y_tex_name = [''] * system.dae.m
+        old_y_map = dict(system.dae.y_map)
+        system.dae.y_map = {}
         for old_idx in np.where(keep)[0]:
             ni = old_to_new[old_idx]
             system.dae.y_name[ni] = old_y_name[old_idx]
             system.dae.y_tex_name[ni] = old_y_tex_name[old_idx]
+            if old_idx in old_y_map:
+                system.dae.y_map[ni] = old_y_map[old_idx]
 
         # --- remap var.a and break contiguity ---
 

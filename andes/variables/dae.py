@@ -349,6 +349,9 @@ class DAE:
         self.i_name, self.i_tex_name = [], []
         self.b_name, self.b_tex_name = [], []
 
+        self.x_map = {}  # x-addr → (model, var), built by set_dae_names
+        self.y_map = {}  # y-addr → (model, var), built by set_dae_names
+
         self.triplets = JacTriplet()
 
         self.tpl = dict()  # sparsity templates with constants

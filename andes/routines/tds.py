@@ -271,10 +271,9 @@ class TDS(BaseRoutine):
         if self.test_ok is True:
             logger.info("Initialization was successful.")
         elif self.test_ok is False:
-            logger.error("Initialization failed!!")
-            logger.error("If you are developing a new model, check the initialization with")
+            logger.error("** Initialization FAILED **")
+            logger.error("For detailed debugging:")
             logger.error("   andes -v 10 run -r tds --init %s", self.system.files.case)
-            logger.error("Otherwise, check the variables that are initialized out of limits.")
         else:
             logger.warning("Initialization results were not verified.")
 
@@ -719,17 +718,31 @@ class TDS(BaseRoutine):
         # reset diff. RHS where `check_init == False`
         system.dae.f[system.no_check_init] = 0.0
 
-        # warn if variables are initialized at limits
-        if system.config.warn_limits:
-            for model in system.exist.pflow_tds.values():
-                for item in model.discrete.values():
-                    item.warn_init_limit()
-
         if np.max(np.abs(system.dae.fg)) < self.config.tol:
             logger.debug('Initialization tests passed.')
             return True
 
-        # otherwise, show suspect initialization error
+        # otherwise, show initialization error diagnostics
+
+        # --- Cause: variables clamped at limits ---
+        limit_rows = []
+        for model in system.exist.pflow_tds.values():
+            for item in model.discrete.values():
+                limit_rows.extend(item.get_limit_report())
+
+        if limit_rows:
+            lim_tab = Tab(
+                title='Variables clamped at limits during initialization',
+                header=['Model', 'Idx', 'Variable', 'Limit (param)',
+                        'Limit Value', 'Unconstr. Value'],
+                data=[[r['model'], r['idx'], r['var'], r['limit_name'],
+                       f"{r['limit_val']:.6g}", f"{r['unconstr']:.6g}"]
+                      for r in limit_rows],
+            )
+            logger.error(lim_tab.draw())
+            logger.error('Clamped variables may cause the equation mismatches below.')
+
+        # --- Effect: equations with nonzero residuals ---
         fail_idx = np.ravel(np.where(abs(system.dae.fg) >= self.config.tol))
         nan_idx = np.ravel(np.where(np.isnan(system.dae.fg)))
         bad_idx = np.hstack([fail_idx, nan_idx])
@@ -738,17 +751,22 @@ class TDS(BaseRoutine):
         nan_names = [system.dae.xy_name[int(i)] for i in nan_idx]
         bad_names = fail_names + nan_names
 
-        title = 'Suspect initialization issue! Simulation may crash!'
-        err_data = {'Name': bad_names,
-                    'Var. Value': system.dae.xy[bad_idx],
-                    'Eqn. Mismatch': system.dae.fg[bad_idx],
-                    }
-        tab = Tab(title=title,
-                  header=err_data.keys(),
-                  data=list(map(list, zip(*err_data.values()))),
-                  )
+        bad_estr = []
+        n = system.dae.n
+        for i in bad_idx:
+            ii = int(i)
+            if ii < n:
+                entry = system.dae.x_map.get(ii)
+            else:
+                entry = system.dae.y_map.get(ii - n)
+            bad_estr.append(entry[1].e_str if entry and entry[1].e_str else '')
 
-        logger.error(tab.draw())
+        err_tab = Tab(
+            title='** Equations with nonzero residuals **',
+            header=['Name', 'Eqn. Mismatch', 'Equation (0=)'],
+            data=list(map(list, zip(bad_names, system.dae.fg[bad_idx], bad_estr))),
+        )
+        logger.error(err_tab.draw())
 
         if system.options.get('verbose') == 1:
             breakpoint()

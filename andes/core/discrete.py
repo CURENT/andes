@@ -59,6 +59,8 @@ class Discrete:
         self.has_check_var = False  # if subclass implements `check_var()`
         self.has_check_eq = False   # if subclass implements `check_eq()`
 
+        self._v_unconstrained = None  # saved by two-pass init after pass 1
+
     def check_var(self, *args, **kwargs):
         """
         This function is called in ``l_update_var`` before evaluating equations.
@@ -135,82 +137,48 @@ class Discrete:
         for flag in self.export_flags:
             self.__dict__[flag] = self.__dict__[flag] * np.ones(n, dtype=float)
 
-    def warn_init_limit(self):
+    def save_unconstrained(self):
+        """Save the input variable's unconstrained value (call after init pass 1)."""
+        if hasattr(self, 'u') and hasattr(self.u, 'v'):
+            self._v_unconstrained = np.array(self.u.v, dtype=float)
+
+    def get_limit_report(self):
         """
-        Warn if associated variables are initialized at limits.
+        Return a list of dicts describing variables clamped at limits.
+
+        Each dict has keys: model, idx, limiter, flag, unconstr,
+        limit_name, limit_val.  Returns empty list if no limits are active
+        or if unconstrained values were not saved.
         """
+        if self.no_warn or self._v_unconstrained is None or len(self.warn_flags) == 0:
+            return []
 
-        if self.no_warn:
-            return
-
-        for f, limit in self.warn_flags:
-            if f not in self.export_flags:
-                logger.error('warn_flags contain unknown flag %s', f)
-                continue
-
-            mask = np.ones(self.owner.n, dtype=bool)
-            if limit == 'upper':
-                mask = self.mask_upper
-            elif limit == 'lower':
-                mask = self.mask_lower
-            else:
-                logger.debug('Unknown limit name <%s>', limit)
-
-            # process online devices only
-            flag_vals = np.logical_and(self.__dict__[f], self.owner.u.v)
-
-            # ignore limits that has been adjusted
-            flag_vals = np.logical_and(flag_vals, np.logical_not(mask))
-
-            pos = np.argwhere(np.not_equal(flag_vals, 0)).ravel()
-
+        rows = []
+        for flag_name, limit_attr in self.warn_flags:
+            flag_vals = np.logical_and(self.__dict__[flag_name], self.owner.u.v)
+            pos = np.argwhere(flag_vals != 0).ravel()
             if len(pos) == 0:
                 continue
 
-            # convert limie values to arrays
-            if isinstance(self.__dict__[limit].v, np.ndarray):
-                lim_value = self.__dict__[limit].v
-            else:
-                lim_value = self.__dict__[limit].v * np.ones(self.owner.n)
+            lim_param = self.__dict__[limit_attr]
+            lim_v = lim_param.v
+            if not isinstance(lim_v, np.ndarray):
+                lim_v = lim_v * np.ones(self.owner.n)
 
-            at_limit_pos = list()
-            out_limit_pos = list()
+            for i in pos:
+                # skip if unconstrained value equals the limit (no actual clamping)
+                if np.isclose(self._v_unconstrained[i], lim_v[i]):
+                    continue
+                rows.append({
+                    'model': self.owner.class_name,
+                    'idx': self.owner.idx.v[i],
+                    'var': self.u.name if hasattr(self.u, 'name') else '?',
+                    'limit_name': lim_param.name,
+                    'limit_val': lim_v[i],
+                    'unconstr': self._v_unconstrained[i],
+                })
 
-            for item in pos:
-                if np.isclose(lim_value[item], self.u.v[item]):
-                    at_limit_pos.append(item)
-                else:
-                    out_limit_pos.append(item)
-
-            if len(out_limit_pos) > 0:
-                # warn out of limits
-                err_msg = f'{self.owner.class_name}.{self.name} out of limits <{self.__dict__[limit].name}>'
-                err_data = {'idx': [self.owner.idx.v[i] for i in out_limit_pos],
-                            'Flag': [f] * len(out_limit_pos),
-                            'Input Value': self.u.v[out_limit_pos],
-                            'Limit': lim_value[out_limit_pos]
-                            }
-
-                tab = Tab(title=err_msg,
-                          header=err_data.keys(),
-                          data=list(map(list, zip(*err_data.values()))))
-
-                logger.warning(tab.draw())
-
-            if len(at_limit_pos) > 0:
-                # warn at limits
-                err_msg = f'{self.owner.class_name}.{self.name} at limits <{self.__dict__[limit].name}>'
-                err_data = {'idx': [self.owner.idx.v[i] for i in at_limit_pos],
-                            'Flag': [f] * len(at_limit_pos),
-                            'Input Value': self.u.v[at_limit_pos],
-                            'Limit': lim_value[at_limit_pos]
-                            }
-
-                tab = Tab(title=err_msg,
-                          header=err_data.keys(),
-                          data=list(map(list, zip(*err_data.values()))))
-
-                logger.debug(tab.draw())
+        return rows
 
     def check_iter_err(self, niter=None, err=None):
         """

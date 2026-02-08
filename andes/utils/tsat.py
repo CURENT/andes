@@ -107,7 +107,6 @@ def run_cmp(raw, dyr, fault_line, t1=1, t2=1.1, tf=20, tstep=1/60, no_output=Tru
                          tf=tf, setup=False, no_output=no_output)
 
     # configure simulation parameters
-    ss.config.warn_limits = 0
     ss.config.warn_abnormal = 0
 
     ss.add('Toggle', {'model': 'Line', 'dev': fault_line, 't': t1})

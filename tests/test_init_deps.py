@@ -8,6 +8,7 @@ introduced by discrete component flags in v_str expressions.
 import unittest
 from collections import OrderedDict
 
+import numpy as np
 import sympy as sp
 from andes.core.discrete import LessThan, Limiter
 from andes.core.param import NumParam
@@ -178,6 +179,132 @@ class TestDiscreteDepTracking(unittest.TestCase):
 
         # Only direct dep on x, NOT lim_zi (which is not in vars_int_dict)
         self.assertEqual(deps['y'], ['x'])
+
+
+class TestGetLimitReport(unittest.TestCase):
+    """Unit tests for Discrete.get_limit_report()."""
+
+    @staticmethod
+    def _make_limiter(u_val, lower_val, upper_val):
+        """Create a Limiter with minimal mock owner for testing."""
+        u_var = Algeb(info='input')
+        u_var.name = 'x'
+        u_var.v = np.array([u_val])
+
+        lower = NumParam()
+        lower.v = np.array([lower_val])
+        upper = NumParam()
+        upper.v = np.array([upper_val])
+
+        lim = Limiter(u_var, lower, upper, name='lim')
+        lim.list2array(1)
+
+        # Mock owner
+        class Owner:
+            class_name = 'TestModel'
+            n = 1
+
+            class idx:
+                v = [1]
+
+            class u:
+                v = np.array([1.0])
+
+        lim.owner = Owner()
+        return lim
+
+    def test_clamped_reports_row(self):
+        """When unconstrained value exceeds limit, get_limit_report returns a row."""
+        lim = self._make_limiter(u_val=5.0, lower_val=0.0, upper_val=10.0)
+
+        # Simulate: pass 1 unconstrained value was 12.0, pass 2 clamped to 10.0
+        lim._v_unconstrained = np.array([12.0])
+        lim.zu = np.array([1.0])   # upper limit active
+        lim.zi = np.array([0.0])
+
+        rows = lim.get_limit_report()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['limit_val'], 10.0)
+        self.assertAlmostEqual(rows[0]['unconstr'], 12.0)
+
+    def test_at_limit_no_clamping_skipped(self):
+        """When unconstrained value equals the limit exactly, no row is reported."""
+        lim = self._make_limiter(u_val=10.0, lower_val=0.0, upper_val=10.0)
+
+        # Unconstrained value == limit → no actual clamping
+        lim._v_unconstrained = np.array([10.0])
+        lim.zu = np.array([1.0])   # flag active but value was already at limit
+        lim.zi = np.array([0.0])
+
+        rows = lim.get_limit_report()
+        self.assertEqual(len(rows), 0,
+                         "Should not report when unconstrained == limit (no clamping)")
+
+    def test_no_unconstrained_saved_returns_empty(self):
+        """When save_unconstrained was never called, report is empty."""
+        lim = self._make_limiter(u_val=5.0, lower_val=0.0, upper_val=10.0)
+        lim.zu = np.array([1.0])
+        lim.zi = np.array([0.0])
+
+        rows = lim.get_limit_report()
+        self.assertEqual(len(rows), 0)
+
+    def test_no_active_flags_returns_empty(self):
+        """When no limit flags are active, report is empty."""
+        lim = self._make_limiter(u_val=5.0, lower_val=0.0, upper_val=10.0)
+        lim._v_unconstrained = np.array([5.0])
+        # zi=1, zl=0, zu=0 — no limits active
+
+        rows = lim.get_limit_report()
+        self.assertEqual(len(rows), 0)
+
+
+class TestDeprecatedConfig(unittest.TestCase):
+    """Tests for Config deprecated field handling."""
+
+    def test_deprecated_set_ignored(self):
+        """Setting a deprecated field should be silently ignored."""
+        from andes.core.common import Config
+        c = Config('test')
+        c._deprecated.add('old_field')
+        c.old_field = 42
+        self.assertNotIn('old_field', c.__dict__)
+
+    def test_deprecated_get_returns_zero(self):
+        """Getting a deprecated field should return 0."""
+        from andes.core.common import Config
+        c = Config('test')
+        c._deprecated.add('old_field')
+        self.assertEqual(c.old_field, 0)
+
+    def test_non_deprecated_works(self):
+        """Normal fields should still work."""
+        from andes.core.common import Config
+        c = Config('test')
+        c._deprecated.add('old_field')
+        c.new_field = 99
+        self.assertEqual(c.new_field, 99)
+
+    def test_system_warn_limits_deprecated(self):
+        """system.config.warn_limits should be silently accepted."""
+        import andes
+        ss = andes.load(
+            andes.get_case('ieee14/ieee14.json'),
+            no_output=True,
+            default_config=True,
+        )
+        ss.config.warn_limits = 0  # should not raise
+        self.assertEqual(ss.config.warn_limits, 0)
+
+    def test_model_config_not_affected(self):
+        """Model configs should have empty _deprecated (not affected)."""
+        import andes
+        ss = andes.load(
+            andes.get_case('ieee14/ieee14.json'),
+            no_output=True,
+            default_config=True,
+        )
+        self.assertEqual(len(ss.GENROU.config._deprecated), 0)
 
 
 class TestObservableInInitSeq(unittest.TestCase):

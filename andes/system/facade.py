@@ -471,6 +471,14 @@ class System:
 
             _set_xy_name(mdl, mdl.observables, (self.dae.b_name, self.dae.b_tex_name))
 
+            # build reverse map: addr → (model, var)
+            for var in mdl.states.values():
+                for addr in var.a:
+                    self.dae.x_map[int(addr)] = (mdl, var)
+            for var in mdl.algebs.values():
+                for addr in var.a:
+                    self.dae.y_map[int(addr)] = (mdl, var)
+
             # add discrete flag names
             if self.TDS.config.store_z == 1:
                 _set_z_name(mdl, self.dae, (self.dae.z_name, self.dae.z_tex_name))

@@ -1148,6 +1148,10 @@ class Model:
             logger.debug("%s: Pass 1 — unconstrained", self.class_name)
             self._run_init_pass(kwargs, sys_debug, eval_discrete=False)
 
+            # Save unconstrained values so limiters can report what was clamped
+            for d in self.discrete.values():
+                d.save_unconstrained()
+
             # ---- Pass 2: Constrained (with discrete evaluation) ----
             logger.debug("%s: Pass 2 — with discrete evaluation", self.class_name)
             self._run_init_pass(kwargs, sys_debug, eval_discrete=True)

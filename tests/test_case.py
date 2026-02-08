@@ -270,7 +270,6 @@ class TestNPCCRAW(unittest.TestCase):
             no_output=True,
         )
         # suppress out-of-normal info
-        ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0
 
         andes.io.psse.read(ss, fd_raw)
@@ -420,7 +419,6 @@ class TestCaseInit(unittest.TestCase):
             no_output=True,
             default_config=True,
         )
-        ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0
 
         ss.TDS.init()
@@ -442,7 +440,6 @@ class TestCaseInit(unittest.TestCase):
         # suppress EXAC1 warning from select
         np.seterr(invalid='ignore')
 
-        ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0
 
         ss.TDS.init()
@@ -500,7 +497,6 @@ class TestDAECompaction(unittest.TestCase):
         ss.GENCLS.u.v[0] = 0
         ss.TG2.u.v[0] = 0
 
-        ss.config.warn_limits = 0
         ss.config.warn_abnormal = 0
 
         ss.TDS.config.tf = 0.1

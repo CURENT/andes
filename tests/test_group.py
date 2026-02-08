@@ -18,7 +18,6 @@ class TestGroup(unittest.TestCase):
                             default_config=True,
                             no_output=True,
                             )
-        self.ss.config.warn_limits = 0
         self.ss.config.warn_abnormal = 0
 
     def test_group_access(self):

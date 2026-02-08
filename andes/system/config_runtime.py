@@ -50,6 +50,8 @@ class SystemConfigRuntime:
         # custom configuration for system goes after this line
         self._add_system_defaults()
 
+        system.config._deprecated.update({'warn_limits'})
+
         system.config.check()
         self.configure_numpy(seed=system.config.seed,
                              divide=system.config.np_divide,
@@ -66,7 +68,6 @@ class SystemConfigRuntime:
                                        ('ipadd', 1),
                                        ('seed', 'None'),
                                        ('diag_eps', 1e-8),
-                                       ('warn_limits', 1),
                                        ('warn_abnormal', 1),
                                        ('dime_enabled', 0),
                                        ('dime_name', 'andes'),
@@ -85,7 +86,6 @@ class SystemConfigRuntime:
                                 ipadd='use spmatrix.ipadd if available',
                                 seed='seed (or None) for random number generator',
                                 diag_eps='small value for Jacobian diagonals',
-                                warn_limits='warn variables initialized at limits',
                                 warn_abnormal='warn initialization out of normal values',
                                 numba='use numba for JIT compilation',
                                 numba_parallel='enable parallel for numba.jit',
@@ -100,7 +100,6 @@ class SystemConfigRuntime:
                                 mva="float",
                                 ipadd=(0, 1),
                                 seed='int or None',
-                                warn_limits=(0, 1),
                                 warn_abnormal=(0, 1),
                                 numba=(0, 1),
                                 numba_parallel=(0, 1),

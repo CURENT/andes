@@ -49,7 +49,6 @@ def compare_results(case, pkl_name, addfile=None, tf=10):
                     default_config=True, no_output=True,
                     )
 
-    ss.config.warn_limits = 0
     ss.config.warn_abnormal = 0
     ss.PFlow.run()
 

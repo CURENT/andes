@@ -191,7 +191,21 @@ class Config:
         self._help = OrderedDict()
         self._tex = OrderedDict()
         self._alt = OrderedDict()
+        self._deprecated = set()
         self.add(dct, **kwargs)
+
+    def __setattr__(self, key, value):
+        if not key.startswith('_') and hasattr(self, '_deprecated') and key in self._deprecated:
+            logger.debug("Config field '%s' is deprecated and ignored.", key)
+            return
+        super().__setattr__(key, value)
+
+    def __getattr__(self, key):
+        if key == '_deprecated':
+            raise AttributeError(key)
+        if '_deprecated' in self.__dict__ and key in self.__dict__['_deprecated']:
+            return 0
+        raise AttributeError(f"Config has no field '{key}'")
 
     def load(self, config):
         """
