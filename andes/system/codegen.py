@@ -379,6 +379,9 @@ class CodegenManager:
             model.calls.f = pycode_model.__dict__.get("f_update")
             model.calls.g = pycode_model.__dict__.get("g_update")
 
+            # observables
+            model.calls.b = pycode_model.__dict__.get("b_update")
+
             # services
             for instance in model.services.values():
                 if (instance.v_str is not None) and instance.sequential is True:

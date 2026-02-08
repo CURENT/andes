@@ -407,6 +407,9 @@ class TDS(BaseRoutine):
                 self.call_stats.append((system.dae.t.tolist(), self.niter, step_status))
 
             if step_status:
+                # evaluate observable variables after convergence
+                system.b_update(system.exist.pflow_tds)
+
                 if config.save_every != 0:
                     if config.save_every == 1:
                         dae.store()

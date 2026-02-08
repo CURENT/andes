@@ -263,6 +263,9 @@ class PFlow(BaseRoutine):
             self.x_sol = system.dae.x.copy()
             self.y_sol = system.dae.y.copy()
 
+            # evaluate observable variables post-solve
+            system.b_update(self.models)
+
             if self.config.init_tds:
                 system.TDS.init()
             if self.config.report:

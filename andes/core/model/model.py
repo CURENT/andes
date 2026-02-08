@@ -26,11 +26,12 @@ from andes.core.model.modelcache import ModelCache
 from andes.core.model.modelcall import ModelCall
 from andes.core.model.model_evaluator import ModelEvaluator
 from andes.core.param import ExtParam
+from andes.core.observable import Observable
 from andes.core.service import (ApplyFunc, BackRef, BaseService, ConstService,
                                 DeviceFinder, ExtService, FlagValue,
                                 InitChecker, NumReduce, NumRepeat, NumSelect,
                                 ParamCalc, PostInitService, RandomService,
-                                Replace, SubsService, SwBlock, VarService)
+                                Replace, SwBlock, VarService)
 from andes.core.symprocessor import SymProcessor
 from andes.core.var import Algeb, BaseVar, ExtAlgeb, ExtState, State
 from andes.shared import numba
@@ -205,7 +206,7 @@ class Model:
         self.services_var_seq = OrderedDict()
         self.services_var_nonseq = OrderedDict()
         self.services_post = OrderedDict()  # post-initialization storage services
-        self.services_subs = OrderedDict()  # to-be-substituted services
+        self.observables = OrderedDict()  # observable variables (substituted + recorded)
         self.services_icheck = OrderedDict()  # post-initialization check services
         self.services_ref = OrderedDict()  # BackRef
         self.services_fnd = OrderedDict()  # services to find/add devices
@@ -277,6 +278,7 @@ class Model:
 
         self.f_args = []
         self.g_args = []  # argument value lists
+        self.b_args = []  # observable argument value lists
         self.j_args = dict()
         self.s_args = OrderedDict()
         self.ia_args = OrderedDict()
@@ -304,7 +306,9 @@ class Model:
         Subclass attributes are automatically registered based on the variable type.
         Block attributes will be exported and registered recursively.
         """
-        if isinstance(value, Algeb):
+        if isinstance(value, Observable):
+            self.observables[key] = value
+        elif isinstance(value, Algeb):
             self.algebs[key] = value
         elif isinstance(value, ExtAlgeb):
             self.algebs_ext[key] = value
@@ -327,8 +331,6 @@ class Model:
                     self.services_var_nonseq[key] = value
             elif isinstance(value, PostInitService):
                 self.services_post[key] = value
-        elif isinstance(value, SubsService):
-            self.services_subs[key] = value
         elif isinstance(value, DeviceFinder):
             self.services_fnd[key] = value
         elif isinstance(value, BackRef):
@@ -688,6 +690,9 @@ class Model:
     def g_update(self):
         return self.evaluator.g_update()
 
+    def b_update(self):
+        return self.evaluator.b_update()
+
     def j_update(self):
         return self.evaluator.j_update()
 
@@ -768,7 +773,7 @@ class Model:
                            list(self.services.items()) +
                            list(self.services_ext.items()) +
                            list(self.services_ops.items()) +
-                           list(self.services_subs.items()) +
+                           list(self.observables.items()) +
                            list(self.discrete.items())
                            )
 
@@ -974,6 +979,7 @@ class Model:
 
         self.syms.generate_symbols()
         self.syms.generate_subs_expr()
+        self.syms.generate_observables()
         self.syms.generate_equations()
         self.syms.generate_services()
         self.syms.generate_jacobians()

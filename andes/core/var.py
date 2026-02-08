@@ -542,9 +542,15 @@ class ExtVar(BaseVar):
             vcodes = vcodes[vcodes != np.array(None)].astype(str)
 
             if not all(vcodes == np.array(self.v_code)):
-                raise TypeError("ExtVar <%s.%s> is of type <%s>, but source Vars <%s.%s> may not." %
-                                (self.owner.class_name, self.name, self.v_code,
-                                 ext_model.class_name, self.src))
+                mismatched = set(vcodes) - {self.v_code}
+                hint = ""
+                if 'b' in mismatched:
+                    hint = (" Observable variables (v_code='b') cannot be linked via ExtAlgeb."
+                            " Consider keeping the source as Algeb or accessing it differently.")
+                raise TypeError(
+                    f"ExtVar <{self.owner.class_name}.{self.name}> expects v_code='{self.v_code}', "
+                    f"but source <{ext_model.class_name}.{self.src}> has v_code={mismatched}.{hint}"
+                )
 
             self.n = len(self.a)
 
@@ -554,9 +560,15 @@ class ExtVar(BaseVar):
             if self.allow_none:
                 raise NotImplementedError(f"{self.name}: allow_none not implemented for Model")
             if original_var.v_code != self.v_code:
-                raise TypeError("Linking %s of %s to %s of %s is not allowed" %
-                                (self.name, self.class_name,
-                                 original_var.name, original_var.class_name))
+                hint = ""
+                if original_var.v_code == 'b':
+                    hint = (" Observable variables (v_code='b') cannot be linked via ExtAlgeb."
+                            " Consider keeping the source as Algeb or accessing it differently.")
+                raise TypeError(
+                    f"ExtVar <{self.class_name}.{self.name}> expects v_code='{self.v_code}', "
+                    f"but source <{original_var.class_name}.{original_var.name}> "
+                    f"has v_code='{original_var.v_code}'.{hint}"
+                )
 
             if self.indexer is not None:
                 uid = ext_model.idx2uid(self.indexer.v)

@@ -397,6 +397,15 @@ class System:
             for idx, item in enumerate(mdl.algebs.values()):
                 item.set_address(yaddr[idx], contiguous=not collate)
 
+            # observable variable addresses (in dae.b)
+            if len(mdl.observables) > 0:
+                baddr = self.dae.request_address('b', ndevice=ndevice,
+                                                 nvar=len(mdl.observables),
+                                                 collate=mdl.flags.collate,
+                                                 )
+                for idx, item in enumerate(mdl.observables.values()):
+                    item.set_address(baddr[idx], contiguous=not collate)
+
         # --- Phase 2: set external variable addresses ---
         # NOTE:
         # This step will retrieve the number of variables (item.n) for Phase 3.
@@ -460,6 +469,8 @@ class System:
             _set_hi_name(mdl, mdl.states_ext, (self.dae.h_name, self.dae.h_tex_name))
             _set_hi_name(mdl, mdl.algebs_ext, (self.dae.i_name, self.dae.i_tex_name))
 
+            _set_xy_name(mdl, mdl.observables, (self.dae.b_name, self.dae.b_tex_name))
+
             # add discrete flag names
             if self.TDS.config.store_z == 1:
                 _set_z_name(mdl, self.dae, (self.dae.z_name, self.dae.z_tex_name))
@@ -490,6 +501,9 @@ class System:
                 var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
             for var in mdl.cache.vars_ext.values():
+                var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
+
+            for var in mdl.observables.values():
                 var.set_arrays(self.dae, inplace=inplace, alloc=alloc)
 
     def _init_numba(self, models: OrderedDict):
@@ -806,6 +820,19 @@ class System:
             self.call_models('g_update', models)
         except TypeError as e:
             logger.error("g_update failed. Have you run `andes prepare -i` after updating?")
+            raise e
+
+    def b_update(self, models: OrderedDict):
+        """
+        Call the observable variable update method for models in sequence.
+
+        This evaluates all Observable variables post-solve and stores
+        values in ``dae.b``.
+        """
+        try:
+            self.call_models('b_update', models)
+        except TypeError as e:
+            logger.error("b_update failed. Have you run `andes prepare -i` after updating?")
             raise e
 
     def g_islands(self):

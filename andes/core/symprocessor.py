@@ -66,7 +66,7 @@ class SymProcessor:
         self.vars_dict = OrderedDict()
         self.vars_int_dict = OrderedDict()   # internal variables only
         self.vars_list = list()       # list of variable symbols, corresponding to `self.xy`
-        self.substitution_map = {}    # mapping of ``SubsService`` to its expression
+        self.substitution_map = {}    # mapping of ``Observable`` symbols to their expressions
 
         self.f_list, self.g_list = list(), list()  # symbolic equations in lists
         self.f_matrix, self.g_matrix, self.s_matrix = list(), list(), list()  # equations in matrices
@@ -174,18 +174,94 @@ class SymProcessor:
 
     def generate_subs_expr(self):
         """
-        Generate expressions for substituting ``SubsService``.
+        Generate substitution map from ``Observable`` instances.
+
+        Dependency resolution (topological sort) is performed so that if
+        Observable B depends on Observable A, A's expression is substituted
+        into B before B is added to the map. Circular dependencies among
+        Observables raise an error.
         """
-        for name, instance in self.parent.services_subs.items():
-            if instance.v_str is not None:
-                expr = sp.sympify(instance.v_str, locals=self.inputs_dict)
-                self.substitution_map[self.inputs_dict[name]] = expr
+        observables = self.parent.observables
+        if len(observables) == 0:
+            return
+
+        obs_names = set(observables.keys())
+        obs_exprs = OrderedDict()
+        deps = OrderedDict()
+
+        for name, instance in observables.items():
+            if instance.e_str is None:
+                continue
+            expr = sp.sympify(instance.e_str, locals=self.inputs_dict)
+            obs_exprs[name] = expr
+            # find dependencies on other observables
+            deps[name] = []
+            for fs in sorted(expr.free_symbols, key=lambda s: s.name):
+                fs_name = str(fs)
+                if fs_name in obs_names and fs_name != name:
+                    deps[name].append(fs_name)
+
+        topo_order = resolve_deps(deps)
+
+        # check for circular dependencies
+        for item in topo_order:
+            if isinstance(item, list):
+                raise ValueError(
+                    f'{self.class_name}: circular dependency among Observables: {item}')
+
+        # build substitution map in topological order
+        self.obs_exprs_substituted = OrderedDict()
+        for name in topo_order:
+            if name not in obs_exprs:
+                continue
+            expr = obs_exprs[name]
+            # substitute earlier observables so the expression is fully expanded
+            expr = expr.subs(self.substitution_map)
+            self.substitution_map[self.inputs_dict[name]] = expr
+            self.obs_exprs_substituted[name] = expr
 
     def _do_substitute(self, input_expr):
         """
-        Helper function to substitute ``SubsService`` with its expression.
+        Helper function to substitute ``Observable`` symbols with their expressions.
         """
         return input_expr.subs(self.substitution_map)
+
+    def generate_observables(self):
+        """
+        Generate a single ``b_update`` function for evaluating all Observable
+        variables post-solve.
+
+        Uses the fully substituted expressions from ``generate_subs_expr()``
+        so that ``b_update`` only takes parameters and DAE variables as inputs.
+        """
+
+        logger.debug('- Generating observables for %s', self.class_name)
+
+        self.b_list = list()
+        self.calls.b = None
+        self.calls.b_args = list()
+
+        if not hasattr(self, 'obs_exprs_substituted') or len(self.obs_exprs_substituted) == 0:
+            return
+
+        sym_args = list()
+        for name, expr in self.obs_exprs_substituted.items():
+            free_syms = self._check_expr_symbols(expr)
+            for s in free_syms:
+                if s not in sym_args:
+                    sym_args.append(s)
+                    self.calls.b_args.append(str(s))
+            self.b_list.append(expr)
+
+        sym_args = sorted(sym_args, key=lambda s: s.name)
+        self.calls.b_args.sort()
+
+        if len(self.b_list) > 0 and any(b != 0 for b in self.b_list):
+            self.calls.b = sp.lambdify(sym_args, tuple(self.b_list),
+                                       modules=self.lambdify_func)
+
+            if 'select' in inspect.getsource(self.calls.b):
+                self.calls.b_args.extend(select_args_add)
 
     def generate_equations(self):
         """
@@ -506,6 +582,9 @@ from andes.thirdparty.npfunc import *                               # NOQA
         # equations
         out.append(self._rename_func(self.calls.f, 'f_update', yf))
         out.append(self._rename_func(self.calls.g, 'g_update', yf))
+
+        # observables
+        out.append(self._rename_func(self.calls.b, 'b_update', yf))
 
         # jacobians
         for name in self.calls.j:

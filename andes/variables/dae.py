@@ -22,13 +22,14 @@ class DAETimeSeries:
         self.dae = dae
 
         # accessible attributes
-        self._public = ['t', 'x', 'y', 'z', 'xy', 'txyz',
-                        'df_x', 'df_y', 'df_z', 'df_xy', 'df_xyz']
+        self._public = ['t', 'x', 'y', 'z', 'b', 'xy', 'txyz',
+                        'df_x', 'df_y', 'df_z', 'df_b', 'df_xy', 'df_xyz']
 
         # internal dict storage
         self._xs = OrderedDict()
         self._ys = OrderedDict()
         self._zs = OrderedDict()
+        self._bs = OrderedDict()
         self._fs = OrderedDict()
         self._hs = OrderedDict()
         self._is = OrderedDict()
@@ -60,7 +61,7 @@ class DAETimeSeries:
                 for ii, val in enumerate(self.__dict__[src].values()):
                     self.__dict__[dest][ii, :] = val
 
-        pairs = (('_xs', 'x'), ('_ys', 'y'), ('_zs', 'z'),
+        pairs = (('_xs', 'x'), ('_ys', 'y'), ('_zs', 'z'), ('_bs', 'b'),
                  ('_fs', 'f'), ('_hs', 'h'), ('_is', 'i'))
 
         for a, b in pairs:
@@ -124,6 +125,11 @@ class DAETimeSeries:
         if attr is None or 'z' in attr:
             self.df_z = pd.DataFrame.from_dict(self._zs, orient='index',
                                                columns=uzname)
+
+        ubname = self.dae.b_name
+        if attr is None or 'b' in attr:
+            self.df_b = pd.DataFrame.from_dict(self._bs, orient='index',
+                                               columns=ubname)
 
         if attr is None or attr == 'df_xy':
             self.df_xy = pd.concat((self.df_x, self.df_y), axis=1)
@@ -318,13 +324,16 @@ class DAE:
             'z': 'o',  # limiter flags
             'h': 'p',  # RHS of external states
             'i': 'q',  # RHS of external algebraic variables
+            'b': 'ob',  # observable variables
         }
 
         self.m, self.n, self.o, self.p, self.q = 0, 0, 0, 0, 0
+        self.ob = 0
 
         self.x, self.y, self.z = np.array([]), np.array([]), np.array([])
         self.f, self.g = np.array([]), np.array([])  # RHS of equations
         self.h, self.i = np.array([]), np.array([])  # RHS of external equations
+        self.b = np.array([])  # observable variable values
 
         # `self.Tf` is the time-constant array for differential equations
         self.Tf = np.array([])
@@ -338,6 +347,7 @@ class DAE:
         self.z_name, self.z_tex_name = [], []
         self.h_name, self.h_tex_name = [], []
         self.i_name, self.i_tex_name = [], []
+        self.b_name, self.b_tex_name = [], []
 
         self.triplets = JacTriplet()
 
@@ -585,6 +595,9 @@ class DAE:
             z_vals = system.get_z(system.exist.pflow_tds)
             ts._zs[t] = np.array(z_vals)
 
+        if self.ob > 0:
+            ts._bs[t] = np.array(self.b)
+
         if tds.config.store_f:
             ts._fs[t] = np.array(self.f)
         if tds.config.store_h:
@@ -609,6 +622,7 @@ class DAE:
         self.x = self._extend_or_slice(self.x, self.n)
         self.y = self._extend_or_slice(self.y, self.m)
         self.z = self._extend_or_slice(self.z, self.o)
+        self.b = self._extend_or_slice(self.b, self.ob)
 
         self.f = self._extend_or_slice(self.f, self.n)
         self.g = self._extend_or_slice(self.g, self.m)
@@ -635,10 +649,12 @@ class DAE:
                  'y_name': self.m,
                  'h_name': self.p,
                  'i_name': self.q,
+                 'b_name': self.ob,
                  'x_tex_name': self.n,
                  'y_tex_name': self.m,
                  'h_tex_name': self.p,
                  'i_tex_name': self.q,
+                 'b_tex_name': self.ob,
                  }
 
         for name, size in specs.items():

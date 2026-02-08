@@ -109,6 +109,7 @@ class ModelEvaluator:
         model = self.model
         model.f_args = list()
         model.g_args = list()
+        model.b_args = list()
         model.j_args = dict()
         model.s_args = dict()
         model.ii_args = dict()
@@ -117,6 +118,7 @@ class ModelEvaluator:
 
         model.f_args = [model._input[arg] for arg in model.calls.f_args]
         model.g_args = [model._input[arg] for arg in model.calls.g_args]
+        model.b_args = [model._input[arg] for arg in model.calls.b_args]
         model.sns_args = [model._input[arg] for arg in model.calls.sns_args]
 
         # each value below is a dict
@@ -417,6 +419,21 @@ class ModelEvaluator:
         for instance in model.blocks.values():
             if instance.flags.g_num is True:
                 instance.g_numeric(**kwargs)
+
+    def b_update(self):
+        """
+        Evaluate observable variables post-solve.
+
+        Values are written to ``dae.b`` via in-place views.
+        """
+        model = self.model
+        if model._all_replaced:
+            return
+
+        if callable(model.calls.b):
+            b_ret = model.calls.b(*model.b_args)
+            for i, var in enumerate(model.observables.values()):
+                var.v[:] = b_ret[i]
 
     def j_update(self):
         """
