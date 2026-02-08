@@ -232,4 +232,3 @@ class DAECompactor:
         if all_replaced_models:
             logger.debug("  All-replaced models: %s",
                          ', '.join(sorted(all_replaced_models)))
-

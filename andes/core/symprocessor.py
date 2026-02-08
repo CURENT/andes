@@ -675,12 +675,32 @@ from andes.thirdparty.npfunc import *                               # NOQA
     def generate_dependency(self):
         """
         Generate dependency list and initialization order.
+
+        Includes discrete flag dependencies: if a variable's ``v_str``
+        references a discrete flag (e.g., ``lim_zi``), the discrete
+        component's BaseVar inputs are added as dependencies so that
+        the resolver orders them before the referencing variable.
+
+        Observable variables are included in the dependency graph
+        using their ``e_str`` as the init expression.
         """
+        from andes.core.var import BaseVar
+
         self.v_str_syms = OrderedDict()
         self.v_iter_syms = OrderedDict()
         deps = OrderedDict()
 
-        # convert to symbols
+        # --- build flag_deps: flag_symbol_name → [input var names] ---
+        flag_deps = {}
+        for disc_name, disc in self.parent.discrete.items():
+            dep_var_names = []
+            for inp in disc.input_list:
+                if isinstance(inp, BaseVar) and inp.name in self.vars_dict:
+                    dep_var_names.append(inp.name)
+            for flag_name in disc.get_names():
+                flag_deps[flag_name] = dep_var_names
+
+        # --- convert DAE variables to symbols ---
         for name, instance in self.cache.all_vars.items():
             if instance.v_str is not None:
                 sympified = sp.sympify(instance.v_str, locals=self.inputs_dict)
@@ -698,12 +718,22 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 self._check_expr_symbols(sympified)
                 self.v_iter_syms[name] = sympified
 
-        # store deps for explicit and iterative initializers
+        # --- include Observable variables using e_str as init expression ---
+        for name, instance in self.parent.observables.items():
+            if instance.e_str is not None:
+                sympified = sp.sympify(instance.e_str, locals=self.inputs_dict)
+                sympified = self._do_substitute(sympified)
+                self._check_expr_symbols(sympified)
+                self.v_str_syms[name] = sympified
+            else:
+                self.v_str_syms[name] = sp.sympify('0.0', locals=self.inputs_dict)
+
+        # --- store deps with discrete flag awareness ---
         for name, expr in self.v_str_syms.items():
-            _store_deps(name, expr, self.vars_dict, deps)
+            _store_deps(name, expr, self.vars_dict, deps, flag_deps=flag_deps)
 
         for name, expr in self.v_iter_syms.items():
-            _store_deps(name, expr, self.vars_dict, deps)
+            _store_deps(name, expr, self.vars_dict, deps, flag_deps=flag_deps)
 
         # store deps for manually added dependent variables
         for name, instance in self.cache.vars_int.items():
@@ -725,6 +755,12 @@ from andes.thirdparty.npfunc import *                               # NOQA
                 continue
 
             for vi in item:
+                # Observable cannot participate in circular init deps
+                if vi in self.parent.observables:
+                    logger.error(
+                        "%s: Observable '%s' is in a circular init dependency. "
+                        "Observable cannot use v_iter.", self.class_name, vi)
+                    continue
                 if self.cache.all_vars[vi].v_iter is None:
                     logger.error("%s: v_iter not defined for %s" % (self.class_name, vi))
 
@@ -762,6 +798,13 @@ from andes.thirdparty.npfunc import *                               # NOQA
         for item in self.init_seq:
             if isinstance(item, str):
                 instance = self.parent.__dict__[item]
+
+                # Observable: use e_str (stored in v_str_syms) as assignment init
+                if item in self.parent.observables:
+                    if instance.e_str is not None:
+                        self.init_asn[item] = self.v_str_syms[item]
+                    continue
+
                 if instance.v_str is not None:
                     self.init_asn[item] = self.v_str_syms[item]
                 if instance.v_iter is not None:
@@ -874,20 +917,34 @@ from andes.thirdparty.npfunc import *                               # NOQA
         return out
 
 
-def _store_deps(name, sympified, vars_int_dict, deps):
+def _store_deps(name, sympified, vars_int_dict, deps, flag_deps=None):
     """
     Helper function to store dependencies to a dict.
 
     Used by ``resolve``.
+
+    Parameters
+    ----------
+    flag_deps : dict, optional
+        Mapping from discrete flag symbol names (e.g., ``'lim_zi'``) to
+        lists of variable names whose initialization must precede any
+        variable that references the flag.  Built from
+        ``Discrete.input_list`` filtered by ``isinstance(inp, BaseVar)``.
     """
 
     deps[name] = []
     free_symbols = sorted(sympified.free_symbols, key=lambda s: s.name)
     for fs in free_symbols:
-        if fs not in vars_int_dict.values():
-            continue
-        if fs not in deps[name]:
-            deps[name].append(str(fs))
+        sym_name = str(fs)
+        # Direct variable dependency
+        if fs in vars_int_dict.values():
+            if sym_name not in deps[name]:
+                deps[name].append(sym_name)
+        # Discrete flag dependency
+        elif flag_deps and sym_name in flag_deps:
+            for dep_var in flag_deps[sym_name]:
+                if dep_var not in deps[name]:
+                    deps[name].append(dep_var)
 
 
 def resolve_deps(graph):

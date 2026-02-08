@@ -1159,7 +1159,7 @@ class DeadBand(Limiter):
 
     def __init__(self, u, center, lower, upper,
                  enable=True, equal=False,
-                 zu=0.0, zl=0.0, zi=0.0,
+                 zu=0.0, zl=0.0, zi=1.0,
                  name=None, tex_name=None, info=None,
                  ):
         Limiter.__init__(self, u, lower, upper,

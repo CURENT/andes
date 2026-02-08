@@ -64,9 +64,10 @@ class Observable(BaseVar):
                  tex_name: Optional[str] = None,
                  info: Optional[str] = None,
                  unit: Optional[str] = None,
+                 discrete=None,
                  ):
         super().__init__(name=name, tex_name=tex_name, info=info, unit=unit,
-                         e_str=e_str)
+                         e_str=e_str, discrete=discrete)
 
     def set_address(self, addr: np.ndarray, contiguous=False):
         """

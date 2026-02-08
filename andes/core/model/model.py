@@ -1110,10 +1110,14 @@ class Model:
         """
         Numerical initialization of a model.
 
-        Initialization sequence:
-        1. Sequential initialization based on the order of definition
-        2. Use Newton-Krylov method for iterative initialization
-        3. Custom init
+        Uses a two-pass strategy:
+
+        - **Pass 1** (unconstrained): compute ``v_str`` assignments and
+          iterative solves with all discrete flags at their defaults
+          (zi=1 = unconstrained).  This gives limiters correct input values.
+        - **Pass 2** (constrained): replay the same sequence but evaluate
+          discrete components first, so limiter flags are set from pass-1
+          values before recomputing.
         """
 
         # evaluate `ConstService` and `VarService`
@@ -1139,102 +1143,14 @@ class Model:
             logger.debug('Initialization sequence:')
             seq_str = ' -> '.join([str(i) for i in self.calls.init_seq])
             logger.debug('\n'.join(wrap(seq_str, 70)))
-            logger.debug("%s: assignment initialization phase begins", self.class_name)
 
-            for idx, name in enumerate(self.calls.init_seq):
-                debug_flag = sys_debug or (name in self.debug_equations)
+            # ---- Pass 1: Unconstrained (no discrete evaluation) ----
+            logger.debug("%s: Pass 1 — unconstrained", self.class_name)
+            self._run_init_pass(kwargs, sys_debug, eval_discrete=False)
 
-                # single variable - do assignment
-                if isinstance(name, str):
-                    _log_init_debug(debug_flag,
-                                    "%s: entering <%s> assignment init",
-                                    self.class_name, name)
-
-                    instance = self.__dict__[name]
-                    if instance.discrete is not None:
-                        _log_init_debug(debug_flag, "%s: evaluate discrete <%s>", name, instance.discrete)
-                        _eval_discrete(instance, self.config.allow_adjust,
-                                       self.config.adjust_lower, self.config.adjust_upper)
-
-                    if instance.v_str is not None:
-                        arg_print = OrderedDict()
-                        if debug_flag:
-                            for a, b in zip(self.calls.ia_args[name], self.ia_args[name]):
-                                arg_print[a] = b
-
-                        if not instance.v_str_add:
-                            # assignment is for most variable initialization
-                            _log_init_debug(debug_flag, "%s: new values will be assigned (=)", name)
-                            instance.v[:] = self.calls.ia[name](*self.ia_args[name])
-
-                        else:
-                            # in-place add initial values.
-                            # Voltage compensators can set part of the `v` of exciters.
-                            # Exciters will then set the bus voltage part.
-                            _log_init_debug(debug_flag, "%s: new values will be in-place added (+=)", name)
-                            instance.v[:] += self.calls.ia[name](*self.ia_args[name])
-
-                        arg_print[name] = instance.v
-
-                        if debug_flag:
-                            for key, val in arg_print.items():
-                                if isinstance(val, (int, float, np.floating, np.integer)) or \
-                                        isinstance(val, np.ndarray) and val.ndim == 0:
-
-                                    arg_print[key] = val * np.ones_like(instance.v)
-                                if isinstance(val, np.ndarray) and val.dtype == complex:
-                                    arg_print[key] = [str(i) for i in val]
-
-                            tab = Tab(title="v_str of %s is '%s'" % (name, instance.v_str),
-                                      header=["idx", *self.calls.ia_args[name], name],
-                                      data=list(zip(self.idx.v, *arg_print.values())),
-                                      )
-                            _log_init_debug(debug_flag, tab.draw())
-
-                    # single variable iterative solution
-                    if name in self.calls.ii:
-                        _log_init_debug(debug_flag,
-                                        "\n%s: entering <%s> iterative init",
-                                        self.class_name,
-                                        pprint.pformat(name))
-
-                        self.solve_iter(name, kwargs)
-
-                        _log_init_debug(debug_flag,
-                                        "%s new values are %s", name, self.__dict__[name].v)
-
-                # multiple variables, iterative
-                else:
-                    _log_init_debug(debug_flag, "\n%s: entering <%s> iterative init",
-                                    self.class_name, name)
-
-                    for vv in name:
-                        instance = self.__dict__[vv]
-
-                        if instance.discrete is not None:
-                            _log_init_debug(debug_flag, "%s: evaluate discrete <%s>",
-                                            name, instance.discrete)
-
-                            _eval_discrete(instance, self.config.allow_adjust,
-                                           self.config.adjust_lower, self.config.adjust_upper)
-                        if instance.v_str is not None:
-                            _log_init_debug(debug_flag, "%s: v_str = %s", vv, instance.v_str)
-
-                            arg_print = OrderedDict()
-                            if debug_flag:
-                                for a, b in zip(self.calls.ia_args[vv], self.ia_args[vv]):
-                                    arg_print[a] = b
-                                _log_init_debug(debug_flag, pprint.pformat(arg_print))
-
-                            instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
-
-                    _log_init_debug(debug_flag, "\n%s: entering <%s> iterative init", self.class_name,
-                                    pprint.pformat(name))
-                    self.solve_iter(name, kwargs)
-
-                    for vv in name:
-                        instance = self.__dict__[vv]
-                        _log_init_debug(debug_flag, "%s new values are %s", vv, instance.v)
+            # ---- Pass 2: Constrained (with discrete evaluation) ----
+            logger.debug("%s: Pass 2 — with discrete evaluation", self.class_name)
+            self._run_init_pass(kwargs, sys_debug, eval_discrete=True)
 
             # call custom variable initializer after generated init
             kwargs = self.get_inputs(refresh=True)
@@ -1244,6 +1160,116 @@ class Model:
         self.post_init_check()
 
         self.flags.initialized = True
+
+    def _run_init_pass(self, kwargs, sys_debug, eval_discrete=False):
+        """
+        Execute one pass of the initialization sequence.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Model inputs from ``get_inputs()``.
+        sys_debug : bool
+            System-level debug flag (``--init`` CLI option).
+        eval_discrete : bool
+            If True, evaluate discrete components before each variable's
+            computation.  Pass 1 uses False (defaults drive), pass 2 uses True.
+        """
+
+        for name in self.calls.init_seq:
+            # --- Single variable ---
+            if isinstance(name, str):
+                instance = self.__dict__[name]
+                debug_flag = sys_debug or (name in self.debug_equations)
+
+                # Evaluate discrete if requested
+                if eval_discrete and instance.discrete is not None:
+                    _log_init_debug(debug_flag, "%s: evaluate discrete <%s>",
+                                    name, instance.discrete)
+                    _eval_discrete(instance, self.config.allow_adjust,
+                                   self.config.adjust_lower, self.config.adjust_upper)
+
+                # Observable: compute from e_str assignment
+                if name in self.observables:
+                    if name in self.calls.ia:
+                        instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+                        _log_init_debug(debug_flag,
+                                        "%s: Observable %s = %s",
+                                        self.class_name, name, instance.v)
+                    continue
+
+                # v_str assignment
+                if instance.v_str is not None and name in self.calls.ia:
+                    arg_print = OrderedDict()
+                    if debug_flag:
+                        for a, b in zip(self.calls.ia_args[name], self.ia_args[name]):
+                            arg_print[a] = b
+
+                    if not instance.v_str_add:
+                        _log_init_debug(debug_flag, "%s: assign (=)", name)
+                        instance.v[:] = self.calls.ia[name](*self.ia_args[name])
+                    else:
+                        _log_init_debug(debug_flag, "%s: reset-and-add (+=)", name)
+                        instance.v[:] = 0
+                        instance.v[:] += self.calls.ia[name](*self.ia_args[name])
+
+                    arg_print[name] = instance.v
+
+                    if debug_flag:
+                        for key, val in arg_print.items():
+                            if isinstance(val, (int, float, np.floating, np.integer)) or \
+                                    isinstance(val, np.ndarray) and val.ndim == 0:
+                                arg_print[key] = val * np.ones_like(instance.v)
+                            if isinstance(val, np.ndarray) and val.dtype == complex:
+                                arg_print[key] = [str(i) for i in val]
+
+                        tab = Tab(title="v_str of %s is '%s'" % (name, instance.v_str),
+                                  header=["idx", *self.calls.ia_args[name], name],
+                                  data=list(zip(self.idx.v, *arg_print.values())),
+                                  )
+                        _log_init_debug(debug_flag, tab.draw())
+
+                # Iterative solve
+                if name in self.calls.ii:
+                    _log_init_debug(debug_flag,
+                                    "\n%s: entering <%s> iterative init",
+                                    self.class_name, pprint.pformat(name))
+
+                    self.solve_iter(name, kwargs)
+
+                    _log_init_debug(debug_flag,
+                                    "%s new values are %s", name, self.__dict__[name].v)
+
+            # --- Multi-variable iterative group ---
+            else:
+                debug_flag = sys_debug or (name in self.debug_equations)
+
+                for vv in name:
+                    instance = self.__dict__[vv]
+
+                    if eval_discrete and instance.discrete is not None:
+                        _eval_discrete(instance, self.config.allow_adjust,
+                                       self.config.adjust_lower, self.config.adjust_upper)
+
+                    if instance.v_str is not None and vv in self.calls.ia:
+                        _log_init_debug(debug_flag, "%s: v_str = %s", vv, instance.v_str)
+
+                        if debug_flag:
+                            arg_print = OrderedDict()
+                            for a, b in zip(self.calls.ia_args[vv], self.ia_args[vv]):
+                                arg_print[a] = b
+                            _log_init_debug(debug_flag, pprint.pformat(arg_print))
+
+                        instance.v[:] = self.calls.ia[vv](*self.ia_args[vv])
+
+                _log_init_debug(debug_flag,
+                                "\n%s: entering <%s> iterative init",
+                                self.class_name, pprint.pformat(name))
+                self.solve_iter(name, kwargs)
+
+                for vv in name:
+                    _log_init_debug(debug_flag,
+                                    "%s new values are %s", vv, self.__dict__[vv].v)
 
     def solve_iter(self, name, kwargs):
         """

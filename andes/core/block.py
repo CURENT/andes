@@ -15,6 +15,7 @@ from andes.core.common import JacTriplet, ModelFlags, dummify
 from andes.core.discrete import (AntiWindup, AntiWindupRate, DeadBand,
                                  HardLimiter, LessThan, RateLimiter,)
 from andes.core.service import EventFlag
+from andes.core.observable import Observable
 from andes.core.var import Algeb, State
 
 
@@ -797,7 +798,7 @@ class Gain(Block):
         self.K = dummify(K)
         self.enforce_tex_name((self.K,))
 
-        self.y = Algeb(info='Gain output', tex_name='y')
+        self.y = Observable(info='Gain output', tex_name='y')
         self.vars = {'y': self.y}
 
     def define(self):
@@ -809,8 +810,7 @@ class Gain(Block):
             y^{(0)} = K u^{(0)}
 
         """
-        self.y.v_str = f'{self.K.name} * {self.u.name}'
-        self.y.e_str = f'{self.K.name} * {self.u.name} - {self.name}_y'
+        self.y.e_str = f'{self.K.name} * {self.u.name}'
 
 
 class Integrator(Block):
@@ -1629,8 +1629,7 @@ class LeadLagLimit(Block):
 
         self.x = State(info='State in lead-lag TF', tex_name="x'", t_const=self.T2)
         self.ynl = Algeb(info='Output of lead-lag TF before limiter', tex_name=r'y_{nl}')
-        self.y = Algeb(info='Output of lead-lag TF after limiter', tex_name=r'y',
-                       diag_eps=True)
+        self.y = Observable(info='Output of lead-lag TF after limiter', tex_name=r'y')
         self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
@@ -1652,7 +1651,6 @@ class LeadLagLimit(Block):
         """
         self.x.v_str = f'{self.u.name}'
         self.ynl.v_str = f'{self.u.name}'
-        self.y.v_str = f'{self.u.name}'
 
         self.x.e_str = f'({self.u.name} - {self.name}_x)'
         self.ynl.e_str = f'{self.T1.name} * ({self.u.name} - {self.name}_x) + ' \
@@ -1661,8 +1659,7 @@ class LeadLagLimit(Block):
 
         self.y.e_str = f'{self.name}_ynl * {self.name}_lim_zi + ' \
                        f'{self.lower.name} * {self.name}_lim_zl + ' \
-                       f'{self.upper.name} * {self.name}_lim_zu - ' \
-                       f'{self.name}_y'
+                       f'{self.upper.name} * {self.name}_lim_zu'
 
 
 class HVGate(Block):
@@ -1686,7 +1683,7 @@ class HVGate(Block):
         self.enforce_tex_name((u1, u2))
 
         self.lt = LessThan(self.u1, self.u2)
-        self.y = Algeb(info='HVGate output', tex_name='y', discrete=self.lt)
+        self.y = Observable(info='HVGate output', tex_name='y', discrete=self.lt)
         self.vars = {'y': self.y, 'lt': self.lt}
 
     def define(self):
@@ -1708,9 +1705,7 @@ class HVGate(Block):
         Not sure if this is a bug or intended.
 
         """
-        self.y.v_str = f'{self.name}_lt_z0*{self.u1.name} + {self.name}_lt_z1*{self.u2.name}'
-        self.y.e_str = f'{self.name}_lt_z0*{self.u1.name} + {self.name}_lt_z1*{self.u2.name} - ' \
-                       f'{self.name}_y'
+        self.y.e_str = f'{self.name}_lt_z0*{self.u1.name} + {self.name}_lt_z1*{self.u2.name}'
 
 
 class LVGate(Block):
@@ -1734,7 +1729,7 @@ class LVGate(Block):
         self.enforce_tex_name((u1, u2))
 
         self.lt = LessThan(self.u1, self.u2)
-        self.y = Algeb(info='LVGate output', tex_name='y', discrete=self.lt)
+        self.y = Observable(info='LVGate output', tex_name='y', discrete=self.lt)
 
         self.vars = {'y': self.y, 'lt': self.lt}
 
@@ -1752,9 +1747,7 @@ class LVGate(Block):
         Same problem as `HVGate` as `minimum` does not sympify correctly.
 
         """
-        self.y.v_str = f'{self.name}_lt_z1*{self.u1.name} + {self.name}_lt_z0*{self.u2.name}'
-        self.y.e_str = f'{self.name}_lt_z1*{self.u1.name} + {self.name}_lt_z0*{self.u2.name} - ' \
-                       f'{self.name}_y'
+        self.y.e_str = f'{self.name}_lt_z1*{self.u1.name} + {self.name}_lt_z0*{self.u2.name}'
 
 
 class GainLimiter(Block):
@@ -1807,7 +1800,7 @@ class GainLimiter(Block):
                                sign_lower=sign_lower, sign_upper=sign_upper,
                                tex_name='lim')
 
-        self.y = Algeb(info='Output after limiter and post gain', tex_name='y', discrete=self.lim)
+        self.y = Observable(info='Output after limiter and post gain', tex_name='y', discrete=self.lim)
 
         self.vars = {'lim': self.lim, 'x': self.x, 'y': self.y}
 
@@ -1819,16 +1812,11 @@ class GainLimiter(Block):
         self.x.e_str = f'{self.K.name} * ({self.u.name}) - {self.name}_x'
 
         self.y.e_str = f'{self.name}_x * {self.name}_lim_zi * {self.R.name}'
-        self.y.v_str = f'{self.name}_x * {self.name}_lim_zi * {self.R.name}'
 
         if not self.no_upper:
             self.y.e_str += f' + {self.name}_lim_zu*{self.upper.name} * {self.R.name}* {self.lim.sign_upper.name}'
-            self.y.v_str += f' + {self.name}_lim_zu*{self.upper.name} * {self.R.name}* {self.lim.sign_upper.name}'
         if not self.no_lower:
             self.y.e_str += f' + {self.name}_lim_zl*{self.lower.name} * {self.R.name}* {self.lim.sign_lower.name}'
-            self.y.v_str += f' + {self.name}_lim_zl*{self.lower.name} * {self.R.name}* {self.lim.sign_lower.name}'
-
-        self.y.e_str += f' - {self.name}_y'
 
 
 class Piecewise(Block):
@@ -1844,6 +1832,14 @@ class Piecewise(Block):
     the last range (x_{n-1}, +inf) applies the last function `fun_n`.
 
     The function returns zero if no condition is met.
+
+    .. note::
+
+        Piecewise.y must remain ``Algeb`` (not ``Observable``) because:
+        (1) model authors may set ``v_iter`` on the output for coupled
+        iterative initialization (e.g., EXAC1), and (2) zero-valued
+        branches cause ``ComplexInfinity`` when the expression is
+        substituted into denominators during code generation.
 
     Parameters
     ----------
@@ -1885,6 +1881,11 @@ class Piecewise(Block):
 class DeadBand1(Block):
     """
     Deadband type 1 (linear, non-step).
+
+    .. note::
+
+        DeadBand1.y must remain ``Algeb`` (not ``Observable``) because
+        other models (e.g., DGPRCT1) reference it via ``ExtAlgeb``.
 
     Parameters
     ----------
@@ -1932,8 +1933,8 @@ class DeadBand1(Block):
             0 = center + z_u * (u - upper) + z_l * (u - lower) - y
 
         """
-        self.y.v_str = f'{self.gain.name} * ({self.center.name} + ' \
-                       f'{self.name}_db_zu * ({self.u.name} - {self.upper.name}) +' \
-                       f'{self.name}_db_zl * ({self.u.name} - {self.lower.name}))'
-
-        self.y.e_str = self.y.v_str + f' - {self.name}_y'
+        db_expr = f'{self.gain.name} * ({self.center.name} + ' \
+                  f'{self.name}_db_zu * ({self.u.name} - {self.upper.name}) +' \
+                  f'{self.name}_db_zl * ({self.u.name} - {self.lower.name}))'
+        self.y.v_str = db_expr
+        self.y.e_str = f'{db_expr} - {self.name}_y'
