@@ -12,27 +12,21 @@ System class for power system data and methods.
 #  File name: system.py
 
 import configparser
-import importlib
-import importlib.util
-import inspect
 import logging
 import os
-import sys
-import time
+import warnings
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import andes.io
+from andes.codegen_manager import CodegenManager
 from andes.core import AntiWindup, Config, Model, ConnMan
 from andes.io.streaming import Streaming
-from andes.models import file_classes
-from andes.models.group import GroupBase
-from andes.routines import all_routines
-from andes.shared import (NCPUS_PHYSICAL, Pool, Process, dilled_vars,
-                          jac_names, matrix, np, sparse, spmatrix, numba)
+from andes.registry_loader import RegistryLoader
+from andes.shared import (NCPUS_PHYSICAL, jac_names, matrix, np, sparse,
+                          spmatrix)
 from andes.utils.misc import elapsed
-from andes.utils.paths import (andes_root, confirm_overwrite, get_config_path,
-                               get_pycode_path)
+from andes.utils.paths import confirm_overwrite, get_config_path
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -194,11 +188,11 @@ class System:
         self.dae = DAE(system=self)                        # numerical DAE storage
         self.streaming = Streaming(self)                   # Dime2 streaming
         self.conn = ConnMan(system=self)                   # connectivity manager
+        self.registry = RegistryLoader(self)               # model/group/routine loading
+        self.codegen = CodegenManager(self)                # symbolic code generation/loading
 
         # dynamic imports of groups, models and routines
-        self.import_groups()
-        self.import_models()
-        self.import_routines()  # routine imports come after models
+        self.registry.load_all()
 
         self._getters = dict(f=list(), g=list(), x=list(), y=list())
         self._adders = dict(f=list(), g=list(), x=list(), y=list())
@@ -278,166 +272,52 @@ class System:
 
     def prepare(self, quick=False, incremental=False, models=None, nomp=False, ncpu=NCPUS_PHYSICAL):
         """
-        Generate numerical functions from symbolically defined models.
-
-        All procedures in this function must be independent of test case.
-
-        Parameters
-        ----------
-        quick : bool, optional
-            True to skip pretty-print generation to reduce code generation time.
-        incremental : bool, optional
-            True to generate only for modified models, incrementally.
-        models : list, OrderedDict, None
-            List or OrderedList of models to prepare
-        nomp : bool
-            True to disable multiprocessing
-
-        Notes
-        -----
-        Option ``incremental`` compares the md5 checksum of all var and
-        service strings, and only regenerate for updated models.
-
-        Examples
-        --------
-        If one needs to print out LaTeX-formatted equations in a Jupyter Notebook, one need to generate such
-        equations with ::
-
-            import andes
-            sys = andes.prepare()
-
-        Alternatively, one can explicitly create a System and generate the code ::
-
-            import andes
-            sys = andes.System()
-            sys.prepare()
-
-        Warnings
-        --------
-        Generated lambda functions will be serialized to file, but pretty prints (SymPy objects) can only exist in
-        the System instance on which prepare is called.
+        Delegate to :class:`andes.codegen_manager.CodegenManager`.
         """
-        if incremental is True:
-            mode_text = 'rapid incremental mode'
-        elif quick is True:
-            mode_text = 'quick mode'
-        else:
-            mode_text = 'full mode'
-
-        logger.info('Numerical code generation (%s) started...', mode_text)
-
-        t0, _ = elapsed()
-
-        # consistency check for group parameters and variables
-        self._check_group_common()
-
-        # get `pycode` folder path without automatic creation
-        pycode_path = get_pycode_path(self.options.get("pycode_path"), mkdir=False)
-
-        # determine which models to prepare based on mode and `models` list.
-        if incremental and models is None:
-            if not self.with_calls:
-                self._load_calls()
-            models = self._find_stale_models()
-        elif not incremental and models is None:
-            models = self.models
-        else:
-            models = self._get_models(models)
-
-        total = len(models)
-        width = len(str(total))
-
-        if nomp is False:
-            print(f"Generating code for {total} models on {ncpu} processes.")
-            self._mp_prepare(models, quick, pycode_path, ncpu=ncpu)
-
-        else:
-            for idx, (name, model) in enumerate(models.items()):
-                print(f"\r\x1b[K Generating code for {name} ({idx+1:>{width}}/{total:>{width}}).",
-                      end='\r', flush=True)
-                model.prepare(quick=quick, pycode_path=pycode_path)
-
-        if len(models) > 0:
-            self._finalize_pycode(pycode_path)
-            self._store_calls(models)
-
-        _, s = elapsed(t0)
-        logger.info('Generated numerical code for %d models in %s.', len(models), s)
+        return self.codegen.prepare(quick=quick,
+                                    incremental=incremental,
+                                    models=models,
+                                    nomp=nomp,
+                                    ncpu=ncpu)
 
     def _mp_prepare(self, models, quick, pycode_path, ncpu):
         """
-        Wrapper for multiprocessed code generation.
-
-        Parameters
-        ----------
-        models : OrderedDict
-            model name : model instance pairs
-        quick : bool
-            True to skip LaTeX string generation
-        pycode_path : str
-            Path to store `pycode` folder
-        ncpu : int
-            Number of processors to use
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        # create empty models without dependency
-        if len(models) == 0:
-            return
-
-        model_names = list(models.keys())
-        model_list = list()
-
-        for fname, cls_list in file_classes:
-            for model_name in cls_list:
-                if model_name not in model_names:
-                    continue
-                the_module = importlib.import_module('andes.models.' + fname)
-                the_class = getattr(the_module, model_name)
-                model_list.append(the_class(system=None, config=self._config_object))
-
-        yapf_pycode = self.config.yapf_pycode
-
-        def _prep_model(model: Model, ):
-            """
-            Wrapper function to call prepare on a model.
-            """
-            model.prepare(quick=quick,
-                          pycode_path=pycode_path,
-                          yapf_pycode=yapf_pycode
-                          )
-
-        Pool(ncpu).map(_prep_model, model_list)
+        warnings.warn(
+            "System._mp_prepare() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._mp_prepare() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._mp_prepare(models=models,
+                                        quick=quick,
+                                        pycode_path=pycode_path,
+                                        ncpu=ncpu)
 
     def _finalize_pycode(self, pycode_path):
         """
-        Helper function for finalizing pycode generation by
-        writing ``__init__.py`` and reloading ``pycode`` package.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        init_path = os.path.join(pycode_path, '__init__.py')
-        with open(init_path, 'w') as f:
-            f.write(f"__version__ = '{andes.__version__}'\n\n")
-
-            for name in self.models.keys():
-                f.write(f"from . import {name:20s}  # NOQA\n")
-            f.write('\n')
-
-        logger.info('Saved generated pycode to "%s"', pycode_path)
-
-        # RELOAD REQUIRED as the generated Jacobian arguments may be in a different order
-        self._load_calls()
+        warnings.warn(
+            "System._finalize_pycode() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._finalize_pycode() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._finalize_pycode(pycode_path)
 
     def _find_stale_models(self):
         """
-        Find models whose ModelCall are stale using md5 checksum.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-        out = OrderedDict()
-        for model in self.models.values():
-            calls_md5 = getattr(model.calls, 'md5', None)
-            if calls_md5 != model.get_md5():
-                out[model.class_name] = model
-
-        return out
+        warnings.warn(
+            "System._find_stale_models() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._find_stale_models() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._find_stale_models()
 
     def _to_orddct(self, model_list):
         """
@@ -710,91 +590,24 @@ class System:
 
     def _init_numba(self, models: OrderedDict):
         """
-        Helper function to compile all functions with Numba before init.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        if not self.config.numba:
-            return
-
-        try:
-            getattr(numba, '__version__')
-        except ImportError:
-            # numba not installed
-            logger.warning("numba is enabled but not installed. Please install numba manually.")
-            self.config.numba = 0
-            return False
-
-        use_parallel = bool(self.config.numba_parallel)
-        nopython = bool(self.config.numba_nopython)
-
-        logger.info("Numba compilation initiated with caching.")
-
-        for mdl in models.values():
-            mdl.numba_jitify(parallel=use_parallel,
-                             nopython=nopython,
-                             )
-
-        return True
+        warnings.warn(
+            "System._init_numba() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._init_numba() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._init_numba(models)
 
     def precompile(self,
                    models: Union[OrderedDict, None] = None,
                    nomp: bool = False,
                    ncpu: int = NCPUS_PHYSICAL):
         """
-        Trigger precompilation for the given models.
-
-        Arguments are the same as ``prepare``.
+        Delegate to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        t0, _ = elapsed()
-
-        if models is None:
-            models = self.models
-        else:
-            models = self._get_models(models)
-
-        # turn on numba for precompilation
-        self.config.numba = 1
-
-        self.setup()
-        numba_ok = self._init_numba(models)
-
-        if not numba_ok:
-            return
-
-        def _precompile_model(model: Model):
-            model.precompile()
-
-        logger.info("Compilation in progress. This might take a minute...")
-
-        if nomp is True:
-            for name, mdl in models.items():
-                _precompile_model(mdl)
-                logger.debug("Model <%s> compiled.", name)
-
-        # multi-processed implementation. `Pool.map` runs very slow somehow.
-        else:
-            jobs = []
-            for idx, (name, mdl) in enumerate(models.items()):
-                job = Process(
-                    name='Process {0:d}'.format(idx),
-                    target=_precompile_model,
-                    args=(mdl,),
-                )
-                jobs.append(job)
-                job.start()
-
-                if (idx % ncpu == ncpu - 1) or (idx == len(models) - 1):
-                    time.sleep(0.02)
-                    for job in jobs:
-                        job.join()
-                    jobs = []
-
-        _, s = elapsed(t0)
-        logger.info('Numba compiled %d model%s in %s.',
-                    len(models),
-                    '' if len(models) == 1 else 's',
-                    s)
+        return self.codegen.precompile(models=models, nomp=nomp, ncpu=ncpu)
 
     def init(self, models: OrderedDict, routine: str):
         """
@@ -807,7 +620,7 @@ class System:
         - Copy variables to DAE and then back to the model.
         """
 
-        self._init_numba(models)
+        self.codegen._init_numba(models)
 
         for mdl in models.values():
             # link externals services first
@@ -1562,115 +1375,33 @@ class System:
 
     def undill(self, autogen_stale=True):
         """
-        Reload generated function functions, from either the
-        ``$HOME/.andes/pycode`` folder.
-
-        If no change is made to models, future calls to ``prepare()`` can be
-        replaced with ``undill()`` for acceleration.
-
-        Parameters
-        ----------
-        autogen_stale: bool
-            True to automatically call code generation if stale code is
-            detected. Regardless of this option, codegen is trigger if importing
-            existing code fails.
+        Delegate to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        # load equations and jacobian from saved code
-        loaded = self._load_calls()
-
-        stale_models = self._find_stale_models()
-
-        if loaded is False:
-            self.prepare(quick=True, incremental=False)
-            loaded = True
-        elif autogen_stale is False:
-            # NOTE: incremental code generation may be triggered due to Python
-            # not invalidating ``.pyc`` caches. If multiprocessing is being
-            # used, code generation will cause nested multiprocessing, which is
-            # not allowed.
-            # The flag ``autogen_stale=False`` is used to prevent nested codegen
-            # and is intended to be used only in multiprocessing.
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            logger.info("Automatic code re-generation manually skipped")
-            loaded = True
-        elif len(stale_models) > 0:
-            logger.info("Generated code for <%s> is stale.", ', '.join(stale_models.keys()))
-            self.prepare(quick=True, incremental=True, models=stale_models)
-            loaded = True
-
-        return loaded
+        return self.codegen.undill(autogen_stale=autogen_stale)
 
     def _load_calls(self):
         """
-        Helper function for loading generated numerical functions from the ``pycode`` module.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-
-        loaded = False
-        user_pycode_path = self.options.get("pycode_path")
-        pycode = import_pycode(user_pycode_path=user_pycode_path)
-
-        if pycode:
-            try:
-                self._expand_pycode(pycode)
-                loaded = True
-            except KeyError:
-                logger.error("Your generated pycode is broken. Run `andes prep` to re-generate. ")
-
-        return loaded
+        warnings.warn(
+            "System._load_calls() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._load_calls() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._load_calls()
 
     def _expand_pycode(self, pycode_module):
         """
-        Expand imported ``pycode`` module to model calls.
-
-        Parameters
-        ----------
-        pycode : module
-            The module for generated code for models.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-        for name, model in self.models.items():
-            if name not in pycode_module.__dict__:
-                logger.debug("Model %s does not exist in pycode", name)
-                continue
-
-            pycode_model = pycode_module.__dict__[model.class_name]
-
-            # md5
-            model.calls.md5 = getattr(pycode_model, 'md5', None)
-
-            # reload stored variables
-            for item in dilled_vars:
-                model.calls.__dict__[item] = pycode_model.__dict__[item]
-
-            # equations
-            model.calls.f = pycode_model.__dict__.get("f_update")
-            model.calls.g = pycode_model.__dict__.get("g_update")
-
-            # services
-            for instance in model.services.values():
-                if (instance.v_str is not None) and instance.sequential is True:
-                    sv_name = f'{instance.name}_svc'
-                    model.calls.s[instance.name] = pycode_model.__dict__[sv_name]
-
-            # services - non sequential
-            model.calls.sns = pycode_model.__dict__.get("sns_update")
-
-            # load initialization; assignment
-            for instance in model.cache.all_vars.values():
-                if instance.v_str is not None:
-                    ia_name = f'{instance.name}_ia'
-                    model.calls.ia[instance.name] = pycode_model.__dict__[ia_name]
-
-            # load initialization: iterative
-            for item in model.calls.init_seq:
-                if isinstance(item, list):
-                    name_concat = '_'.join(item)
-                    model.calls.ii[name_concat] = pycode_model.__dict__[name_concat + '_ii']
-                    model.calls.ij[name_concat] = pycode_model.__dict__[name_concat + '_ij']
-
-            # load Jacobian functions
-            for jname in model.calls.j_names:
-                model.calls.j[jname] = pycode_model.__dict__.get(f'{jname}_update')
+        warnings.warn(
+            "System._expand_pycode() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._expand_pycode() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._expand_pycode(pycode_module)
 
     def _get_models(self, models):
         """
@@ -1744,32 +1475,11 @@ class System:
 
         return ret
 
-    def _check_group_common(self):
+    def check_group_common(self):
         """
-        Check if all group common variables and parameters are met.
-
-        This function is called at the end of code generation by `prepare`.
-
-        Raises
-        ------
-        KeyError if any parameter or value is not provided
+        Delegate to :class:`andes.registry_loader.RegistryLoader`.
         """
-        for group in self.groups.values():
-            for item in group.common_params:
-                for model in group.models.values():
-                    # the below includes all of BaseParam (NumParam, DataParam and ExtParam)
-                    if item not in model.__dict__:
-                        if item in model.group_param_exception:
-                            continue
-                        raise KeyError(f'Group <{group.class_name}> common param <{item}> does not exist '
-                                       f'in model <{model.class_name}>')
-            for item in group.common_vars:
-                for model in group.models.values():
-                    if item not in model.cache.all_vars:
-                        if item in model.group_var_exception:
-                            continue
-                        raise KeyError(f'Group <{group.class_name}> common var <{item}> does not exist '
-                                       f'in model <{model.class_name}>')
+        return self.registry.check_group_common()
 
     def collect_ref(self):
         """
@@ -1821,76 +1531,39 @@ class System:
 
     def import_groups(self):
         """
-        Import all groups classes defined in ``models/group.py``.
-
-        Groups will be stored as instances with the name as class names.
-        All groups will be stored to dictionary ``System.groups``.
+        Delegate to :class:`andes.registry_loader.RegistryLoader`.
         """
-        module = importlib.import_module('andes.models.group')
-
-        for m in inspect.getmembers(module, inspect.isclass):
-
-            name, cls = m
-            if name == 'GroupBase':
-                continue
-            elif not issubclass(cls, GroupBase):
-                # skip other imported classes such as `OrderedDict`
-                continue
-
-            self.__dict__[name] = cls()
-            self.groups[name] = self.__dict__[name]
+        warnings.warn(
+            "System.import_groups() is deprecated and will be removed in v3.0. "
+            "Use system.registry.import_groups() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.registry.import_groups()
 
     def import_models(self):
         """
-        Import and instantiate models as System member attributes.
-
-        Models defined in ``models/__init__.py`` will be instantiated `sequentially` as attributes with the same
-        name as the class name.
-        In addition, all models will be stored in dictionary ``System.models`` with model names as
-        keys and the corresponding instances as values.
-
-        Examples
-        --------
-        ``system.Bus`` stores the `Bus` object, and ``system.GENCLS`` stores the classical
-        generator object,
-
-        ``system.models['Bus']`` points the same instance as ``system.Bus``.
+        Delegate to :class:`andes.registry_loader.RegistryLoader`.
         """
-        for fname, cls_list in file_classes:
-            for model_name in cls_list:
-                the_module = importlib.import_module('andes.models.' + fname)
-                the_class = getattr(the_module, model_name)
-                self.__dict__[model_name] = the_class(system=self, config=self._config_object)
-                self.models[model_name] = self.__dict__[model_name]
-                self.models[model_name].config.check()
-
-                # link to the group
-                group_name = self.__dict__[model_name].group
-                self.__dict__[group_name].add_model(model_name, self.__dict__[model_name])
-        for key, val in andes.models.model_aliases.items():
-            self.model_aliases[key] = self.models[val]
-            self.__dict__[key] = self.models[val]
+        warnings.warn(
+            "System.import_models() is deprecated and will be removed in v3.0. "
+            "Use system.registry.import_models() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.registry.import_models()
 
     def import_routines(self):
         """
-        Import routines as defined in ``routines/__init__.py``.
-
-        Routines will be stored as instances with the name as class names.
-        All routines will be stored to dictionary ``System.routines``.
-
-        Examples
-        --------
-        ``System.PFlow`` is the power flow routine instance, and ``System.TDS`` and ``System.EIG`` are
-        time-domain analysis and eigenvalue analysis routines, respectively.
+        Delegate to :class:`andes.registry_loader.RegistryLoader`.
         """
-        for file, cls_list in all_routines.items():
-            for cls_name in cls_list:
-                file = importlib.import_module('andes.routines.' + file)
-                the_class = getattr(file, cls_name)
-                attr_name = cls_name
-                self.__dict__[attr_name] = the_class(system=self, config=self._config_object)
-                self.routines[attr_name] = self.__dict__[attr_name]
-                self.routines[attr_name].config.check()
+        warnings.warn(
+            "System.import_routines() is deprecated and will be removed in v3.0. "
+            "Use system.registry.import_routines() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.registry.import_routines()
 
     def store_switch_times(self, models, eps=1e-4):
         """
@@ -1987,14 +1660,15 @@ class System:
 
     def _store_calls(self, models: OrderedDict):
         """
-        Collect and store model calls into system.
+        Deprecated wrapper to :class:`andes.codegen_manager.CodegenManager`.
         """
-        logger.debug("Collecting Model.calls into System.")
-
-        self.calls['__version__'] = andes.__version__
-
-        for name, mdl in models.items():
-            self.calls[name] = mdl.calls
+        warnings.warn(
+            "System._store_calls() is deprecated and will be removed in v3.0. "
+            "Use system.codegen._store_calls() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.codegen._store_calls(models)
 
     def _list2array(self):
         """
@@ -2477,66 +2151,26 @@ def fix_view_arrays(system, models=None):
 
 def import_pycode(user_pycode_path=None):
     """
-    Helper function to import generated pycode in the following priority:
-
-    1. a user-provided path from CLI. Currently, this is only for specifying the
-       path to store the generated pycode via ``andes prepare``.
-    2. ``~/.andes/pycode``. This is where pycode is stored by default.
-    3. ``<andes_package_root>/pycode``. One can store pycode in the ANDES
-       package folder and ship a full package, which does not require code generation.
+    Backward-compatible wrapper to :func:`andes.codegen_manager.import_pycode`.
     """
-
-    # below are executed serially because of priority
-    pycode = reload_submodules('pycode')
-    if not pycode:
-        pycode_path = get_pycode_path(user_pycode_path, mkdir=False)
-        pycode = _import_pycode_from(pycode_path)
-    if not pycode:
-        pycode = reload_submodules('andes.pycode')
-    if not pycode:
-        pycode = _import_pycode_from(os.path.join(andes_root(), 'pycode'))
-
-    return pycode
+    from andes.codegen_manager import import_pycode as _import_pycode
+    return _import_pycode(user_pycode_path=user_pycode_path)
 
 
 def _import_pycode_from(pycode_path):
     """
-    Helper function to load pycode from ``.andes``.
+    Backward-compatible wrapper to :func:`andes.codegen_manager._import_pycode_from`.
     """
-
-    MODULE_PATH = os.path.join(pycode_path, '__init__.py')
-    MODULE_NAME = 'pycode'
-
-    pycode = None
-    if os.path.isfile(MODULE_PATH):
-        try:
-            spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
-            pycode = importlib.util.module_from_spec(spec)  # NOQA
-            sys.modules[spec.name] = pycode
-            spec.loader.exec_module(pycode)
-            logger.info('> Loaded generated Python code in "%s".', pycode_path)
-        except ImportError:
-            logger.debug('> Failed loading generated Python code in "%s".', pycode_path)
-
-    return pycode
+    from andes.codegen_manager import _import_pycode_from as _import_pycode_from_impl
+    return _import_pycode_from_impl(pycode_path)
 
 
 def reload_submodules(module_name):
     """
-    Helper function for reloading an existing module and its submodules.
-
-    It is used to reload the ``pycode`` module after regenerating code.
+    Backward-compatible wrapper to :func:`andes.codegen_manager.reload_submodules`.
     """
-
-    if module_name in sys.modules:
-        pycode = sys.modules[module_name]
-        for _, m in inspect.getmembers(pycode, inspect.ismodule):
-            importlib.reload(m)
-
-        logger.info('> Reloaded generated Python code of module "%s".', module_name)
-        return pycode
-
-    return None
+    from andes.codegen_manager import reload_submodules as _reload_submodules
+    return _reload_submodules(module_name)
 
 
 def _append_model_name(model_name, idx):

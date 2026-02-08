@@ -16,6 +16,8 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 - Add DAE compaction to remove replaced static generators' algebraic variables from the
   Newton-Raphson system during TDS, reducing system size for dynamics-heavy cases.
+- Refactor `System` internals by extracting `RegistryLoader` and `CodegenManager`; prefer direct calls via
+  `system.registry.*` and `system.codegen.*`, with legacy `System` delegate methods deprecated for removal in v3.0.
 
 ## v1.10 Notes
 
