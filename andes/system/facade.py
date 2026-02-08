@@ -11,23 +11,21 @@ System class for power system data and methods.
 #
 #  File name: system/facade.py
 
-import configparser
 import logging
-import os
 import warnings
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import andes.io
-from andes.core import AntiWindup, Config, Model, ConnMan
+from andes.core import AntiWindup, Model, ConnMan
 from andes.io.streaming import Streaming
 from andes.shared import (NCPUS_PHYSICAL, jac_names, matrix, np, sparse,
                           spmatrix)
 from andes.system.codegen import CodegenManager
+from andes.system.config_runtime import SystemConfigRuntime
 from andes.system.dae_compactor import DAECompactor
 from andes.system.registry import RegistryLoader
 from andes.utils.misc import elapsed
-from andes.utils.paths import confirm_overwrite, get_config_path
 from andes.utils.tab import Tab
 from andes.variables import DAE, FileMan
 
@@ -114,74 +112,10 @@ class System:
         self.n_switches = 0                  # number of elements in `self.switch_times`
         self.exit_code = 0                   # command-line exit code, 0 - normal, others - error.
 
-        # get and load default config file
-        self._config_path = get_config_path()
-        if config_path is not None:
-            self._config_path = config_path
-        if default_config is True:
-            self._config_path = None
-
-        self._config_object = load_config_rc(self._config_path)
-        self._update_config_object()
-        self.config = Config(self.__class__.__name__, dct=config)
-        self.config.load(self._config_object)
-
-        # custom configuration for system goes after this line
-        self.config.add(OrderedDict((('freq', 60),
-                                     ('mva', 100),
-                                     ('ipadd', 1),
-                                     ('seed', 'None'),
-                                     ('diag_eps', 1e-8),
-                                     ('warn_limits', 1),
-                                     ('warn_abnormal', 1),
-                                     ('dime_enabled', 0),
-                                     ('dime_name', 'andes'),
-                                     ('dime_address', 'ipc:///tmp/dime2'),
-                                     ('numba', 0),
-                                     ('numba_parallel', 0),
-                                     ('numba_nopython', 1),
-                                     ('yapf_pycode', 0),
-                                     ('save_stats', 0),
-                                     ('np_divide', 'warn'),
-                                     ('np_invalid', 'warn'),
-                                     )))
-        self.config.add_extra("_help",
-                              freq='base frequency [Hz]',
-                              mva='system base MVA',
-                              ipadd='use spmatrix.ipadd if available',
-                              seed='seed (or None) for random number generator',
-                              diag_eps='small value for Jacobian diagonals',
-                              warn_limits='warn variables initialized at limits',
-                              warn_abnormal='warn initialization out of normal values',
-                              numba='use numba for JIT compilation',
-                              numba_parallel='enable parallel for numba.jit',
-                              numba_nopython='nopython mode for numba',
-                              yapf_pycode='format generated code with yapf',
-                              save_stats='store statistics of function calls',
-                              np_divide='treatment for division by zero',
-                              np_invalid='treatment for invalid floating-point ops.',
-                              )
-        self.config.add_extra("_alt",
-                              freq="float",
-                              mva="float",
-                              ipadd=(0, 1),
-                              seed='int or None',
-                              warn_limits=(0, 1),
-                              warn_abnormal=(0, 1),
-                              numba=(0, 1),
-                              numba_parallel=(0, 1),
-                              numba_nopython=(0, 1),
-                              yapf_pycode=(0, 1),
-                              save_stats=(0, 1),
-                              np_divide={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                              np_invalid={'ignore', 'warn', 'raise', 'call', 'print', 'log'},
-                              )
-
-        self.config.check()
-        _config_numpy(seed=self.config.seed,
-                      divide=self.config.np_divide,
-                      invalid=self.config.np_invalid,
-                      )
+        self.config_runtime = SystemConfigRuntime(self)
+        self.config_runtime.initialize(config=config,
+                                       config_path=config_path,
+                                       default_config=default_config)
 
         self.exist = ExistingModels()
 
@@ -211,47 +145,15 @@ class System:
 
     def _update_config_object(self):
         """
-        Change config on the fly based on command-line options.
+        Deprecated wrapper to :class:`andes.system.config_runtime.SystemConfigRuntime`.
         """
-
-        config_option = self.options.get('config_option', None)
-        if config_option is None:
-            return
-
-        if len(config_option) == 0:
-            return
-
-        newobj = False
-        if self._config_object is None:
-            self._config_object = configparser.ConfigParser()
-            newobj = True
-
-        for item in config_option:
-
-            # check the validity of the config field
-            # each field follows the format `SECTION.FIELD = VALUE`
-
-            if item.count('=') != 1:
-                raise ValueError('config_option "{}" must be an assignment expression'.format(item))
-
-            field, value = item.split("=")
-
-            if field.count('.') != 1:
-                raise ValueError('config_option left-hand side "{}" must use format SECTION.FIELD'.format(field))
-
-            section, key = field.split(".")
-
-            section = section.strip()
-            key = key.strip()
-            value = value.strip()
-
-            if not newobj:
-                self._config_object.set(section, key, value)
-                logger.debug("Existing config option set: %s.%s=%s", section, key, value)
-            else:
-                self._config_object.add_section(section)
-                self._config_object.set(section, key, value)
-                logger.debug("New config option added: %s.%s=%s", section, key, value)
+        warnings.warn(
+            "System._update_config_object() is deprecated and will be removed in v3.0. "
+            "Use system.config_runtime.update_config_object() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.config_runtime.update_config_object()
 
     def reload(self, case, **kwargs):
         """
@@ -1691,73 +1593,22 @@ class System:
 
     def set_config(self, config=None):
         """
-        Set configuration for the System object.
-
-        Config for models are routines are passed directly to their
-        constructors.
+        Delegate to :class:`andes.system.config_runtime.SystemConfigRuntime`.
         """
-        if config is not None:
-            # set config for system
-            if self.__class__.__name__ in config:
-                self.config.add(config[self.__class__.__name__])
-                logger.debug("Config: set for System")
+        return self.config_runtime.set_config(config=config)
 
     def collect_config(self):
         """
-        Collect config data from models.
-
-        Returns
-        -------
-        dict
-            a dict containing the config from devices; class names are keys and
-            configs in a dict are values.
+        Delegate to :class:`andes.system.config_runtime.SystemConfigRuntime`.
         """
-        config_dict = configparser.ConfigParser()
-        config_dict[self.__class__.__name__] = self.config.as_dict()
-
-        all_with_config = OrderedDict(list(self.routines.items()) +
-                                      list(self.models.items()))
-
-        for name, instance in all_with_config.items():
-            cfg = instance.config.as_dict()
-            if len(cfg) > 0:
-                config_dict[name] = cfg
-        return config_dict
+        return self.config_runtime.collect_config()
 
     def save_config(self, file_path=None, overwrite=False):
         """
-        Save all system, model, and routine configurations to an rc-formatted
-        file.
-
-        Parameters
-        ----------
-        file_path : str, optional
-            path to the configuration file default to `~/andes/andes.rc`.
-        overwrite : bool, optional
-            If file exists, True to overwrite without confirmation. Otherwise
-            prompt for confirmation.
-
-        Warnings
-        --------
-        Saved config is loaded back and populated *at system instance creation
-        time*. Configs from the config file takes precedence over default config
-        values.
+        Delegate to :class:`andes.system.config_runtime.SystemConfigRuntime`.
         """
-        if file_path is None:
-            andes_path = os.path.join(os.path.expanduser('~'), '.andes')
-            os.makedirs(andes_path, exist_ok=True)
-            file_path = os.path.join(andes_path, 'andes.rc')
-
-        elif os.path.isfile(file_path):
-            if not confirm_overwrite(file_path, overwrite=overwrite):
-                return
-
-        conf = self.collect_config()
-        with open(file_path, 'w') as f:
-            conf.write(f)
-
-        logger.info('Config written to "%s"', file_path)
-        return file_path
+        return self.config_runtime.save_config(file_path=file_path,
+                                               overwrite=overwrite)
 
     def supported_models(self, export='plain'):
         """
@@ -1912,41 +1763,32 @@ class System:
 
 def _config_numpy(seed='None', divide='warn', invalid='warn'):
     """
-    Configure NumPy based on Config.
+    Backward-compatible wrapper to
+    :meth:`andes.system.config_runtime.SystemConfigRuntime.configure_numpy`.
     """
-
-    # set up numpy random seed
-    if isinstance(seed, int):
-        np.random.seed(seed)
-        logger.debug("Random seed set to <%d>.", seed)
-
-    # set levels
-    np.seterr(divide=divide,
-              invalid=invalid,
-              )
+    warnings.warn(
+        "andes.system.facade._config_numpy() is deprecated and will be removed in v3.0. "
+        "Use andes.system.config_runtime.SystemConfigRuntime.configure_numpy() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return SystemConfigRuntime.configure_numpy(seed=seed,
+                                               divide=divide,
+                                               invalid=invalid)
 
 
 def load_config_rc(conf_path=None):
     """
-    Load config from an rc-formatted file.
-
-    Parameters
-    ----------
-    conf_path : None or str
-        Path to the config file. If is `None`, the function body will not
-        run.
-
-    Returns
-    -------
-    configparse.ConfigParser
+    Backward-compatible wrapper to
+    :meth:`andes.system.config_runtime.SystemConfigRuntime.load_config_rc`.
     """
-    if conf_path is None:
-        return
-
-    conf = configparser.ConfigParser()
-    conf.read(conf_path)
-    logger.info('> Loaded config from file "%s"', conf_path)
-    return conf
+    warnings.warn(
+        "andes.system.facade.load_config_rc() is deprecated and will be removed in v3.0. "
+        "Use andes.system.config_runtime.SystemConfigRuntime.load_config_rc() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return SystemConfigRuntime.load_config_rc(conf_path=conf_path)
 
 
 def fix_view_arrays(system, models=None):

@@ -18,6 +18,9 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
   Newton-Raphson system during TDS, reducing system size for dynamics-heavy cases.
 - Refactor `System` internals by extracting `RegistryLoader` and `CodegenManager`; prefer direct calls via
   `system.registry.*` and `system.codegen.*`, with legacy `System` delegate methods deprecated for removal in v3.0.
+- Extract config runtime logic into `SystemConfigRuntime` (`andes.system.config_runtime`); prefer
+  `system.config_runtime.*` over facade-level helpers. Legacy wrappers in `andes.system.facade`
+  are deprecated and scheduled for removal in v3.0.
 
 ## v1.10 Notes
 

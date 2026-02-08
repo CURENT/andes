@@ -139,7 +139,7 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
     if conf_path is None:
         logger.info('Config file does not exist. Automatically saving.')
         system = System()
-        conf_path = system.save_config()
+        conf_path = system.config_runtime.save_config()
 
     logger.info('Editing config file "%s"', conf_path)
 
@@ -191,7 +191,7 @@ def save_conf(config_path=None, overwrite=None, **kwargs):
         config_path = os.path.join(config_path, 'andes.rc')
 
     ps = System(**kwargs)
-    ps.save_config(config_path, overwrite=overwrite)
+    ps.config_runtime.save_config(config_path, overwrite=overwrite)
     ret = True
 
     return ret
