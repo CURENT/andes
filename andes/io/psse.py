@@ -21,6 +21,56 @@ from collections import defaultdict
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Per-version format descriptors.
+# Each entry describes the block structure and column layout for that version.
+# ---------------------------------------------------------------------------
+
+_VERSION_CONFIGS = {
+    33: {
+        'blocks': [
+            'bus', 'load', 'fshunt', 'gen', 'branch', 'transf', 'area',
+            'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline', 'zone',
+            'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q',
+        ],
+        'initial_block_idx': 0,
+        'line_counts': [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0],
+        'transf_block': 5,
+        'branch_cols': {
+            'bus1': 0, 'bus2': 1, 'ckt': 2,
+            'r': 3, 'x': 4, 'b': 5,
+            'rate_a': 6, 'rate_b': 7, 'rate_c': 8,
+            'gi': 9, 'bi': 10, 'gj': 11, 'bj': 12,
+            'u': 13, 'length': 14,
+        },
+    },
+    34: {
+        'blocks': [
+            'bus', 'load', 'fshunt', 'gen', 'branch', 'swdev', 'transf',
+            'area', 'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline',
+            'zone', 'interarea', 'owner', 'facts', 'swshunt', 'gne',
+            'indmach', 'substation', 'Q',
+        ],
+        'initial_block_idx': -1,  # extra "END OF SYSTEM-WIDE DATA" delimiter
+        'line_counts': [1, 1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0],
+        'transf_block': 6,
+        'branch_cols': {
+            'bus1': 0, 'bus2': 1, 'ckt': 2,
+            'r': 3, 'x': 4, 'b': 5, 'name': 6,
+            'rate_a': 7, 'rate_b': 8, 'rate_c': 9,
+            'rate_d': 10, 'rate_e': 11, 'rate_f': 12,
+            'rate_g': 13, 'rate_h': 14, 'rate_i': 15,
+            'rate_j': 16, 'rate_k': 17, 'rate_l': 18,
+            'gi': 19, 'bi': 20, 'gj': 21, 'bj': 22,
+            'u': 23, 'met': 24, 'length': 25,
+        },
+    },
+}
+
+# v32 is identical to v33 for our purposes
+_VERSION_CONFIGS[32] = _VERSION_CONFIGS[33]
+
+
 def testlines(infile):
     """
     Check the raw file for frequency base.
@@ -39,8 +89,9 @@ def testlines(infile):
         version = int(first[2])
         logger.debug(f'PSSE raw version {version} detected')
 
-        if version < 32 or version > 33:
-            logger.warning('RAW file is not v32 or v33. Errors may occur.')
+        if version not in _VERSION_CONFIGS:
+            logger.warning(f'RAW file version {version} is not explicitly supported. '
+                           'Falling back to v33 format. Errors may occur.')
 
         return True
 
@@ -48,20 +99,18 @@ def testlines(infile):
         return False
 
 
-def get_block_lines(b, mdata):
+def get_block_lines(b, mdata, cfg):
     """
     Return the number of lines based on the block index in the RAW file.
     """
 
-    line_counts = [1, 1, 1, 1, 1, 4, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0]
-
-    if b == 5:  # for transformer
+    if b == cfg['transf_block']:
         if mdata[0][2] == 0:  # two-winding transformer
             return 4
         else:  # three-winding transformer
             return 5
 
-    return line_counts[b]
+    return cfg['line_counts'][b]
 
 
 def _parse_csv_with_quotes(line):
@@ -160,23 +209,14 @@ def _split_line_with_quoted_parts(line, separator='/'):
 
 def read(system, file):
     """
-    Read PSS/E RAW file v32/v33 formats.
+    Read PSS/E RAW file v32/v33/v34 formats.
     """
 
-    blocks = [
-        'bus', 'load', 'fshunt', 'gen', 'branch', 'transf', 'area',
-        'twotermdc', 'vscdc', 'impedcorr', 'mtdc', 'msline', 'zone',
-        'interarea', 'owner', 'facts', 'swshunt', 'gne', 'Q'
-    ]
     rawd = re.compile(r'rawd\d\d')
 
     ret = True
-    block_idx = 0  # current block index
     mva = 100
-
-    raw = {}
-    for item in blocks:
-        raw[item] = []
+    version = 0
 
     data = []
     mdata = []  # multi-line data
@@ -184,6 +224,19 @@ def read(system, file):
 
     # read file into `line_list`
     line_list = andes.io.read_file_like(file)
+
+    # detect version from header
+    if line_list:
+        first_parts = _split_line_with_quoted_parts(line_list[0].strip())
+        first_data = _parse_csv_with_quotes(first_parts[0])
+        if len(first_data) >= 3:
+            version = int(first_data[2])
+
+    cfg = _VERSION_CONFIGS.get(version, _VERSION_CONFIGS[33])
+    blocks = cfg['blocks']
+    block_idx = cfg['initial_block_idx']
+
+    raw = {item: [] for item in blocks}
 
     # parse file into `raw` with to_number conversions
     for num, line in enumerate(line_list):
@@ -197,18 +250,10 @@ def read(system, file):
             system.config.mva = mva
             try:
                 system.config.freq = float(data[5])
-            except IndexError:
-                logger.warning('System frequency is set to 60 Hz.\n'
-                               'Consider using a higher version PSS/E raw file.')
+            except (IndexError, ValueError):
+                logger.debug('System frequency not specified in RAW header. '
+                             'Defaulting to 60 Hz.')
                 system.config.freq = 60.0
-
-            # get raw file version
-            version = 0
-            if len(data) >= 3:
-                version = int(data[2])
-            else:
-                if rawd.search(line):
-                    version = int(rawd.search(line).group(0).strip('rawd'))  # NOQA
 
             continue
 
@@ -222,6 +267,8 @@ def read(system, file):
                 continue
             elif line[0] == 'Q':  # end of file
                 break
+            elif line.startswith('@!'):  # v34 column header line
+                continue
             parts = _split_line_with_quoted_parts(line)
             data = _parse_csv_with_quotes(parts[0])
 
@@ -229,7 +276,7 @@ def read(system, file):
         mdata.append(data)
         dev_line += 1
 
-        block_lines = get_block_lines(block_idx, mdata)
+        block_lines = get_block_lines(block_idx, mdata, cfg)
         if dev_line >= block_lines:
             if block_lines == 1:
                 mdata = mdata[0]
@@ -244,7 +291,7 @@ def read(system, file):
     _parse_load_v33(raw, system)
     _parse_fshunt_v33(raw, system)
     _parse_gen_v33(raw, system, sw)
-    _parse_line_v33(raw, system)
+    _parse_line(raw, system, cfg)
     _parse_transf_v33(raw, system, max_bus)
     _parse_swshunt_v33(raw, system)
     _parse_area_v33(raw, system)
@@ -546,21 +593,23 @@ def _parse_gen_v33(raw, system, sw):
     return out
 
 
-def _parse_line_v33(raw, system):
-    #
-    # 0,1,  2,3,4,5,    6,    7,    8, 9,10,11,12,13, 14,15,16
-    # I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...,O4,F4
-    #
+def _parse_line(raw, system, cfg):
+    # Column indices come from cfg['branch_cols'], which varies by version.
+    # v33: I,J,CKT,R,X,B,RATEA,RATEB,RATEC,GI,BI,GJ,BJ,ST,LEN,O1,F1,...
+    # v34: I,J,CKT,R,X,B,NAME,RATE1..RATE12,GI,BI,GJ,BJ,ST,MET,LEN,...
 
+    cols = cfg['branch_cols']
     out = defaultdict(list)
     for data in raw['branch']:
         param = {
-            'u': data[13],
-            'bus1': data[0], 'bus2': data[1],
-            'r': data[3], 'x': data[4], 'b': data[5],
-            'rate_a': data[6], 'rate_b': data[7], 'rate_c': data[8],
-            'Vn1': system.Bus.get(src='Vn', idx=data[0], attr='v'),
-            'Vn2': system.Bus.get(src='Vn', idx=data[1], attr='v'),
+            'u': data[cols['u']],
+            'bus1': data[cols['bus1']], 'bus2': data[cols['bus2']],
+            'r': data[cols['r']], 'x': data[cols['x']], 'b': data[cols['b']],
+            'rate_a': data[cols['rate_a']],
+            'rate_b': data[cols['rate_b']],
+            'rate_c': data[cols['rate_c']],
+            'Vn1': system.Bus.get(src='Vn', idx=data[cols['bus1']], attr='v'),
+            'Vn2': system.Bus.get(src='Vn', idx=data[cols['bus2']], attr='v'),
         }
         out['Line'].append(param)
 
