@@ -379,8 +379,12 @@ class ConnMan:
                          [island_sets[item] for item in nosw_island])
 
         if len(msw_island) > 0:
-            logger.warning('  Multiple slack generators are defined/enabled for %d island(s).',
-                           len(msw_island))
+            # collect Slack count and bus info for the warning message
+            slack = self.system.Slack
+            enabled_buses = [int(b) for b, u in zip(slack.bus.v, slack.u.v) if u > 0]
+            unique_buses = sorted(set(enabled_buses))
+            logger.warning('  %d slack generators are enabled on %d bus(es): %s.',
+                           len(enabled_buses), len(unique_buses), unique_buses)
             logger.debug("  Bus indices in multiple-Slack areas (0-based): %s",
                          [island_sets[item] for item in msw_island])
 
