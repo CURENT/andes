@@ -323,7 +323,7 @@ def _read_dyr_dict(file):
             single_list = single_line.split("'")
 
             psse_model = single_list[1].strip()
-            input_concat_dict[psse_model].append(single_list[0] + single_list[2])
+            input_concat_dict[psse_model].append(single_list[0] + ' '.join(single_list[2:]))
             multi_line = list()
 
     # construct pandas dataframe for all models
@@ -331,7 +331,7 @@ def _read_dyr_dict(file):
 
     for psse_model, all_rows in input_concat_dict.items():
         # DYR files are space-separated, not comma-separated
-        dev_params_num = [([to_number(cell) for cell in row.split()]) for row in all_rows]
+        dev_params_num = [([to_number(cell) for cell in row.replace(',', ' ').split()]) for row in all_rows]
         dyr_dict[psse_model] = pd.DataFrame(dev_params_num)
 
     return dyr_dict
