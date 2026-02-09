@@ -364,7 +364,7 @@ class ModelData:
                     v_idx.append(self.idx.v[pos])
             if not v_idx:
                 if allow_none is False:
-                    raise IndexError(f'{list(keys)}={v_search} not found in {self.class_name}')
+                    raise IndexError(f'No {self.class_name} device found matching {list(keys)}={v_search}')
                 else:
                     v_idx = [default]
 

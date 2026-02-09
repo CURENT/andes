@@ -322,7 +322,7 @@ class GroupBase:
             miss_pairs = []
             for i in i_val_miss:
                 miss_pairs.append([values[j][i] for j in range(len(keys))])
-            raise IndexError(f'{keys} = {miss_pairs} not found in {self.class_name}')
+            raise IndexError(f'No {self.class_name} device found matching {list(keys)} = {miss_pairs}')
 
         # --- output ---
         out_pre = []
