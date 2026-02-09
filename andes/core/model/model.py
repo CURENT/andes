@@ -1152,6 +1152,13 @@ class Model:
             for d in self.discrete.values():
                 d.save_unconstrained()
 
+            # Pre-evaluate discrete flags so they are up-to-date before
+            # Pass 2 re-initializes variables.  Without this, a variable
+            # whose inlined expression uses another discrete's flags (e.g.
+            # Iqout_x using HVG_lim_zi) may see stale default flags if
+            # the owning Observable is later in init_seq.
+            self._pre_eval_discrete()
+
             # ---- Pass 2: Constrained (with discrete evaluation) ----
             logger.debug("%s: Pass 2 — with discrete evaluation", self.class_name)
             self._run_init_pass(kwargs, sys_debug, eval_discrete=True)
@@ -1164,6 +1171,23 @@ class Model:
         self.post_init_check()
 
         self.flags.initialized = True
+
+    def _pre_eval_discrete(self):
+        """
+        Pre-evaluate discrete flags using Pass 1 values.
+
+        Only sets flags (``is_init=False``); Pass 2 handles limit adjustment.
+        """
+        for name in self.calls.init_seq:
+            names = (name,) if isinstance(name, str) else name
+            for n in names:
+                inst = self.__dict__[n]
+                if inst.discrete is None:
+                    continue
+                dlist = inst.discrete if isinstance(
+                    inst.discrete, (list, tuple, set)) else (inst.discrete,)
+                for d in dlist:
+                    d.check_var()
 
     def _run_init_pass(self, kwargs, sys_debug, eval_discrete=False):
         """
