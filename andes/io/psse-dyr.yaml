@@ -1538,6 +1538,82 @@ REECA1:
         Vp4: Vp4
         Ip4: Ip4
 
+REECB1:
+    destination: REECB1
+    inputs:
+        - BUS
+        - ID
+        - BUSR
+        - PFFLAG
+        - VFLAG
+        - QFLAG
+        - PQFLAG
+        - Vdip
+        - Vup
+        - Trv
+        - dbd1
+        - dbd2
+        - Kqv
+        - Iqh1
+        - Iql1
+        - Vref0
+        - Tp
+        - QMax
+        - QMin
+        - VMAX
+        - VMIN
+        - Kqp
+        - Kqi
+        - Kvp
+        - Kvi
+        - Tiq
+        - dPmax
+        - dPmin
+        - PMAX
+        - PMIN
+        - Imax
+        - Tpord
+    find:
+        gen:
+            StaticGen:
+                bus: BUS
+                subidx: ID
+        reg:
+            RenGen:
+                bus: BUS
+    outputs:
+        reg: reg
+        busr: BUSR
+        PFFLAG: PFFLAG
+        VFLAG: VFLAG
+        QFLAG: QFLAG
+        PQFLAG: PQFLAG
+        Vdip: Vdip
+        Vup: Vup
+        Trv: Trv
+        dbd1: dbd1
+        dbd2: dbd2
+        Kqv: Kqv
+        Iqh1: Iqh1
+        Iql1: Iql1
+        Vref0: Vref0
+        Tp: Tp
+        QMax: QMax
+        QMin: QMin
+        VMAX: VMAX
+        VMIN: VMIN
+        Kqp: Kqp
+        Kqi: Kqi
+        Kvp: Kvp
+        Kvi: Kvi
+        Tiq: Tiq
+        dPmax: dPmax
+        dPmin: dPmin
+        PMAX: PMAX
+        PMIN: PMIN
+        Imax: Imax
+        Tpord: Tpord
+
 REPCA1:
     destination: REPCA1
     inputs:
@@ -1590,8 +1666,9 @@ REPCA1:
                 reg: reg
         line:
             Line:
+                allow_none: 1
                 bus1: BUS1
-                bus2: BUS2  # TODO: CKTID is not used
+                bus2: BUS2
     outputs:
         ree: ree
         line: line

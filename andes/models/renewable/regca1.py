@@ -267,8 +267,6 @@ class REGCA1Model(Model):
                                lower=0, upper=999, no_upper=True,
                                tex_name='H_{VG}'
                                )
-        self.HVG.lim.no_warn = True
-        self.HVG.lim.allow_adjust = False
 
         self.Iqout = GainLimiter(u='S1_y - HVG_y',
                                  K=1, R=1,

@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+import numpy as np
+
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, LeadLag, LessThan, Limiter, Model,
                         ModelData, NumParam, Switcher,)
@@ -23,7 +25,7 @@ class REPCA1Data(ModelData):
 
         self.line = IdxParam(info='Idx of line that connect to measured bus',
                              model='ACLine',
-                             mandatory=True,
+                             default=None,
                              )
 
         self.busr = IdxParam(info='Optional remote bus for voltage and freq. measurement',
@@ -268,37 +270,50 @@ class REPCA1Model(Model):
 
         # from Line
         self.bus1 = ExtParam(model='ACLine', src='bus1', indexer=self.line, export=False,
+                             allow_none=True,
                              info='Retrieved Line.bus1 idx', vtype=str, default=None,
                              )
 
         self.bus2 = ExtParam(model='ACLine', src='bus2', indexer=self.line, export=False,
+                             allow_none=True,
                              info='Retrieved Line.bus2 idx', vtype=str, default=None,
                              )
         self.r = ExtParam(model='ACLine', src='r', indexer=self.line, export=False,
-                          info='Retrieved Line.r', vtype=str, default=None,
+                          allow_none=True,
+                          info='Retrieved Line.r', vtype=float, default=1.0,
                           )
 
         self.x = ExtParam(model='ACLine', src='x', indexer=self.line, export=False,
-                          info='Retrieved Line.x', vtype=str, default=None,
+                          allow_none=True,
+                          info='Retrieved Line.x', vtype=float, default=1.0,
                           )
 
         self.v1 = ExtAlgeb(model='ACLine', src='v1', indexer=self.line, tex_name='V_1',
+                           allow_none=True,
                            info='Voltage at Line.bus1',
                            )
 
         self.v2 = ExtAlgeb(model='ACLine', src='v2', indexer=self.line, tex_name='V_2',
+                           allow_none=True,
                            info='Voltage at Line.bus2',
                            )
 
         self.a1 = ExtAlgeb(model='ACLine', src='a1', indexer=self.line, tex_name=r'\theta_1',
+                           allow_none=True,
                            info='Angle at Line.bus1',
                            )
 
         self.a2 = ExtAlgeb(model='ACLine', src='a2', indexer=self.line, tex_name=r'\theta_2',
+                           allow_none=True,
                            info='Angle at Line.bus2',
                            )
 
         # -- begin services ---
+
+        # Patch bus1/bus2 for devices without a line (before CurrentSign)
+        self._no_line = ConstService(v_numeric=self._fix_no_line,
+                                     info='Flag for no-line devices (1=has line, 0=no line)',
+                                     )
 
         self.Isign = CurrentSign(self.bus, self.bus1, self.bus2, tex_name='I_{sign}')
 
@@ -490,25 +505,54 @@ class REPCA1Model(Model):
 
         self.Qext.e_str = Qext
 
+    def _fix_no_line(self, **kwargs):
+        """
+        Patch bus1/bus2 for devices without a line reference.
+
+        Called as a ConstService v_numeric callback before CurrentSign,
+        so that CurrentSign.check sees valid bus1/bus2 values.
+        Returns a flag array (1=has line, 0=no line).
+        """
+
+        out = np.ones(self.n)
+        for i in range(self.n):
+            if self.line.v[i] is None:
+                self.bus1.v[i] = self.bus.v[i]
+                self.bus2.v[i] = self.bus.v[i]
+                out[i] = 0
+        return out
+
+    def v_numeric(self, **kwargs):
+        """
+        Handle devices with no line reference (line=None).
+
+        When BUS1=BUS2=0 in the DYR file, no line is monitored.
+        Redirect v1/v2 and a1/a2 addresses to the device's own bus
+        so that v1-v2=0 and a1-a2=0, resulting in Iline=0.
+        """
+
+        no_line = np.array([x is None for x in self.line.v], dtype=bool)
+
+        if not no_line.any():
+            return
+
+        # point v1/v2 to the same bus voltage and a1/a2 to the same bus angle
+        # so that (v1*exp(j*a1) - v2*exp(j*a2)) = 0 → Iline = 0
+        self.v1.a[no_line] = self.v.a[no_line]
+        self.v2.a[no_line] = self.v.a[no_line]
+        self.a1.a[no_line] = self.a.a[no_line]
+        self.a2.a[no_line] = self.a.a[no_line]
+
 
 class REPCA1(REPCA1Data, REPCA1Model):
     """
-    REPCA1: renewable energy power plat control model.
+    REPCA1: renewable energy power plant control model.
 
     The output of the model, ``Pext`` and ``Qext``,  are the increment signals
     of active and reactive power for the electrical control model.
 
-    Notes for PSS/E DYR parser:
-
-    1. If ICONs M+1 and M+2 are set to 0 when using generator power, an error
-       will be thrown by the parser, saying "<REPCA1> cannot retrieve <bus1>
-       from <ACLine> using <line>: KeyError('Group <ACLine> does not contain
-       device with idx=False')". Manual effort is required to run the converted
-       file. In the REPCA1 sheet, provide the idx of a line that connects to the
-       RenGen bus.
-
-    2. PSS/E enters ICONs M+3 as a string in single quotes. The pair of single
-       quotes need to be removed, or the conversion will fail.
+    When BUS1 and BUS2 are both 0 in the DYR file (no line monitoring),
+    the line reference is set to None and Iline evaluates to zero.
     """
 
     def __init__(self, system, config):

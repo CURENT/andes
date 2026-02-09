@@ -418,7 +418,8 @@ def read_add(system, file):
                         logger.debug("<%s> contains %d devices", model, system.__dict__[model].n)
 
                         find[name] = system.__dict__[model].find_idx(cond_names, cond_values,
-                                                                     allow_none=allow_none)
+                                                                     allow_none=allow_none,
+                                                                     default=None)
                     except IndexError as e:
                         logger.error("Data file likely contains references to unsupported models.")
                         logger.error(e)
