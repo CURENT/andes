@@ -6,7 +6,7 @@ from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Limiter, Model, ModelData, NumParam,
                         Switcher, IsEqual)
 from andes.core.block import (DeadBand1, GainLimiter, LagAWFreeze,
-                              LagRate, PITrackAWFreeze,)
+                              LagFreeze, LagRate, PITrackAWFreeze,)
 from andes.core.service import (ApplyFunc, DataSelect, Replace,
                                 VarService,)
 from andes.core.var import AliasState
@@ -93,10 +93,12 @@ class REECB1Data(ModelData):
         self.QMax = NumParam(default=999.0,
                              tex_name='Q_{max}',
                              info='Upper limit for reactive power regulator',
+                             power=True,
                              )
         self.QMin = NumParam(default=-999.0,
                              tex_name='Q_{min}',
                              info='Lower limit for reactive power regulator',
+                             power=True,
                              )
         self.VMAX = NumParam(default=999.0,
                              tex_name='V_{max}',
@@ -124,23 +126,27 @@ class REECB1Data(ModelData):
                             )
         self.Tiq = NumParam(default=0.02,
                             tex_name='T_{iq}',
-                            info='Filter time constant for Iq (reserved, unused in REECB1)',
+                            info='Filter time constant for Iq (used when QFLAG=0)',
                             )
         self.dPmax = NumParam(default=999.0,
                               tex_name='d_{Pmax}',
                               info='Power reference max. ramp rate (>0)',
+                              power=True,
                               )
         self.dPmin = NumParam(default=-999.0,
                               tex_name='d_{Pin}',
                               info='Power reference min. ramp rate (<0)',
+                              power=True,
                               )
         self.PMAX = NumParam(default=999.0,
                              tex_name='P_{max}',
                              info='Max. active power limit > 0',
+                             power=True,
                              )
         self.PMIN = NumParam(default=0.0,
                              tex_name='P_{min}',
                              info='Min. active power limit',
+                             power=True,
                              )
         self.Imax = NumParam(default=999.0,
                              tex_name='I_{max}',
@@ -338,9 +344,16 @@ class REECB1Model(Model):
                                 )
 
         # --- Upper portion - Iqinj calculation (simplified, no state machine) ---
+
+        # PSS/E convention: Vref0=0 means use initial bus voltage
+        self.Vref0r = ConstService(v_str='Vref0',
+                                   v_numeric=self._replace_vref0,
+                                   tex_name='V_{ref0,r}',
+                                   info='Replaced Vref0 (0 -> bus V)')
+
         self.Verr = Algeb(info='Voltage error (Vref0)',
-                          v_str='Vref0 - s0_y',
-                          e_str='Vref0 - s0_y - Verr',
+                          v_str='Vref0r - s0_y',
+                          e_str='Vref0r - s0_y - Verr',
                           tex_name='V_{err}',
                           )
         self.dbV = DeadBand1(u=self.Verr, lower=self.dbd1, upper=self.dbd2,
@@ -414,10 +427,16 @@ class REECB1Model(Model):
                                    freeze=self.Volt_dip,
                                    )
 
-        # REECB1: QFLAG=0 outputs 0 (no s4 filter)
+        self.s4 = LagFreeze(u='PFsel / vp',
+                            T=self.Tiq, K=1,
+                            freeze=self.Volt_dip,
+                            tex_name='s_4',
+                            info='Filter for reactive current (QFLAG=0 path)',
+                            )
+
         self.Qsel = Algeb(info='Selection output of QFLAG',
-                          v_str='SWQ_s1 * PIV_y',
-                          e_str='SWQ_s1 * PIV_y - Qsel',
+                          v_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y',
+                          e_str='SWQ_s1 * PIV_y + SWQ_s0 * s4_y - Qsel',
                           tex_name='Q_{sel}',
                           )
 
@@ -461,6 +480,13 @@ class REECB1Model(Model):
 
         self.Pord = AliasState(self.s5_y)
 
+    def _replace_vref0(self, **kwargs):
+        """PSS/E convention: Vref0=0 means use initial bus voltage."""
+        out = np.array(self.Vref0.v, dtype=float)
+        mask = np.equal(out, 0.0)
+        out[mask] = self.v.v[mask]
+        return out
+
 
 class REECB1(REECB1Data, REECB1Model):
     """
@@ -476,7 +502,8 @@ class REECB1(REECB1Data, REECB1Model):
     - No ``PFLAG`` speed dependency. ``Pref`` feeds directly through
       the rate limiter to ``Pord``.
     - No ``Vref1``. Only ``Vref0`` is used.
-    - ``QFLAG=0`` disables the Q control path (outputs 0).
+    - ``QFLAG=0`` uses direct reactive current (``PFsel/vp``) via
+      a lag filter, bypassing the voltage PI controller.
 
     Regarding the reactive current injection during voltage dip:
 

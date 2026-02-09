@@ -889,6 +889,7 @@ class IntegratorAntiWindup(Block):
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
                               info='Limiter in integrator', no_warn=self.no_warn,
                               )
+        self.y.discrete = self.lim
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
@@ -1141,6 +1142,7 @@ class LagAntiWindup(Block):
                        t_const=self.T)
         self.lim = AntiWindup(u=self.y, lower=self.lower, upper=self.upper, tex_name='lim',
                               info='Limiter in Lag')
+        self.y.discrete = self.lim
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
@@ -1338,6 +1340,7 @@ class LagAntiWindupRate(Block):
                                   tex_name='lim',
                                   info='Limiter in Lag',
                                   )
+        self.y.discrete = self.lim
 
         self.vars = {'y': self.y, 'lim': self.lim}
 
@@ -1631,6 +1634,7 @@ class LeadLagLimit(Block):
         self.ynl = Algeb(info='Output of lead-lag TF before limiter', tex_name=r'y_{nl}')
         self.y = Observable(info='Output of lead-lag TF after limiter', tex_name=r'y')
         self.lim = AntiWindup(u=self.ynl, lower=self.lower, upper=self.upper)
+        self.ynl.discrete = self.lim
 
         self.vars = {'x': self.x, 'ynl': self.ynl, 'y': self.y, 'lim': self.lim}
 
