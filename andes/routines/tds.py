@@ -228,6 +228,7 @@ class TDS(BaseRoutine):
         system.vars_to_models()
 
         self.fg_update(system.exist.tds, init=True)
+        system.b_update(system.exist.pflow_tds)
 
         # reset diff. equation RHS for binding antiwindups
         for item in system.antiwindups:
