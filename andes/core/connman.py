@@ -194,10 +194,12 @@ class ConnMan:
         self._post_process_islands(n)
 
         _, s = elapsed(t0)
-        logger.info('Connectivity check completed in %s.', s)
 
         if info is True:
+            logger.info('Connectivity check completed in %s.', s)
             self.summary()
+        else:
+            logger.debug('Connectivity check completed in %s.', s)
 
     def _collect_edges(self):
         """
