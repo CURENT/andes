@@ -50,6 +50,41 @@ class TestREECB1(unittest.TestCase):
             finally:
                 os.unlink(tmpfile)
 
+    def test_eig_with_zero_tf_states_not_at_end(self):
+        """
+        Test eigenvalue analysis when zero-Tf states (from ESST3A with TA=0)
+        are not at the end of the state array.
+
+        The REECB1 case adds renewable model states (REGCA1, REECB1, REPCA1)
+        after ESST3A, pushing ESST3A's zero-Tf states to the middle of the
+        state vector. This exercises the folding of zero-Tf states into the
+        algebraic system in EIG.
+
+        Regression test for a bug where zero-Tf states in the middle of the
+        state array caused a singular state matrix.
+        """
+        ss = andes.run(
+            get_case('ieee14/ieee14_reecb1.json'),
+            routine='eig',
+            default_config=True,
+            no_output=True,
+        )
+
+        self.assertEqual(ss.exit_code, 0, "EIG should complete without error")
+
+        # Zero-Tf states must be in the middle (not at the end) for this
+        # test to exercise the bug. Verify that assumption holds.
+        zidx = ss.EIG.zstate_idx
+        self.assertGreater(len(zidx), 0, "Case must have zero-Tf states")
+        self.assertTrue(
+            zidx[-1] < ss.dae.n - 1,
+            "Zero-Tf states should not be at the end of the state array "
+            "(other models must add states after them)")
+
+        # Basic sanity: no positive eigenvalues for a stable system
+        self.assertEqual(ss.EIG.n_positive, 0,
+                         "Stable system should have no positive eigenvalues")
+
     def test_vref0_zero_convention(self):
         """
         Test that Vref0=0 is replaced with the initial bus voltage.

@@ -29,16 +29,16 @@ class EIG(BaseRoutine):
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
-        self.config.add(plot=0, tol=1e-6)
+        self.config.add(plot=0, tol=1e-6, gy_tol=1e-6)
         self.config.add_extra("_help",
                               plot="show plot after computation",
-                              tol="numerical tolerance to treat eigenvalues as zeros")
+                              tol="numerical tolerance to treat eigenvalues as zeros",
+                              gy_tol="row norm threshold for eliminating dead algebraic variables")
 
         self.config.add_extra("_alt", plot=(0, 1))
 
         # internal flags and storage
-        self.As = None     # state matrix after removing the ones associated with zero T consts
-        self.Asc = None    # the original complete As without reordering
+        self.As = None     # reduced state matrix
         self.mu = None     # eigenvalues
         self.N = None      # right eigenvectors
         self.W = None      # left eigenvectors
@@ -46,7 +46,9 @@ class EIG(BaseRoutine):
 
         # --- related to states with zero time constants (zs) ---
         self.zstate_idx = np.array([], dtype=int)
-        self.nz_counts = None
+
+        # --- related to dead algebraic variables ---
+        self.dead_algeb_idx = np.array([], dtype=int)
 
         # --- statistics --
         self.n_positive = 0
@@ -54,6 +56,7 @@ class EIG(BaseRoutine):
         self.n_negative = 0
 
         self.x_name = []
+        self.x_tex_name = []
 
     def calc_As(self, dense=True):
         r"""
@@ -74,6 +77,12 @@ class EIG(BaseRoutine):
 
             A_s = T^{-1} (f_x - f_y * g_y^{-1} * g_x)
 
+        States with zero time constants satisfy :math:`0 = f(x, y)` and
+        are treated as algebraic equations.  They are folded into the
+        algebraic system before reduction so that a single Schur
+        complement handles both original algebraic variables and
+        zero-Tf states uniformly.
+
         Returns
         -------
         kvxopt.matrix
@@ -83,14 +92,36 @@ class EIG(BaseRoutine):
 
         self.find_zero_states()
         self.x_name = np.array(dae.x_name)
+        self.x_tex_name = np.array(dae.x_tex_name)
 
-        self.As = self._reduce(dae.fx, dae.fy,
-                               dae.gx, dae.gy, dae.Tf,
-                               dense=dense)
+        fx, fy, gx, gy = dae.fx, dae.fy, dae.gx, dae.gy
+        Tf = dae.Tf
 
+        # Fold zero-Tf states into the algebraic system
         if len(self.zstate_idx) > 0:
-            self.Asc = self.As
-            self.As = self._reduce(*self._reorder())
+            fx, fy, gx, gy, Tf = self._fold_zstates(fx, fy, gx, gy, Tf)
+
+        # Find and eliminate dead algebraic variables (including dead zero-Tf states)
+        self.find_dead_algebs(gy, gx)
+
+        # Extract state constraints (0 = C δx) before dead rows are removed
+        C = self._extract_state_constraints(gx)
+
+        if len(self.dead_algeb_idx) > 0:
+            fx, fy, gx, gy = self._eliminate_algebs(fx, fy, gx, gy)
+
+        # Regularize dead columns (variables absent from all equations)
+        self._regularize_dead_columns(gy)
+
+        self.As = self._reduce(fx, fy, gx, gy, Tf, dense=dense)
+
+        # Use state constraints to eliminate dependent states
+        if C is not None:
+            self.As = self._apply_state_constraints(self.As, C)
+
+        if len(self.x_name) < dae.n:
+            n_as = len(self.x_name)
+            logger.info("State matrix is %d x %d (reduced from %d states).", n_as, n_as, dae.n)
 
         return self.As
 
@@ -116,45 +147,69 @@ class EIG(BaseRoutine):
         else:
             return sparse(iTf * self.fxy)
 
-    def _reorder(self):
+    def _fold_zstates(self, fx, fy, gx, gy, Tf):
         """
-        reorder As by moving rows and cols associated with zero time constants to the end.
+        Fold zero-Tf states into the algebraic system.
 
-        Returns `fx`, `fy`, `gx`, `gy`, `Tf`.
+        States with ``Tf=0`` satisfy ``0 = f(x, y)`` — algebraic, not
+        differential.  This method moves their equation rows from
+        ``(fx, fy)`` into an expanded ``(gx, gy)`` and returns reduced
+        Jacobians for the remaining (non-zero-Tf) differential states.
+
+        Parameters
+        ----------
+        fx, fy, gx, gy : spmatrix
+            Original Jacobian sub-matrices (n×n, n×m, m×n, m×m).
+        Tf : np.ndarray
+            Time-constant vector (length n).
+
+        Returns
+        -------
+        fx', fy', gx', gy' : spmatrix
+            Restructured Jacobians (n'×n', n'×m', m'×n', m'×m')
+            where n' = n - nz, m' = m + nz.
+        Tf' : np.ndarray
+            Time constants for non-zero-Tf states only.
         """
-        dae = self.system.dae
-        rows = np.arange(dae.n, dtype=int)
-        cols = np.arange(dae.n, dtype=int)
-        vals = np.ones(dae.n, dtype=float)
+        n = fx.size[0]
+        m = gy.size[0]
+        zs = self.zstate_idx
+        nz = len(zs)
 
-        swaps = []
-        bidx = self.nz_counts
-        for ii in range(dae.n - self.nz_counts):
-            if ii in self.zstate_idx:
-                while (bidx in self.zstate_idx):
-                    bidx += 1
-                cols[ii] = bidx
-                rows[bidx] = ii
-                swaps.append((ii, bidx))
+        nz_mask = np.ones(n, dtype=bool)
+        nz_mask[zs] = False
+        nz_idx = np.where(nz_mask)[0]
+        n_nz = len(nz_idx)
 
-        # swap the variable names
-        for fr, bk in swaps:
-            bk_name = self.x_name[bk]
-            self.x_name[fr] = bk_name
-        self.x_name = self.x_name[:self.nz_counts]
+        # Selection matrices for non-zero-Tf states (rows/cols of fx)
+        Sx, Sx_T = self._selection_matrices(list(nz_idx), n)
+        # Selection matrices for zero-Tf states (rows/cols of fx)
+        Sz, Sz_T = self._selection_matrices(list(zs), n)
 
-        # compute the permutation matrix for `As` containing non-states
-        perm = spmatrix(matrix(vals), matrix(rows), matrix(cols))
-        As_perm = perm * sparse(self.As) * perm
-        self.As_perm = As_perm
+        # Build expanded Jacobians:
+        #   fx' = Sx * fx * Sx_T                        (n' x n')
+        #   fy' = [Sx * fy | Sx * fx * Sz_T]            (n' x m')
+        #   gx' = [gx * Sx_T ; Sz * fx * Sx_T]          (m' x n')
+        #   gy' = [[gy, gx * Sz_T], [Sz * fy, Sz * fx * Sz_T]]  (m' x m')
 
-        nfx = As_perm[:self.nz_counts, :self.nz_counts]
-        nfy = As_perm[:self.nz_counts, self.nz_counts:]
-        ngx = As_perm[self.nz_counts:, :self.nz_counts]
-        ngy = As_perm[self.nz_counts:, self.nz_counts:]
-        nTf = np.delete(self.system.dae.Tf, self.zstate_idx)
+        fx_new = Sx * fx * Sx_T                     # n' x n'
 
-        return nfx, nfy, ngx, ngy, nTf
+        fy_left = Sx * fy                           # n' x m
+        fy_right = Sx * fx * Sz_T                   # n' x nz
+        fy_new = sparse([[fy_left], [fy_right]])    # n' x (m + nz)
+
+        gx_top = gx * Sx_T                          # m  x n'
+        gx_bot = Sz * fx * Sx_T                     # nz x n'
+        gx_new = sparse([gx_top, gx_bot])           # (m + nz) x n'
+
+        gy_new = sparse([[gy,       Sz * fy],       # (m + nz) x (m + nz)
+                         [gx * Sz_T, Sz * fx * Sz_T]])
+
+        # Keep only non-zero-Tf state names
+        self.x_name = self.x_name[nz_idx]
+        self.x_tex_name = self.x_tex_name[nz_idx]
+
+        return fx_new, fy_new, gx_new, gy_new, Tf[nz_idx]
 
     def calc_eig(self, As=None):
         """
@@ -259,10 +314,247 @@ class EIG(BaseRoutine):
         if sum(system.dae.Tf != 0) != len(system.dae.Tf):
 
             self.zstate_idx = np.where(system.dae.Tf == 0)[0]
-            logger.info("%d states are associated with zero time constants. ", len(self.zstate_idx))
+            logger.debug("%d states are associated with zero time constants.", len(self.zstate_idx))
             logger.debug([system.dae.x_name[i] for i in self.zstate_idx])
 
-        self.nz_counts = system.dae.n - len(self.zstate_idx)
+
+    @staticmethod
+    def _sparse_row_norms(mat):
+        """Compute L2 row norms of a sparse matrix using triplet data."""
+
+        m = mat.size[0]
+        row_norm_sq = np.zeros(m)
+        for i, v in zip(mat.I, mat.V):
+            row_norm_sq[i] += v * v
+        return np.sqrt(row_norm_sq)
+
+    @staticmethod
+    def _sparse_col_norms(mat):
+        """Compute L2 column norms of a sparse matrix using triplet data."""
+
+        n = mat.size[1]
+        col_norm_sq = np.zeros(n)
+        for j, v in zip(mat.J, mat.V):
+            col_norm_sq[j] += v * v
+        return np.sqrt(col_norm_sq)
+
+    @staticmethod
+    def _selection_matrices(alive, total):
+        """Build rectangular selection matrix ``S`` and its transpose.
+
+        ``S`` is (n_alive x total) and selects only the *alive* rows/cols.
+        """
+
+        n = len(alive)
+        alive_int = [int(i) for i in alive]
+        S = spmatrix([1.0] * n, list(range(n)), alive_int, (n, total))
+        S_T = spmatrix([1.0] * n, alive_int, list(range(n)), (total, n))
+        return S, S_T
+
+    def find_dead_algebs(self, gy, gx):
+        """
+        Find algebraic variables with near-zero ``gy`` rows.
+
+        These variables have degenerate equations (only ``diag_eps``
+        on the diagonal) and cause ``gy`` to be singular.  They are
+        eliminated before computing the state matrix.
+
+        Dead rows with nonzero ``gx`` coupling encode state constraints
+        ``0 = C δx``, which are extracted by ``_extract_state_constraints``
+        and used to reduce the state dimension in
+        ``_apply_state_constraints``.
+
+        Parameters
+        ----------
+        gy : spmatrix
+            The algebraic Jacobian to scan.  After ``_fold_zstates`` this
+            includes both original algebraic variables and zero-Tf states.
+        gx : spmatrix
+            The algebraic-to-state Jacobian, checked for state constraints.
+        """
+
+        self.dead_algeb_idx = np.array([], dtype=int)
+
+        dead = np.where(self._sparse_row_norms(gy) < self.config.gy_tol)[0]
+
+        if len(dead) > 0:
+            self.dead_algeb_idx = dead
+            logger.debug("%d algebraic variables have near-zero gy coupling "
+                         "and will be eliminated.", len(dead))
+
+            # Check if any eliminated rows encode state constraints (gx ≠ 0)
+            gx_norms = self._sparse_row_norms(gx)
+            coupled = dead[gx_norms[dead] >= self.config.gy_tol]
+            if len(coupled) > 0:
+                logger.debug(
+                    "%d of these encode state constraints (nonzero gx) "
+                    "and will be used to reduce the state dimension.",
+                    len(coupled))
+
+    def _eliminate_algebs(self, fx, fy, gx, gy):
+        """
+        Remove dead algebraic variables from the Jacobian matrices.
+
+        Builds a rectangular selection matrix ``S`` (m_alive x m) that
+        keeps only the alive algebraic rows/cols, then returns the
+        reduced Jacobians.
+
+        Returns ``fx, fy_alive, gx_alive, gy_alive``.
+        """
+
+        m = gy.size[0]
+        alive = sorted(set(range(m)) - set(self.dead_algeb_idx))
+        S, S_T = self._selection_matrices(alive, m)
+
+        return fx, fy * S_T, S * gx, S * gy * S_T
+
+    def _regularize_dead_columns(self, gy):
+        """
+        Regularize algebraic variables with near-zero ``gy`` columns.
+
+        A near-zero column means the variable does not appear in any
+        algebraic equation.  Setting its diagonal to 1.0 makes ``gy``
+        non-singular and forces the variable's perturbation to zero
+        in the Schur complement, which is physically correct for an
+        unconstrained variable.
+
+        This handles the complementary case to ``find_dead_algebs``
+        (dead rows).  Typical cause: a zero-Tf state whose
+        self-coupling vanishes (e.g. ``Lag2ndOrd.x`` with ``T1=0``).
+        """
+        col_norms = self._sparse_col_norms(gy)
+        dead_cols = np.where(col_norms < self.config.gy_tol)[0]
+
+        if len(dead_cols) > 0:
+            for j in dead_cols:
+                gy[int(j), int(j)] = 1.0
+            logger.debug(
+                "%d algebraic variables with near-zero gy columns "
+                "regularized (diagonal set to 1).", len(dead_cols))
+
+    def _extract_state_constraints(self, gx):
+        """
+        Extract state constraint rows from dead algebraic variables.
+
+        Dead algebraic rows with ``gy ≈ 0`` but ``gx ≠ 0`` encode
+        linear constraints ``0 = C δx`` on the state perturbations.
+        This method extracts those rows from ``gx`` as a constraint
+        matrix ``C`` before dead rows are eliminated.
+
+        Parameters
+        ----------
+        gx : spmatrix
+            Algebraic-to-state Jacobian (possibly expanded by folding).
+
+        Returns
+        -------
+        spmatrix or None
+            Constraint matrix ``C`` of shape (nc × n), or ``None``
+            if no dead rows have nonzero ``gx`` coupling.
+        """
+        if len(self.dead_algeb_idx) == 0:
+            return None
+
+        gx_norms = self._sparse_row_norms(gx)
+        coupled_mask = gx_norms[self.dead_algeb_idx] >= self.config.gy_tol
+        coupled = self.dead_algeb_idx[coupled_mask]
+
+        if len(coupled) == 0:
+            return None
+
+        m = gx.size[0]
+        S, _ = self._selection_matrices([int(i) for i in coupled], m)
+        return S * gx
+
+    def _apply_state_constraints(self, As, C):
+        r"""
+        Reduce the state matrix using algebraic constraints on states.
+
+        Dead algebraic rows with ``gy ≈ 0`` but ``gx ≠ 0`` impose
+        constraints ``0 = C δx`` on the linearized perturbations.
+        Each constraint eliminates one dependent state:
+
+        .. math::
+
+            \delta x_d = -C_d^{-1} C_f \, \delta x_f
+
+        where *d* denotes dependent (pivot) states and *f* the remaining
+        free states.  The reduced state matrix is
+
+        .. math::
+
+            A_{\text{red}} = A_{\text{full}}[\text{free}, :] \; R
+
+        where ``R`` is the substitution matrix satisfying ``C R = 0``.
+
+        Parameters
+        ----------
+        As : matrix or ndarray
+            Full state matrix (n × n) from ``_reduce``, already
+            includes ``T^{-1}``.
+        C : spmatrix
+            Constraint matrix (nc × n) from dead algebraic rows.
+
+        Returns
+        -------
+        ndarray
+            Reduced state matrix of size (n - nc) × (n - nc).
+        """
+        n = As.size[0]   # kvxopt matrix .size is (rows, cols)
+        nc = C.size[0]
+
+        # Convert sparse C to dense numpy
+        C_np = np.zeros((nc, n))
+        for k in range(len(C.V)):
+            C_np[C.I[k], C.J[k]] = C.V[k]
+
+        # Identify pivot (dependent) state for each constraint row.
+        # Pick the largest unused coefficient as pivot to ensure C_d
+        # is well-conditioned.
+        dep_list = []
+        used = set()
+        for i in range(nc):
+            row_abs = np.abs(C_np[i, :])
+            for pivot in np.argsort(-row_abs):
+                if pivot not in used and row_abs[pivot] > 0:
+                    dep_list.append(int(pivot))
+                    used.add(pivot)
+                    break
+            else:
+                logger.warning("No valid pivot for constraint %d. "
+                               "Skipping state constraint reduction.", i)
+                return As
+
+        dep_states = np.array(dep_list, dtype=int)
+        free_mask = np.ones(n, dtype=bool)
+        free_mask[dep_states] = False
+        free_states = np.where(free_mask)[0]
+        n_f = len(free_states)
+
+        # Build substitution: δx_dep = -C_d^{-1} C_f δx_free
+        C_d = C_np[:, dep_states]
+        C_f = C_np[:, free_states]
+        G = -solve(C_d, C_f)
+
+        # Substitution matrix R: δx = R δx_free
+        R = np.zeros((n, n_f))
+        R[free_states, np.arange(n_f)] = 1.0
+        R[dep_states, :] = G
+
+        # Convert As to numpy and project
+        As_np = np.array(As)
+        if As_np.ndim == 1:
+            As_np = As_np.reshape((n, n), order='F')
+
+        As_red = As_np[free_states, :] @ R
+
+        self.x_name = self.x_name[free_states]
+        self.x_tex_name = self.x_tex_name[free_states]
+
+        logger.debug("%d state constraints applied, reducing %d states to %d.",
+                     nc, n, n_f)
+
+        return As_red
 
     def sweep(self, params, idxes, values):
         """
@@ -666,9 +958,8 @@ class EIG(BaseRoutine):
         """
         system = self.system
         out = {'As': self.As,
-               'Asc': self.Asc,
-               'x_name': np.array(system.dae.x_name, dtype=object),
-               'x_tex_name': np.array(system.dae.x_tex_name, dtype=object),
+               'x_name': np.array(self.x_name, dtype=object),
+               'x_tex_name': np.array(self.x_tex_name, dtype=object),
                }
 
         scipy.io.savemat(system.files.mat, mdict=out)
