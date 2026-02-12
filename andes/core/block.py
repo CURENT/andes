@@ -1435,20 +1435,43 @@ class LeadLag(Block):
              │   1 + sT2 │
              └───────────┘
 
-    Exports two variables: internal state `x` and output algebraic variable `y`.
+    Exports two variables: internal state ``x`` and output algebraic
+    variable ``y``.
 
-    Notes
-    -----
-    To allow zeroing out lead-lag as a pure gain, set ``zero_out`` to `True`.
+    Implementation
+    --------------
+    The equations are written in the "multiply by T2" form to avoid
+    division by T2::
+
+        T2 * x_dot = u - x
+        T2 * y     = K*T1*(u - x) + K*T2*x + E2
+
+    This makes T2=0 safe for the state equation (it becomes the
+    algebraic constraint ``0 = u - x``), but causes the ``y``
+    self-coupling (coefficient ``-T2``) to vanish.  When T2=0 the
+    algebraic equation for ``y`` is degenerate and ``y`` is
+    unconstrained.
+
+    The ``zero_out`` mechanism detects T2 <= 0 at run time via a
+    cached ``LessThan`` flag (``LT_z1``) and adds the bypass term
+    ``E2 = (y - K*u)`` so that ``y = K*u`` is enforced.  This
+    corresponds to evaluating the transfer function at its DC gain.
 
     Parameters
     ----------
+    u : BaseVar or BaseParam
+        Input signal.
     T1 : BaseParam
-        Time constant 1
+        Numerator (lead) time constant.
     T2 : BaseParam
-        Time constant 2
-    zero_out : bool
-        True to allow zeroing out lead-lag as a pass through (when T1=T2=0)
+        Denominator (lag) time constant.  Also used as the ``t_const``
+        of the internal state ``x``.
+    K : BaseParam or numeric, optional
+        Static gain (default 1).
+    zero_out : bool, optional
+        If ``True`` (default), bypass the block as ``y = K * u`` when
+        T2 <= 0.  Set to ``False`` only if T2 > 0 is guaranteed by
+        the data.
     """
 
     def __init__(self, u, T1, T2, K=1, zero_out=True, name=None, tex_name=None, info=None):
@@ -1466,13 +1489,10 @@ class LeadLag(Block):
         self.vars = {'x': self.x, 'y': self.y}
 
         if self.zero_out is True:
-            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.x.discrete = (self.LT1, self.LT2)
-            self.vars['LT1'] = self.LT1
-            self.vars['LT2'] = self.LT2
+            self.LT = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                               cache=True, z0=1, z1=0)
+            self.x.discrete = (self.LT,)
+            self.vars['LT'] = self.LT
 
     def define(self):
         r"""
@@ -1488,7 +1508,7 @@ class LeadLag(Block):
             T_2  y &= K T_1  (u - x') + K T_2  x' + E_2 \, , \text{where} \\
             E_2 = &
             \left\{\begin{matrix}
-            (y - K x') &\text{ if } T_1 = T_2 = 0 \& zero\_out=True \\
+            (y - K u) &\text{ if } T_2 \leq 0 \& zero\_out=True \\
             0& \text{ otherwise }
             \end{matrix}\right. \\
             x'^{(0)} & = u\\
@@ -1504,10 +1524,10 @@ class LeadLag(Block):
                        f'{self.K.name} * {self.name}_x * {self.T2.name} - ' \
                        f'{self.name}_y * {self.T2.name}'
 
-        # when T1=T2=0, use equation `0 = y - Kx`
+        # when T2<=0, bypass as pure gain: 0 = y - K*u
         if self.zero_out is True:
-            self.y.e_str += f'+ {self.name}_LT1_z1 * {self.name}_LT2_z1 * ' \
-                            f'({self.name}_y - {self.K.name} * {self.name}_x)'
+            self.y.e_str += f'+ {self.name}_LT_z1 * ' \
+                            f'({self.name}_y - {self.K.name} * {self.u.name})'
 
 
 class LeadLag2ndOrd(Block):
@@ -1522,13 +1542,51 @@ class LeadLag2ndOrd(Block):
              │ 1 + sT1 + s^2 T2 │
              └──────────────────┘
 
-    Exports two internal states (`x1` and `x2`) and output algebraic variable
-    `y`.
+    Exports two internal states (``x1`` and ``x2``) and output algebraic
+    variable ``y``.
 
-    The current implementation allows any or all parameters to be zero.  Four
-    ``LessThan`` blocks are used to check if the parameter values are all zero.
-    If yes, ``y = u`` will be imposed in the algebraic equation.
+    Implementation
+    --------------
+    State-space realization with two states::
 
+        T2 * x1_dot = u - x2 - T1*x1
+        x2_dot      = x1
+        T2 * y      = T2*x2 + T2*T3*x1 + T4*(u - x2 - T1*x1) + E2
+
+    All equations are multiplied by T2 so that T2=0 converts the
+    ``x1`` equation into an algebraic constraint ``0 = u - x2 - T1*x1``
+    rather than a division-by-zero.  However, the ``y`` self-coupling
+    (coefficient ``-T2``) also vanishes, leaving ``y`` unconstrained.
+
+    The ``zero_out`` mechanism detects T2 <= 0 via a cached
+    ``LessThan`` flag (``LT_z1``) and adds ``E2 = (y - u)`` to
+    enforce the DC-gain bypass ``y = u``.
+
+    Only T2 is checked because it is the common factor of the
+    denominator polynomial that multiplies the ``y`` equation.  When
+    T2=0 the denominator reduces to ``1 + sT1``, which is at most
+    first-order — the second-order realization is degenerate and
+    bypass is the correct behavior.  Earlier versions checked all
+    four time constants, which failed to activate the bypass when
+    the numerator constants (T3, T4) were nonzero (e.g. IEEEST
+    with A3=A4=0, A5!=0, A6!=0).
+
+    Parameters
+    ----------
+    u : BaseVar or BaseParam
+        Input signal.
+    T1 : BaseParam
+        Denominator first-order time constant.
+    T2 : BaseParam
+        Denominator second-order time constant.  Also used as the
+        ``t_const`` of the internal state ``x1``.
+    T3 : BaseParam
+        Numerator first-order time constant.
+    T4 : BaseParam
+        Numerator second-order time constant.
+    zero_out : bool, optional
+        If ``True``, bypass the block as ``y = u`` when T2 <= 0.
+        Default is ``False``.
     """
 
     def __init__(self, u, T1, T2, T3, T4, zero_out=False, name=None, tex_name=None, info=None):
@@ -1547,23 +1605,11 @@ class LeadLag2ndOrd(Block):
 
         self.vars = {'x1': self.x1, 'x2': self.x2, 'y': self.y}
 
-        # TODO: instead of implementing `zero_out` using `LessThan` and an
-        #   additional term, consider correcting all parameters to 1 if all are 0.
-
         if self.zero_out is True:
-            self.LT1 = LessThan(T1, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.LT2 = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.LT3 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.LT4 = LessThan(T4, dummify(0), equal=True, enable=zero_out, tex_name='LT',
-                                cache=True, z0=1, z1=0)
-            self.x2.discrete = (self.LT1, self.LT2, self.LT3, self.LT4)
-            self.vars['LT1'] = self.LT1
-            self.vars['LT2'] = self.LT2
-            self.vars['LT3'] = self.LT3
-            self.vars['LT4'] = self.LT4
+            self.LT = LessThan(T2, dummify(0), equal=True, enable=zero_out, tex_name='LT',
+                               cache=True, z0=1, z1=0)
+            self.x2.discrete = (self.LT,)
+            self.vars['LT'] = self.LT
 
     def define(self):
         r"""
@@ -1577,7 +1623,7 @@ class LeadLag2ndOrd(Block):
             T_2 y &= T_2 x_2 + T_2 T_3 x_1 + T_4 (u - x_2 - T_1 x_1) + E_2 \, , \text{ where} \\
             E_2 = &
             \left\{\begin{matrix}
-            (y - x_2) &\text{ if } T_1 = T_2 = T_3 = T_4 = 0 \& zero\_out=True \\
+            (y - u) &\text{ if } T_2 \leq 0 \& zero\_out=True \\
             0& \text{ otherwise }
             \end{matrix}\right. \\
             x_1^{(0)} &= 0 \\
@@ -1595,10 +1641,10 @@ class LeadLag2ndOrd(Block):
         self.x2.v_str = f'{self.u.name}'
         self.y.v_str = f'{self.u.name}'
 
-        # when T1=T2=0, use equation `0 = y - Kx`
+        # when T2<=0, bypass block: 0 = y - u
         if self.zero_out is True:
-            self.y.e_str += f'+ {self.name}_LT1_z1*{self.name}_LT2_z1*{self.name}_LT3_z1*{self.name}_LT4_z1 * ' \
-                            f'({self.name}_y - {self.name}_x2)'
+            self.y.e_str += f'+ {self.name}_LT_z1 * ' \
+                            f'({self.name}_y - {self.u.name})'
 
 
 class LeadLagLimit(Block):
