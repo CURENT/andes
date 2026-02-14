@@ -14,6 +14,12 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 ### v1.10.1 (2026-02-04)
 
+- Fix `zero_out` bypass in `LeadLag` and `LeadLag2ndOrd` blocks. `LeadLag` now checks
+  only `T2` (not both `T1` and `T2`) to activate bypass. `LeadLag2ndOrd` also checks
+  only `T2` instead of requiring all four time constants to be zero.
+- Replace permutation-based eigenvalue reorder with a fold/eliminate/reduce pipeline
+  in `EIG` routine. Fixes singular matrix errors for cases with zero-`Tf` states and
+  degenerate model equations.
 - Fix PSS/E convention for tap ratios in `_parse_transf_v33`; zero taps default to 1.0 pu.
 - Suppress `tqdm` output when logging level is higher than INFO.
 - Batch parameter correction warnings during setup. Instead of logging one warning per
