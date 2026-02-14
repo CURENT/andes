@@ -547,6 +547,38 @@ class Model:
 
         return True
 
+    def set_status(self, idx, value):
+        """
+        Set the online status of a device and propagate to dependents.
+
+        Parameters
+        ----------
+        idx : str, int, float
+            Device idx.
+        value : int or float
+            New status value (0 or 1).
+        """
+        return self.system.set_status(self.class_name, idx, value)
+
+    def get_status(self, idx):
+        """
+        Get the effective online status of a device.
+
+        Returns ``ue.v`` if the model defines a ``ue`` ConstService,
+        otherwise returns ``u.v``.
+
+        Parameters
+        ----------
+        idx : str, int, float
+            Device idx.
+
+        Returns
+        -------
+        float
+            Effective status value (0 or 1).
+        """
+        return self.system.get_status(self.class_name, idx)
+
     def alter(self, src, idx, value, attr='v'):
         """
         Alter values of input parameters or constant service.

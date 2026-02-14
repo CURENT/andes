@@ -11,7 +11,8 @@ class IEEEVCData(ModelData):
 
     def __init__(self):
         ModelData.__init__(self)
-        self.avr = IdxParam(info='Exciter idx', mandatory=True, model='Exciter')
+        self.avr = IdxParam(info='Exciter idx', mandatory=True, model='Exciter',
+                            status_parent=True)
 
         self.rc = NumParam(default=0.0,
                            info="Active compensation degree.",

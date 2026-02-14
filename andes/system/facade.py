@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple, Union
 
 import andes.io
 from andes.core import AntiWindup, Model, ConnMan
+from andes.core.service import ConstService
 from andes.io.streaming import Streaming
 from andes.shared import NCPUS_PHYSICAL, jac_names, np, spmatrix
 from andes.system.codegen import CodegenManager
@@ -135,6 +136,10 @@ class System:
         self.antiwindups = list()
         self.no_check_init = list()  # states for which initialization check is omitted
         self.call_stats = defaultdict(dict)  # call statistics storage
+
+        # status propagation graph (built during setup)
+        self._status_children = {}     # parent_group -> set of child BackRef names
+        self._status_parent_map = {}   # child_model_name -> (param_attr_name, parent_group_name)
 
         # internal flags
         self.is_setup = False        # if system has been setup
@@ -256,6 +261,7 @@ class System:
             return ret
 
         self.collect_ref()
+        self._build_status_graph()
         self._list2array()     # `list2array` must come before `link_ext_param`
         if not self.link_ext_param():
             ret = False
@@ -1283,6 +1289,218 @@ class System:
             # set model ``in_use`` flag
             if isinstance(model, Model):
                 model.set_in_use()
+
+    def _build_status_graph(self):
+        """
+        Build the status propagation graph from ``IdxParam`` declarations
+        with ``status_parent=True``.
+
+        Populates ``self._status_children`` and ``self._status_parent_map``
+        used by :meth:`set_status` for recursive propagation.
+        """
+        self._status_children = {}
+        self._status_parent_map = {}
+
+        for mdl_name, mdl in self.models.items():
+            if mdl.n == 0:
+                continue
+            if not hasattr(mdl, 'idx_params'):
+                continue
+
+            for p_name, p_instance in mdl.idx_params.items():
+                if not getattr(p_instance, 'status_parent', False):
+                    continue
+
+                parent_group = p_instance.model
+                if parent_group is None:
+                    continue
+
+                # Record child -> parent mapping
+                self._status_parent_map[mdl_name] = (p_name, parent_group)
+
+                # Record parent -> child BackRef names to follow
+                if parent_group not in self._status_children:
+                    self._status_children[parent_group] = set()
+
+                parent_obj = self.__dict__.get(parent_group)
+                if parent_obj is None:
+                    continue
+
+                child_group_name = mdl.group
+                child_model_name = mdl.class_name
+
+                if child_group_name in parent_obj.services_ref:
+                    self._status_children[parent_group].add(child_group_name)
+                if child_model_name in parent_obj.services_ref:
+                    self._status_children[parent_group].add(child_model_name)
+
+        # Validate: warn if model has status_parent but no ue ConstService
+        for mdl_name in self._status_parent_map:
+            mdl = self.models[mdl_name]
+            has_ue = (hasattr(mdl, 'ue') and
+                      isinstance(getattr(mdl, 'ue'), ConstService))
+            if not has_ue:
+                logger.debug(
+                    '<%s> declares status_parent but has no ConstService '
+                    'named "ue". Status propagation will update u.v only.',
+                    mdl_name,
+                )
+
+    def _get_effective_status(self, mdl, uid):
+        """
+        Return the effective status value for a device.
+
+        Returns ``ue.v[uid]`` if the model has a ``ConstService`` named
+        ``ue``, otherwise returns ``u.v[uid]``.
+        """
+        if hasattr(mdl, 'ue') and isinstance(mdl.ue, ConstService):
+            return mdl.ue.v[uid]
+        return mdl.u.v[uid]
+
+    def _get_parent_ue(self, mdl, uid):
+        """
+        Get the parent's effective status for a device.
+
+        Returns 1.0 if the model has no status parent.
+        """
+        mdl_name = mdl.class_name
+        if mdl_name not in self._status_parent_map:
+            return 1.0
+
+        p_name, parent_group_name = self._status_parent_map[mdl_name]
+        parent_idx = mdl.__dict__[p_name].v[uid]
+
+        if parent_idx is None:
+            return 1.0
+
+        parent_obj = self.__dict__.get(parent_group_name)
+        if parent_obj is None:
+            return 1.0
+
+        # Resolve to concrete model via group
+        if hasattr(parent_obj, 'idx2model'):
+            parent_mdl = parent_obj.idx2model(parent_idx)
+        else:
+            parent_mdl = parent_obj
+
+        parent_uid = parent_mdl.idx2uid(parent_idx)
+        return self._get_effective_status(parent_mdl, parent_uid)
+
+    def _propagate_status(self, mdl, idx, uid, ue_val):
+        """
+        Recursively propagate effective status to children via BackRef.
+        """
+        group_name = mdl.group
+        if group_name not in self._status_children:
+            return
+
+        group = self.groups.get(group_name)
+        if group is None:
+            return
+
+        # Get group-level uid for this device
+        if idx not in group.uid:
+            return
+        group_uid = group.idx2uid(idx)
+
+        for backref_name in self._status_children[group_name]:
+            if backref_name not in group.services_ref:
+                continue
+
+            child_idx_list = group.services_ref[backref_name].v[group_uid]
+
+            for child_idx in child_idx_list:
+                # Resolve child idx to concrete model
+                if backref_name in self.groups:
+                    child_group = self.groups[backref_name]
+                    try:
+                        child_mdl = child_group.idx2model(child_idx)
+                    except KeyError:
+                        continue
+                elif backref_name in self.models:
+                    child_mdl = self.models[backref_name]
+                else:
+                    continue
+
+                child_uid = child_mdl.idx2uid(child_idx)
+                child_ue = child_mdl.u.v[child_uid] * ue_val
+
+                # Update ue.v if the child has a ConstService named ue
+                if hasattr(child_mdl, 'ue') and isinstance(child_mdl.ue, ConstService):
+                    child_mdl.ue.v[child_uid] = child_ue
+
+                # Recurse to children of this child
+                self._propagate_status(child_mdl, child_idx, child_uid, child_ue)
+
+    def set_status(self, model_or_group, idx, value):
+        """
+        Set the online status of a device and propagate to dependents.
+
+        Sets ``u.v`` (the device's own status) and recomputes ``ue.v``
+        (effective status) for the device and all downstream dependents
+        recursively via BackRef.
+
+        Parameters
+        ----------
+        model_or_group : str
+            Model name or group name containing the device.
+        idx : str, int, float
+            Device idx.
+        value : int or float
+            New status value (0 or 1).
+        """
+        if model_or_group in self.groups:
+            grp = self.groups[model_or_group]
+            mdl = grp.idx2model(idx)
+        elif model_or_group in self.models:
+            mdl = self.models[model_or_group]
+        else:
+            raise KeyError(f"'{model_or_group}' is not a model or group name.")
+
+        uid = mdl.idx2uid(idx)
+
+        # Set u.v (device's own status)
+        mdl.u.v[uid] = value
+
+        # Recompute ue.v for this device
+        parent_ue = self._get_parent_ue(mdl, uid)
+        ue_val = value * parent_ue
+
+        if hasattr(mdl, 'ue') and isinstance(mdl.ue, ConstService):
+            mdl.ue.v[uid] = ue_val
+
+        # Propagate to children
+        self._propagate_status(mdl, idx, uid, ue_val)
+
+    def get_status(self, model_or_group, idx):
+        """
+        Get the effective status of a device.
+
+        Returns ``ue.v`` if the model has a ``ConstService`` named ``ue``,
+        otherwise returns ``u.v``.
+
+        Parameters
+        ----------
+        model_or_group : str
+            Model name or group name.
+        idx : str, int, float
+            Device idx.
+
+        Returns
+        -------
+        float
+            Effective status value (0 or 1).
+        """
+        if model_or_group in self.groups:
+            grp = self.groups[model_or_group]
+            mdl = grp.idx2model(idx)
+        elif model_or_group in self.models:
+            mdl = self.models[model_or_group]
+        else:
+            raise KeyError(f"'{model_or_group}' is not a model or group name.")
+
+        uid = mdl.idx2uid(idx)
+        return self._get_effective_status(mdl, uid)
 
     def import_groups(self):
         """

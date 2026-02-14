@@ -18,6 +18,7 @@ class TGBaseData(ModelData):
                             info='Synchronous generator idx',
                             mandatory=True,
                             unique=True,
+                            status_parent=True,
                             )
         self.Tn = NumParam(info='Turbine power rating. Equal to `Sn` if not provided.',
                            tex_name='T_n',

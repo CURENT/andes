@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 class PSSBaseData(ModelData):
     def __init__(self):
         super().__init__()
-        self.avr = IdxParam(info='Exciter idx', mandatory=True, model='Exciter')
+        self.avr = IdxParam(info='Exciter idx', mandatory=True, model='Exciter',
+                            status_parent=True)
 
 
 class PSSBase(Model):

@@ -23,6 +23,7 @@ class ExcBaseData(ModelData):
         self.syn = IdxParam(model='SynGen',
                             info='Synchronous generator idx',
                             mandatory=True,
+                            status_parent=True,
                             )
 
 

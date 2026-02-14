@@ -244,6 +244,40 @@ class GroupBase:
 
         return True
 
+    def set_status(self, idx, value):
+        """
+        Set the online status of a device and propagate to dependents.
+
+        Delegates to the concrete model's :meth:`set_status` which calls
+        :meth:`System.set_status` for propagation.
+
+        Parameters
+        ----------
+        idx : str, int, float
+            Device idx.
+        value : int or float
+            New status value (0 or 1).
+        """
+        mdl = self.idx2model(idx)
+        return mdl.set_status(idx, value)
+
+    def get_status(self, idx):
+        """
+        Get the effective online status of a device.
+
+        Parameters
+        ----------
+        idx : str, int, float
+            Device idx.
+
+        Returns
+        -------
+        float
+            Effective status value (0 or 1).
+        """
+        mdl = self.idx2model(idx)
+        return mdl.get_status(idx)
+
     def alter(self, src, idx, value, attr='v'):
         """
         Alter values of input parameters or constant service for a group of models.
