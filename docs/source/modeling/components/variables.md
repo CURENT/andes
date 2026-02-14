@@ -199,6 +199,29 @@ self.omega = State(e_str='(Tm - Te) / M')
 self.P = Algeb(e_str='Pgen - Pload')
 ```
 
+#### Device Status: `u` vs `ue`
+
+Every model has a `u` parameter (own online status, from input data) and a `ue`
+service (effective status, accounting for parent devices). Use **`ue`** in
+`e_str` to ensure equations are zeroed out when the device or any of its
+ancestors (bus, generator, exciter, etc.) is offline:
+
+```python
+# Correct: equation respects parent status
+self.omega = State(e_str='ue * (Tm - Te - D*(omega-1)) / M')
+
+# Wrong: ignores bus/parent offline status
+self.omega = State(e_str='u * (Tm - Te - D*(omega-1)) / M')
+```
+
+`ue` is computed as the product of the device's own `u` and the effective
+status of all parents declared with ``status_parent=True`` (see
+{doc}`parameters`). For example, a governor's `ue` is
+`u * generator.ue * bus.ue`.
+
+Use `u` in `v_str` for initialization, since `v_str` is evaluated before
+status propagation runs.
+
 ## Flags for Value Overwriting
 
 Variables have special flags for handling value initialization and equation values.
