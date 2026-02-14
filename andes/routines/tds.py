@@ -222,7 +222,6 @@ class TDS(BaseRoutine):
 
         # propagate after compact_dae so that ue reflects replacement u=0
         system.propagate_init_status()
-        system.conn.check_connectivity()
 
         # full setup after compaction (sparse patterns, adders, antiwindups)
         system.dae.clear_ts()
