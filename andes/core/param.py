@@ -252,23 +252,43 @@ class DataParam(BaseParam):
 
 class IdxParam(BaseParam):
     """
-    An alias of `BaseParam` with an additional storage of the owner model name
+    Parameter for storing idx references into other models.
 
-    This class is intended for storing `idx` into other models.
-    It can be used in the future for data consistency check.
+    ``IdxParam`` creates the connection graph between models.  It stores
+    device idx values that point to entries in the referenced ``model``
+    (which can be a Model or Group name).  These references are used by
+    ``ExtParam`` and ``ExtAlgeb``/``ExtState`` to look up external values.
+
+    Parameters
+    ----------
+    model : str, optional
+        Name of the referenced Model or Group (e.g. ``'Bus'``,
+        ``'StaticGen'``).  Required for BackRef and external-variable
+        linking.
+    unique : bool, optional
+        If ``True``, duplicate values raise ``IndexError``.  Useful when
+        a one-to-one mapping is required (e.g. one TG per generator).
+    replaces : bool, optional
+        If ``True``, this model replaces the referenced device during
+        time-domain simulation (static-dynamic replacement).
+    status_parent : bool, optional
+        If ``True``, the referenced device is treated as a status parent.
+        When the parent is taken offline via ``set_status``, the effective
+        status ``ue`` of this device and its descendants is propagated
+        automatically.
 
     Examples
     --------
-    A PQ model connected to Bus model will have the following code ::
+    A PQ model connected to Bus ::
 
         class PQModel(...):
             def __init__(...):
-                ...
                 self.bus = IdxParam(model='Bus')
 
-    Notes
-    -----
-    This will be useful when, for example, one connects two TGs to one SynGen.
+    An exciter referencing its parent generator with status propagation ::
+
+        self.syn = IdxParam(model='SynGen', mandatory=True,
+                            status_parent=True)
     """
     def __init__(self,
                  default: Optional[Union[float, str, int]] = None,

@@ -93,6 +93,14 @@ GENROU.gen → StaticGen.idx
 ESST1A.syn → GENROU.idx
 ```
 
+Set ``status_parent=True`` to declare that the referenced device is a status
+parent. When a parent device is taken offline via ``set_status``, the effective
+status (``ue``) of the child and its descendants is automatically propagated:
+
+```python
+self.syn = IdxParam(model='SynGen', mandatory=True, status_parent=True)
+```
+
 ```{eval-rst}
 .. autoclass:: andes.core.param.IdxParam
    :members:
