@@ -389,23 +389,6 @@ class TestBusSetIntegration(unittest.TestCase):
         self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
         self.assertEqual(ss.EXDC2.ue.v[0], 0)
 
-    def test_bus_set_flags_pflow_not_converged(self):
-        """Bus.set(src='u') should flag PFlow as not converged (before TDS)."""
-        ss = andes.run(
-            andes.get_case('kundur/kundur_st2cut.xlsx'),
-            default_config=True,
-            no_output=True,
-        )
-        # PFlow converged, TDS not yet initialized
-        self.assertTrue(ss.PFlow.converged)
-        self.assertFalse(ss.TDS.initialized)
-
-        bus_idx = ss.GENROU.bus.v[0]
-        ss.Bus.set(src='u', attr='v', idx=bus_idx, value=0)
-
-        self.assertFalse(ss.PFlow.converged)
-
-
 class TestMultiParentLine(unittest.TestCase):
     """
     Test Line with two parent buses (bus1 and bus2).

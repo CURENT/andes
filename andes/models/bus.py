@@ -125,15 +125,3 @@ class Bus(Model, BusData):
         self.v.v_str = 'flat_start*1 + ' \
                        '(1-flat_start)*v0'
 
-    def set(self, src, idx, attr, value):
-        super().set(src=src, idx=idx, attr=attr, value=value)
-
-        if src == 'u' and attr == 'v':
-            if self.system.is_setup:
-                self.system.set_status('ACNode', idx, value)
-
-            if not self.system.TDS.initialized:
-                if self.system.PFlow.converged:
-                    logger.warning('Bus connectivity is touched, resolve PFlow '
-                                   'before running EIG or TDS!')
-                self.system.PFlow.converged = False

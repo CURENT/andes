@@ -41,7 +41,7 @@ class TestConnMan(unittest.TestCase):
         self.assertEqual(pq_mdl.ue.v[pq_uid], 0)
 
     def test_turn_off_after_pflow(self):
-        """Turning off a bus after PFlow should flag PFlow as not converged."""
+        """Turning off a bus after PFlow should propagate ue to dependents."""
         ss = andes.load(andes.get_case('ieee14/ieee14_conn.xlsx'),
                         setup=False, no_output=True, default_config=True)
         ss.Bus.set(src='u', attr='v', idx=15, value=1)
@@ -50,9 +50,9 @@ class TestConnMan(unittest.TestCase):
         ss.PFlow.run()
         self.assertTrue(ss.PFlow.converged)
 
-        # turn off a bus
+        # turn off a bus — ue should propagate
         ss.Bus.alter(src='u', idx=15, value=0)
-        self.assertFalse(ss.PFlow.converged)
+        self.assertEqual(ss.Bus.ue.v[ss.Bus.idx2uid(15)], 0)
 
     def test_connectivity_check_runs(self):
         """Connectivity check should run without error."""

@@ -532,6 +532,13 @@ class Model:
         """
 
         uid = self.idx2uid(idx)
+
+        # Route u.v changes through set_status for ue propagation.
+        # set_status sets u.v, recomputes ue, propagates, and invalidates PFlow.
+        if src == 'u' and attr == 'v' and self.system.is_setup:
+            self.system.set_status(self.class_name, idx, value)
+            return True
+
         instance = self.__dict__[src]
 
         # Check if the destination is a list
@@ -547,7 +554,6 @@ class Model:
             instance.__dict__[attr][uid] = value
 
         # update differential equations' time constants stored in `dae.Tf`
-
         if attr == "v":
             for state in self.states.values():
                 if (state.t_const is instance) and len(state.a) > 0:
