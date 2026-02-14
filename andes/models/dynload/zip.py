@@ -15,8 +15,9 @@ class ZIPData(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.pq = IdxParam(model='PQ', mandatory=True,
+        self.pq = IdxParam(model='StaticLoad', mandatory=True,
                            info='idx of the PQ to replace',
+                           replaces=True,
                            )
 
         self.kpp = NumParam(info='Percentage of active power',
@@ -140,12 +141,6 @@ class ZIPModel(Model):
                           ename='Q',
                           tex_ename='Q',
                           )
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the linked PQs.
-        """
-        self.system.groups['StaticLoad'].set(src='u', idx=self.pq.v, attr='v', value=0)
 
 
 class ZIP(ZIPData, ZIPModel):

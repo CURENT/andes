@@ -12,7 +12,8 @@ class PMUData(ModelData):
 
     def __init__(self):
         ModelData.__init__(self)
-        self.bus = IdxParam(info="bus idx", mandatory=True)
+        self.bus = IdxParam(model='ACNode', info="bus idx", mandatory=True,
+                            status_parent=True)
 
         self.Ta = NumParam(default=0.1, tex_name='T_a', info='angle filter time constant')
         self.Tv = NumParam(default=0.1, tex_name='T_v', info='voltage filter time constant')

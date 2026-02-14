@@ -12,9 +12,10 @@ class ACDC2Term(ModelData, Model):
 
     def __init__(self, system, config):
         ModelData.__init__(self)
-        self.bus = IdxParam(model='Bus',
+        self.bus = IdxParam(model='ACNode',
                             info="idx of connected bus",
                             mandatory=True,
+                            status_parent=True,
                             )
         self.node1 = IdxParam(default=None,
                               info='Node 1 index',

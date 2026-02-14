@@ -52,10 +52,10 @@ class Slack(SlackData, PVModel):
                        v_str='u * p0',
                        )
 
-        self.p.e_str = "u*(plim_zi * (a0-a) + " \
+        self.p.e_str = "ue*(plim_zi * (a0-a) + " \
                        "plim_zl * (pmin-p) + " \
                        "plim_zu * (pmax-p))"
-        self.a.e_str = '-u * p'
+        self.a.e_str = '-ue * p'
 
         self.plim = SortedLimiter(u=self.p, lower=self.pmin, upper=self.pmax,
                                   enable=self.config.av2pv)

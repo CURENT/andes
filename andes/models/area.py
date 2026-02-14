@@ -18,7 +18,7 @@ class Area(AreaData, Model):
     Area model.
 
     Area collects back references from the Bus model and
-    the ACTopology group.
+    the ACNode group.
     """
     def __init__(self, system, config):
         AreaData.__init__(self)
@@ -28,7 +28,7 @@ class Area(AreaData, Model):
         self.flags.tds = True
 
         self.Bus = BackRef()
-        self.ACTopology = BackRef()
+        self.ACNode = BackRef()
 
     def bus_table(self):
         """

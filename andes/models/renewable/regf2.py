@@ -63,7 +63,7 @@ class REGF2Primary:
 
         self.vref2 = Algeb(tex_name=r'v_{ref2}',
                            info='voltage reference after droop',
-                           e_str='(u * PIqlim_y - Qsen_y) * Qdrp + vref - vref2',
+                           e_str='(ue * PIqlim_y - Qsen_y) * Qdrp + vref - vref2',
                            v_str='u * vref')
 
 

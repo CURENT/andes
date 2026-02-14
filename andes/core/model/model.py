@@ -294,10 +294,16 @@ class Model:
         # overwritten by status propagation (parent offline → child offline).
         # Models should use ``ue`` instead of ``u`` in equations so that
         # turning off a parent device automatically disables its children.
-        self.ue = ConstService(v_str='u',
-                               info='effective online status',
-                               tex_name='u_e',
-                               )
+        #
+        # Implemented as an ExtParam(model='__self__') so the value is
+        # retrieved during ``link_ext_param()`` — well before any routine's
+        # ``s_update`` — and is therefore available to all models regardless
+        # of their ``flags.pflow`` / ``flags.tds`` settings.
+        self.ue = ExtParam(model='__self__', src='u',
+                           info='effective online status',
+                           tex_name='u_e',
+                           export=False,
+                           )
 
         self._replaced = None  # bool array marking devices replaced by dynamic models
         self.evaluator = ModelEvaluator(self)

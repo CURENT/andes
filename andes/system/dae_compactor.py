@@ -88,11 +88,12 @@ class DAECompactor:
 
                     excluded.setdefault(model_name, set()).add(target_uid)
 
-        # set u=0 on all replaced devices
+        # set u=0 and ue=0 on all replaced devices
         for model_name, uids in excluded.items():
             mdl = system.__dict__[model_name]
             for uid in uids:
                 mdl.u.v[uid] = 0
+                mdl.ue.v[uid] = 0
 
         return excluded
 

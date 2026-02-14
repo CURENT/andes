@@ -15,7 +15,8 @@ class PVData(ModelData):
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name=r'S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name=r'V_n')
         self.subidx = DataParam(info='index for generators on the same bus', export=False)
-        self.bus = IdxParam(model='Bus', info="idx of the installed bus", mandatory=True)
+        self.bus = IdxParam(model='ACNode', info="idx of the installed bus", mandatory=True,
+                            status_parent=True)
         self.busr = IdxParam(model='Bus', info="bus idx for remote voltage control")
         self.p0 = NumParam(default=0.0, info="active power set point in system base", tex_name=r'p_0', unit='p.u.')
         self.q0 = NumParam(default=0.0, info="reactive power set point in system base", tex_name=r'q_0',
@@ -130,8 +131,8 @@ class PVModel(Model):
         self.q.v_str = 'u * q0'
 
         # injections into buses have negative values
-        self.a.e_str = "-u * p"
-        self.v.e_str = "-u * q"
+        self.a.e_str = "-ue * p"
+        self.v.e_str = "-ue * q"
 
         # power injection equations g(y) = 0
         # NOTE: dynamic generators set `u` to `0` to disable static generators.
@@ -139,7 +140,7 @@ class PVModel(Model):
         # after the substitution. Currently, there is such a step so will result
         # into initialization errors (equation mismatches).
 
-        self.q.e_str = "u*(qlim_zi * (v0-v) + " \
+        self.q.e_str = "ue*(qlim_zi * (v0-v) + " \
                        "qlim_zl * (qmin-q) + " \
                        "qlim_zu * (qmax-q))"
 

@@ -84,7 +84,7 @@ class IEEEVCModel(Model):
         self.vcomp = Algeb(info='Compensator output voltage to exciter',
                            tex_name=r'v_{comp}',
                            v_str='vct - u * v',
-                           e_str='vct - u * v - vcomp',
+                           e_str='vct - ue * v - vcomp',
                            )
 
         # do not need to interface to exciters here.

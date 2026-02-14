@@ -127,8 +127,8 @@ class ShuntSwModel(ShuntModel):
                                err_tol=self.config.err_tol,
                                info='shunt adjuster')
 
-        self.a.e_str = 'u * v**2 * geff'
-        self.v.e_str = '-u * v**2 * beff'
+        self.a.e_str = 'ue * v**2 * geff'
+        self.v.e_str = '-ue * v**2 * beff'
 
 
 class ShuntSw(ShuntSwData, ShuntSwModel):

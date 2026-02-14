@@ -17,8 +17,8 @@ class LineData(ModelData):
     def __init__(self):
         super().__init__()
 
-        self.bus1 = IdxParam(model='Bus', info="idx of from bus")
-        self.bus2 = IdxParam(model='Bus', info="idx of to bus")
+        self.bus1 = IdxParam(model='ACNode', info="idx of from bus", status_parent=True)
+        self.bus2 = IdxParam(model='ACNode', info="idx of to bus", status_parent=True)
 
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
@@ -201,19 +201,19 @@ class Line(LineData, Model):
         self.itap.v_str = '1/tap'
         self.itap2.v_str = '1/tap/tap'
 
-        self.a1.e_str = 'u * (v1 ** 2 * (gh + ghk) * itap2  - \
+        self.a1.e_str = 'ue * (v1 ** 2 * (gh + ghk) * itap2  - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) + \
                                          bhk * sin(a1 - a2 - phi)) * itap)'
 
-        self.v1.e_str = 'u * (-v1 ** 2 * (bh + bhk) * itap2 - \
+        self.v1.e_str = 'ue * (-v1 ** 2 * (bh + bhk) * itap2 - \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) - \
                                          bhk * cos(a1 - a2 - phi)) * itap)'
 
-        self.a2.e_str = 'u * (v2 ** 2 * (gh + ghk) - \
+        self.a2.e_str = 'ue * (v2 ** 2 * (gh + ghk) - \
                               v1 * v2 * (ghk * cos(a1 - a2 - phi) - \
                                          bhk * sin(a1 - a2 - phi)) * itap)'
 
-        self.v2.e_str = 'u * (-v2 ** 2 * (bh + bhk) + \
+        self.v2.e_str = 'ue * (-v2 ** 2 * (bh + bhk) + \
                               v1 * v2 * (ghk * sin(a1 - a2 - phi) + \
                                          bhk * cos(a1 - a2 - phi)) * itap)'
 

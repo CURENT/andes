@@ -13,15 +13,15 @@ class Motor3Model(MotorBaseModel):
     def __init__(self, system, config):
         MotorBaseModel.__init__(self, system, config)
 
-        self.Id.e_str = 'u * (vd - e1d - rs * Id + x1 * Iq)'
+        self.Id.e_str = 'ue * (vd - e1d - rs * Id + x1 * Iq)'
 
         self.Id.v_str = '1'
 
-        self.Iq.e_str = 'u * (vq - e1q - rs * Iq - x1 * Id)'
+        self.Iq.e_str = 'ue * (vq - e1q - rs * Iq - x1 * Id)'
 
         self.te.v_str = 'u * (e1d * Id + e1q * Iq)'
 
-        self.te.e_str = f'{self.te.v_str} - te'
+        self.te.e_str = 'ue * (e1d * Id + e1q * Iq) - te'
 
 
 class Motor3(MotorBaseData, Motor3Model):

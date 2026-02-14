@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple, Union
 
 import andes.io
 from andes.core import AntiWindup, Model, ConnMan
+from andes.core.service import BackRef
 from andes.io.streaming import Streaming
 from andes.shared import NCPUS_PHYSICAL, jac_names, np, spmatrix
 from andes.system.codegen import CodegenManager
@@ -278,8 +279,9 @@ class System:
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
 
-        # init connectivity manager
-        self.conn.init()
+        # propagate bus/parent status to ue before first connectivity check
+        self.propagate_init_status()
+        self.conn.check_connectivity()
 
         if ret is True:
             self.is_setup = True  # set `is_setup` if no error occurred
@@ -676,14 +678,21 @@ class System:
             # get external parameters with `link_external` and then calculate the pu coeff
             for instance in model.params_ext.values():
                 ext_name = instance.model
-                ext_model = self.__dict__[ext_name]
+
+                # '__self__' is a sentinel for self-referencing ExtParam
+                # (e.g. ``ue`` which copies the model's own ``u``)
+                if ext_name == '__self__':
+                    ext_model = model
+                else:
+                    ext_model = self.__dict__[ext_name]
 
                 try:
                     instance.link_external(ext_model)
                 except (IndexError, KeyError) as e:
                     logger.error('Error: <%s> cannot retrieve <%s> from <%s> using <%s>:\n  %s',
                                  model.class_name, instance.name, instance.model,
-                                 instance.indexer.name, repr(e))
+                                 instance.indexer.name if instance.indexer else 'None',
+                                 repr(e))
                     ret = False
         return ret
 
@@ -1247,6 +1256,26 @@ class System:
         """
         models_and_groups = list(self.models.values()) + list(self.groups.values())
 
+        # Auto-create BackRef on destination groups/models for status_parent IdxParams.
+        # This allows the framework to propagate status without requiring manual
+        # BackRef declarations on every parent (e.g., Bus/ACNode doesn't need to
+        # pre-declare BackRef for every child group).
+        for model in models_and_groups:
+            if not hasattr(model, 'idx_params') or model.n == 0:
+                continue
+            for idxp in model.idx_params.values():
+                if not getattr(idxp, 'status_parent', False) or idxp.model is None:
+                    continue
+                dest = self.__dict__.get(idxp.model)
+                if dest is None or dest.n == 0:
+                    continue
+                for ref_name in (model.group, model.class_name):
+                    if ref_name not in dest.services_ref:
+                        br = BackRef(info=f'auto for status from {model.class_name}')
+                        br.owner = dest
+                        br.name = ref_name
+                        dest.services_ref[ref_name] = br
+
         # create an empty list of lists for all `BackRef` instances
         for model in models_and_groups:
             for ref in model.services_ref.values():
@@ -1314,8 +1343,10 @@ class System:
                 if parent_group is None:
                     continue
 
-                # Record child -> parent mapping
-                self._status_parent_map[mdl_name] = (p_name, parent_group)
+                # Record child -> parent mapping (list of tuples for multi-parent)
+                if mdl_name not in self._status_parent_map:
+                    self._status_parent_map[mdl_name] = []
+                self._status_parent_map[mdl_name].append((p_name, parent_group))
 
                 # Record parent -> child BackRef names to follow
                 if parent_group not in self._status_children:
@@ -1332,7 +1363,6 @@ class System:
                     self._status_children[parent_group].add(child_group_name)
                 if child_model_name in parent_obj.services_ref:
                     self._status_children[parent_group].add(child_model_name)
-
 
     def propagate_init_status(self):
         """
@@ -1378,7 +1408,10 @@ class System:
 
     def _get_parent_ue(self, mdl, uid):
         """
-        Get the parent's effective status for a device.
+        Get the combined parent effective status for a device.
+
+        For models with multiple parents (e.g., Line with bus1 and bus2),
+        returns the product of all parents' effective statuses.
 
         Returns 1.0 if the model has no status parent.
         """
@@ -1386,24 +1419,27 @@ class System:
         if mdl_name not in self._status_parent_map:
             return 1.0
 
-        p_name, parent_group_name = self._status_parent_map[mdl_name]
-        parent_idx = mdl.__dict__[p_name].v[uid]
+        result = 1.0
+        for p_name, parent_group_name in self._status_parent_map[mdl_name]:
+            parent_idx = mdl.__dict__[p_name].v[uid]
 
-        if parent_idx is None:
-            return 1.0
+            if parent_idx is None:
+                continue
 
-        parent_obj = self.__dict__.get(parent_group_name)
-        if parent_obj is None:
-            return 1.0
+            parent_obj = self.__dict__.get(parent_group_name)
+            if parent_obj is None:
+                continue
 
-        # Resolve to concrete model via group
-        if hasattr(parent_obj, 'idx2model'):
-            parent_mdl = parent_obj.idx2model(parent_idx)
-        else:
-            parent_mdl = parent_obj
+            # Resolve to concrete model via group
+            if hasattr(parent_obj, 'idx2model'):
+                parent_mdl = parent_obj.idx2model(parent_idx)
+            else:
+                parent_mdl = parent_obj
 
-        parent_uid = parent_mdl.idx2uid(parent_idx)
-        return self._get_effective_status(parent_mdl, parent_uid)
+            parent_uid = parent_mdl.idx2uid(parent_idx)
+            result *= self._get_effective_status(parent_mdl, parent_uid)
+
+        return result
 
     def _propagate_status(self, mdl, idx, uid, ue_val):
         """
@@ -1442,7 +1478,8 @@ class System:
                     continue
 
                 child_uid = child_mdl.idx2uid(child_idx)
-                child_ue = child_mdl.u.v[child_uid] * ue_val
+                parent_ue = self._get_parent_ue(child_mdl, child_uid)
+                child_ue = child_mdl.u.v[child_uid] * parent_ue
                 child_mdl.ue.v[child_uid] = child_ue
 
                 # Recurse to children of this child

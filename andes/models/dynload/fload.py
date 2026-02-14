@@ -15,8 +15,9 @@ class FLoadData(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.pq = IdxParam(model='PQ', mandatory=True,
+        self.pq = IdxParam(model='StaticLoad', mandatory=True,
                            info='idx of the PQ to replace',
+                           replaces=True,
                            )
         self.busf = IdxParam(model='BusFreq',
                              info='optional idx of the BusFreq device to use',
@@ -95,12 +96,6 @@ class FLoadModel(Model):
                           ename='Q',
                           tex_ename='Q',
                           )
-
-    def v_numeric(self, **kwargs):
-        """
-        Disable the linked PQs.
-        """
-        self.system.groups['StaticLoad'].set(src='u', idx=self.pq.v, attr='v', value=0)
 
 
 class FLoad(FLoadData, FLoadModel):

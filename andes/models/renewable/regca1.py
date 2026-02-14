@@ -19,9 +19,10 @@ class REGCA1Data(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.bus = IdxParam(model='Bus',
+        self.bus = IdxParam(model='ACNode',
                             info="interface bus id",
                             mandatory=True,
+                            status_parent=True,
                             )
         self.gen = IdxParam(info="static generator index",
                             model='StaticGen',

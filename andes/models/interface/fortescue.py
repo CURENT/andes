@@ -17,10 +17,14 @@ class FortescueData(ModelData):
     def __init__(self):
         super().__init__()
 
-        self.bus = IdxParam(model='Bus', info="bus idx for the single-phase equivalent", mandatory=True)
-        self.busa = IdxParam(model='Bus', info="bus idx for phase a", mandatory=True)
-        self.busb = IdxParam(model='Bus', info="bus idx for phase b", mandatory=True)
-        self.busc = IdxParam(model='Bus', info="bus idx for phase c", mandatory=True)
+        self.bus = IdxParam(model='ACNode', info="bus idx for the single-phase equivalent", mandatory=True,
+                            status_parent=True)
+        self.busa = IdxParam(model='ACNode', info="bus idx for phase a", mandatory=True,
+                             status_parent=True)
+        self.busb = IdxParam(model='ACNode', info="bus idx for phase b", mandatory=True,
+                             status_parent=True)
+        self.busc = IdxParam(model='ACNode', info="bus idx for phase c", mandatory=True,
+                             status_parent=True)
 
         self.Sn = NumParam(default=100.0,
                            info="Power rating",
@@ -173,16 +177,16 @@ class FortescueModel(Model):
 
         # injection on the primary side
 
-        self.a.e_str = 'u * (v ** 2 * (g + ghk) - v * vp * (ghk * cos(a - ap) + bhk * sin(a - ap)))'
+        self.a.e_str = 'ue * (v ** 2 * (g + ghk) - v * vp * (ghk * cos(a - ap) + bhk * sin(a - ap)))'
 
-        self.v.e_str = 'u * (-v ** 2 * (b + bhk) - v * vp * (ghk * sin(a - ap) - bhk * cos(a - ap)))'
+        self.v.e_str = 'ue * (-v ** 2 * (b + bhk) - v * vp * (ghk * sin(a - ap) - bhk * cos(a - ap)))'
 
         # injections on the secondary side
 
-        p_phase = 'u/3*({v_phase}**2 *(g + ghk) - ' \
+        p_phase = 'ue/3*({v_phase}**2 *(g + ghk) - ' \
                   'v*{v_phase}*(ghk * cos(a-({a_phase})) - bhk * sin(a-({a_phase}))))'
 
-        q_phase = 'u/3*(-{v_phase}**2 *(b + bhk) + ' \
+        q_phase = 'ue/3*(-{v_phase}**2 *(b + bhk) + ' \
                   'v *{v_phase}* (ghk * sin(a - ({a_phase})) + bhk * cos(a - ({a_phase}))))'
 
         self.aa.e_str = p_phase.format(v_phase='va', a_phase='aa')

@@ -52,7 +52,7 @@ class VSCShunt(ACDC2Term):
                          unit='rad',
                          tex_name=r'\theta_{sh}',
                          v_str='a',
-                         e_str='u * (gsh * v**2 - gsh * v * vsh * cos(a - ash) - '
+                         e_str='ue * (gsh * v**2 - gsh * v * vsh * cos(a - ash) - '
                                'bsh * v * vsh * sin(a - ash)) - psh',
                          diag_eps=True,
                          )
@@ -60,7 +60,7 @@ class VSCShunt(ACDC2Term):
                          tex_name="V_{sh}",
                          unit='p.u.',
                          v_str='v0',
-                         e_str='u * (-bsh * v**2 - gsh * v * vsh * sin(a - ash) + '
+                         e_str='ue * (-bsh * v**2 - gsh * v * vsh * sin(a - ash) + '
                                'bsh * v * vsh * cos(a - ash)) - qsh',
                          diag_eps=True,
                          )
@@ -68,21 +68,21 @@ class VSCShunt(ACDC2Term):
                          tex_name="P_{sh}",
                          unit='p.u.',
                          v_str='p0 * (mode_s0 + mode_s1)',
-                         e_str='u * (mode_s0 + mode_s1) * (p0 - psh) + '
-                               'u * (mode_s2 + mode_s3) * (v1 - v2 - vdc0)',
+                         e_str='ue * (mode_s0 + mode_s1) * (p0 - psh) + '
+                               'ue * (mode_s2 + mode_s3) * (v1 - v2 - vdc0)',
                          diag_eps=True,
                          )
         self.qsh = Algeb(info='reactive power injection into VSC',
                          tex_name="Q_{sh}",
                          v_str='q0 * (mode_s0 + mode_s2)',
-                         e_str='u * (mode_s0 + mode_s2) * (q0 - qsh) + '
-                               'u * (mode_s1 + mode_s3) * (v0 - v)',
+                         e_str='ue * (mode_s0 + mode_s2) * (q0 - qsh) + '
+                               'ue * (mode_s1 + mode_s3) * (v0 - v)',
                          diag_eps=True,
                          )
         self.pdc = Algeb(info='DC power injection',
                          tex_name="P_{dc}",
                          v_str='0',
-                         e_str='u * (gsh * vsh * vsh - gsh * v * vsh * cos(a - ash) + '
+                         e_str='ue * (gsh * vsh * vsh - gsh * v * vsh * cos(a - ash) + '
                                'bsh * v * vsh * sin(a - ash)) + pdc',
                          )
         self.a.e_str = '-psh'

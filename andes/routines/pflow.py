@@ -6,7 +6,7 @@ import logging
 from collections import OrderedDict
 
 from andes.utils.misc import elapsed
-from andes.routines.base import BaseRoutine, check_conn_before_init
+from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
 from andes.shared import np, matrix, sparse, newton_krylov
 
@@ -66,7 +66,6 @@ class PFlow(BaseRoutine):
         self.x_sol = None
         self.y_sol = None
 
-    @check_conn_before_init
     def init(self):
         """
         Initialize variables for power flow.
@@ -91,6 +90,9 @@ class PFlow(BaseRoutine):
 
         self.system.set_var_arrays(self.models, inplace=True, alloc=False)
         self.system.init(self.models, routine='pflow')
+
+        system.propagate_init_status()
+        system.conn.check_connectivity()
 
         _, s1 = elapsed(t0)
         logger.info('Power flow initialized in %s.', s1)

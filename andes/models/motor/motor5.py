@@ -22,7 +22,7 @@ class Motor5Model(MotorBaseModel):
                                 )
 
         self.e2d = State(info='real part of 2nd cage voltage',
-                         e_str='u * '
+                         e_str='ue * '
                                '(-wb*slip*(e1q - e2q) + '
                                '(wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10) + '
                                '(e1d - e2d - (x1 - x2) * Iq)/T20)',
@@ -32,7 +32,7 @@ class Motor5Model(MotorBaseModel):
                          )
 
         self.e2q = State(info='imag part of 2nd cage voltage',
-                         e_str='u * '
+                         e_str='ue * '
                                '(wb*slip*(e1d - e2d) + '
                                '(-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10) + '
                                '(e1q - e2q + (x1 - x2) * Id) / T20)',
@@ -41,17 +41,17 @@ class Motor5Model(MotorBaseModel):
                          diag_eps=True,
                          )
 
-        self.Id.e_str = 'u * (vd - e2d - rs * Id + x2 * Iq)'
+        self.Id.e_str = 'ue * (vd - e2d - rs * Id + x2 * Iq)'
 
         self.Id.v_str = '0.9 * u'
 
-        self.Iq.e_str = 'u * (vq - e2q - rs * Iq - x2 * Id)'
+        self.Iq.e_str = 'ue * (vq - e2q - rs * Iq - x2 * Id)'
 
         self.Iq.v_str = '0.1 * u'
 
         self.te.v_str = 'u * (e2d * Id + e2q * Iq)'
 
-        self.te.e_str = f'{self.te.v_str} - te'
+        self.te.e_str = 'ue * (e2d * Id + e2q * Iq) - te'
 
 
 class Motor5(MotorBaseData, Motor5Model):

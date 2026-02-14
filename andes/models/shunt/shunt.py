@@ -10,7 +10,8 @@ class ShuntData(ModelData):
     def __init__(self, system=None, name=None):
         super().__init__(system, name)
 
-        self.bus = IdxParam(model='Bus', info="idx of connected bus", mandatory=True)
+        self.bus = IdxParam(model='ACNode', info="idx of connected bus", mandatory=True,
+                            status_parent=True)
 
         self.Sn = NumParam(default=100.0, info="Power rating", non_zero=True, tex_name='S_n')
         self.Vn = NumParam(default=110.0, info="AC voltage rating", non_zero=True, tex_name='V_n')
@@ -39,8 +40,8 @@ class ShuntModel(Model):
                           tex_ename='Q',
                           )
 
-        self.a.e_str = 'u * v**2 * g'
-        self.v.e_str = '-u * v**2 * b'
+        self.a.e_str = 'ue * v**2 * g'
+        self.v.e_str = '-ue * v**2 * b'
 
 
 class Shunt(ShuntData, ShuntModel):

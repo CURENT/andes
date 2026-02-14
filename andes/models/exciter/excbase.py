@@ -8,7 +8,7 @@ from andes.core.block import Integrator
 from andes.core.discrete import LessThan
 from andes.core.model import Model, ModelData
 from andes.core.param import ExtParam, IdxParam
-from andes.core.service import BackRef, ConstService, ExtService
+from andes.core.service import ConstService, ExtService
 from andes.core.var import Algeb, ExtAlgeb, ExtState
 from andes.models.exciter.saturation import ExcQuadSat
 
@@ -45,9 +45,6 @@ class ExcBase(Model):
         Model.__init__(self, system, config)
         self.group = 'Exciter'
         self.flags.tds = True
-
-        # Voltage compensator idx-es
-        self.VoltComp = BackRef()
 
         # from synchronous generators, get Sn, Vn, bus; tm0; omega
         self.Sn = ExtParam(src='Sn',

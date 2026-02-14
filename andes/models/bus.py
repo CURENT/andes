@@ -100,7 +100,7 @@ class Bus(Model, BusData):
                               flat_start="z_{flat}",
                               )
 
-        self.group = 'ACTopology'
+        self.group = 'ACNode'
         self.category = ['TransNode']
 
         self.flags.update({'collate': False,
@@ -127,29 +127,13 @@ class Bus(Model, BusData):
 
     def set(self, src, idx, attr, value):
         super().set(src=src, idx=idx, attr=attr, value=value)
-        _check_conn_status(system=self.system, src=src, attr=attr)
 
+        if src == 'u' and attr == 'v':
+            if self.system.is_setup:
+                self.system.set_status('ACNode', idx, value)
 
-def _check_conn_status(system, src, attr):
-    """
-    Helper function to determine if connectivity update is needed.
-
-    Parameters
-    ----------
-    system : System
-        The system object.
-    src : str
-        Name of the model property
-    attr : str
-        The internal attribute of the property to get.
-    """
-    # Check if connectivity update is required
-    if src == 'u' and attr == 'v':
-        if system.is_setup:
-            system.conn.record()  # Record connectivity once setup is confirmed
-
-        if not system.TDS.initialized:
-            # Log a warning if Power Flow needs resolution before EIG or TDS
-            if system.PFlow.converged:
-                logger.warning('Bus connectivity is touched, resolve PFlow before running EIG or TDS!')
-            system.PFlow.converged = False  # Flag Power Flow as not converged
+            if not self.system.TDS.initialized:
+                if self.system.PFlow.converged:
+                    logger.warning('Bus connectivity is touched, resolve PFlow '
+                                   'before running EIG or TDS!')
+                self.system.PFlow.converged = False

@@ -755,9 +755,7 @@ class ExtParam(NumParam):
             try:
                 self.vin = parent_instance.vin[uid]
                 self.pu_coeff = parent_instance.pu_coeff[uid]
-            except KeyError:
-                pass
-            except AttributeError:
+            except (KeyError, AttributeError, TypeError):
                 pass
 
     def to_array(self):

@@ -18,9 +18,10 @@ class REGCV1Data(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.bus = IdxParam(model='Bus',
+        self.bus = IdxParam(model='ACNode',
                             info="interface bus id",
                             mandatory=True,
+                            status_parent=True,
                             )
         self.gen = IdxParam(info="static generator index",
                             model='StaticGen',
@@ -160,14 +161,14 @@ class REGCV1ModelBase(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage angle',
-                          e_str='-u * Pe',
+                          e_str='-ue * Pe',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name='V',
                           info='Bus voltage magnitude',
-                          e_str='-u * Qe',
+                          e_str='-ue * Qe',
                           )
 
         self.p0s = ExtService(model='StaticGen',
@@ -218,12 +219,12 @@ class REGCV1ModelBase(Model):
 
         self.Pref2 = Algeb(tex_name=r'P_{ref2}',
                            info='active power reference after adjusting by frequency',
-                           e_str='u * Pref - dw * kw - Pref2',
+                           e_str='ue * Pref - dw * kw - Pref2',
                            v_str='u * Pref')
 
         self.vref2 = Algeb(tex_name=r'v_{ref2}',
                            info='voltage reference after adjusted by reactive power',
-                           e_str='(u * Qref - Qe) * kv + vref - vref2',
+                           e_str='(ue * Qref - Qe) * kv + vref - vref2',
                            v_str='u * vref')
 
         self.dw = State(info='delta virtual rotor speed',
@@ -247,11 +248,11 @@ class REGCV1ModelBase(Model):
 
         self.vd = Algeb(tex_name='V_d',
                         info='d-axis voltage',
-                        e_str='u * v * cos(delta - a) - vd',
+                        e_str='ue * v * cos(delta - a) - vd',
                         v_str='vd0')
         self.vq = Algeb(tex_name='V_q',
                         info='q-axis voltage',
-                        e_str='- u * v * sin(delta - a) - vq',
+                        e_str='- ue * v * sin(delta - a) - vq',
                         v_str='vq0')
 
         self.Pe = Algeb(tex_name='P_e',

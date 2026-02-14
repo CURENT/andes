@@ -13,8 +13,8 @@ class JumperData(ModelData):
     def __init__(self):
         ModelData.__init__(self)
 
-        self.bus1 = IdxParam(model='Bus', info="idx of from bus")
-        self.bus2 = IdxParam(model='Bus', info="idx of to bus")
+        self.bus1 = IdxParam(model='ACNode', info="idx of from bus", status_parent=True)
+        self.bus2 = IdxParam(model='ACNode', info="idx of to bus", status_parent=True)
 
 
 class JumperModel(Model):
@@ -50,13 +50,13 @@ class JumperModel(Model):
                            )
 
         self.p = Algeb(info='active power (1 to 2)',
-                       e_str='u*(a1 - a2) + (1-u) * p',
+                       e_str='ue*(a1 - a2) + (1-ue) * p',
                        tex_name='P',
                        diag_eps=True,
                        )
 
         self.q = Algeb(info='active power (1 to 2)',
-                       e_str='u*(v1 - v2) + (1-u) * p',
+                       e_str='ue*(v1 - v2) + (1-ue) * p',
                        tex_name='Q',
                        diag_eps=True,
                        )

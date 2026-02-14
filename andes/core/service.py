@@ -471,7 +471,7 @@ class BackRef(BaseService):
 
     where the member attribute name `Bus` needs to match exactly model name that
     `Area` wants to collect `idx` for. Similarly, one can define
-    ``self.ACTopology = BackRef()`` to collect devices in the `ACTopology` group
+    ``self.ACNode = BackRef()`` to collect devices in the `ACNode` group
     that references Area.
 
     The collection of `idx` happens in

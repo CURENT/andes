@@ -68,8 +68,8 @@ class Toggle(ToggleData, Model):
                 self._init = True
         else:
             for i in range(self.n):
-                instance = self.system.__dict__[self.model.v[i]]
-                instance.set(src='u', attr='v', idx=self.dev.v[i], value=self._u.v[i])
+                self.system.set_status(self.model.v[i], self.dev.v[i],
+                                       self._u.v[i])
 
     def _u_switch(self, is_time: np.ndarray):
         action = False
@@ -79,7 +79,7 @@ class Toggle(ToggleData, Model):
 
             instance = self.system.__dict__[self.model.v[i]]
             u0 = instance.get(src='u', attr='v', idx=self.dev.v[i])
-            instance.set(src='u', attr='v', idx=self.dev.v[i], value=1-u0)
+            self.system.set_status(self.model.v[i], self.dev.v[i], 1 - u0)
             action = True
             if self.system.options.get("verbose", 20) <= 20:
                 tqdm.write(f'<Toggle {self.idx.v[i]}>: '

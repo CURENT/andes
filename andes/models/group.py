@@ -658,7 +658,7 @@ class Undefined(GroupBase):
     pass
 
 
-class ACTopology(GroupBase):
+class ACNode(GroupBase):
     def __init__(self):
         super().__init__()
         self.common_vars.extend(('a', 'v'))
@@ -774,9 +774,6 @@ class SynGen(GroupBase):
         self.idx_island = []
         self.uid_island = []
         self.delta_addr = []
-
-        self.TurbineGov = BackRef()
-        self.Exciter = BackRef()
 
     def store_idx_island(self, bus_idx):
         """
@@ -926,9 +923,6 @@ class Exciter(GroupBase):
         super().__init__()
         self.common_params.extend(('syn',))
         self.common_vars.extend(('vout', 'vi',))
-
-        self.VoltComp = BackRef()
-        self.PSS = BackRef()
 
 
 class VoltComp(GroupBase):

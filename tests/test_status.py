@@ -43,9 +43,9 @@ class TestStatusPropagation(unittest.TestCase):
         self.assertIn('TGOV1', ss._status_parent_map)
         self.assertIn('ST2CUT', ss._status_parent_map)
 
-        self.assertEqual(ss._status_parent_map['EXDC2'], ('syn', 'SynGen'))
-        self.assertEqual(ss._status_parent_map['TGOV1'], ('syn', 'SynGen'))
-        self.assertEqual(ss._status_parent_map['ST2CUT'], ('avr', 'Exciter'))
+        self.assertEqual(ss._status_parent_map['EXDC2'], [('syn', 'SynGen')])
+        self.assertEqual(ss._status_parent_map['TGOV1'], [('syn', 'SynGen')])
+        self.assertEqual(ss._status_parent_map['ST2CUT'], [('avr', 'Exciter')])
 
     def test_set_status_generator_off(self):
         """Turning off a generator should propagate to exciter, governor, and PSS."""
@@ -287,6 +287,221 @@ class TestInitPropagation(unittest.TestCase):
         self.assertEqual(ss.EXDC2.ue.v[0], 0)
         # PSS ue = pss.u * exciter.ue = 1 * 0 = 0
         self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+
+
+class TestBusStatusPropagation(unittest.TestCase):
+    """
+    Test bus→device status propagation via the ACNode group.
+
+    Uses kundur_st2cut which has Bus, Line, GENROU, PQ, PV, Shunt, etc.
+    """
+
+    def setUp(self):
+        self.ss = andes.run(
+            andes.get_case('kundur/kundur_st2cut.xlsx'),
+            default_config=True,
+            no_output=True,
+            routine='tds',
+        )
+
+    def test_bus_offline_propagates_to_generators(self):
+        """Turning off a bus should set ue=0 on generators at that bus."""
+        ss = self.ss
+        gen_uid = 0
+        bus_idx = ss.GENROU.bus.v[gen_uid]
+
+        ss.set_status('ACNode', bus_idx, 0)
+
+        self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
+        # u stays 1 (device's own status preserved)
+        self.assertEqual(ss.GENROU.u.v[gen_uid], 1)
+
+    def test_bus_offline_cascades_full_chain(self):
+        """Bus offline should cascade: Bus → GENROU → EXDC2 → ST2CUT."""
+        ss = self.ss
+        gen_uid = 0
+        bus_idx = ss.GENROU.bus.v[gen_uid]
+
+        ss.set_status('ACNode', bus_idx, 0)
+
+        self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
+        self.assertEqual(ss.EXDC2.ue.v[0], 0)
+        self.assertEqual(ss.TGOV1.ue.v[0], 0)
+        self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+
+    def test_bus_online_restores_chain(self):
+        """Turning bus back on should restore the full chain."""
+        ss = self.ss
+        gen_uid = 0
+        bus_idx = ss.GENROU.bus.v[gen_uid]
+
+        ss.set_status('ACNode', bus_idx, 0)
+        ss.set_status('ACNode', bus_idx, 1)
+
+        self.assertEqual(ss.GENROU.ue.v[gen_uid], 1)
+        self.assertEqual(ss.EXDC2.ue.v[0], 1)
+        self.assertEqual(ss.TGOV1.ue.v[0], 1)
+        self.assertEqual(ss.ST2CUT.ue.v[0], 1)
+
+    def test_bus_offline_child_independently_off(self):
+        """If exciter has u=0, restoring bus should NOT restore exciter ue."""
+        ss = self.ss
+        gen_uid = 0
+        bus_idx = ss.GENROU.bus.v[gen_uid]
+
+        # Turn off exciter independently
+        ss.set_status('EXDC2', 1, 0)
+        self.assertEqual(ss.EXDC2.u.v[0], 0)
+
+        # Turn off bus, then back on
+        ss.set_status('ACNode', bus_idx, 0)
+        ss.set_status('ACNode', bus_idx, 1)
+
+        # Exciter should still be off (own u=0)
+        self.assertEqual(ss.EXDC2.ue.v[0], 0)
+        # PSS should also be off (parent exciter is off)
+        self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+        # But governor should be restored
+        self.assertEqual(ss.TGOV1.ue.v[0], 1)
+
+
+class TestBusSetIntegration(unittest.TestCase):
+    """
+    Test that Bus.set(src='u') triggers set_status propagation.
+    """
+
+    def setUp(self):
+        self.ss = andes.run(
+            andes.get_case('kundur/kundur_st2cut.xlsx'),
+            default_config=True,
+            no_output=True,
+            routine='tds',
+        )
+
+    def test_bus_set_propagates_ue(self):
+        """Bus.set(src='u', value=0) should propagate ue to dependents."""
+        ss = self.ss
+        gen_uid = 0
+        bus_idx = ss.GENROU.bus.v[gen_uid]
+
+        ss.Bus.set(src='u', attr='v', idx=bus_idx, value=0)
+
+        self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
+        self.assertEqual(ss.EXDC2.ue.v[0], 0)
+
+    def test_bus_set_flags_pflow_not_converged(self):
+        """Bus.set(src='u') should flag PFlow as not converged (before TDS)."""
+        ss = andes.run(
+            andes.get_case('kundur/kundur_st2cut.xlsx'),
+            default_config=True,
+            no_output=True,
+        )
+        # PFlow converged, TDS not yet initialized
+        self.assertTrue(ss.PFlow.converged)
+        self.assertFalse(ss.TDS.initialized)
+
+        bus_idx = ss.GENROU.bus.v[0]
+        ss.Bus.set(src='u', attr='v', idx=bus_idx, value=0)
+
+        self.assertFalse(ss.PFlow.converged)
+
+
+class TestMultiParentLine(unittest.TestCase):
+    """
+    Test Line with two parent buses (bus1 and bus2).
+
+    Line.ue = Line.u * bus1.ue * bus2.ue  (AND logic).
+    """
+
+    def setUp(self):
+        self.ss = andes.run(
+            andes.get_case('kundur/kundur_st2cut.xlsx'),
+            default_config=True,
+            no_output=True,
+            routine='tds',
+        )
+
+    def test_line_bus1_offline(self):
+        """Line with bus1 offline should have ue=0."""
+        ss = self.ss
+        line_uid = 0
+        bus1_idx = ss.Line.bus1.v[line_uid]
+
+        ss.set_status('ACNode', bus1_idx, 0)
+
+        self.assertEqual(ss.Line.ue.v[line_uid], 0)
+        self.assertEqual(ss.Line.u.v[line_uid], 1)
+
+    def test_line_bus2_offline(self):
+        """Line with bus2 offline should have ue=0."""
+        ss = self.ss
+        line_uid = 0
+        bus2_idx = ss.Line.bus2.v[line_uid]
+
+        ss.set_status('ACNode', bus2_idx, 0)
+
+        self.assertEqual(ss.Line.ue.v[line_uid], 0)
+
+    def test_line_both_buses_online(self):
+        """Line ue=1 only when both buses are online."""
+        ss = self.ss
+        line_uid = 0
+        bus1_idx = ss.Line.bus1.v[line_uid]
+        bus2_idx = ss.Line.bus2.v[line_uid]
+
+        ss.set_status('ACNode', bus1_idx, 0)
+        ss.set_status('ACNode', bus2_idx, 0)
+        self.assertEqual(ss.Line.ue.v[line_uid], 0)
+
+        # Restore bus1 only — line should stay off
+        ss.set_status('ACNode', bus1_idx, 1)
+        self.assertEqual(ss.Line.ue.v[line_uid], 0)
+
+        # Restore bus2 — now line should be on
+        ss.set_status('ACNode', bus2_idx, 1)
+        self.assertEqual(ss.Line.ue.v[line_uid], 1)
+
+
+class TestToggleSetStatus(unittest.TestCase):
+    """
+    Test that Toggle uses set_status at runtime (not model.set).
+    """
+
+    def test_toggle_trips_line(self):
+        """Toggle tripping a line should update both u and ue."""
+        ss = andes.load(
+            andes.get_case('kundur/kundur_full.xlsx'),
+            default_config=True,
+            no_output=True,
+        )
+        ss.setup()
+
+        line_idx = ss.Line.idx.v[0]
+        line_uid = 0
+
+        # Simulate what Toggle._u_switch does
+        ss.set_status('Line', line_idx, 0)
+
+        self.assertEqual(ss.Line.u.v[line_uid], 0)
+        self.assertEqual(ss.Line.ue.v[line_uid], 0)
+
+    def test_toggle_restores_line(self):
+        """Toggle reconnecting a line should restore u and ue."""
+        ss = andes.load(
+            andes.get_case('kundur/kundur_full.xlsx'),
+            default_config=True,
+            no_output=True,
+        )
+        ss.setup()
+
+        line_idx = ss.Line.idx.v[0]
+        line_uid = 0
+
+        ss.set_status('Line', line_idx, 0)
+        ss.set_status('Line', line_idx, 1)
+
+        self.assertEqual(ss.Line.u.v[line_uid], 1)
+        self.assertEqual(ss.Line.ue.v[line_uid], 1)
 
 
 if __name__ == '__main__':

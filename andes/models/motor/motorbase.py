@@ -7,9 +7,10 @@ class MotorBaseData(ModelData):
 
     def __init__(self):
         ModelData.__init__(self)
-        self.bus = IdxParam(model='Bus',
+        self.bus = IdxParam(model='ACNode',
                             info="interface bus id",
                             mandatory=True,
+                            status_parent=True,
                             )
 
         self.Sn = NumParam(default=100.0,
@@ -163,43 +164,43 @@ class MotorBaseModel(Model):
                           )
 
         self.vd = Algeb(info='d-axis voltage',
-                        e_str='-u * v * sin(a) - vd',
+                        e_str='-ue * v * sin(a) - vd',
                         tex_name=r'V_d',
                         )
 
         self.vq = Algeb(info='q-axis voltage',
-                        e_str='u * v * cos(a) - vq',
+                        e_str='ue * v * cos(a) - vq',
                         tex_name=r'V_q',
                         )
 
         self.slip = State(tex_name=r"\sigma",
-                          e_str='u * (tm - te)',
+                          e_str='ue * (tm - te)',
                           t_const=self.M,
                           diag_eps=True,
                           v_str='1.0 * u',
                           )
 
         self.p = Algeb(tex_name='P',
-                       e_str='u * (vd * Id + vq * Iq) - p',
+                       e_str='ue * (vd * Id + vq * Iq) - p',
                        v_str='u * (vd * Id + vq * Iq)',
                        )
 
         self.q = Algeb(tex_name='Q',
-                       e_str='u * (vq * Id - vd * Iq) - q',
+                       e_str='ue * (vq * Id - vd * Iq) - q',
                        v_str='u * (vq * Id - vd * Iq)',
                        )
 
         self.e1d = State(info='real part of 1st cage voltage',
                          tex_name="e'_d",
                          v_str='0.05 * u',
-                         e_str='u * (wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10)',
+                         e_str='ue * (wb*slip*e1q - (e1d + (x0 - x1) * Iq)/T10)',
                          diag_eps=True,
                          )
 
         self.e1q = State(info='imaginary part of 1st cage voltage',
                          tex_name="e'_q",
                          v_str='0.9 * u',
-                         e_str='u * (-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10)',
+                         e_str='ue * (-wb*slip*e1d - (e1q - (x0 - x1) * Id)/T10)',
                          diag_eps=True,
                          )
 
@@ -218,4 +219,4 @@ class MotorBaseModel(Model):
                         )
 
         self.tm.v_str = 'u * (aa + bb * slip + c2 * slip * slip)'
-        self.tm.e_str = f'{self.tm.v_str} - tm'
+        self.tm.e_str = 'ue * (aa + bb * slip + c2 * slip * slip) - tm'

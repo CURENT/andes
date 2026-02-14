@@ -22,7 +22,8 @@ class BusFreq(ModelData, Model):
         self.group = 'FreqMeasurement'
 
         # Parameters
-        self.bus = IdxParam(info="bus idx", mandatory=True)
+        self.bus = IdxParam(model='ACNode', info="bus idx", mandatory=True,
+                            status_parent=True)
 
         self.Tf = NumParam(default=0.02,
                            info="input digital filter time const",
