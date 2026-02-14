@@ -12,18 +12,47 @@ The APIs before v3.0.0 are in beta and may change without prior notice.
 
 ## v2.0 Notes
 
-### v2.0.0
+### v2.0.0 (In development)
 
-- Add DAE compaction to remove replaced static generators' algebraic variables from the
-  Newton-Raphson system during TDS, reducing system size for dynamics-heavy cases.
-- Refactor `System` internals by extracting `RegistryLoader` and `CodegenManager`; prefer direct calls via
-  `system.registry.*` and `system.codegen.*`, with legacy `System` delegate methods deprecated for removal in v3.0.
-- Extract config runtime logic into `SystemConfigRuntime` (`andes.system.config_runtime`); prefer
-  `system.config_runtime.*` over facade-level helpers. Legacy wrappers in `andes.system.facade`
-  are deprecated and scheduled for removal in v3.0.
-- Extract model evaluator logic into `ModelEvaluator` (`andes.core.model.model_evaluator`) using composition.
-  Keep `Model` methods (`f_update`, `g_update`, `j_update`, service/discrete updates, and input refreshers)
-  as delegate wrappers to preserve call sites.
+Modeling framework changes:
+
+- Add universal `ue` (effective online status) field to the base `Model` class.
+  Models should use `ue` instead of `u` in equations so that parent-offline
+  status automatically disables children.
+- Add `status_parent=True` flag to `IdxParam` for declaring parent-child status
+  relationships (e.g., Exciter->SynGen, PSS->Exciter).
+- Add `System.set_status()` / `get_status()` API for setting device status with
+  recursive propagation of `ue = u * parent.ue` to downstream controllers via
+  BackRef.
+- Add `propagate_init_status()` for init-time status propagation, replacing the
+  old per-model `ug`/`uee` ExtParam mechanism.
+- Add DAE compaction to remove replaced static generators' algebraic variables
+  from the Newton-Raphson system during TDS, reducing system size for
+  dynamics-heavy cases.
+
+Model changes:
+
+- Remove `ug` ExtParam and custom `ue` ConstService from `ExcBase` and `TGBase`;
+  now inherited from the base `Model` class.
+- Remove `uee` ExtService and custom `ue` ConstService from `PSSBase`.
+- Rename DGPrct `ue` Algeb (lock flag) to `lock` to avoid collision with the new
+  base `ue`.
+- Fix EXDC2 `Se0` formula to use `ue` instead of removed `ug`.
+
+Refactoring:
+
+- Refactor `System` internals by extracting `RegistryLoader` and
+  `CodegenManager`; prefer direct calls via `system.registry.*` and
+  `system.codegen.*`, with legacy `System` delegate methods deprecated for
+  removal in v3.0.
+- Extract config runtime logic into `SystemConfigRuntime`
+  (`andes.system.config_runtime`); prefer `system.config_runtime.*` over
+  facade-level helpers. Legacy wrappers in `andes.system.facade` are deprecated
+  and scheduled for removal in v3.0.
+- Extract model evaluator logic into `ModelEvaluator`
+  (`andes.core.model.model_evaluator`) using composition. Keep `Model` methods
+  (`f_update`, `g_update`, `j_update`, service/discrete updates, and input
+  refreshers) as delegate wrappers to preserve call sites.
 
 ## v1.10 Notes
 

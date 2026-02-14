@@ -17,7 +17,7 @@ class OutputData(ModelData):
     """
 
     def __init__(self):
-        ModelData.__init__(self, three_params=False)
+        ModelData.__init__(self)
 
         self.model = DataParam(info='Name of the model', mandatory=True)
         self.varname = DataParam(info='Variable name', )

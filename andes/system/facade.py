@@ -18,7 +18,6 @@ from typing import Dict, Optional, Tuple, Union
 
 import andes.io
 from andes.core import AntiWindup, Model, ConnMan
-from andes.core.service import ConstService
 from andes.io.streaming import Streaming
 from andes.shared import NCPUS_PHYSICAL, jac_names, np, spmatrix
 from andes.system.codegen import CodegenManager
@@ -1334,28 +1333,48 @@ class System:
                 if child_model_name in parent_obj.services_ref:
                     self._status_children[parent_group].add(child_model_name)
 
-        # Validate: warn if model has status_parent but no ue ConstService
-        for mdl_name in self._status_parent_map:
-            mdl = self.models[mdl_name]
-            has_ue = (hasattr(mdl, 'ue') and
-                      isinstance(getattr(mdl, 'ue'), ConstService))
-            if not has_ue:
-                logger.debug(
-                    '<%s> declares status_parent but has no ConstService '
-                    'named "ue". Status propagation will update u.v only.',
-                    mdl_name,
-                )
+
+    def propagate_init_status(self):
+        """
+        Propagate effective status from parent to child models at init time.
+
+        For each model with a ``status_parent``, recompute
+        ``ue.v = u.v * parent_ue`` for every device, then recurse into
+        children.  This replaces the previous ``ug``/``uee`` ExtParam
+        mechanism that fetched the parent's ``u`` at init.
+
+        Should be called once after ``system.init()`` for TDS models.
+        """
+        if not self._status_children:
+            return
+
+        # Find top-level parent groups (groups that have children but
+        # are not themselves children of another group)
+        child_groups = {self.models[m].group for m in self._status_parent_map
+                        if m in self.models}
+        parent_groups = set(self._status_children.keys()) - child_groups
+
+        # For each top-level parent group, propagate from every device
+        for grp_name in parent_groups:
+            grp = self.groups.get(grp_name)
+            if grp is None:
+                continue
+
+            for mdl_name in grp.models:
+                mdl = self.models.get(mdl_name)
+                if mdl is None or mdl.n == 0:
+                    continue
+
+                for uid in range(mdl.n):
+                    idx = mdl.idx.v[uid]
+                    ue_val = self._get_effective_status(mdl, uid)
+                    self._propagate_status(mdl, idx, uid, ue_val)
 
     def _get_effective_status(self, mdl, uid):
         """
         Return the effective status value for a device.
-
-        Returns ``ue.v[uid]`` if the model has a ``ConstService`` named
-        ``ue``, otherwise returns ``u.v[uid]``.
         """
-        if hasattr(mdl, 'ue') and isinstance(mdl.ue, ConstService):
-            return mdl.ue.v[uid]
-        return mdl.u.v[uid]
+        return mdl.ue.v[uid]
 
     def _get_parent_ue(self, mdl, uid):
         """
@@ -1424,10 +1443,7 @@ class System:
 
                 child_uid = child_mdl.idx2uid(child_idx)
                 child_ue = child_mdl.u.v[child_uid] * ue_val
-
-                # Update ue.v if the child has a ConstService named ue
-                if hasattr(child_mdl, 'ue') and isinstance(child_mdl.ue, ConstService):
-                    child_mdl.ue.v[child_uid] = child_ue
+                child_mdl.ue.v[child_uid] = child_ue
 
                 # Recurse to children of this child
                 self._propagate_status(child_mdl, child_idx, child_uid, child_ue)
@@ -1465,9 +1481,7 @@ class System:
         # Recompute ue.v for this device
         parent_ue = self._get_parent_ue(mdl, uid)
         ue_val = value * parent_ue
-
-        if hasattr(mdl, 'ue') and isinstance(mdl.ue, ConstService):
-            mdl.ue.v[uid] = ue_val
+        mdl.ue.v[uid] = ue_val
 
         # Propagate to children
         self._propagate_status(mdl, idx, uid, ue_val)
@@ -1476,8 +1490,7 @@ class System:
         """
         Get the effective status of a device.
 
-        Returns ``ue.v`` if the model has a ``ConstService`` named ``ue``,
-        otherwise returns ``u.v``.
+        Returns ``ue.v`` (effective online status) for the device.
 
         Parameters
         ----------

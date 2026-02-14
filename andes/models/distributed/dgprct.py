@@ -225,7 +225,7 @@ class DGPRCTBaseModel(Model):
         self.ltu = ConstService(v_str='0.8')
         self.ltl = ConstService(v_str='0.2')
 
-        # `Ldsum_zu` is `ue`
+        # `Ldsum_zu` is `lock`
         dsum = 'fen * (IAWfl1_lim_zu * Lfl1_zi + IAWfl2_lim_zu * Lfl2_zi + ' \
                'IAWfu1_lim_zu * Lfu1_zi + IAWfu2_lim_zu * Lfu2_zi) + ' \
                'Ven * (IAWVl1_lim_zu * LVl1_zi + IAWVl2_lim_zu * LVl2_zi + ' \
@@ -246,15 +246,15 @@ class DGPRCTBaseModel(Model):
                              equal=False, no_warn=True,
                              )
 
-        self.ue = Algeb(v_str='0',
-                        e_str='Ldsum_zu - ue',
-                        info='lock flag',
-                        tex_name=r'ue',
-                        )
+        self.lock = Algeb(v_str='0',
+                          e_str='Ldsum_zu - lock',
+                          info='lock flag',
+                          tex_name=r'u_{lock}',
+                          )
 
         self.zero = ConstService('0')
 
-        self.res = ExtendedEvent(self.ue, t_ext=self.Tres,
+        self.res = ExtendedEvent(self.lock, t_ext=self.Tres,
                                  trig="rise",
                                  extend_only=True)
 
@@ -269,7 +269,7 @@ class DGPRCTBaseModel(Model):
         self.fHzl = ExtAlgeb(model='DG', src='fHz',
                              indexer=self.dev,
                              export=False,
-                             e_str='- ue * (fn * f)',
+                             e_str='- lock * (fn * f)',
                              info='Frequency measure lock',
                              ename='fHzl',
                              tex_ename='f_{Hzl}',
@@ -296,7 +296,7 @@ class DGPRCTBaseModel(Model):
         self.Psum = ExtAlgeb(model='DG', src='Psum',
                              indexer=self.dev,
                              export=False,
-                             e_str='- ue * (Pext + Pref + Pdrp)',
+                             e_str='- lock * (Pext + Pref + Pdrp)',
                              info='Active power lock',
                              ename='Pneg',
                              tex_ename='P_{neg}',
@@ -315,7 +315,7 @@ class DGPRCTBaseModel(Model):
         self.Qsum = ExtAlgeb(model='DG', src='Qsum',
                              indexer=self.dev,
                              export=False,
-                             e_str='- ue * (Qdrp + Qref)',
+                             e_str='- lock * (Qdrp + Qref)',
                              info='Reactive power lock',
                              ename='Qneg',
                              tex_ename='Q_{neg}',
@@ -325,7 +325,7 @@ class DGPRCTBaseModel(Model):
         # TODO: clear State: BusFreq WO(Washout)
         # TODO: clear State: PVD1: Ipout, Iqout
         # TODO: develop integrator with reset function
-        # TODO: Set EventFlag for ue
+        # TODO: Set EventFlag for lock
 
 
 class fProtect:
@@ -499,13 +499,13 @@ class DGPRCT1(DGPRCTBaseData, DGPRCT1Model):
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
-    ``ue`` is lock flag signal.
+    ``lock`` is lock flag signal.
 
     It should be noted that, the lock only lock the ``fHz`` (frequency read value)
     of DG model. The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
     Protection sensors (e.g., IAWfl1) are instances of ``IntergratorAntiWindup``. All
-    the protection sensors will be reset after ``ue`` returns to 0.
+    the protection sensors will be reset after ``lock`` returns to 0.
     Resetting action takes `Tres` to finish.
 
     The model does not check the shedding points sequence.
@@ -578,13 +578,13 @@ class DGPRCTExt(DGPRCTBaseData, DGPRCTExtModel):
 
     ``fen`` and ``Ven`` are protection enabling parameters. 1/0 is on/off.
 
-    ``ue`` is lock flag signal.
+    ``lock`` is lock flag signal.
 
     It should be noted that, the lock only lock the ``fHz`` (frequency read value)
     of DG model. The source values (which come from ``BusFreq`` `f` remain unchanged.)
 
     Protection sensors (e.g., IAWfl1) are instances of ``IntergratorAntiWindup``. All
-    the protection sensors will be reset after ``ue`` returns to 0.
+    the protection sensors will be reset after ``lock`` returns to 0.
     Resetting action takes `Tres` to finish.
 
     The model does not check the shedding points sequence.

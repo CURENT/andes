@@ -49,19 +49,7 @@ class ExcBase(Model):
         # Voltage compensator idx-es
         self.VoltComp = BackRef()
 
-        # from synchronous generators, get u, Sn, Vn, bus; tm0; omega
-        self.ug = ExtParam(src='u',
-                           model='SynGen',
-                           indexer=self.syn,
-                           tex_name='u_g',
-                           info='Generator online status',
-                           unit='bool',
-                           export=False,
-                           )
-        self.ue = ConstService(v_str='u * ug',
-                               info="effective online status",
-                               tex_name='u_e',
-                               )
+        # from synchronous generators, get Sn, Vn, bus; tm0; omega
         self.Sn = ExtParam(src='Sn',
                            model='SynGen',
                            indexer=self.syn,

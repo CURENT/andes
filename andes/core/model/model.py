@@ -290,6 +290,15 @@ class Model:
         self.debug_equations = list()  # variable names for debugging corresponding equation
         self.non_top_level = list()  # list of non-top-level components
 
+        # effective online status: equals ``u`` by default, but may be
+        # overwritten by status propagation (parent offline → child offline).
+        # Models should use ``ue`` instead of ``u`` in equations so that
+        # turning off a parent device automatically disables its children.
+        self.ue = ConstService(v_str='u',
+                               info='effective online status',
+                               tex_name='u_e',
+                               )
+
         self._replaced = None  # bool array marking devices replaced by dynamic models
         self.evaluator = ModelEvaluator(self)
 

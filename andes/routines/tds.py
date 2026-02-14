@@ -218,6 +218,7 @@ class TDS(BaseRoutine):
         system.vars_to_models()
 
         system.init(system.exist.tds, routine='tds')
+        system.propagate_init_status()
 
         system.compact_dae()
 

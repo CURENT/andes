@@ -58,19 +58,6 @@ class TGBase(Model):
                            unit='MVA',
                            export=False,
                            )
-        self.ug = ExtParam(src='u',
-                           model='SynGen',
-                           indexer=self.syn,
-                           tex_name='u_g',
-                           info='Generator connection status',
-                           unit='bool',
-                           export=False,
-                           )
-        self.ue = ConstService(v_str='u * ug',
-                               info="effective connection status considering generator's",
-                               tex_name='u_{e}',
-                               )
-
         if add_sn is True:
             self.Sn = NumSelect(self.Tn,
                                 fallback=self.Sg,

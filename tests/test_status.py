@@ -198,5 +198,96 @@ class TestStatusPropagation(unittest.TestCase):
         self.assertEqual(ss.Exciter.get_status(1), 0)
 
 
+class TestInitPropagation(unittest.TestCase):
+    """
+    Tests for init-time status propagation via ``propagate_init_status()``.
+
+    Uses the same kundur_st2cut case (GENROU -> EXDC2 -> ST2CUT, GENROU -> TGOV1).
+    """
+
+    def setUp(self):
+        self.ss = andes.run(
+            andes.get_case('kundur/kundur_st2cut.xlsx'),
+            default_config=True,
+            no_output=True,
+            routine='tds',
+        )
+
+    def test_all_online_after_init(self):
+        """After normal init with all devices online, ue should equal u."""
+        ss = self.ss
+        for uid in range(ss.GENROU.n):
+            self.assertEqual(ss.GENROU.ue.v[uid], ss.GENROU.u.v[uid])
+        for uid in range(ss.EXDC2.n):
+            self.assertEqual(ss.EXDC2.ue.v[uid], ss.EXDC2.u.v[uid])
+        for uid in range(ss.TGOV1.n):
+            self.assertEqual(ss.TGOV1.ue.v[uid], ss.TGOV1.u.v[uid])
+        for uid in range(ss.ST2CUT.n):
+            self.assertEqual(ss.ST2CUT.ue.v[uid], ss.ST2CUT.u.v[uid])
+
+    def test_propagate_offline_generator(self):
+        """propagate_init_status should set children ue=0 for an offline generator."""
+        ss = self.ss
+
+        # Simulate generator offline at init (u=0 from input data -> ue=0 after service eval)
+        ss.GENROU.u.v[0] = 0
+        ss.GENROU.ue.v[0] = 0
+
+        ss.propagate_init_status()
+
+        # Children's ue should be 0
+        self.assertEqual(ss.EXDC2.ue.v[0], 0)
+        self.assertEqual(ss.TGOV1.ue.v[0], 0)
+        self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+
+        # Children's u should be unchanged
+        self.assertEqual(ss.EXDC2.u.v[0], 1)
+        self.assertEqual(ss.TGOV1.u.v[0], 1)
+        self.assertEqual(ss.ST2CUT.u.v[0], 1)
+
+    def test_propagate_offline_exciter(self):
+        """propagate_init_status with offline exciter should cascade to PSS only."""
+        ss = self.ss
+
+        # Simulate exciter offline at init
+        ss.EXDC2.u.v[0] = 0
+        ss.EXDC2.ue.v[0] = 0
+
+        ss.propagate_init_status()
+
+        # PSS should have ue=0 (exciter is parent)
+        self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+        # Governor should be unaffected (different branch)
+        self.assertEqual(ss.TGOV1.ue.v[0], 1)
+
+    def test_propagate_no_cross_contamination(self):
+        """Offline generator 1 should not affect generator 2's children."""
+        ss = self.ss
+
+        ss.GENROU.u.v[0] = 0
+        ss.GENROU.ue.v[0] = 0
+
+        ss.propagate_init_status()
+
+        # Generator 2's exciter and governor should remain online
+        self.assertEqual(ss.EXDC2.ue.v[1], 1)
+        self.assertEqual(ss.TGOV1.ue.v[1], 1)
+
+    def test_propagate_child_also_offline(self):
+        """If both generator and exciter are offline, PSS ue should be 0."""
+        ss = self.ss
+
+        ss.GENROU.u.v[0] = 0
+        ss.GENROU.ue.v[0] = 0
+        ss.EXDC2.u.v[0] = 0
+
+        ss.propagate_init_status()
+
+        # exciter ue = exciter.u * gen.ue = 0 * 0 = 0
+        self.assertEqual(ss.EXDC2.ue.v[0], 0)
+        # PSS ue = pss.u * exciter.ue = 1 * 0 = 0
+        self.assertEqual(ss.ST2CUT.ue.v[0], 0)
+
+
 if __name__ == '__main__':
     unittest.main()

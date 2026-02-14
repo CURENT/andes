@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 from andes.core import (ModelData, IdxParam, Model, ExtParam,
-                        ExtState, ExtService, ExtAlgeb, Algeb, ConstService)
+                        ExtState, ExtService, ExtAlgeb, Algeb)
 from andes.core.service import Replace, DataSelect, DeviceFinder
 
 logger = logging.getLogger(__name__)
@@ -29,18 +29,6 @@ class PSSBase(Model):
         super().__init__(system, config)
         self.group = 'PSS'
         self.flags.update({'tds': True})
-
-        # from synchronous exciters, get ue
-        self.uee = ExtService(model='Exciter',
-                              src='ue',
-                              indexer=self.avr,
-                              tex_name=r'u_{ee}',
-                              info='Effective exciter online status',
-                              )
-        self.ue = ConstService(v_str='u * uee',
-                               info="effective connection status considering exciter's",
-                               tex_name='u_{e}',
-                               )
 
         self.VCUr = Replace(self.VCU, lambda x: np.equal(x, 0.0), 999)
         self.VCLr = Replace(self.VCL, lambda x: np.equal(x, 0.0), -999)

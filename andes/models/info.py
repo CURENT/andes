@@ -15,7 +15,7 @@ class Summary(ModelData, Model):
     """
 
     def __init__(self, system, config):
-        ModelData.__init__(self, three_params=False)
+        ModelData.__init__(self)
 
         self.field = DataParam(info='field name')
         self.comment = DataParam(info='information, comment, or anything')
