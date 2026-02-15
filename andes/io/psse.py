@@ -5,7 +5,6 @@ Include a RAW parser and a DYR parser.
 """
 
 import logging
-import re
 import os
 import yaml
 
@@ -211,8 +210,6 @@ def read(system, file):
     """
     Read PSS/E RAW file v32/v33/v34 formats.
     """
-
-    rawd = re.compile(r'rawd\d\d')
 
     ret = True
     mva = 100

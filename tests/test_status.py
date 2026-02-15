@@ -389,6 +389,7 @@ class TestBusSetIntegration(unittest.TestCase):
         self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
         self.assertEqual(ss.EXDC2.ue.v[0], 0)
 
+
 class TestMultiParentLine(unittest.TestCase):
     """
     Test Line with two parent buses (bus1 and bus2).

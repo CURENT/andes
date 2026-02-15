@@ -172,14 +172,11 @@ class EIG(BaseRoutine):
             Time constants for non-zero-Tf states only.
         """
         n = fx.size[0]
-        m = gy.size[0]
         zs = self.zstate_idx
-        nz = len(zs)
 
         nz_mask = np.ones(n, dtype=bool)
         nz_mask[zs] = False
         nz_idx = np.where(nz_mask)[0]
-        n_nz = len(nz_idx)
 
         # Selection matrices for non-zero-Tf states (rows/cols of fx)
         Sx, Sx_T = self._selection_matrices(list(nz_idx), n)
@@ -316,7 +313,6 @@ class EIG(BaseRoutine):
             self.zstate_idx = np.where(system.dae.Tf == 0)[0]
             logger.debug("%d states are associated with zero time constants.", len(self.zstate_idx))
             logger.debug([system.dae.x_name[i] for i in self.zstate_idx])
-
 
     @staticmethod
     def _sparse_row_norms(mat):

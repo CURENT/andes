@@ -124,4 +124,3 @@ class Bus(Model, BusData):
                        '(1-flat_start)*a0'
         self.v.v_str = 'flat_start*1 + ' \
                        '(1-flat_start)*v0'
-
