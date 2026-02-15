@@ -578,23 +578,27 @@ class Model:
         """
         return self.system.set_status(self.class_name, idx, value)
 
-    def get_status(self, idx):
+    def get_status(self, idx=None):
         """
-        Get the effective online status of a device.
+        Get the effective online status of a device or all devices.
 
-        Returns ``ue.v`` if the model defines a ``ue`` ConstService,
-        otherwise returns ``u.v``.
+        When ``idx`` is ``None``, returns the full ``ue.v`` array for
+        all devices. Otherwise, returns the scalar status for the
+        given device.
 
         Parameters
         ----------
-        idx : str, int, float
-            Device idx.
+        idx : str, int, float, or None
+            Device idx. If ``None``, return the status array for all
+            devices.
 
         Returns
         -------
-        float
-            Effective status value (0 or 1).
+        float or numpy.ndarray
+            Effective status value(s) (0 or 1).
         """
+        if idx is None:
+            return self.ue.v
         return self.system.get_status(self.class_name, idx)
 
     def alter(self, src, idx, value, attr='v'):

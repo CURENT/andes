@@ -839,6 +839,7 @@ class RenPlant(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('ree',))
 
 
 class RenGovernor(GroupBase):
@@ -911,6 +912,7 @@ class TurbineGov(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('syn',))
         self.common_vars.extend(('pout',))
 
 
@@ -942,7 +944,7 @@ class VoltComp(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('rc', 'xc',))
+        self.common_params.extend(('avr', 'rc', 'xc',))
         self.common_vars.extend(('vcomp',))
 
 
@@ -951,6 +953,7 @@ class PSS(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('avr',))
         self.common_vars.extend(('vsout',))
 
 
@@ -979,6 +982,7 @@ class FreqMeasurement(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus',))
         self.common_vars.extend(('f',))
 
 
@@ -987,6 +991,7 @@ class PhasorMeasurement(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus',))
         self.common_vars.extend(('am', 'vm'))
 
 
@@ -995,6 +1000,7 @@ class PLL(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus',))
         self.common_vars.extend(('am',))
 
 
@@ -1004,6 +1010,7 @@ class Motor(GroupBase):
 
     def __init__(self):
         super().__init__()
+        self.common_params.extend(('bus',))
 
 
 class Information(GroupBase):

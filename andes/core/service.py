@@ -1190,12 +1190,16 @@ class InitChecker(OperationService):
     def check(self):
         """
         Check the bounds and equality conditions.
+
+        Skips offline devices using the owner model's effective status.
         """
         if not self.enable:
             return
 
         if self._v is None:
             self._v = np.zeros_like(self.u.v)
+
+        online = self.owner.get_status().astype(bool)
 
         for check in self.checks:
             limit = check[0]
@@ -1205,9 +1209,10 @@ class InitChecker(OperationService):
             if limit is None:
                 continue
 
-            self.v[:] = np.logical_or(self.v, func(self.u.v, limit.v))
+            violated = func(self.u.v, limit.v)
+            self.v[:] = np.logical_or(self.v, violated)
 
-            pos = np.argwhere(func(self.u.v, limit.v)).ravel()
+            pos = np.argwhere(np.logical_and(violated, online)).ravel()
 
             if len(pos) == 0:
                 continue

@@ -40,7 +40,6 @@ class TestREECB1(unittest.TestCase):
 
             try:
                 ss = andes.load(tmpfile, no_output=True, default_config=True)
-                ss.setup()
                 ss.PFlow.run()
                 ss.TDS.init()
 
@@ -103,7 +102,6 @@ class TestREECB1(unittest.TestCase):
 
         try:
             ss = andes.load(tmpfile, no_output=True, default_config=True)
-            ss.setup()
             ss.PFlow.run()
             ss.TDS.init()
 

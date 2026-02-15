@@ -1826,7 +1826,7 @@ class GainLimiter(Block):
     """
 
     def __init__(self, u, K, R, lower, upper, no_lower=False, no_upper=False,
-                 sign_lower=1, sign_upper=1,
+                 sign_lower=1, sign_upper=1, allow_adjust=True,
                  name=None, tex_name=None, info=None):
         Block.__init__(self, name=name, tex_name=tex_name, info=info)
         self.u = dummify(u)
@@ -1848,6 +1848,7 @@ class GainLimiter(Block):
         self.lim = HardLimiter(u=self.x, lower=self.lower, upper=self.upper,
                                no_upper=no_upper, no_lower=no_lower,
                                sign_lower=sign_lower, sign_upper=sign_upper,
+                               allow_adjust=allow_adjust,
                                tex_name='lim')
 
         self.y = Observable(info='Output after limiter and post gain', tex_name='y', discrete=self.lim)

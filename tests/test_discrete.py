@@ -1,9 +1,11 @@
+import logging
 import unittest
 
 from andes.core.common import DummyValue
 from andes.core.discrete import (Average, Delay, Derivative, Limiter,
                                  SortedLimiter, Switcher,)
 from andes.core.param import NumParam
+from andes.core.service import InitChecker
 from andes.core.var import Algeb
 from andes.shared import np
 
@@ -186,3 +188,134 @@ class TestDerivative(unittest.TestCase):
                 np.testing.assert_almost_equal(self.v, self.k)
 
             self.dae_t += self.t_step
+
+
+class _MockOwner:
+    """Minimal mock model owner for InitChecker and Limiter tests."""
+
+    def __init__(self, n, status=None):
+        self.class_name = 'TestModel'
+        self.n = n
+        self.idx = type('obj', (object,), {'v': list(range(1, n + 1))})()
+        self._status = status if status is not None else np.ones(n)
+
+    def get_status(self):
+        return self._status
+
+
+class TestInitCheckerOffline(unittest.TestCase):
+    """Tests that InitChecker skips offline devices."""
+
+    def _make_checker(self, values, lower, upper, status):
+        u = Algeb(info='test')
+        u.v = np.array(values)
+
+        ic = InitChecker(u=u, lower=lower, upper=upper, info='test range')
+        ic.owner = _MockOwner(len(values), status=np.array(status))
+        return ic
+
+    def test_online_device_warns(self):
+        """Online device violating bounds should produce a warning."""
+        ic = self._make_checker(
+            values=[0.5, 2.0],
+            lower=1.0, upper=3.0,
+            status=[1.0, 1.0],
+        )
+
+        with self.assertLogs(level=logging.WARNING):
+            ic.check()
+
+        # v is True for pass, False for violation
+        self.assertFalse(ic.v[0])  # 0.5 < 1.0 lower bound
+        self.assertTrue(ic.v[1])   # 2.0 within bounds
+
+    def test_offline_device_no_warn(self):
+        """Offline device violating bounds should NOT produce a warning."""
+        ic = self._make_checker(
+            values=[0.5, 2.0],
+            lower=1.0, upper=3.0,
+            status=[0.0, 1.0],
+        )
+
+        # Device 0 violates lower bound but is offline; device 1 is fine.
+        # No warnings should be emitted.
+        with self.assertRaises(AssertionError):
+            # assertLogs fails if no log is emitted — that's what we expect
+            with self.assertLogs(level=logging.WARNING):
+                ic.check()
+
+        # v still tracks the violation regardless of online status
+        self.assertFalse(ic.v[0])  # violated
+        self.assertTrue(ic.v[1])   # within bounds
+
+    def test_mixed_online_offline(self):
+        """Only online violators should produce warnings."""
+        ic = self._make_checker(
+            values=[0.5, 0.5, 2.0],
+            lower=1.0, upper=3.0,
+            status=[0.0, 1.0, 1.0],
+        )
+
+        # Device 0 offline+violating (no warn), device 1 online+violating (warn),
+        # device 2 online+ok (no warn)
+        with self.assertLogs(level=logging.WARNING):
+            ic.check()
+
+        self.assertFalse(ic.v[0])  # violated (offline)
+        self.assertFalse(ic.v[1])  # violated (online)
+        self.assertTrue(ic.v[2])   # within bounds
+
+
+class TestLimiterAdjustOffline(unittest.TestCase):
+    """Tests that Limiter adjust skips offline devices."""
+
+    def _make_limiter(self, values, lower_v, upper_v, status):
+        u = Algeb(info='input')
+        u.v = np.array(values, dtype=float)
+
+        lower = NumParam()
+        lower.v = np.array(lower_v, dtype=float)
+        lower.name = 'lower'
+        upper = NumParam()
+        upper.v = np.array(upper_v, dtype=float)
+        upper.name = 'upper'
+
+        n = len(values)
+        lim = Limiter(u, lower, upper, name='lim', allow_adjust=True)
+        lim.list2array(n)
+        lim.owner = _MockOwner(n, status=np.array(status, dtype=float))
+        return lim, lower, upper
+
+    def test_adjust_lower_skips_offline(self):
+        """Offline device below lower bound should not trigger adjustment."""
+        lim, lower, upper = self._make_limiter(
+            values=[0.5, 0.5, 2.0],
+            lower_v=[1.0, 1.0, 1.0],
+            upper_v=[3.0, 3.0, 3.0],
+            status=[0.0, 1.0, 1.0],
+        )
+
+        original_lower_0 = lower.v[0]
+        lim.do_adjust_lower(lim.u.v, lower.v, allow_adjust=True, adjust_lower=True)
+
+        # Device 0 is offline — its lower limit should be unchanged
+        self.assertEqual(lower.v[0], original_lower_0)
+        # Device 1 is online and violating — its lower limit should be adjusted
+        self.assertEqual(lower.v[1], 0.5)
+
+    def test_adjust_upper_skips_offline(self):
+        """Offline device above upper bound should not trigger adjustment."""
+        lim, lower, upper = self._make_limiter(
+            values=[5.0, 5.0, 2.0],
+            lower_v=[1.0, 1.0, 1.0],
+            upper_v=[3.0, 3.0, 3.0],
+            status=[0.0, 1.0, 1.0],
+        )
+
+        original_upper_0 = upper.v[0]
+        lim.do_adjust_upper(lim.u.v, upper.v, allow_adjust=True, adjust_upper=True)
+
+        # Device 0 is offline — its upper limit should be unchanged
+        self.assertEqual(upper.v[0], original_upper_0)
+        # Device 1 is online and violating — its upper limit should be adjusted
+        self.assertEqual(upper.v[1], 5.0)

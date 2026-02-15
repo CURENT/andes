@@ -459,7 +459,8 @@ class Limiter(Discrete):
         """
 
         if allow_adjust:
-            mask = (val < lower)
+            online = self.owner.get_status().astype(bool)
+            mask = (val < lower) & online
 
             if sum(mask) == 0:
                 return
@@ -513,7 +514,8 @@ class Limiter(Discrete):
         """
 
         if allow_adjust:
-            mask = (val > upper)
+            online = self.owner.get_status().astype(bool)
+            mask = (val > upper) & online
             if sum(mask) == 0:
                 return
 

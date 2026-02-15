@@ -266,6 +266,7 @@ class REGCA1Model(Model):
                                K=self.Khv, R=1,
                                info='High voltage gain block',
                                lower=0, upper=999, no_upper=True,
+                               allow_adjust=False,
                                tex_name='H_{VG}'
                                )
 
