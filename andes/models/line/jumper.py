@@ -26,6 +26,7 @@ class JumperModel(Model):
         Model.__init__(self, system, config)
         self.flags.pflow = True
         self.flags.tds = True
+        self.flags.topo = True
         self.group = 'ACShort'
 
         self.a1 = ExtAlgeb(model='Bus', src='a', indexer=self.bus1, tex_name='a_1',

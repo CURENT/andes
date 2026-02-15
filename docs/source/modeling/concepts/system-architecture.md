@@ -106,6 +106,28 @@ ss.dae.ts.y    # Algebraic history (n_steps x n_algebs)
     :noindex:
 ```
 
+### Device Connectivity
+
+Use `get_connected()` to find all devices referencing a given bus or device:
+
+```python
+ss.get_connected('Bus', 1)
+# OrderedDict([('Slack', [1]), ('Line', ['Line_1', 'Line_2']),
+#              ('GENROU', ['GENROU_1']), ('BusFreq', ['BusFreq_2'])])
+```
+
+This works for any model or group, not just buses:
+
+```python
+ss.get_connected('SynGen', 'GENROU_1')
+# OrderedDict([('TGOV1', ['TGOV1_1']), ('ESST3A', ['ESST3A_2'])])
+```
+
+```{eval-rst}
+.. autofunction:: andes.system.System.get_connected
+    :noindex:
+```
+
 ## Decentralized Architecture
 
 ANDES uses a decentralized architecture between models and DAE value arrays. In

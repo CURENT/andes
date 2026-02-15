@@ -30,6 +30,10 @@ class ModelFlags:
         True if initialize tds; False otherwise; None default to `tds`
     series : bool
         True if is series device
+    topo : bool
+        True if the model's status affects network topology.
+        Models with this flag cause ``ConnMan`` to be invalidated
+        when their effective status changes.
     nr_iter : bool
         True if is series device
     f_num : bool
@@ -48,6 +52,7 @@ class ModelFlags:
 
     def __init__(self, collate=False, pflow=False, tds=False,
                  pflow_init=None, tds_init=None, series=False,
+                 topo=False,
                  nr_iter=False, f_num=False, g_num=False, j_num=False,
                  s_num=False, sv_num=False):
 
@@ -57,6 +62,7 @@ class ModelFlags:
         self.pflow_init = pflow_init
         self.tds_init = tds_init
         self.series = series
+        self.topo = topo
         self.nr_iter = nr_iter
         self.f_num = f_num
         self.g_num = g_num

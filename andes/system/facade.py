@@ -1351,16 +1351,42 @@ class System:
             if isinstance(model, Model):
                 model.set_in_use()
 
-    def _build_status_graph(self):
+    def _collect_ref_index(self, status_parent_only=False):
         """
-        Build the status propagation graph from ``IdxParam`` declarations
-        with ``status_parent=True``.
+        Build a reverse index from ``IdxParam`` declarations.
 
-        Populates ``self._status_children`` and ``self._status_parent_map``
-        used by :meth:`set_status` for recursive propagation.
+        Returns a dict mapping each target group/model name to a list of
+        ``(source_model_name, param_attr_name)`` tuples.
+
+        Parameters
+        ----------
+        status_parent_only : bool, optional
+            If ``True``, include only ``IdxParam`` instances with
+            ``status_parent=True``.  Default is ``False`` (all references).
+
+        Returns
+        -------
+        dict
+            ``{target_group_or_model: [(source_model, param_name), ...]}``
+
+        Examples
+        --------
+        With ``status_parent_only=False`` (all references)::
+
+            {
+                'ACNode': [('PQ', 'bus'), ('PV', 'bus'), ('Line', 'bus1'),
+                           ('Line', 'bus2'), ('GENROU', 'bus'), ...],
+                'SynGen': [('TGOV1', 'syn'), ('ESST3A', 'syn'), ...],
+                'Exciter': [('IEEEST', 'avr'), ...],
+                'Bus':     [('Fault', 'bus'), ('PV', 'busr'), ...],
+                ...
+            }
+
+        With ``status_parent_only=True``, only entries where the
+        ``IdxParam`` has ``status_parent=True`` are included (a subset
+        of the above).
         """
-        self._status_children = {}
-        self._status_parent_map = {}
+        ref_index = {}
 
         for mdl_name, mdl in self.models.items():
             if mdl.n == 0:
@@ -1369,33 +1395,74 @@ class System:
                 continue
 
             for p_name, p_instance in mdl.idx_params.items():
-                if not getattr(p_instance, 'status_parent', False):
+                if status_parent_only and not getattr(p_instance, 'status_parent', False):
                     continue
 
-                parent_group = p_instance.model
-                if parent_group is None:
+                target = p_instance.model
+                if target is None:
                     continue
 
+                if target not in ref_index:
+                    ref_index[target] = []
+                ref_index[target].append((mdl_name, p_name))
+
+        return ref_index
+
+    def _build_status_graph(self):
+        """
+        Build the status propagation graph from ``IdxParam`` declarations
+        with ``status_parent=True``.
+
+        Populates ``self._status_children`` and ``self._status_parent_map``
+        used by :meth:`set_status` for recursive propagation.
+
+        After this method runs, the two dicts look like::
+
+            _status_parent_map = {
+                'GENROU': [('bus', 'ACNode')],
+                'ESST3A': [('syn', 'SynGen')],
+                'TGOV1':  [('syn', 'SynGen')],
+                'Line':   [('bus1', 'ACNode'), ('bus2', 'ACNode')],
+                ...
+            }
+
+            _status_children = {
+                'ACNode': {'PQ', 'PV', 'Slack', 'StaticGen', 'SynGen',
+                           'GENROU', 'Line', 'ACLine', 'Shunt', ...},
+                'SynGen': {'ESST3A', 'TGOV1', 'Exciter', 'TurbineGov', ...},
+                ...
+            }
+
+        Values in ``_status_children`` are BackRef names present on the
+        parent group, which may be group names (e.g., ``'Exciter'``) or
+        model names (e.g., ``'ESST3A'``).
+        """
+        self._status_children = {}
+        self._status_parent_map = {}
+
+        for target, refs in self._collect_ref_index(status_parent_only=True).items():
+            for mdl_name, p_name in refs:
                 # Record child -> parent mapping (list of tuples for multi-parent)
                 if mdl_name not in self._status_parent_map:
                     self._status_parent_map[mdl_name] = []
-                self._status_parent_map[mdl_name].append((p_name, parent_group))
+                self._status_parent_map[mdl_name].append((p_name, target))
 
                 # Record parent -> child BackRef names to follow
-                if parent_group not in self._status_children:
-                    self._status_children[parent_group] = set()
+                if target not in self._status_children:
+                    self._status_children[target] = set()
 
-                parent_obj = self.__dict__.get(parent_group)
+                parent_obj = self.__dict__.get(target)
                 if parent_obj is None:
                     continue
 
+                mdl = self.models[mdl_name]
                 child_group_name = mdl.group
                 child_model_name = mdl.class_name
 
                 if child_group_name in parent_obj.services_ref:
-                    self._status_children[parent_group].add(child_group_name)
+                    self._status_children[target].add(child_group_name)
                 if child_model_name in parent_obj.services_ref:
-                    self._status_children[parent_group].add(child_model_name)
+                    self._status_children[target].add(child_model_name)
 
     def propagate_init_status(self):
         """
@@ -1513,7 +1580,11 @@ class System:
                 child_uid = child_mdl.idx2uid(child_idx)
                 parent_ue = self._get_parent_ue(child_mdl, child_uid)
                 child_ue = child_mdl.u.v[child_uid] * parent_ue
+                old_ue = child_mdl.ue.v[child_uid]
                 child_mdl.ue.v[child_uid] = child_ue
+
+                if child_mdl.flags.topo and child_ue != old_ue:
+                    self.conn.invalidate()
 
                 # Recurse to children of this child
                 self._propagate_status(child_mdl, child_idx, child_uid, child_ue)
@@ -1544,6 +1615,7 @@ class System:
             raise KeyError(f"'{model_or_group}' is not a model or group name.")
 
         uid = mdl.idx2uid(idx)
+        old_ue = mdl.ue.v[uid]
 
         # Set u.v (device's own status)
         mdl.u.v[uid] = value
@@ -1552,6 +1624,9 @@ class System:
         parent_ue = self._get_parent_ue(mdl, uid)
         ue_val = value * parent_ue
         mdl.ue.v[uid] = ue_val
+
+        if mdl.flags.topo and ue_val != old_ue:
+            self.conn.invalidate()
 
         # Propagate to children
         self._propagate_status(mdl, idx, uid, ue_val)
@@ -1584,6 +1659,74 @@ class System:
 
         uid = mdl.idx2uid(idx)
         return self._get_effective_status(mdl, uid)
+
+    def get_connected(self, model_or_group, idx):
+        """
+        Find all devices connected to a given device.
+
+        Scans ``IdxParam`` references across all models to find devices
+        that point to the specified target device.
+
+        Parameters
+        ----------
+        model_or_group : str
+            Model name (e.g., ``'Bus'``) or group name (e.g., ``'ACNode'``).
+        idx : str, int, float
+            Device idx to query.
+
+        Returns
+        -------
+        OrderedDict
+            ``{model_name: [idx, ...]}`` for each model with at least one
+            device referencing the target.  Empty models are omitted.
+
+        Examples
+        --------
+        Find all devices connected to Bus 1::
+
+            ss.get_connected('Bus', 1)
+            # OrderedDict([('PQ', [1]), ('Line', [1, 4]), ('GENROU', [1])])
+        """
+        # Build and cache the reverse index on first call
+        if not hasattr(self, '_ref_index'):
+            self._ref_index = self._collect_ref_index(status_parent_only=False)
+
+        # Resolve model name to group name and collect both keys
+        targets = set()
+        if model_or_group in self.groups:
+            targets.add(model_or_group)
+        elif model_or_group in self.models:
+            targets.add(model_or_group)
+            targets.add(self.models[model_or_group].group)
+        else:
+            raise KeyError(f"'{model_or_group}' is not a model or group name.")
+
+        result = OrderedDict()
+
+        for target in targets:
+            if target not in self._ref_index:
+                continue
+
+            for src_model, param_name in self._ref_index[target]:
+                mdl = self.models.get(src_model)
+                if mdl is None or mdl.n == 0:
+                    continue
+
+                idxp = mdl.idx_params.get(param_name)
+                if idxp is None:
+                    continue
+
+                matched = [mdl.idx.v[uid]
+                           for uid, ref_idx in enumerate(idxp.v)
+                           if ref_idx == idx]
+
+                if matched:
+                    if src_model in result:
+                        result[src_model].extend(matched)
+                    else:
+                        result[src_model] = matched
+
+        return result
 
     def import_groups(self):
         """

@@ -29,6 +29,7 @@ class ConnMan:
 
     def __init__(self, system=None):
         self.system = system
+        self._dirty = True  # True so first check in setup() always runs
 
     # ------------------------------------------------------------------
     #  Topology analysis
@@ -66,11 +67,17 @@ class ConnMan:
 
         _, s = elapsed(t0)
 
+        self._dirty = False
+
         if info is True:
             logger.info('Connectivity check completed in %s.', s)
             self.summary()
         else:
             logger.debug('Connectivity check completed in %s.', s)
+
+    def invalidate(self):
+        """Mark topology as dirty so the next check will run."""
+        self._dirty = True
 
     def _collect_edges(self):
         """

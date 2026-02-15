@@ -850,8 +850,8 @@ class TDS(BaseRoutine):
             self.custom_event = False
             ret = True
 
-        # check system connectivity after a switching
-        if ret is True and self.config.check_conn == 1:
+        # check system connectivity if topology changed during switching
+        if self.config.check_conn == 1 and system.conn._dirty:
             system.connectivity(info=False)
 
         return ret

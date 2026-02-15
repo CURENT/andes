@@ -24,6 +24,7 @@ class Slack(SlackData, PVModel):
     def __init__(self, system=None, config=None):
         SlackData.__init__(self)
         PVModel.__init__(self, system, config)
+        self.flags.topo = True
 
         self.config.add(OrderedDict((('av2pv', 0),
                                      )))

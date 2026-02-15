@@ -69,6 +69,7 @@ class FortescueModel(Model):
         self.group = 'Interface'
         self.flags.pflow = True
         self.flags.tds = True
+        self.flags.topo = True
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.bus, tex_name=r'\theta_1',
                           info='phase angle of single-phase eq. bus',
