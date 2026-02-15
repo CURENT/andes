@@ -12,6 +12,7 @@ Module for ANDES models.
 
 import logging
 import pprint
+import warnings
 from collections import OrderedDict
 from textwrap import wrap
 from typing import Callable, Iterable, Union
@@ -498,72 +499,156 @@ class Model:
 
         return self.__dict__[src].__dict__[attr][uid]
 
-    def set(self, src, idx, attr, value):
+    # Sentinel for distinguishing "not passed" from None/0/False
+    _SENTINEL = object()
+
+    def set(self, src, idx, *args, value=_SENTINEL, attr='v', base=None):
         """
-        Set the value of an attribute of a model property.
+        Set the value of a model parameter, service, or variable.
 
-        Performs ``self.<src>.<attr>[idx] = value``. This method will not modify
-        the input values from the case file that have not been converted to the
-        system base. As a result, changes applied by this method will not affect
-        the dumped case file.
+        This method is for modifying numerical data such as inertia,
+        impedance, setpoints, etc. To change a device's online/offline
+        status, use :meth:`set_status` instead.
 
-        To alter parameters and reflect it in the case file, use :meth:`alter`
-        instead.
+        By default, ``value`` is in system base and is written directly to
+        the internal storage (``self.<src>.<attr>``). No per-unit conversion
+        is applied and the input-base record (``vin``) is not updated.
+
+        Use ``base='device'`` to provide a value in device/input base (as
+        in the case file). The value is converted to system base via
+        ``pu_coeff`` and stored in both ``vin`` (input record) and ``v``
+        (system-base working copy).
 
         Parameters
         ----------
         src : str
-            Name of the model property
+            Name of the model property (e.g. ``'M'``, ``'p0'``).
         idx : str, int, float, array-like
-            Indices of the devices
-        attr : str, optional, default='v'
-            The internal attribute of the property to get.
-            ``v`` for values, ``a`` for address, and ``e`` for equation value.
-        value : array-like
-            New values to be set
+            Device index or indices.
+        value : float or array-like
+            The value to set. Can be passed as the third positional argument
+            or as a keyword.
+        attr : str, optional
+            Attribute to write when ``base=None`` (default ``'v'``).
+            Ignored when ``base='device'``.
+        base : ``None`` or ``'device'``, optional
+            ``None`` (default): system-base direct write.
+            ``'device'``: device/input-base with per-unit conversion;
+            also updates ``vin`` for case file consistency.
 
         Returns
         -------
         bool
             True when successful.
+
+        Examples
+        --------
+        System-base write (default):
+
+        >>> ss.GENROU.set('M', 'GENROU_1', 2.0)
+
+        Device/input-base write (like the old ``alter``):
+
+        >>> ss.GENROU.set('M', 'GENROU_1', 10.0, base='device')
+
+        See Also
+        --------
+        set_status : Change device online/offline status with ``ue``
+            propagation.
         """
+
+        # ---- Parse arguments (backward compat + new style) ----
+        _VALID_ATTRS = {'v', 'a', 'e', 'vin'}
+        _S = self._SENTINEL
+
+        if len(args) == 2 and isinstance(args[0], str) and args[0] in _VALID_ATTRS:
+            # Old-style positional: set('M', 1, 'v', 10.0)
+            warnings.warn(
+                f"set(src, idx, attr, value) is deprecated. "
+                f"Use set('{src}', {idx!r}, {args[1]!r}, attr='{args[0]}') instead.",
+                FutureWarning, stacklevel=2
+            )
+            attr = args[0]
+            actual_value = args[1]
+        elif len(args) == 1 and value is _S:
+            # New-style positional: set('M', 1, 10.0)
+            actual_value = args[0]
+        elif len(args) == 0 and value is not _S:
+            # Keyword style: set('M', 1, value=10.0)
+            actual_value = value
+        elif len(args) == 0 and value is _S:
+            raise TypeError(
+                f"set() missing 'value'. "
+                f"Usage: ss.{self.class_name}.set('{src}', {idx!r}, <value>)"
+            )
+        else:
+            raise TypeError(
+                f"set() got unexpected arguments. "
+                f"Usage: ss.{self.class_name}.set(src, idx, value, *, attr='v', base=None)"
+            )
+
+        # ---- Validate base ----
+        if base is not None and base != 'device':
+            raise ValueError(
+                f"base must be None (system base) or 'device', got {base!r}"
+            )
 
         uid = self.idx2uid(idx)
 
         # Route u.v changes through set_status for ue propagation.
         # set_status sets u.v, recomputes ue, propagates, and invalidates PFlow.
         if src == 'u' and attr == 'v' and self.system.is_setup:
-            self.system.set_status(self.class_name, idx, value)
+            warnings.warn(
+                f"Use set_status() to change device online status:\n"
+                f"  ss.{self.class_name}.set_status({idx!r}, {actual_value!r})",
+                FutureWarning, stacklevel=2
+            )
+            self.system.set_status(self.class_name, idx, actual_value)
             return True
 
         instance = self.__dict__[src]
 
-        # Check if the destination is a list
-        if isinstance(instance.__dict__[attr], list):
-            # Use a for-loop to set values
-            if isinstance(uid, list):
-                for i, u in enumerate(uid):
-                    instance.__dict__[attr][u] = value[i]
+        if base == 'device':
+            # Device/input base: store input value in vin, convert for v
+            if hasattr(instance, 'vin') and instance.vin is not None:
+                self._write_field(instance, 'vin', uid, actual_value)
+                converted = actual_value * instance.pu_coeff[uid]
+                self._write_field(instance, 'v', uid, converted)
             else:
-                instance.__dict__[attr][uid] = value
+                # No vin (e.g. ConstService) — just set v directly
+                self._write_field(instance, 'v', uid, actual_value)
+            self._update_time_constants(instance, uid)
         else:
-            # Default behavior for numpy arrays or other types
-            instance.__dict__[attr][uid] = value
-
-        # update differential equations' time constants stored in `dae.Tf`
-        if attr == "v":
-            for state in self.states.values():
-                if (state.t_const is instance) and len(state.a) > 0:
-                    self.system.dae.Tf[state.a[uid]] = instance.v[uid]
-                    # convert scalar `uid` to list
-                    if isinstance(uid, (float, int, str, np.integer, np.floating)):
-                        uid = [uid]
-                    # set diagonal elements of `Teye` for each element in `uid``
-                    uid_int = state.a.tolist()
-                    for ii in uid:
-                        self.system.TDS.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
+            # System base: write directly
+            self._write_field(instance, attr, uid, actual_value)
+            if attr == 'v':
+                self._update_time_constants(instance, uid)
 
         return True
+
+    @staticmethod
+    def _write_field(instance, field, uid, value):
+        """Write ``value`` to ``instance.<field>[uid]``, handling list vs array."""
+        target = instance.__dict__[field]
+        if isinstance(target, list):
+            if isinstance(uid, list):
+                for i, u in enumerate(uid):
+                    target[u] = value[i]
+            else:
+                target[uid] = value
+        else:
+            target[uid] = value
+
+    def _update_time_constants(self, instance, uid):
+        """Update ``dae.Tf`` and ``TDS.Teye`` when a time constant parameter changes."""
+        for state in self.states.values():
+            if (state.t_const is instance) and len(state.a) > 0:
+                self.system.dae.Tf[state.a[uid]] = instance.v[uid]
+                # convert scalar uid to list for iteration
+                uid_list = uid if isinstance(uid, list) else [uid]
+                uid_int = state.a.tolist()
+                for ii in uid_list:
+                    self.system.TDS.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
 
     def set_status(self, idx, value):
         """
@@ -605,13 +690,13 @@ class Model:
         """
         Alter values of input parameters or constant service.
 
-        If the method operates on an input parameter, the new data should be in
-        the same base as that in the input file. This function will convert
-        ``value`` to per unit in the system base whenever necessary.
+        .. deprecated::
+            Use :meth:`set` with ``base='device'`` instead::
 
-        The values for storing the input data, i.e., the parameter's ``vin``
-        field, will be overwritten. As a result, altered values will be
-        reflected in the dumped case file.
+                # Old
+                ss.GENROU.alter('M', idx=1, value=10.0)
+                # New
+                ss.GENROU.set('M', idx=1, value=10.0, base='device')
 
         Parameters
         ----------
@@ -623,41 +708,30 @@ class Model:
             The desired value
         attr : str
             The attribute to alter, default is 'v'.
-
-        Notes
-        -----
-        New in version 1.9.3: Added the `attr` parameter and the feature to alter
-        specific attributes. This feature is useful when you need to manipulate parameter
-        values in the system base and ensure that these changes are reflected in the
-        dumped case file.
-
-        Examples
-        --------
-        >>> import andes
-        >>> ss = andes.load(andes.get_case('5bus/pjm5bus.xlsx'), setup=True)
-        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='v')
-        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
-        3.0
-        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='vin')
-        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
-        1.0
         """
+
+        warnings.warn(
+            f"alter() is deprecated. Use set() with base='device' instead.\n"
+            f"  Old: ss.{self.class_name}.alter('{src}', {idx!r}, {value!r})\n"
+            f"  New: ss.{self.class_name}.set('{src}', {idx!r}, {value!r}, base='device')",
+            FutureWarning, stacklevel=2
+        )
 
         instance = self.__dict__[src]
 
-        if hasattr(instance, 'vin') and (instance.vin is not None):
-            uid = self.idx2uid(idx)
-            if attr == 'vin':
-                self.set(src, idx, 'vin', value / instance.pu_coeff[uid])
-                self.set(src, idx, 'v', value=value)
+        if attr == 'vin':
+            if hasattr(instance, 'vin') and (instance.vin is not None):
+                # attr='vin' legacy: value is system-base, write v directly
+                self.set(src, idx, value, attr='v')
+                # reverse-convert for vin record
+                uid = self.idx2uid(idx)
+                self._write_field(instance, 'vin', uid, value / instance.pu_coeff[uid])
             else:
-                self.set(src, idx, 'vin', value)
-                self.set(src, idx, 'v', value * instance.pu_coeff[uid])
-        elif not hasattr(instance, 'vin') and attr == 'vin':
-            logger.warning(f"{self.class_name}.{src} has no `vin` attribute, changing `v`.")
-            self.set(src, idx, 'v', value)
+                logger.warning(f"{self.class_name}.{src} has no `vin` attribute, changing `v`.")
+                self.set(src, idx, value, attr='v')
         else:
-            self.set(src, idx, attr=attr, value=value)
+            # Default attr='v': value is device-base → delegate to set(base='device')
+            self.set(src, idx, value, base='device')
 
     def get_inputs(self, refresh=False):
         return self.evaluator.get_inputs(refresh=refresh)

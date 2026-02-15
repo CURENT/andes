@@ -217,7 +217,7 @@ class TimeSeriesModel(Model):
                 if len(value) == 0:
                     continue
                 value = value[0]
-                self.system.__dict__[model].set(dest, dev_idx, 'v', value)
+                self.system.__dict__[model].set(dest, dev_idx, value)
 
                 if self.system.options.get("verbose", 20) <= 20:
                     tqdm.write("<TimeSeries %s> set %s=%g for %s.%s at t=%g" %

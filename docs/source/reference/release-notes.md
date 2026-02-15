@@ -86,6 +86,10 @@ Refactoring:
 
 API improvements:
 
+- Consolidate ``set()`` and ``alter()`` into a unified ``set()`` method with a
+  cleaner positional signature: ``set(src, idx, value, base=None)``.
+  The old ``alter()`` method is deprecated and will be removed in v3.0.
+  See the upgrade guide below.
 - Add ``TDS.get_timeseries(var)`` convenience method that returns time-series
   data as a pandas DataFrame, dispatching automatically by variable type
   (State, Algeb, ExtState, ExtAlgeb, Observable).
@@ -93,6 +97,45 @@ API improvements:
   suggesting close matches with ``difflib.get_close_matches``.
 - Document ``System.add()`` kwargs support and the ``model`` parameter
   collision caveat for ``Alter`` and ``Toggle``.
+
+Upgrade guide — ``set()`` / ``alter()`` consolidation:
+
+- **``alter()`` → ``set()`` with ``base='device'``**: ``alter()`` accepted
+  values in device (input) base, converted them via ``pu_coeff``, and updated
+  the ``vin`` record. The new equivalent is ``set(..., base='device')``.
+
+  ```python
+  # Before (deprecated, emits FutureWarning):
+  ss.GENROU.alter('M', 1, 10.0)
+
+  # After:
+  ss.GENROU.set('M', 1, 10.0, base='device')
+  ```
+
+- **``set()`` old-style keyword arguments**: The old ``set(src, idx, attr, value)``
+  four-argument form is deprecated. Drop the ``attr`` argument (it defaults to
+  ``'v'``):
+
+  ```python
+  # Before (deprecated, emits FutureWarning):
+  ss.GENROU.set('M', 'GENROU_1', 'v', 2.0)
+
+  # After:
+  ss.GENROU.set('M', 'GENROU_1', 2.0)
+  ```
+
+- **Default base is system base**: ``set(src, idx, value)`` writes the value
+  directly in system per-unit, matching what ``get()`` returns. This makes
+  read-modify-write round-trips correct without conversion:
+
+  ```python
+  h = ss.GENROU.get('M', 'GENROU_1')   # system-base value
+  ss.GENROU.set('M', 'GENROU_1', h * 1.2)   # 20% increase, same base
+  ```
+
+- **Time constant updates are automatic**: When modifying a time constant
+  parameter (one whose variable has a ``t_const`` attribute), ``set()``
+  automatically updates ``dae.Tf`` and ``TDS.Teye``.
 
 Bug fixes:
 

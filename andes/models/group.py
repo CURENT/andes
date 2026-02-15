@@ -1,5 +1,6 @@
 import logging
 import inspect
+import warnings
 from collections import OrderedDict
 
 import numpy as np
@@ -204,13 +205,15 @@ class GroupBase:
 
         return ret
 
-    def set(self, src: str, idx, attr, value):
-        """
-        Set the value of an attribute of a group property.
-        Performs ``self.<src>.<attr>[idx] = value``.
+    # Sentinel for distinguishing "not passed" from None/0/False
+    _SENTINEL = object()
 
-        The user needs to ensure that the property is shared by all models
-        in this group.
+    def set(self, src: str, idx, *args, value=_SENTINEL, attr='v', base=None):
+        """
+        Set the value of a group property, dispatching to the correct model.
+
+        Delegates to each model's :meth:`Model.set`. See its docstring
+        for details on ``base`` and ``attr``.
 
         Parameters
         ----------
@@ -218,29 +221,60 @@ class GroupBase:
             Name of property.
         idx : str, int, float, array-like
             Indices of devices.
-        attr : str, optional, default='v'
-            The internal attribute of the property to get.
-            ``v`` for values, ``a`` for address, and ``e`` for equation value.
-        value : array-like
-            New values to be set
+        value : float or array-like
+            New values to be set. Can be passed as the third positional
+            argument or as a keyword.
+        attr : str, optional
+            Attribute to write (default ``'v'``). Ignored when
+            ``base='device'``.
+        base : ``None`` or ``'device'``, optional
+            ``None`` (default): system-base direct write.
+            ``'device'``: device/input-base with per-unit conversion.
 
         Returns
         -------
         bool
             True when successful.
         """
+        # ---- Parse arguments (backward compat + new style) ----
+        _VALID_ATTRS = {'v', 'a', 'e', 'vin'}
+        _S = self._SENTINEL
+
+        if len(args) == 2 and isinstance(args[0], str) and args[0] in _VALID_ATTRS:
+            # Old-style positional: set('M', 1, 'v', 10.0)
+            warnings.warn(
+                "set(src, idx, attr, value) is deprecated. "
+                f"Use set('{src}', {idx!r}, {args[1]!r}, attr='{args[0]}') instead.",
+                FutureWarning, stacklevel=2
+            )
+            attr = args[0]
+            actual_value = args[1]
+        elif len(args) == 1 and value is _S:
+            actual_value = args[0]
+        elif len(args) == 0 and value is not _S:
+            actual_value = value
+        elif len(args) == 0 and value is _S:
+            raise TypeError(
+                f"set() missing 'value'. "
+                f"Usage: ss.<Group>.set('{src}', {idx!r}, <value>)"
+            )
+        else:
+            raise TypeError(
+                "set() got unexpected arguments. "
+                "Usage: set(src, idx, value, *, attr='v', base=None)"
+            )
+
         self._check_src(src)
         self._check_idx(idx)
 
         idx, _ = self._1d_vectorize(idx)
         models = self.idx2model(idx)
 
-        if isinstance(value, (str, int, float, np.integer, np.floating)):
-            value = [value] * len(idx)
+        if isinstance(actual_value, (str, int, float, np.integer, np.floating)):
+            actual_value = [actual_value] * len(idx)
 
-        for mdl, ii, val in zip(models, idx, value):
-            uid = mdl.idx2uid(ii)
-            mdl.__dict__[src].__dict__[attr][uid] = val
+        for mdl, ii, val in zip(models, idx, actual_value):
+            mdl.set(src, ii, val, attr=attr, base=base)
 
         return True
 
@@ -282,8 +316,8 @@ class GroupBase:
         """
         Alter values of input parameters or constant service for a group of models.
 
-        .. note::
-            New in version 1.9.3.
+        .. deprecated::
+            Use :meth:`set` with ``base='device'`` instead.
 
         Parameters
         ----------
@@ -296,6 +330,11 @@ class GroupBase:
         attr : str, optional
             The attribute to alter. Default is 'v'.
         """
+        warnings.warn(
+            "alter() is deprecated. Use set() with base='device' instead.",
+            FutureWarning, stacklevel=2
+        )
+
         self._check_src(src)
         self._check_idx(idx)
 
@@ -306,6 +345,7 @@ class GroupBase:
             value = [value] * len(idx)
 
         for mdl, ii, val in zip(models, idx, value):
+            # Call Model.alter directly (which handles the attr='vin' legacy)
             mdl.alter(src, ii, val, attr=attr)
 
         return True

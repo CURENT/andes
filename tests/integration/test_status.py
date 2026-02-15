@@ -379,12 +379,13 @@ class TestBusSetIntegration(unittest.TestCase):
         )
 
     def test_bus_set_propagates_ue(self):
-        """Bus.set(src='u', value=0) should propagate ue to dependents."""
+        """Bus.set('u', ...) should warn and propagate ue to dependents."""
         ss = self.ss
         gen_uid = 0
         bus_idx = ss.GENROU.bus.v[gen_uid]
 
-        ss.Bus.set(src='u', attr='v', idx=bus_idx, value=0)
+        with self.assertWarns(FutureWarning):
+            ss.Bus.set('u', bus_idx, 0)
 
         self.assertEqual(ss.GENROU.ue.v[gen_uid], 0)
         self.assertEqual(ss.EXDC2.ue.v[0], 0)

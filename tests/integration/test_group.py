@@ -58,14 +58,14 @@ class TestGroup(unittest.TestCase):
                                 [1, 1, 999])
 
         # --- set ---
-        ss.DG.set('xc', 1, 'v', 2.0)
+        ss.DG.set('xc', 1, 2.0)
         np.testing.assert_equal(ss.DG.get('xc', [1, 2]), [2, 1])
 
-        ss.DG.set('xc', (1, 2, 3), 'v', 2.0)
+        ss.DG.set('xc', (1, 2, 3), 2.0)
         np.testing.assert_equal(ss.DG.get('xc', [1, 2, 3, 4]),
                                 [2, 2, 2, 1])
 
-        ss.DG.set('xc', (1, 2, 3), 'v', [6, 7, 8])
+        ss.DG.set('xc', (1, 2, 3), [6, 7, 8])
         np.testing.assert_equal(ss.DG.get('xc', [1, 2, 3, 4]),
                                 [6, 7, 8, 1])
 
@@ -122,22 +122,34 @@ class TestGroupAdditional(unittest.TestCase):
             no_output=True,
         )
 
-    def test_group_alter(self):
+    def test_group_set_device_base(self):
         """
-        Test `Group.alter` method.
+        Test `Group.set()` with `base='device'`.
         """
 
-        # alter `v`
-        self.ss.SynGen.alter(src='M', idx=2, value=1, attr='v')
+        self.ss.SynGen.set('M', 2, 1, base='device')
         self.assertEqual(self.ss.GENCLS.M.v[1],
                          1 * self.ss.GENCLS.M.pu_coeff[1])
 
-        # alter `vin`
-        self.ss.SynGen.alter(src='M', idx=2, value=1, attr='vin')
+    def test_group_alter_deprecated(self):
+        """
+        Test that `Group.alter()` still works but emits FutureWarning.
+        """
+
+        # alter `v` — deprecated but functional
+        with self.assertWarns(FutureWarning):
+            self.ss.SynGen.alter(src='M', idx=2, value=1, attr='v')
+        self.assertEqual(self.ss.GENCLS.M.v[1],
+                         1 * self.ss.GENCLS.M.pu_coeff[1])
+
+        # alter `vin` — deprecated but functional
+        with self.assertWarns(FutureWarning):
+            self.ss.SynGen.alter(src='M', idx=2, value=1, attr='vin')
         self.assertEqual(self.ss.GENCLS.M.v[1], 1)
 
         # alter `vin` on instances without `vin` falls back to `v`
-        self.ss.SynGen.alter(src='p0', idx=2, value=1, attr='vin')
+        with self.assertWarns(FutureWarning):
+            self.ss.SynGen.alter(src='p0', idx=2, value=1, attr='vin')
         self.assertEqual(self.ss.GENCLS.p0.v[1], 1)
 
     def test_as_dict(self):

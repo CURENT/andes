@@ -85,7 +85,7 @@ class Test5Bus(unittest.TestCase):
         Test altering parameter for power flow.
         """
 
-        self.ss.PV.alter('v0', 2, 0.98)
+        self.ss.PV.set('v0', 2, 0.98, base='device')
         self.assertEqual(self.ss.PV.v0.v[1], 0.98)
         self.ss.PFlow.run()
 
@@ -94,7 +94,7 @@ class Test5Bus(unittest.TestCase):
         Test altering parameter for time constants of diff eq.
         """
 
-        self.ss.GENCLS.alter("M", [2, 3], [2., 2.])
+        self.ss.GENCLS.set("M", [2, 3], [2., 2.], base='device')
         np.testing.assert_array_equal(self.ss.GENCLS.M.v, [8., 6., 4., 12.])
         self.ss.PFlow.run()
 
@@ -107,7 +107,7 @@ class Test5Bus(unittest.TestCase):
         """
 
         self.ss.PFlow.run()
-        self.ss.GENCLS.alter("M", [2, 3], [2., 2.])
+        self.ss.GENCLS.set("M", [2, 3], [2., 2.], base='device')
         np.testing.assert_array_equal(self.ss.GENCLS.M.v, [8., 6., 4., 12.])
 
         self.ss.TDS.init()

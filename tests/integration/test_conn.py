@@ -51,7 +51,7 @@ class TestConnMan(unittest.TestCase):
         self.assertTrue(ss.PFlow.converged)
 
         # turn off a bus — ue should propagate
-        ss.Bus.alter(src='u', idx=15, value=0)
+        ss.Bus.set_status(15, 0)
         self.assertEqual(ss.Bus.ue.v[ss.Bus.idx2uid(15)], 0)
 
     def test_connectivity_check_runs(self):
