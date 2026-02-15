@@ -15,11 +15,12 @@ Start with tutorials 01-06 to learn the basics of ANDES:
 - Visualizing results
 
 ### Power System Analyst
-After completing the basics, continue with tutorials 07-11 for advanced analysis:
+After completing the basics, continue with tutorials 07-12 for advanced analysis:
 - Small-signal stability assessment
 - Parameter sensitivity studies
 - Contingency analysis
 - Dynamic control studies
+- State estimation
 
 ### Model Developer
 For creating custom device models, see the {doc}`../modeling/index` section after completing these tutorials.
@@ -27,6 +28,7 @@ For creating custom device models, see the {doc}`../modeling/index` section afte
 
 ```{toctree}
 :maxdepth: 1
+:numbered:
 
 01-installation
 02-first-simulation
@@ -39,5 +41,6 @@ For creating custom device models, see the {doc}`../modeling/index` section afte
 09-contingency-analysis
 10-dynamic-control
 11-frequency-response
+12-state-estimation
 inspecting-models
 ```

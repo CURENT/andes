@@ -10,6 +10,7 @@ from andes.utils.func import list_flatten
 all_routines = OrderedDict([('pflow', ['PFlow']),
                             ('tds', ['TDS']),
                             ('eig', ['EIG']),
+                            ('se', ['SE']),
                             ])
 
 class_names = list_flatten(list(all_routines.values()))
