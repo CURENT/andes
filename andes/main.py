@@ -30,21 +30,23 @@ from typing import Optional, Union
 
 import andes
 from andes.routines import routine_cli
-from andes.shared import Pool, Process, coloredlogs, unittest, NCPUS_PHYSICAL
-from andes.system import System, import_pycode, fix_view_arrays
+from andes.shared import NCPUS_PHYSICAL, Pool, Process, coloredlogs, unittest
+from andes.system import System, fix_view_arrays, import_pycode
 from andes.utils.misc import elapsed, is_interactive
 from andes.utils.paths import get_config_path, get_log_dir, tests_root
 
 logger = logging.getLogger(__name__)
 
 
-def config_logger(stream_level=logging.INFO, *,
-                  stream=True,
-                  file=True,
-                  log_file='andes.log',
-                  log_path=None,
-                  file_level=logging.DEBUG,
-                  ):
+def config_logger(
+    stream_level=logging.INFO,
+    *,
+    stream=True,
+    file=True,
+    log_file="andes.log",
+    log_path=None,
+    file_level=logging.DEBUG,
+):
     """
     Configure an ANDES logger with a `FileHandler` and a `StreamHandler`.
 
@@ -73,20 +75,19 @@ def config_logger(stream_level=logging.INFO, *,
     None
 
     """
-    lg = logging.getLogger('andes')
+    lg = logging.getLogger("andes")
     lg.setLevel(logging.DEBUG)
 
     if log_path is None:
         log_path = get_log_dir()
 
-    sh_formatter_str = '%(message)s'
+    sh_formatter_str = "%(message)s"
     if stream_level == 1:
-        sh_formatter_str = '%(name)s:%(lineno)d - %(levelname)s - %(message)s'
+        sh_formatter_str = "%(name)s:%(lineno)d - %(levelname)s - %(message)s"
         stream_level = 10
 
     sh_formatter = logging.Formatter(sh_formatter_str)
     if len(lg.handlers) == 0:
-
         # create a StreamHandler
         if stream is True:
             sh = logging.StreamHandler()
@@ -97,13 +98,15 @@ def config_logger(stream_level=logging.INFO, *,
         # file handler for level DEBUG and up
         if file is True and (log_file is not None):
             log_full_path = os.path.join(log_path, log_file)
-            fh_formatter = logging.Formatter('%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            fh_formatter = logging.Formatter(
+                "%(process)d: %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             fh = logging.FileHandler(log_full_path)
             fh.setLevel(file_level)
             fh.setFormatter(fh_formatter)
             lg.addHandler(fh)
 
-        globals()['logger'] = lg
+        globals()["logger"] = lg
 
     else:
         # update the handlers
@@ -114,7 +117,7 @@ def config_logger(stream_level=logging.INFO, *,
         coloredlogs.install(logger=lg, level=stream_level, fmt=sh_formatter_str)
 
 
-def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
+def edit_conf(edit_config: Optional[Union[str, bool]] = ""):
     """
     Edit the Andes config file which occurs first in the search path.
 
@@ -131,30 +134,30 @@ def edit_conf(edit_config: Optional[Union[str, bool]] = ''):
     ret = False
 
     # no `edit-config` supplied
-    if edit_config == '':
+    if edit_config == "":
         return ret
 
     conf_path = get_config_path()
 
     if conf_path is None:
-        logger.info('Config file does not exist. Automatically saving.')
+        logger.info("Config file does not exist. Automatically saving.")
         system = System()
         conf_path = system.config_runtime.save_config()
 
     logger.info('Editing config file "%s"', conf_path)
 
-    editor = ''
+    editor = ""
     if edit_config is not None:
         # use `edit_config` as default editor
         editor = edit_config
     else:
         # use the following default editors
-        if platform.system() == 'Linux':
-            editor = os.environ.get('EDITOR', 'vim')
-        elif platform.system() == 'Darwin':
-            editor = os.environ.get('EDITOR', 'vim')
-        elif platform.system() == 'Windows':
-            editor = 'notepad.exe'
+        if platform.system() == "Linux":
+            editor = os.environ.get("EDITOR", "vim")
+        elif platform.system() == "Darwin":
+            editor = os.environ.get("EDITOR", "vim")
+        elif platform.system() == "Windows":
+            editor = "notepad.exe"
 
     editor_cmd = editor.split()
     editor_cmd.append(conf_path)
@@ -184,11 +187,11 @@ def save_conf(config_path=None, overwrite=None, **kwargs):
     ret = False
 
     # no ``--save-config ``
-    if config_path == '':
+    if config_path == "":
         return ret
 
     if config_path is not None and os.path.isdir(config_path):
-        config_path = os.path.join(config_path, 'andes.rc')
+        config_path = os.path.join(config_path, "andes.rc")
 
     ps = System(**kwargs)
     ps.config_runtime.save_config(config_path, overwrite=overwrite)
@@ -224,22 +227,23 @@ def remove_output(recursive=False):
 
     for d in dirs:
         for file in os.listdir(d):
-            if file.endswith('_eig.txt') or \
-                    file.endswith('_out.txt') or \
-                    file.endswith('_out.lst') or \
-                    file.endswith('_out.npy') or \
-                    file.endswith('_out.npz') or \
-                    file.endswith('_prof.prof') or \
-                    file.endswith('_prof.txt'):
+            if (
+                file.endswith("_eig.txt")
+                or file.endswith("_out.txt")
+                or file.endswith("_out.lst")
+                or file.endswith("_out.npy")
+                or file.endswith("_out.npz")
+                or file.endswith("_prof.prof")
+                or file.endswith("_prof.txt")
+            ):
                 found = True
                 try:
                     os.remove(os.path.join(d, file))
                     logger.info('"%s" removed.', os.path.join(d, file))
                 except IOError:
-                    logger.error('Error removing file "%s".',
-                                 os.path.join(d, file))
+                    logger.error('Error removing file "%s".', os.path.join(d, file))
     if not found:
-        logger.info('No output file found in the working directory.')
+        logger.info("No output file found in the working directory.")
 
     return True
 
@@ -270,8 +274,7 @@ def print_license():
     return True
 
 
-def load(case, codegen=False, setup=True,
-         use_input_path=True, **kwargs):
+def load(case, codegen=False, setup=True, use_input_path=True, **kwargs):
     """
     Load a case and set up a system without running routine.
     Return a system.
@@ -300,7 +303,7 @@ def load(case, codegen=False, setup=True,
     When done, manually invoke ``setup()`` to set up the system.
     """
     if use_input_path:
-        input_path = kwargs.get('input_path', '')
+        input_path = kwargs.get("input_path", "")
         case = _find_cases(case, input_path)
         if len(case) > 1:
             logger.error("`andes.load` does not support mulitple cases.")
@@ -323,10 +326,19 @@ def load(case, codegen=False, setup=True,
     return system
 
 
-def run_case(case, *, routine='pflow', profile=False,
-             convert='', convert_all='', add_book=None,
-             codegen=False, autogen_stale=True,
-             remove_pycapsule=False, **kwargs):
+def run_case(
+    case,
+    *,
+    routine="pflow",
+    profile=False,
+    convert="",
+    convert_all="",
+    add_book=None,
+    codegen=False,
+    autogen_stale=True,
+    remove_pycapsule=False,
+    **kwargs,
+):
     """
     Run single simulation case for the given full path.
     Use ``run`` instead of ``run_case`` whenever possible.
@@ -366,11 +378,13 @@ def run_case(case, *, routine='pflow', profile=False,
     if profile is True:
         pr.enable()
 
-    system = load(case,
-                  codegen=codegen,
-                  use_input_path=False,
-                  autogen_stale=autogen_stale,
-                  **kwargs)
+    system = load(
+        case,
+        codegen=codegen,
+        use_input_path=False,
+        autogen_stale=autogen_stale,
+        **kwargs,
+    )
 
     if system is None:
         return None
@@ -379,25 +393,30 @@ def run_case(case, *, routine='pflow', profile=False,
     overwrite = None
     # convert to xlsx and process `add-book` option
     if add_book is not None:
-        convert = 'xlsx'
+        convert = "xlsx"
         overwrite = True
-    if convert_all != '':
-        convert = 'xlsx'
+    if convert_all != "":
+        convert = "xlsx"
         skip_empty = False
 
     # convert to the requested format
-    if convert != '':
-        andes.io.dump(system, convert, overwrite=overwrite, skip_empty=skip_empty,
-                      add_book=add_book)
+    if convert != "":
+        andes.io.dump(
+            system,
+            convert,
+            overwrite=overwrite,
+            skip_empty=skip_empty,
+            add_book=add_book,
+        )
         return system
 
     # run the requested routine
     if routine is not None:
         if isinstance(routine, str):
             routine = [routine]
-        if 'pflow' in routine:
+        if "pflow" in routine:
             routine = list(routine)
-            routine.remove('pflow')
+            routine.remove("pflow")
 
         if system.is_setup:
             system.PFlow.run(**kwargs)
@@ -413,18 +432,21 @@ def run_case(case, *, routine='pflow', profile=False,
         if system.files.no_output:
             nlines = 40
             s = io.StringIO()
-            ps = pstats.Stats(pr, stream=sys.stdout).sort_stats('cumtime')
+            ps = pstats.Stats(pr, stream=sys.stdout).sort_stats("cumtime")
             ps.print_stats(nlines)
             logger.info(s.getvalue())
             s.close()
         else:
             nlines = 999
-            with open(system.files.prof, 'w') as s:
-                ps = pstats.Stats(pr, stream=s).sort_stats('cumtime')
+            with open(system.files.prof, "w") as s:
+                ps = pstats.Stats(pr, stream=s).sort_stats("cumtime")
                 ps.print_stats(nlines)
                 ps.dump_stats(system.files.prof_raw)
             logger.info('cProfile text data written to "%s".', system.files.prof)
-            logger.info('cProfile raw data written to "%s". View with tool `snakeviz`.', system.files.prof_raw)
+            logger.info(
+                'cProfile raw data written to "%s". View with tool `snakeviz`.',
+                system.files.prof_raw,
+            )
 
     if remove_pycapsule is True:
         system.remove_pycapsule()
@@ -450,7 +472,7 @@ def _find_cases(filename, path):
     logger.info('Working directory: "%s"', os.getcwd())
 
     if len(filename) == 0:
-        logger.info('info: no input file. Use `andes run -h` for help.')
+        logger.info("info: no input file. Use `andes run -h` for help.")
     if isinstance(filename, str):
         filename = [filename]
 
@@ -471,7 +493,7 @@ def _find_cases(filename, path):
             valid_cases.append(case)
     if len(valid_cases) > 0:
         valid_cases = sorted(valid_cases)
-        logger.debug('Found files: %s', pprint.pformat(valid_cases))
+        logger.debug("Found files: %s", pprint.pformat(valid_cases))
 
     return valid_cases
 
@@ -507,7 +529,9 @@ def _run_mp_proc(cases, ncpu=NCPUS_PHYSICAL, **kwargs):
     # start processes
     jobs = []
     for idx, file in enumerate(cases):
-        job = Process(name=f'Process {idx:d}', target=run_case, args=(file,), kwargs=kwargs)
+        job = Process(
+            name=f"Process {idx:d}", target=run_case, args=(file,), kwargs=kwargs
+        )
         jobs.append(job)
         job.start()
         start_msg = f'Process {idx:d} for "{file:s}" started.'
@@ -540,14 +564,18 @@ def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
 
     pool = Pool(ncpu)
     print("Cases are processed in the following order:")
-    print('\n'.join([f'"{name}"' for name in cases]))
+    print("\n".join([f'"{name}"' for name in cases]))
 
-    ret = pool.map(partial(run_case,
-                           verbose=verbose,
-                           remove_pycapsule=True,
-                           autogen_stale=False,
-                           **kwargs),
-                   cases)
+    ret = pool.map(
+        partial(
+            run_case,
+            verbose=verbose,
+            remove_pycapsule=True,
+            autogen_stale=False,
+            **kwargs,
+        ),
+        cases,
+    )
 
     # fix address for in-place arrays
     for ss in ret:
@@ -556,8 +584,18 @@ def _run_mp_pool(cases, ncpu=NCPUS_PHYSICAL, verbose=logging.INFO, **kwargs):
     return ret
 
 
-def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL, pool=False,
-        cli=False, codegen=False, shell=False, **kwargs):
+def run(
+    filename,
+    input_path="",
+    verbose=20,
+    mp_verbose=30,
+    ncpu=NCPUS_PHYSICAL,
+    pool=False,
+    cli=False,
+    codegen=False,
+    shell=False,
+    **kwargs,
+):
     """
     Entry point to run ANDES routines.
 
@@ -597,8 +635,8 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
         config_logger(verbose, file=False)
 
     # put some args back to `kwargs`
-    kwargs['input_path'] = input_path
-    kwargs['verbose'] = verbose
+    kwargs["input_path"] = input_path
+    kwargs["verbose"] = verbose
 
     cases = _find_cases(filename, input_path)
 
@@ -616,27 +654,21 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
         import_pycode()
 
         # suppress logging output during multiprocessing
-        logger.info('-> Processing %s jobs on %s CPUs.', len(cases), ncpu)
+        logger.info("-> Processing %s jobs on %s CPUs.", len(cases), ncpu)
         set_logger_level(logger, logging.StreamHandler, mp_verbose)
         set_logger_level(logger, logging.FileHandler, logging.DEBUG)
 
         if pool is True:
-            system = _run_mp_pool(cases,
-                                  ncpu=ncpu,
-                                  mp_verbose=mp_verbose,
-                                  **kwargs)
+            system = _run_mp_pool(cases, ncpu=ncpu, mp_verbose=mp_verbose, **kwargs)
         else:
-            system = _run_mp_proc(cases,
-                                  ncpu=ncpu,
-                                  mp_verbose=mp_verbose,
-                                  **kwargs)
+            system = _run_mp_proc(cases, ncpu=ncpu, mp_verbose=mp_verbose, **kwargs)
 
         # restore command line output when all jobs are done
         set_logger_level(logger, logging.StreamHandler, verbose)
 
         log_files = find_log_path(logger)
         if len(log_files) > 0:
-            log_paths = '\n'.join(log_files)
+            log_paths = "\n".join(log_files)
             print(f'Log saved to "{log_paths}".')
 
     t0, s0 = elapsed(t0)
@@ -653,14 +685,14 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
 
     if len(cases) == 1:
         if ex_code == 0:
-            print(f'-> Single process finished in {s0}.')
+            print(f"-> Single process finished in {s0}.")
         else:
-            print(f'-> Single process exit with an error in {s0}.')
+            print(f"-> Single process exit with an error in {s0}.")
     elif len(cases) > 1:
         if ex_code == 0:
-            print(f'-> Multiprocessing finished in {s0}.')
+            print(f"-> Multiprocessing finished in {s0}.")
         else:
-            print(f'-> Multiprocessing exit with an error in {s0}.')
+            print(f"-> Multiprocessing exit with an error in {s0}.")
 
     # IPython interactive shell
     if shell is True:
@@ -674,8 +706,10 @@ def run(filename, input_path='', verbose=20, mp_verbose=30, ncpu=NCPUS_PHYSICAL,
                 logger.info("IPython: Access System object in variable `system`.")
                 system.TDS.load_plotter()
             elif isinstance(system, list):
-                logger.warning("IPython: System objects stored in list `system`.\n"
-                               "Call `TDS.load_plotter()` on each for plotter.")
+                logger.warning(
+                    "IPython: System objects stored in list `system`.\n"
+                    "Call `TDS.load_plotter()` on each for plotter."
+                )
 
             embed()
         except ImportError:
@@ -697,8 +731,16 @@ def plot(*args, **kwargs):
     return tdsplot(*args, **kwargs)
 
 
-def misc(edit_config='', save_config='', show_license=False, clean=True, recursive=False,
-         overwrite=None, version=False, **kwargs):
+def misc(
+    edit_config="",
+    save_config="",
+    show_license=False,
+    clean=True,
+    recursive=False,
+    overwrite=None,
+    version=False,
+    **kwargs,
+):
     """
     Miscellaneous commands.
     """
@@ -708,7 +750,7 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     if show_license:
         print_license()
         return
-    if save_config != '':
+    if save_config != "":
         save_conf(save_config, overwrite=overwrite, **kwargs)
         return
     if clean is True:
@@ -726,8 +768,9 @@ def misc(edit_config='', save_config='', show_license=False, clean=True, recursi
     logger.info("info: no option specified. Use 'andes misc -h' for help.")
 
 
-def prepare(quick=False, incremental=False, models=None,
-            precompile=False, nomp=False, **kwargs):
+def prepare(
+    quick=False, incremental=False, models=None, precompile=False, nomp=False, **kwargs
+):
     """
     Run code generation.
 
@@ -770,8 +813,9 @@ def prepare(quick=False, incremental=False, models=None,
 
     # run code generation
     system = System(options=kwargs, no_undill=True)
-    system.prepare(quick=quick, incremental=incremental, models=models,
-                   nomp=nomp, ncpu=ncpu)
+    system.prepare(
+        quick=quick, incremental=incremental, models=models, nomp=nomp, ncpu=ncpu
+    )
 
     # compile model function calls
     if precompile:
@@ -790,23 +834,26 @@ def selftest(quick=False, extra=False, **kwargs):
 
     # map verbosity level from logging to unittest
     vmap = {1: 3, 10: 3, 20: 2, 30: 1, 40: 1, 50: 1}
-    verbose = vmap[kwargs.get('verbose', 20)]
+    verbose = vmap[kwargs.get("verbose", 20)]
 
     # skip if quick
-    quick_skips = ('test_1_docs', 'test_codegen_inc')
+    quick_skips = ("test_1_docs", "test_codegen_inc")
 
     # extra test naming convention
-    extra_test = 'extra_test'
+    extra_test = "extra_test"
 
     try:
         logger.handlers[0].setLevel(logging.WARNING)
-        sys.stdout = open(os.devnull, 'w')  # suppress print statements
+        sys.stdout = open(os.devnull, "w")  # suppress print statements
     except IndexError:  # logger not set up
         pass
 
     # discover test cases
     test_directory = tests_root()
-    suite = unittest.TestLoader().discover(test_directory)
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTests(loader.discover(test_directory, pattern="test*.py"))
+    suite.addTests(loader.discover(test_directory, pattern="extra_test*.py"))
 
     # remove codegen for quick mode
     for test_group in suite._tests:
@@ -814,8 +861,11 @@ def selftest(quick=False, extra=False, **kwargs):
             tests_keep = list()
 
             for t in test_class._tests:
-                # skip the extra tests if `extra` is not True
-                if (extra is not True) and (extra_test in t._testMethodName):
+                # skip extra tests if `extra` is not True
+                # checks both module name and method name for `extra_test`
+                if (extra is not True) and (
+                    extra_test in type(t).__module__ or extra_test in t._testMethodName
+                ):
                     continue
 
                 # skip the ones for `quick`
@@ -836,16 +886,16 @@ def doc(attribute=None, list_supported=False, config=False, **kwargs):
     """
     system = System()
     if attribute is not None:
-        if attribute in system.__dict__ and hasattr(system.__dict__[attribute], 'doc'):
+        if attribute in system.__dict__ and hasattr(system.__dict__[attribute], "doc"):
             logger.info(system.__dict__[attribute].doc())
         else:
-            logger.error('Model <%s> does not exist.', attribute)
+            logger.error("Model <%s> does not exist.", attribute)
 
     elif list_supported is True:
         logger.info(system.supported_models())
 
     else:
-        logger.info('info: no option specified. Use \'andes doc -h\' for help.')
+        logger.info("info: no option specified. Use 'andes doc -h' for help.")
 
 
 def demo(**kwargs):
@@ -860,20 +910,21 @@ def versioninfo():
     Print version info for ANDES and dependencies.
     """
 
-    import numpy as np
-    import sympy
-    import scipy
-    import pandas
     import kvxopt
+    import numpy as np
+    import pandas
+    import scipy
+    import sympy
 
-    versions = {'Python': platform.python_version(),
-                'andes': andes.__version__,
-                'numpy': np.__version__,
-                'kvxopt': kvxopt.__version__,
-                'sympy': sympy.__version__,
-                'scipy': scipy.__version__,
-                'pandas': pandas.__version__,
-                }
+    versions = {
+        "Python": platform.python_version(),
+        "andes": andes.__version__,
+        "numpy": np.__version__,
+        "kvxopt": kvxopt.__version__,
+        "sympy": sympy.__version__,
+        "scipy": scipy.__version__,
+        "pandas": pandas.__version__,
+    }
     maxwidth = max([len(k) for k in versions.keys()])
 
     try:
