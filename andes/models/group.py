@@ -914,6 +914,16 @@ class TurbineGov(GroupBase):
         self.common_vars.extend(('pout',))
 
 
+class DynShaft(GroupBase):
+    """
+    Dynamic shaft model group for multi-mass torsional models.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.common_params.extend(('syn',))
+
+
 class Exciter(GroupBase):
     """
     Exciter group for synchronous generators.

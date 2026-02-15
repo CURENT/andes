@@ -39,6 +39,9 @@ Modeling framework changes:
 
 Model changes:
 
+- Add `SHAFT5` 5-mass torsional shaft model (HP-IP-LP-Rotor-EX) for
+  sub-synchronous resonance studies on synchronous generators. Includes
+  `DynShaft` group and IEEE 14-bus test case (`ieee14_shaft5.json`).
 - Add `REECB1` renewable energy control model with test cases.
 - Remove `ug` ExtParam and custom `ue` ConstService from `ExcBase` and `TGBase`;
   now inherited from the base `Model` class.
