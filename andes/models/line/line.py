@@ -266,7 +266,7 @@ class Line(LineData, Model):
         mconj = np.conj(m)
 
         # build self and mutual admittances into Y
-        self.Y = spmatrix((y12 + y1) / m2 + ysh, self.a1.a, self.a1.a, (nb, nb), 'z')
+        self.Y = spmatrix((y12 + y1 + ysh) / m2, self.a1.a, self.a1.a, (nb, nb), 'z')
         self.Y -= spmatrix(y12 / mconj, self.a1.a, self.a2.a, (nb, nb), 'z')
         self.Y -= spmatrix(y12 / m, self.a2.a, self.a1.a, (nb, nb), 'z')
         self.Y += spmatrix(y12 + y2 + ysh, self.a2.a, self.a2.a, (nb, nb), 'z')
