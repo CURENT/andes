@@ -23,6 +23,7 @@ class REECA1Data(ModelData):
         self.reg = IdxParam(model='RenGen',
                             info='Renewable generator idx',
                             mandatory=True,
+                            status_parent=True,
                             )
 
         self.busr = IdxParam(info='Optional remote bus for voltage control',
@@ -340,12 +341,12 @@ class REECA1Model(Model):
 
         self.Ipcmd = ExtAlgeb(model='RenGen', src='Ipcmd', indexer=self.reg, export=False,
                               info='Retrieved Ipcmd of RenGen',
-                              e_str='-Ipcmd0 + IpHL_y',
+                              e_str='ue * (-Ipcmd0 + IpHL_y)',
                               )
 
         self.Iqcmd = ExtAlgeb(model='RenGen', src='Iqcmd', indexer=self.reg, export=False,
                               info='Retrieved Iqcmd of RenGen',
-                              e_str='-Iqcmd0 - IqHL_y',   # negative sign here, different from `Ipcmd`
+                              e_str='ue * (-Iqcmd0 - IqHL_y)',   # negative sign here, different from `Ipcmd`
                               )
 
         self.p0 = ExtService(model='RenGen',

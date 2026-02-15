@@ -123,7 +123,7 @@ class REGCA1Model(Model):
                           indexer=self.bus,
                           tex_name=r'\theta',
                           info='Bus voltage angle',
-                          e_str='-Pe',
+                          e_str='-ue * Pe',
                           ename='P',
                           tex_ename='P',
                           )
@@ -133,7 +133,7 @@ class REGCA1Model(Model):
                           indexer=self.bus,
                           tex_name=r'V',
                           info='Bus voltage magnitude',
-                          e_str='-Qe',
+                          e_str='-ue * Qe',
                           ename='Q',
                           tex_ename='Q',
                           )

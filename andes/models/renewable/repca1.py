@@ -21,6 +21,7 @@ class REPCA1Data(ModelData):
         self.ree = IdxParam(info='RenExciter idx',
                             model='RenExciter',
                             mandatory=True,
+                            status_parent=True,
                             )
 
         self.line = IdxParam(info='Idx of line that connect to measured bus',
@@ -501,9 +502,9 @@ class REPCA1Model(Model):
 
         Pext = '(SWF_s1 * s6_y)'
 
-        self.Pext.e_str = Pext
+        self.Pext.e_str = f'ue * {Pext}'
 
-        self.Qext.e_str = Qext
+        self.Qext.e_str = f'ue * {Qext}'
 
     def _fix_no_line(self, **kwargs):
         """
