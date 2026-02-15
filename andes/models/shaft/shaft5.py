@@ -176,12 +176,13 @@ class SHAFT5Model(Model):
                               tex_name=r'\tau_{m0}',
                               info='Initial mechanical torque',
                               )
-        self.delta0_gen = ExtService(model='SynGen',
-                                    src='delta',
-                                    indexer=self.syn,
-                                    tex_name=r'\delta_0',
-                                    info='Initial generator rotor angle',
-                                    )
+        self.delta0_gen = ExtService(
+            model='SynGen',
+            src='delta',
+            indexer=self.syn,
+            tex_name=r'\delta_0',
+            info='Initial generator rotor angle',
+        )
 
         # --- Computed constants ---
         self.Ob = ConstService(v_str='2 * pi * fn',

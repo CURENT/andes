@@ -240,15 +240,15 @@ class TestComponentConverters(unittest.TestCase):
     def test_line_columns(self):
         ssp = self._prep_lines(self.sa14)
         for col in ['name', 'from_bus', 'to_bus', 'in_service',
-                     'r_ohm_per_km', 'x_ohm_per_km', 'c_nf_per_km',
-                     'length_km', 'max_i_ka']:
+                    'r_ohm_per_km', 'x_ohm_per_km', 'c_nf_per_km',
+                    'length_km', 'max_i_ka']:
             self.assertIn(col, ssp.line.columns, f"Missing line column: {col}")
 
     def test_trafo_columns_ieee14(self):
         ssp = self._prep_lines(self.sa14)
         for col in ['name', 'hv_bus', 'lv_bus', 'sn_mva', 'vn_hv_kv',
-                     'vn_lv_kv', 'vk_percent', 'vkr_percent',
-                     'tap_side', 'tap_pos', 'in_service']:
+                    'vn_lv_kv', 'vk_percent', 'vkr_percent',
+                    'tap_side', 'tap_pos', 'in_service']:
             self.assertIn(col, ssp.trafo.columns, f"Missing trafo column: {col}")
 
     def test_line_positive_impedance(self):
@@ -302,7 +302,7 @@ class TestComponentConverters(unittest.TestCase):
         _to_pp_bus(ssp, ssa_bus)
         _to_pp_load(sa, ssp, ssa_bus)
         for col in ['name', 'bus', 'p_mw', 'q_mvar', 'in_service',
-                     'sn_mva', 'scaling', 'controllable']:
+                    'sn_mva', 'scaling', 'controllable']:
             self.assertIn(col, ssp.load.columns, f"Missing load column: {col}")
 
     # --- Shunt ---
@@ -326,7 +326,7 @@ class TestComponentConverters(unittest.TestCase):
         _to_pp_bus(ssp, ssa_bus)
         _to_pp_shunt(sa, ssp, ssa_bus)
         for col in ['name', 'bus', 'p_mw', 'q_mvar', 'in_service', 'vn_kv',
-                     'step', 'max_step']:
+                    'step', 'max_step']:
             self.assertIn(col, ssp.shunt.columns, f"Missing shunt column: {col}")
 
     # --- Generator ---
@@ -361,8 +361,8 @@ class TestComponentConverters(unittest.TestCase):
         _to_pp_bus(ssp, ssa_bus)
         _to_pp_gen(sa, ssp)
         for col in ['name', 'bus', 'p_mw', 'vm_pu', 'in_service',
-                     'controllable', 'slack', 'max_p_mw', 'min_p_mw',
-                     'max_q_mvar', 'min_q_mvar', 'slack_weight', 'sn_mva']:
+                    'controllable', 'slack', 'max_p_mw', 'min_p_mw',
+                    'max_q_mvar', 'min_q_mvar', 'slack_weight', 'sn_mva']:
             self.assertIn(col, ssp.gen.columns, f"Missing gen column: {col}")
 
     def test_gen_vm_matches_v0(self):
