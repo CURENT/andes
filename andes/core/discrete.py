@@ -8,8 +8,6 @@
 #  File name: discrete.py
 
 import logging
-from typing import List, Tuple, Union
-
 import numpy as np
 
 from andes.core.common import dummify
@@ -38,8 +36,7 @@ class Discrete:
         if not hasattr(self, 'export_flags_tex'):
             self.export_flags_tex = []
 
-        # The following two dicts are registries; currently not used for computation
-        self.input_list = []  # references to input variables
+        self.input_list = []  # references to input variables; used by symprocessor
         self.param_list = []  # references to parameters
 
         self.x_set = list()
@@ -379,9 +376,9 @@ class Limiter(Discrete):
         self.allow_adjust = allow_adjust
 
         if sign_lower not in (1, -1):
-            raise ValueError("sign_lower must be 1 or -1, got %s" % sign_lower)
+            raise ValueError(f"sign_lower must be 1 or -1, got {sign_lower}")
         if sign_upper not in (1, -1):
-            raise ValueError("sign_upper must be 1 or -1, got %s" % sign_upper)
+            raise ValueError(f"sign_upper must be 1 or -1, got {sign_upper}")
 
         self.sign_lower = dummify(sign_lower)
         self.sign_upper = dummify(sign_upper)
@@ -525,7 +522,7 @@ class Limiter(Discrete):
                 upper[mask] = val[mask]
                 self.mask_upper = mask
             else:
-                self._show_adjust(val, upper, mask, self.lower.name, adjusted=False)
+                self._show_adjust(val, upper, mask, self.upper.name, adjusted=False)
 
 
 class SortedLimiter(Limiter):
@@ -566,7 +563,7 @@ class SortedLimiter(Limiter):
                          )
 
         self.n_select = int(n_select)
-        self.auto = True if self.n_select == 0 else False
+        self.auto = self.n_select == 0
         self.abs_violation = abs_violation
 
         self.ql = np.array([ql])
@@ -1041,11 +1038,11 @@ class Switcher(Discrete):
     where `IC_s0` is used for padding so that following flags align with the options.
     """
 
-    def __init__(self, u, options: Union[list, Tuple], info: str = None,
+    def __init__(self, u, options: list | tuple, info: str = None,
                  name: str = None, tex_name: str = None, cache=True,):
         super().__init__(name=name, tex_name=tex_name, info=info,)
         self.u = u
-        self.options: Union[List, Tuple] = options
+        self.options: list | tuple = options
         self.cache: bool = cache
         self._eval: bool = False  # if the flags has been evaluated
 
@@ -1209,9 +1206,7 @@ class DeadBandRT(DeadBand):
     """
 
     def __init__(self, u, center, lower, upper, enable=True):
-        """
-
-        """
+        """Initialize DeadBandRT with return-direction tracking flags."""
         DeadBand.__init__(self, u, center=center, lower=lower, upper=upper, enable=enable)
 
         # default state if not enabled
@@ -1254,7 +1249,10 @@ class DeadBandRT(DeadBand):
         if not self.enable:
             return
 
-        # square return dead band
+        # TODO: This logic is broken — zu+zi and zl+zi can never equal 2
+        # (zi = not(zu|zl)), and np.equal(self.zi, self.zi) is always True,
+        # so zur/zlr never change. Needs previous-step flag storage to
+        # detect transitions from zu→zi or zl→zi as the docstring intends.
         self.zur[:] = np.equal(self.zu + self.zi, 2) + self.zur * np.equal(self.zi, self.zi)
         self.zlr[:] = np.equal(self.zl + self.zi, 2) + self.zlr * np.equal(self.zi, self.zi)
 
