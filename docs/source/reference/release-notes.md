@@ -29,15 +29,35 @@ Modeling framework changes:
 - Add DAE compaction to remove replaced static generators' algebraic variables
   from the Newton-Raphson system during TDS, reducing system size for
   dynamics-heavy cases.
+- Add `Observable` variable type for substitution-based recording without
+  adding variables to the DAE system.
+- Add two-pass initialization with block-to-Observable conversions and discrete
+  dependency tracking.
+- Add pre-evaluation of discrete flags before the initialization pass.
+- Add nonmonotone backtracking line search to the Newton-Raphson solver in both
+  PFlow and TDS for improved convergence robustness.
 
 Model changes:
 
+- Add `REECB1` renewable energy control model with test cases.
 - Remove `ug` ExtParam and custom `ue` ConstService from `ExcBase` and `TGBase`;
   now inherited from the base `Model` class.
 - Remove `uee` ExtService and custom `ue` ConstService from `PSSBase`.
 - Rename DGPrct `ue` Algeb (lock flag) to `lock` to avoid collision with the new
   base `ue`.
 - Fix EXDC2 `Se0` formula to use `ue` instead of removed `ug`.
+- Enable `AntiWindup` init limit adjustment and fix REEC models.
+- Fix `zero_out` bypass in `LeadLag` and `LeadLag2ndOrd` blocks.
+
+Eigenvalue analysis:
+
+- Replace permutation-based reorder with a fold/eliminate/reduce pipeline in
+  eigenvalue analysis for improved numerical robustness.
+
+PSS/E parser:
+
+- Refactor RAW parser to a data-driven architecture with PSS/E v34 support.
+- Fix DYR parser to handle embedded quoted strings and comma-separated values.
 
 Refactoring:
 
@@ -45,6 +65,7 @@ Refactoring:
   `CodegenManager`; prefer direct calls via `system.registry.*` and
   `system.codegen.*`, with legacy `System` delegate methods deprecated for
   removal in v3.0.
+- Convert the `System` module into a package and extract `DAECompactor`.
 - Extract config runtime logic into `SystemConfigRuntime`
   (`andes.system.config_runtime`); prefer `system.config_runtime.*` over
   facade-level helpers. Legacy wrappers in `andes.system.facade` are deprecated
@@ -53,6 +74,22 @@ Refactoring:
   (`andes.core.model.model_evaluator`) using composition. Keep `Model` methods
   (`f_update`, `g_update`, `j_update`, service/discrete updates, and input
   refreshers) as delegate wrappers to preserve call sites.
+- Move connectivity check into `ConnMan` and optimize.
+- Replace `ConnMan` bus propagation with declarative status framework.
+- Route `u` changes through `set_status` and remove `Bus.set` override.
+- Replace `ModelCache` boilerplate with declarative registration.
+- Rewrite TDS init error diagnostics with limit clamping report and DAE
+  reverse map.
+
+Bug fixes:
+
+- TDS no longer checks connectivity at initialization time.
+- Fix `pflow_tds` not updated during TDS initialization.
+- Guard `save_unconstrained` against non-numeric `u.v` in discrete components.
+- Disable discrete warning when initialized value is exactly at the limit.
+- Clarify error message for device lookup failures in `find_idx`.
+- Show slack generator count and bus indices in connectivity warning.
+- Pin pandas version for pandapower compatibility.
 
 ## v1.10 Notes
 
