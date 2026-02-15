@@ -68,19 +68,6 @@ class ModelCache:
     def __getstate__(self):
         return self.__dict__
 
-    def add_callback(self, name: str, callback):
-        """
-        Add a cache attribute and a callback function for updating the attribute.
-
-        Parameters
-        ----------
-        name : str
-            name of the cached function return value
-        callback : callable
-            callback function for updating the cached attribute
-        """
-        self._callbacks[name] = callback
-
     def add_combined(self, name, model, attrs):
         """
         Register a cache field that concatenates OrderedDicts from *model*.
