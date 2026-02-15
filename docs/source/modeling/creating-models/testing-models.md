@@ -78,9 +78,9 @@ ss.PFlow.run()
 ss.TDS.config.tf = 2
 ss.TDS.run()
 
-# Check states stayed constant
-omega = ss.dae.ts.x[:, ss.GENROU.omega.a]
-deviation = omega.max() - omega.min()
+# Check states stayed constant using get_timeseries()
+omega_df = ss.TDS.get_timeseries(ss.GENROU.omega)
+deviation = omega_df.max().max() - omega_df.min().min()
 
 assert deviation < 1e-6, "States should not change in flat run"
 ```
@@ -102,8 +102,8 @@ ss.TDS.run()
 assert ss.TDS.exit_code == 0
 
 # Check reasonable response
-omega_max = ss.dae.ts.x[:, ss.GENROU.omega.a].max()
-assert omega_max < 1.1, "Speed deviation too large"
+omega_df = ss.TDS.get_timeseries(ss.GENROU.omega)
+assert omega_df.max().max() < 1.1, "Speed deviation too large"
 ```
 
 ## Initialization Test
@@ -152,8 +152,8 @@ class TestMyModel:
         ss.TDS.config.tf = 2
         ss.TDS.run()
 
-        omega = ss.dae.ts.x[:, ss.GENROU.omega.a]
-        assert omega.std() < 1e-6
+        omega_df = ss.TDS.get_timeseries(ss.GENROU.omega)
+        assert omega_df.std().max() < 1e-6
 
     def test_tds_fault(self):
         """TDS with fault completes."""
@@ -187,8 +187,9 @@ import numpy as np
 import pandas as pd
 
 # Load ANDES results
-andes_omega = ss.dae.ts.x[:, ss.GENROU.omega.a[0]]
-andes_t = ss.dae.ts.t
+omega_df = ss.TDS.get_timeseries(ss.GENROU.omega)
+andes_omega = omega_df.iloc[:, 0].values  # First generator
+andes_t = omega_df.index.values
 
 # Load PSS/E results
 psse = pd.read_csv('psse_results.csv')

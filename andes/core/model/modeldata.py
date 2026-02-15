@@ -2,6 +2,7 @@
 Module for ModelData.
 """
 
+import difflib
 import logging
 from collections import OrderedDict, defaultdict
 
@@ -162,7 +163,15 @@ class ModelData:
             if violation is not None:
                 self._param_corrections[(name, violation)].append(idx)
         if len(kwargs) > 0:
-            logger.warning("%s: unused data %s", self.class_name, str(kwargs))
+            valid_names = list(self.params.keys())
+            for bad_key in kwargs:
+                close = difflib.get_close_matches(bad_key, valid_names, n=3, cutoff=0.6)
+                if close:
+                    logger.warning("%s: unrecognized field '%s'. Did you mean: %s?",
+                                   self.class_name, bad_key, ', '.join(close))
+                else:
+                    logger.warning("%s: unrecognized field '%s'. Valid fields: %s",
+                                   self.class_name, bad_key, ', '.join(valid_names))
 
     def report_corrections(self):
         """

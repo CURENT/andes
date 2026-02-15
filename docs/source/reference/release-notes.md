@@ -84,6 +84,16 @@ Refactoring:
 - Rewrite TDS init error diagnostics with limit clamping report and DAE
   reverse map.
 
+API improvements:
+
+- Add ``TDS.get_timeseries(var)`` convenience method that returns time-series
+  data as a pandas DataFrame, dispatching automatically by variable type
+  (State, Algeb, ExtState, ExtAlgeb, Observable).
+- Add fuzzy-match warnings for unrecognized field names in ``System.add()``,
+  suggesting close matches with ``difflib.get_close_matches``.
+- Document ``System.add()`` kwargs support and the ``model`` parameter
+  collision caveat for ``Alter`` and ``Toggle``.
+
 Bug fixes:
 
 - TDS no longer checks connectivity at initialization time.

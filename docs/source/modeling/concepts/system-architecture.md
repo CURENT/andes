@@ -86,7 +86,14 @@ ss.dae.t    # Current time
 
 ### Time Series
 
-After TDS, historical data is in:
+After TDS, use `get_timeseries()` to extract results as a pandas DataFrame:
+
+```python
+omega_df = ss.TDS.get_timeseries(ss.GENROU.omega)  # State variable
+voltage_df = ss.TDS.get_timeseries(ss.Bus.v)       # Algebraic variable
+```
+
+The underlying arrays are also available for direct access:
 
 ```python
 ss.dae.ts.t    # Time points

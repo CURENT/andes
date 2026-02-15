@@ -328,7 +328,39 @@ class System:
         """
         Add a device instance for an existing model.
 
-        This methods calls the ``add`` method of `model` and registers the device `idx` to group.
+        This method calls the ``add`` method of `model` and registers the device `idx` to group.
+
+        Parameters can be passed as a dictionary, as keyword arguments, or both.
+        When both are provided, keyword arguments are merged into the dictionary
+        (kwargs take precedence on conflicts).
+
+        Parameters
+        ----------
+        model : str
+            Name of the model (e.g., ``'Fault'``, ``'Toggle'``, ``'PQ'``).
+        param_dict : dict, optional
+            Dictionary of parameter names to values.
+        **kwargs
+            Parameter names and values as keyword arguments.
+
+        Returns
+        -------
+        idx
+            The assigned device index.
+
+        Examples
+        --------
+        The following are equivalent::
+
+            ss.add('Fault', {'bus': 5, 'tf': 1.0, 'tc': 1.1})
+            ss.add('Fault', bus=5, tf=1.0, tc=1.1)
+
+        For models that have a parameter named ``model`` (e.g., ``Alter``,
+        ``Toggle``), the dictionary form must be used to avoid collision
+        with the first positional argument::
+
+            ss.add('Alter', {'model': 'TGOV1', 'dev': 1, 'src': 'paux0',
+                             't': 1.0, 'method': '=', 'amount': 0.05})
         """
         if model not in self.models and (model not in self.model_aliases):
             logger.warning("<%s> is not an existing model.", model)

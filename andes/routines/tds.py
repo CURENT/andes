@@ -1129,6 +1129,46 @@ class TDS(BaseRoutine):
                          self.config.ddelta_limit)
         return res
 
+    def get_timeseries(self, var):
+        """
+        Return time-series data for a variable as a DataFrame.
+
+        Dispatches automatically based on the variable type (State/ExtState
+        use ``dae.ts.x``; Algeb/ExtAlgeb use ``dae.ts.y``).
+
+        Parameters
+        ----------
+        var : BaseVar
+            A variable instance, e.g., ``ss.GENROU.omega`` or ``ss.Bus.v``.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame with time as index and device idx values as columns.
+        """
+
+        from andes.core.var import BaseVar
+
+        if not isinstance(var, BaseVar):
+            raise TypeError(
+                f"Expected a variable (e.g., ss.GENROU.omega), got {type(var).__name__}."
+            )
+
+        ts = self.system.dae.ts
+
+        if ts.t is None or len(ts.t) == 0:
+            raise ValueError("No time-series data. Run TDS first.")
+
+        data_matrix = getattr(ts, var.v_code)
+        data = data_matrix[:, var.a]
+
+        if len(var.a) == len(var.owner.idx.v):
+            columns = list(var.owner.idx.v)
+        else:
+            columns = list(range(len(var.a)))
+
+        return pd.DataFrame(data, index=ts.t, columns=columns)
+
     def _csv_data_to_dae(self):
         """
         Helper function to fetch data when replaying from CSV file.
