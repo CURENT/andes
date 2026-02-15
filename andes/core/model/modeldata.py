@@ -95,10 +95,7 @@ class ModelData:
 
         if not hasattr(self, 'cache'):
             self.cache = ModelCache()
-        self.cache.add_callback('dict', self.as_dict)
-        self.cache.add_callback('df', lambda: self.as_df())
-        self.cache.add_callback('dict_in', lambda: self.as_dict(True))
-        self.cache.add_callback('df_in', lambda: self.as_df(vin=True))
+        self.cache._owner = self
 
         if three_params is True:
             self.idx = DataParam(info='unique device idx')

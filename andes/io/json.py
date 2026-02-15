@@ -61,7 +61,7 @@ def _dump_system(system, skip_empty, orient='records'):
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
             continue
-        out[name] = instance.cache.df_in.to_dict(orient=orient)
+        out[name] = instance.as_df(vin=True).to_dict(orient=orient)
 
     return json.dumps(out, indent=2)
 

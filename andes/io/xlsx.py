@@ -61,8 +61,7 @@ def _write_system(system, writer, skip_empty):
     for name, instance in system.models.items():
         if skip_empty and instance.n == 0:
             continue
-        instance.cache.refresh("df_in")
-        instance.cache.df_in.to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
+        instance.as_df(vin=True).to_excel(writer, sheet_name=name, freeze_panes=(1, 0))
     return writer
 
 
@@ -78,7 +77,7 @@ def _add_book(system, writer, add_book):
 
         for item in add_book:
             if item in system.models:
-                system.models[item].cache.df_in.to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
+                system.models[item].as_df(vin=True).to_excel(writer, sheet_name=item, freeze_panes=(1, 0))
                 logger.info('<%s> template sheet added.', item)
             else:
                 logger.error('<%s> is not a valid model name.', item)

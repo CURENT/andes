@@ -597,6 +597,9 @@ class System:
         for mdl in models.values():
             if not mdl.n:
                 continue
+
+            mdl.cache.refresh()
+
             for var in mdl.cache.v_getters.values():
                 self._getters[var.v_code].append(var)
             for var in mdl.cache.v_setters.values():
@@ -1272,9 +1275,7 @@ class System:
                 for ref_name in (model.group, model.class_name):
                     if ref_name not in dest.services_ref:
                         br = BackRef(info=f'auto for status from {model.class_name}')
-                        br.owner = dest
-                        br.name = ref_name
-                        dest.services_ref[ref_name] = br
+                        setattr(dest, ref_name, br)
 
         # create an empty list of lists for all `BackRef` instances
         for model in models_and_groups:
