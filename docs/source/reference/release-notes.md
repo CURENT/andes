@@ -97,6 +97,10 @@ API improvements:
   suggesting close matches with ``difflib.get_close_matches``.
 - Document ``System.add()`` kwargs support and the ``model`` parameter
   collision caveat for ``Alter`` and ``Toggle``.
+- Add Plotly backend for interactive TDS plots in Jupyter notebooks via
+  ``ss.TDS.plt.plot(..., backend='plotly')``. Supports zoom, pan, hover
+  tooltips, horizontal/vertical reference lines, figure reuse, and HTML
+  export. LaTeX legend labels are automatically replaced with plain text.
 
 Upgrade guide — ``set()`` / ``alter()`` consolidation:
 

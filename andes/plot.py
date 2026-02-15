@@ -541,10 +541,12 @@ class TDSData:
 
         # header: names for variables
         # axis labels: the texts next to axes
+        # Plotly cannot render LaTeX in legends, so use plain text names
+        use_latex = latex if backend != 'plotly' else False
         if not xheader:
-            xheader = self.get_header(xidx, formatted=latex)
+            xheader = self.get_header(xidx, formatted=use_latex)
         if not yheader:
-            yheader = self.get_header(yidx, formatted=latex)
+            yheader = self.get_header(yidx, formatted=use_latex)
 
         # process `ytimes`
         if ytimes is not None:
@@ -574,11 +576,191 @@ class TDSData:
     def get_call(self, backend=None):
         """
         Get the internal `plot_data` function for the specified backend.
+
+        Parameters
+        ----------
+        backend : str or None
+            ``'plotly'`` for interactive Plotly plots in Jupyter,
+            ``'bqplot'`` for the (experimental) bqplot backend,
+            ``None`` for matplotlib (default).
         """
+        if backend == 'plotly':
+            return self.plotly_data
         if backend == 'bqplot':
             return self.bqplot_data
 
         return self.plot_data
+
+    def plotly_data(self, xdata, ydata, *, xheader=None, yheader=None, xlabel=None, ylabel=None,
+                    left=None, right=None, ymin=None, ymax=None,
+                    legend=None, grid=False, greyscale=False, latex=False,
+                    dpi=DPI, line_width=1.5, font_size=14, savefig=None, save_format=None,
+                    show=True, title=None, linestyles=None, color=None,
+                    hline1=None, hline2=None, vline1=None, vline2=None, hline=None, vline=None,
+                    fig=None, figsize=None,
+                    set_xlim=True, set_ylim=True, autoscale=False,
+                    legend_bbox=None, legend_loc=None, legend_ncol=1,
+                    **kwargs):
+        """
+        Plot with Plotly for interactive visualization in Jupyter.
+
+        Parameters
+        ----------
+        xdata : array-like
+            X-axis values (typically time).
+        ydata : np.ndarray
+            Y-axis values. Each column is one variable.
+        fig : plotly.graph_objects.Figure, optional
+            Existing Plotly figure to add traces to.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            The Plotly figure object.
+
+        Other Parameters
+        ----------------
+        See ``plot()`` for the full parameter list. Parameters not applicable
+        to Plotly (e.g., ``ax``, ``latex``) are accepted but ignored.
+        """
+        try:
+            import plotly.graph_objects as go
+        except ImportError:
+            raise ImportError("Plotly is required for the 'plotly' backend. "
+                              "Install with: pip install plotly")
+
+        if not isinstance(ydata, np.ndarray):
+            raise TypeError("ydata must be a numpy array. Retrieve with get_values().")
+
+        if ydata.ndim == 1:
+            ydata = ydata.reshape((-1, 1))
+
+        n_lines = ydata.shape[1]
+
+        # --- line styles ---
+        _dash_map = {'-': 'solid', '--': 'dash', '-.': 'dashdot', ':': 'dot'}
+        if not linestyles:
+            linestyles = ['-', '--', '-.', ':']
+        linestyles = linestyles * int(n_lines / len(linestyles) + 1)
+
+        if isinstance(color, (str, float, int)):
+            color = [color] * n_lines
+        elif color is None:
+            color = [None] * n_lines
+
+        # --- create or reuse figure ---
+        if fig is None:
+            fig = go.Figure()
+
+        # --- add traces ---
+        for i in range(n_lines):
+            name = yheader[i] if yheader else f'var {i}'
+            fig.add_trace(go.Scatter(
+                x=xdata.ravel(),
+                y=ydata[:, i],
+                mode='lines',
+                name=name,
+                line=dict(
+                    width=line_width,
+                    dash=_dash_map.get(linestyles[i], 'solid'),
+                    color=color[i],
+                ),
+            ))
+
+        # --- layout ---
+        x_title = xlabel if xlabel else (xheader[0] if xheader else None)
+        y_title = ylabel if ylabel else None
+
+        xaxis_opts = dict(title=x_title)
+        yaxis_opts = dict(title=y_title)
+
+        if set_xlim:
+            if left is not None:
+                xaxis_opts['range'] = [left, right if right else xdata[-1]]
+            elif right is not None:
+                xaxis_opts['range'] = [xdata[0], right]
+
+        if set_ylim and (ymin is not None or ymax is not None):
+            yaxis_opts['range'] = [ymin, ymax]
+
+        if grid:
+            xaxis_opts['showgrid'] = True
+            yaxis_opts['showgrid'] = True
+
+        # legend — Plotly legends are interactive (click to toggle traces),
+        # so always show them unless explicitly disabled
+        show_legend = legend if legend is not None else bool(yheader)
+
+        layout_opts = dict(
+            xaxis=xaxis_opts,
+            yaxis=yaxis_opts,
+            showlegend=show_legend,
+            font=dict(size=font_size),
+            template='plotly_white' if not greyscale else 'simple_white',
+        )
+
+        if title:
+            layout_opts['title'] = dict(text=title)
+
+        if figsize:
+            layout_opts['width'] = figsize[0] if figsize[0] > 50 else int(figsize[0] * 100)
+            layout_opts['height'] = figsize[1] if figsize[1] > 50 else int(figsize[1] * 100)
+
+        fig.update_layout(**layout_opts)
+
+        # --- hlines / vlines ---
+        if hline1 or hline2 or vline1 or vline2:
+            logger.warning("hline1, hline2, vline1, and vline2 are deprecated. Use `hline` and `vline`.")
+
+        if isinstance(hline, (float, int, np.floating, np.integer)):
+            hline = [hline]
+        elif hline is None:
+            hline = []
+        if isinstance(vline, (float, int, np.floating, np.integer)):
+            vline = [vline]
+        elif vline is None:
+            vline = []
+
+        if hline1:
+            hline = list(hline) + [hline1]
+        if hline2:
+            hline = list(hline) + [hline2]
+        if vline1:
+            vline = list(vline) + [vline1]
+        if vline2:
+            vline = list(vline) + [vline2]
+
+        for loc in hline:
+            fig.add_hline(y=loc, line_dash='dot', line_color='grey', line_width=1)
+        for loc in vline:
+            fig.add_vline(x=loc, line_dash='dot', line_color='grey', line_width=1)
+
+        # --- save ---
+        if savefig:
+            if save_format is None:
+                save_format = 'html'
+
+            if isinstance(savefig, str):
+                outfile = savefig if '.' in savefig else f'{savefig}.{save_format}'
+            else:
+                count = 1
+                while True:
+                    outfile = f'{self.file_name}_{count}.{save_format}'
+                    if not os.path.isfile(outfile):
+                        break
+                    count += 1
+
+            if save_format == 'html':
+                fig.write_html(outfile)
+            else:
+                fig.write_image(outfile, scale=2)
+
+            logger.info('Figure saved to "%s".', outfile)
+
+        if show:
+            fig.show(renderer='iframe')
+
+        return fig
 
     def data_to_df(self):
         """Convert to pandas.DataFrame"""
