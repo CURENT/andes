@@ -479,17 +479,25 @@ class Limiter(Discrete):
         Helper function to show a table of the adjusted limits.
         """
 
-        idxes = np.array(self.owner.idx.v)[mask]
         if isinstance(val, (int, float)):
             val = np.array([val])
         if isinstance(old_limit, (int, float)):
             old_limit = np.array([old_limit])
 
+        # suppress warnings for values essentially at the limit
+        show = mask.copy()
+        show[mask] &= ~np.isclose(val[mask], old_limit[mask])
+
+        if np.sum(show) == 0:
+            return
+
+        idxes = np.array(self.owner.idx.v)[show]
+
         adjust_or_not = 'adjusted' if adjusted else '*not adjusted*'
 
         tab = Tab(title=f"{self.owner.class_name}.{self.name}: {adjust_or_not} limit <{limit_name}>",
                   header=['Idx', 'Input', 'Old Limit'],
-                  data=[*zip(idxes, val[mask], old_limit[mask])],
+                  data=[*zip(idxes, val[show], old_limit[show])],
                   )
 
         if adjusted:
