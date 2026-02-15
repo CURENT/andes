@@ -256,7 +256,10 @@ class System:
         t0, _ = elapsed()
 
         if self.is_setup:
-            logger.warning('System has been setup. Calling setup twice is not allowed.')
+            logger.warning(
+                'System has been setup. Calling setup() twice is not allowed. '
+                'To add devices, reload the case with setup=False, add devices, then call setup().'
+            )
             ret = False
             return ret
 
@@ -367,7 +370,10 @@ class System:
             return
 
         if self.is_setup:
-            raise NotImplementedError("Adding devices are not allowed after setup.")
+            raise NotImplementedError(
+                "Adding devices after setup() is not supported. "
+                "To add devices, reload the case with setup=False, add devices, then call setup()."
+            )
 
         group_name = self.__dict__[model].group
         group = self.groups[group_name]
