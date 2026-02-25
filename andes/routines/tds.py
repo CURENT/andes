@@ -140,7 +140,7 @@ class TDS(BaseRoutine):
         self.last_pc = 0.0
         self.Teye = None
         self.qg = np.array([])
-        self.tol_zero = self.config.tol / 1e6
+        self.tol_zero = self.config.tol / 1e10
 
         # internal status
         self.converged = False
@@ -383,6 +383,7 @@ class TDS(BaseRoutine):
 
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
             logger.debug("Start to integrate time step t=%g", system.dae.t)
+            # logger.info("Integration step size dt = %g", self.h)
 
             # call perturbation file if specified
             if self.callpert is not None:
@@ -423,7 +424,9 @@ class TDS(BaseRoutine):
 
                 if self.check_criteria() is False:
                     self.err_msg = 'Violated stability criteria. To turn off, set [TDS].criteria = 0.'
+                    # logger.info("*--* Violated stability criteria. (I have disabled it!) *--*")
                     self.busted = True
+                    # self.busted = False
 
                 # check if the next step is critical time
                 self.do_switch()
@@ -530,7 +533,7 @@ class TDS(BaseRoutine):
             Convergence status in ``self.converged``.
 
         """
-        return self.method.step(self)
+        return self.method.step(self) 
 
     def _csv_step(self):
         """
@@ -609,6 +612,11 @@ class TDS(BaseRoutine):
 
         self.h = self.deltat
 
+        ############## ~~~~~~~~~~~~~~ ###############
+        '''added an explicit dt'''
+        # self.h = 500e-6
+        ############## ~~~~~~~~~~~~~~ ###############
+
         # do not skip over the end time
         self.h = max(min(self.h, config.tf - system.dae.t), 0)
 
@@ -630,6 +638,10 @@ class TDS(BaseRoutine):
                 self.h = 0
 
         logger.debug("Calculated TDS.h = %g", self.h)
+
+        # if self.h > 50e-6:
+        #     logger.info('h is %g.', self.h)
+
 
         return self.h
 

@@ -111,12 +111,14 @@ class Bus(Model, BusData):
                        info='voltage angle',
                        unit='rad',
                        is_output=True,
+                       diag_eps=True,
                        )
         self.v = Algeb(name='v',
                        tex_name='V',
                        info='voltage magnitude',
                        unit='p.u.',
                        is_output=True,
+                       diag_eps=True,
                        )
 
         # initial values
