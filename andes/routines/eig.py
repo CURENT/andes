@@ -29,15 +29,17 @@ class EIG(BaseRoutine):
     def __init__(self, system, config):
         super().__init__(system=system, config=config)
 
-        self.config.add(plot=0, tol=1e-6, gy_tol=1e-6)
+        self.config.add(plot=0, tol=1e-6, gy_tol=1e-6, gy_tol=1e-6)
         self.config.add_extra("_help",
                               plot="show plot after computation",
                               tol="numerical tolerance to treat eigenvalues as zeros",
+                              gy_tol="row norm threshold for eliminating dead algebraic variables",
                               gy_tol="row norm threshold for eliminating dead algebraic variables")
 
         self.config.add_extra("_alt", plot=(0, 1))
 
         # internal flags and storage
+        self.As = None     # reduced state matrix
         self.As = None     # reduced state matrix
         self.mu = None     # eigenvalues
         self.N = None      # right eigenvectors
@@ -50,12 +52,16 @@ class EIG(BaseRoutine):
         # --- related to dead algebraic variables ---
         self.dead_algeb_idx = np.array([], dtype=int)
 
+        # --- related to dead algebraic variables ---
+        self.dead_algeb_idx = np.array([], dtype=int)
+
         # --- statistics --
         self.n_positive = 0
         self.n_zeros = 0
         self.n_negative = 0
 
         self.x_name = []
+        self.x_tex_name = []
         self.x_tex_name = []
 
     def calc_As(self, dense=True):
@@ -83,6 +89,12 @@ class EIG(BaseRoutine):
         complement handles both original algebraic variables and
         zero-Tf states uniformly.
 
+        States with zero time constants satisfy :math:`0 = f(x, y)` and
+        are treated as algebraic equations.  They are folded into the
+        algebraic system before reduction so that a single Schur
+        complement handles both original algebraic variables and
+        zero-Tf states uniformly.
+
         Returns
         -------
         kvxopt.matrix
@@ -93,12 +105,39 @@ class EIG(BaseRoutine):
         self.find_zero_states()
         self.x_name = np.array(dae.x_name)
         self.x_tex_name = np.array(dae.x_tex_name)
+        self.x_tex_name = np.array(dae.x_tex_name)
 
+        fx, fy, gx, gy = dae.fx, dae.fy, dae.gx, dae.gy
+        Tf = dae.Tf
         fx, fy, gx, gy = dae.fx, dae.fy, dae.gx, dae.gy
         Tf = dae.Tf
 
         # Fold zero-Tf states into the algebraic system
+        # Fold zero-Tf states into the algebraic system
         if len(self.zstate_idx) > 0:
+            fx, fy, gx, gy, Tf = self._fold_zstates(fx, fy, gx, gy, Tf)
+
+        # Find and eliminate dead algebraic variables (including dead zero-Tf states)
+        self.find_dead_algebs(gy, gx)
+
+        # Extract state constraints (0 = C δx) before dead rows are removed
+        C = self._extract_state_constraints(gx)
+
+        if len(self.dead_algeb_idx) > 0:
+            fx, fy, gx, gy = self._eliminate_algebs(fx, fy, gx, gy)
+
+        # Regularize dead columns (variables absent from all equations)
+        self._regularize_dead_columns(gy)
+
+        self.As = self._reduce(fx, fy, gx, gy, Tf, dense=dense)
+
+        # Use state constraints to eliminate dependent states
+        if C is not None:
+            self.As = self._apply_state_constraints(self.As, C)
+
+        if len(self.x_name) < dae.n:
+            n_as = len(self.x_name)
+            logger.info("State matrix is %d x %d (reduced from %d states).", n_as, n_as, dae.n)
             fx, fy, gx, gy, Tf = self._fold_zstates(fx, fy, gx, gy, Tf)
 
         # Find and eliminate dead algebraic variables (including dead zero-Tf states)
@@ -147,6 +186,7 @@ class EIG(BaseRoutine):
         else:
             return sparse(iTf * self.fxy)
 
+    def _fold_zstates(self, fx, fy, gx, gy, Tf):
     def _fold_zstates(self, fx, fy, gx, gy, Tf):
         """
         Fold zero-Tf states into the algebraic system.
