@@ -240,7 +240,7 @@ class EIG(BaseRoutine):
 
         self.n_positive = np.count_nonzero(mu_real > self.config.tol)
         self.n_zeros = np.count_nonzero(abs(mu_real) <= self.config.tol)
-        self.n_negative = np.count_nonzero(mu_real < self.config.tol)
+        self.n_negative = np.count_nonzero(mu_real < -self.config.tol)
 
         return True
 
