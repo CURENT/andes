@@ -5,15 +5,16 @@ This model implements the plant controller that provides reference signals to RE
 - GFM Branch: Voltage reference (Vref_GFM) and frequency reference (fref_GFM)
 - GFL Branch: Active power command (Pcmd_GFL) and reactive power command (Qcmd_GFL)
 """
-
+import numpy as np
 from collections import OrderedDict
 
 from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
                         IdxParam, Lag, Limiter, Model, ModelData, NumParam,
                         Piecewise, State, Switcher)
 from andes.core.block import DeadBand1, GainLimiter, IntegratorAntiWindup, PIController, Washout
-from andes.core.service import NumSelect, VarService
 
+
+from andes.core.service import NumSelect, VarService, EventFlag, ExtendedEvent, VarHold
 
 class REPCGFMC1Data(ModelData):
     """
@@ -356,12 +357,47 @@ class REPCGFMC1Data(ModelData):
                                      info='Minimum reactive power error limit',
                                      unit='p.u.',
                                      )
+        
+        
+        # --- FFR Parameters (per REPCGFM_C1 specification) ---
+        self.fFFR_low = NumParam(default=0.998,
+                                 tex_name='f_{FFR,low}',
+                                 info='Lower threshold of the FFR function',
+                                 unit='p.u.',
+                                 )
 
-        self.k_FFR = NumParam(default=25,         # modified
-                                     tex_name='P_{FFR}',
-                                     info='active power FFR offer',
-                                     unit='p.u.',
-                                     )
+        self.fFFR_high = NumParam(default=1.002,
+                                  tex_name='f_{FFR,high}',
+                                  info='Upper threshold of the FFR function',
+                                  unit='p.u.',
+                                  )
+
+        self.PFFR_low = NumParam(default=0.05,
+                                 tex_name='P_{FFR,low}',
+                                 info='FFR power command when frequency is below fFFR_low',
+                                 unit='p.u.',
+                                 )
+
+        self.PFFR_high = NumParam(default=-0.05,
+                                  tex_name='P_{FFR,high}',
+                                  info='FFR power command when frequency is above fFFR_high',
+                                  unit='p.u.',
+                                  )
+
+        self.DFFR = NumParam(default=0.01,
+                             tex_name='D_{FFR}',
+                             info='Ramp rate for FFR to quit operation',
+                             unit='p.u./s',
+                             )
+
+        self.TFFR = NumParam(default=20, # 300
+                             tex_name='T_{FFR}',
+                             info='Time duration of the FFR hold period',
+                             unit='s',
+                             )
+
+
+
 
 
 class REPCGFMC1Model(Model):
@@ -373,8 +409,12 @@ class REPCGFMC1Model(Model):
         Model.__init__(self, system, config)
 
         self.group = 'RenPlant'
+        
         self.flags.tds = True
-
+        
+        self.flags.update({'v_num': True, 'g_num': True})
+        
+        
         # --- External Parameters from REGFMC1 ---
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
                             info='Retrieved bus idx', vtype=str, default=None,
@@ -392,10 +432,12 @@ class REPCGFMC1Model(Model):
         # --- External Variables from Bus ---
         self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
                           info='Bus (or busr, if given) terminal voltage',
+                          e_str='0',
                           )
 
         self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
                           info='Bus (or busr, if given) phase angle',
+                          e_str='0',
                           )
 
         self.v0 = ExtService(model='Bus', src='v', indexer=self.buss, tex_name="V_0",
@@ -548,7 +590,7 @@ class REPCGFMC1Model(Model):
                            )
         # Output to REGFMC1 frequency reference
         fref_out = 'frefLag_y'
-        self.fref_GFM.e_str = f'{fref_out} -1'  # modified
+        self.fref_GFM.e_str = f'{fref_out} -1'
 
         # --- GFM Voltage Reference Generator (Image 3) ---
         # Site voltage measurement (already defined above as Vsite)
@@ -568,7 +610,7 @@ class REPCGFMC1Model(Model):
         #                          info='Voltage drop due to losses',
         #                          )
 
-        self.dVloss = VarService(v_str='( (Vsite_meas2_y+1e-8+Rloss * Ptarget_1 + Xloss * Qtarget_1)**2 + (Ptarget_1*Xloss-Qtarget_1*Rloss)**2  )**0.5',
+        self.dVloss = VarService(v_str='( (Vsite_meas2_y+Rloss * Ptarget_1 + Xloss * Qtarget_1)**2 + (Ptarget_1*Xloss-Qtarget_1*Rloss)**2  )**0.5',
                                  tex_name=r'\Delta V_{loss}',
                                  info='Voltage drop due to losses',
                                  )                          # modified
@@ -659,15 +701,69 @@ class REPCGFMC1Model(Model):
                                      e_str='Pfreq_droop * Pfreq_lim_zi + Pfreq_max * Pfreq_lim_zu + Pfreq_min * Pfreq_lim_zl - Pfreq_droop_lim',
                                      )
         # FFR
+        
+        self.f_rocof = Algeb(v_str='rocof',
+                               e_str='rocof - f_rocof',
+                               tex_name='f_{rocof,freq}',
+                               info='ROCOF',
+                               )
+        
+        
         self.FFRCSW = Switcher(u=self.FFRFlag, options=(0, 1), tex_name='FFR_{SW}')
 
 
-        self.P_FFR = Algeb(tex_name='P_{ffr}',
-                                     info='Limited frequency droop output',
-                                     v_str='0',
-                                     e_str='(Indicator(rocof > 0.002) + Indicator(rocof < -0.002))'
-                                 '*(fsite_err * k_FFR) - P_FFR',
-                                     )
+        # self.P_FFR = Algeb(tex_name='P_{ffr}',
+        #                              info='Limited frequency droop output',
+        #                              v_str='0',
+        #                              e_str='(Indicator(rocof > 0.002) + Indicator(rocof < -0.002))'
+        #                          '*(fsite_err * k_FFR) - P_FFR',
+        #                              )
+        
+
+        # FFR output is NOT a simple algebraic function of ROCOF or frequency error.
+        # It is a latched hybrid logic:
+        #   trigger -> fixed output -> hold TFFR -> ramp back with DFFR -> re-arm
+        
+ 
+        # self.z_ffr_low = VarService(v_str='Indicator(fsite_meas < fFFR_low)')
+        # self.z_ffr_high = VarService(v_str='Indicator(fsite_meas > fFFR_high)')
+        # self.z_ffr_thr = VarService(v_str='Indicator(z_ffr_low + z_ffr_high > 0)')
+
+        # # busy / armed
+        # self.z_ffr_busy = VarService(v_str='Indicator(Abs(P_FFR) > 1e-6)')
+        # self.z_ffr_armed = VarService(v_str='FFRCSW_s1 * (1 - z_ffr_busy)')
+
+        # # only armed condition can fire  0 or 1
+        # self.z_ffr_pick = VarService(v_str='z_ffr_armed * z_ffr_thr')   
+
+        # # convert conditionz_ffr_armed * z_ffr_thr')
+
+        # # convert condition into event  0 or 1
+        # self.ffr_evt = EventFlag(self.z_ffr_pick)
+
+        # # hold window for TFFR seconds  only trig from 0-->1 
+        # self.ffr_hold = ExtendedEvent(self.ffr_evt, t_ext=self.TFFR, trig="rise")
+
+        # # choose fixed step value  determine the P_FFR
+        # self.Pffr_pick = VarService(
+        #     v_str='z_ffr_low * PFFR_low + z_ffr_high * PFFR_high'
+        # )
+
+        # # hold the chosen value
+        # self.Pffr_hold = VarHold(self.Pffr_pick, hold=self.ffr_hold)
+
+        # algebraic output placeholder, final value still updated in g_numeric()
+        self.P_FFR = Algeb(
+            tex_name='P_{FFR}',
+            info='FFR contribution added to active power reference',
+            v_str='0.0',
+            e_str='0.0 - P_FFR',
+            diag_eps=True
+        )
+                
+        
+        
+        
 
         # p target
         self.Ptarget_1_initial = Algeb(tex_name='P_{target1_initial}',  # modified
@@ -944,6 +1040,85 @@ class REPCGFMC1Model(Model):
       #   Qcmd_out = 'Qcmd_GFLLag_y'  # modified
         self.Qcmd_GFL.e_str = f'{Qcmd_out} - (q0)'
       #   self.Qcmd_GFL.e_str = f'{Qcmd_out} - Qcmd_GFL'
+      
+      
+    # # FFR update function 
+    def v_numeric(self, **kwargs):
+        self._ffr_cmd = 0.0          # ffr output now
+        self._ffr_hold_remain = 0.0  # remaining time
+        self._ffr_busy = 0           # 0=armed, 1=busy
+        self._ffr_last_t = None
+        self._ffr_eps = 1e-8
+
+    def g_numeric(self, **kwargs):
+        dae = self.system.dae
+        t_now = float(getattr(dae, 't', 0.0))
+
+        if not hasattr(self, '_ffr_cmd'):
+            self._ffr_cmd = 0.0
+            self._ffr_hold_remain = 0.0
+            self._ffr_busy = 0
+            self._ffr_last_t = None
+            self._ffr_eps = 1e-8
+
+        if self._ffr_last_t is None:
+            dt = 0.0
+        else:
+            dt = max(0.0, t_now - self._ffr_last_t)
+
+        enabled = bool(self.FFRFlag.v[0] > 0.5)
+        f_meas = float(self.fsite_meas.v[0])
+
+        f_low = float(self.fFFR_low.v[0])
+        f_high = float(self.fFFR_high.v[0])
+
+        p_low = float(self.PFFR_low.v[0])
+        p_high = float(self.PFFR_high.v[0])
+
+        dffr = float(self.DFFR.v[0])
+        tffr = float(self.TFFR.v[0])
+
+        if (self._ffr_last_t is None) or (dt > 0.0):
+
+            if not enabled:
+                self._ffr_cmd = 0.0
+                self._ffr_hold_remain = 0.0
+                self._ffr_busy = 0
+
+            else:
+                # 1) armed: check trigger only when not busy
+                if self._ffr_busy == 0:
+                    if f_meas < f_low:
+                        self._ffr_cmd = p_low
+                        self._ffr_hold_remain = tffr
+                        self._ffr_busy = 1
+                    elif f_meas > f_high:
+                        self._ffr_cmd = p_high
+                        self._ffr_hold_remain = tffr
+                        self._ffr_busy = 1
+
+                # 2) busy: hold stage
+                else:
+                    if self._ffr_hold_remain > 0.0:
+                        self._ffr_hold_remain = max(0.0, self._ffr_hold_remain - dt)
+
+                    # 3) ramp-back stage
+                    else:
+                        if self._ffr_cmd > 0.0:
+                            self._ffr_cmd = max(0.0, self._ffr_cmd - dffr * dt)
+                        elif self._ffr_cmd < 0.0:
+                            self._ffr_cmd = min(0.0, self._ffr_cmd + dffr * dt)
+
+                        # 4) re-arm only after returning to zero
+                        if abs(self._ffr_cmd) <= self._ffr_eps:
+                            self._ffr_cmd = 0.0
+                            self._ffr_busy = 0
+
+            self._ffr_last_t = t_now
+
+        # algebraic residual: force P_FFR = _ffr_cmd
+        self.P_FFR.e[:] = np.array([self._ffr_cmd]) - self.P_FFR.v   
+
 
 class REPCGFMC1(REPCGFMC1Data, REPCGFMC1Model):
     """
