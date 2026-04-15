@@ -114,6 +114,10 @@ def supports_color(stream=None):
     if not hasattr(stream, 'isatty') or not stream.isatty():
         return False
 
+    # 'dumb' terminal universally means no color support
+    if os.environ.get('TERM') == 'dumb':
+        return False
+
     if platform.system() == 'Windows':
         # Windows 10 build 10586+ supports ANSI natively in conhost/WT
         try:
@@ -125,8 +129,7 @@ def supports_color(stream=None):
                 or 'TERM_PROGRAM' in os.environ
                 or win_build >= 10586)
 
-    # Unix: only the 'dumb' terminal lacks color support
-    return os.environ.get('TERM') != 'dumb'
+    return True
 
 
 class ColoredFormatter(logging.Formatter):

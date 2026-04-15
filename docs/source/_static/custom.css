@@ -1,0 +1,14 @@
+/* Widen content area for wide screens (default: 88rem page, 60em article) */
+.bd-page-width {
+    max-width: 120rem;
+}
+
+.bd-main .bd-content .bd-article-container {
+    max-width: 80rem;
+}
+
+/* Fix sidebar scrollbar always visible (pydata-sphinx-theme#1238) */
+.sidebar-primary-items__end {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+}

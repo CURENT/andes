@@ -52,6 +52,8 @@ nb_execution_raise_on_error = True    # Fail build on notebook errors (catch iss
 nb_execution_excludepatterns = [
     'verification/*',                 # Skip verification notebooks (long-running)
     'tutorials/15-reinforcement-learning.ipynb',  # Requires gymnasium (rl extra)
+    'readme-figures.ipynb',           # Skip README figure generation
+    'gallery/*',                      # Skip all gallery notebooks (long-running)
 ]
 nb_merge_streams = True               # Merge stdout/stderr into single output
 
@@ -110,6 +112,7 @@ html_context = {
 }
 
 html_static_path = ['_static']
+html_css_files = ['custom.css']
 html_logo = 'images/andes_logo.svg'
 html_favicon = 'images/curent.ico'
 html_title = f'ANDES {version}'

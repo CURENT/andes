@@ -212,9 +212,26 @@ class VarService(ConstService):
 
     Warnings
     --------
-    `VarService` is not solved with other algebraic equations, meaning that
-    there is one step "delay" between the algebraic variables and `VarService`.
-    Use an algebraic variable whenever possible.
+    ``VarService`` is intended for non-differentiable expressions (e.g.,
+    ``Abs()``, ``re()``, ``im()``) that cannot appear in algebraic
+    equations. If the expression is differentiable, an ``Algeb`` variable
+    should be used instead.
+
+    During model initialization, ``VarService`` is evaluated *before* any
+    variable ``v_str`` assignment is computed. If the expression references
+    algebraic or state variables, those variables will still hold their
+    default (typically zero) values, resulting in an incorrect initial
+    ``VarService`` value. Variables whose ``v_str`` depends on this
+    ``VarService`` will consequently be initialized from an erroneous
+    starting point. At runtime, this effect is self-correcting because
+    ``VarService`` is re-evaluated every iteration with updated variable
+    values. However, the incorrect initial value can cause convergence
+    difficulties or incorrect limiter flag settings during the first few
+    iterations.
+
+    ``VarService`` is not solved simultaneously with algebraic equations,
+    meaning that a one-step delay exists between the algebraic variables
+    and the ``VarService`` value.
     """
 
     def __init__(self,

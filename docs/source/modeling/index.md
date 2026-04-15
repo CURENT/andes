@@ -1,4 +1,4 @@
-# Modeling Guide
+# Modeling
 
 This section provides an in-depth explanation of how the ANDES framework is set up for symbolic modeling and numerical simulation. It aims to help developers understand the internal architecture and implement customized DAE models.
 

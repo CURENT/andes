@@ -273,6 +273,13 @@ class EIG(BaseRoutine):
         #   left eigenvector is `inv(N)^T`
 
         Weye = np.eye(n_state)
+
+        n_zero = np.count_nonzero(np.abs(mu) < self.config.tol)
+        if n_zero > 0:
+            logger.debug("Eigenvector matrix has %d zero-eigenvalue modes "
+                         "(e.g. PLL angles, integrators); participation "
+                         "factors for these modes may be inaccurate.", n_zero)
+
         WT = solve(N, Weye, overwrite_b=True)
         W = WT.T
 

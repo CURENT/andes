@@ -275,6 +275,10 @@ class TDS(BaseRoutine):
 
         self.initialized = True
 
+        # populate delta addresses for stability criteria check
+        if self.config.criteria and system.SynGen.n > 0:
+            system.conn.check_connectivity(info=False)
+
         # test if residuals are close enough to zero
         if self.config.test_init:
             self.test_ok = self.test_init()

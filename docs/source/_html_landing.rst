@@ -10,7 +10,7 @@ ANDES is an open-source Python library for power system modeling, computation, a
 
 ----
 
-.. grid:: 1 2 2 2
+.. grid:: 1 2 3 3
    :gutter: 3
 
    .. grid-item-card:: Tutorials
@@ -18,6 +18,12 @@ ANDES is an open-source Python library for power system modeling, computation, a
       :link-type: doc
 
       Complete learning path from installation through advanced analysis: power flow, time-domain simulation, eigenvalue analysis, parameter sweeps, and contingency studies.
+
+   .. grid-item-card:: Gallery
+      :link: gallery/index
+      :link-type: doc
+
+      Research-oriented application examples: forced oscillation analysis, frequency stability under low inertia, ML-based security assessment, and more.
 
    .. grid-item-card:: Modeling Guide
       :link: modeling/index

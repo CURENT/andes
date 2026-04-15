@@ -33,9 +33,12 @@ class AndesEnv(gymnasium.Env):
         DAE array (``'x'``, ``'y'``, or ``'b'``).  When ``idx_list``
         is given, only those devices (external idx) are observed.
     acts : list of tuple
-        Action spec.  Each element is ``(target, setpoint)``.
-        ``target`` may be a group name (e.g. ``'SynGen'``) or a
-        model name (e.g. ``'TGOV1'``).
+        Action spec.  Each element is ``(target, setpoint)`` or
+        ``(target, setpoint, idx_list)``.  ``target`` may be a
+        group name (e.g. ``'SynGen'``) or a model name (e.g.
+        ``'TGOV1'``).  When ``idx_list`` is given, only those
+        devices are controlled; otherwise all devices in the
+        group or model are used.
     reward_fn : callable
         ``reward_fn(obs, action, env) -> float``.  Required.
     dt : float
@@ -267,10 +270,29 @@ class AndesEnv(gymnasium.Env):
     def _resolve_acts(self, acts_spec):
         """Resolve action spec with full init-time validation.
 
+        Each element of *acts_spec* is ``(target, setpoint)`` or
+        ``(target, setpoint, idx_list)``.  When *idx_list* is given,
+        only those devices are controlled.
+
         Returns list of ``(kind, target, setpoint, idx_list)`` tuples.
         """
         act_info = []
-        for target, setpoint in acts_spec:
+        for spec in acts_spec:
+            if len(spec) == 3:
+                target, setpoint, user_idx = spec
+                if isinstance(user_idx, (str, int, float, np.integer)):
+                    user_idx = [user_idx]
+                else:
+                    user_idx = list(user_idx)
+            elif len(spec) == 2:
+                target, setpoint = spec
+                user_idx = None
+            else:
+                raise ValueError(
+                    f"Action spec must be (target, setpoint) or "
+                    f"(target, setpoint, idx_list), got {spec!r}"
+                )
+
             in_groups = target in self._ss.groups
             in_models = target in self._ss.models
             if in_groups and in_models:
@@ -286,7 +308,7 @@ class AndesEnv(gymnasium.Env):
                     raise ValueError(
                         f"Group '{target}' has no method '{setter_name}'."
                     )
-                idx_list = group.get_all_idxes()
+                idx_list = user_idx if user_idx is not None else group.get_all_idxes()
                 if not idx_list:
                     raise ValueError(f"Group '{target}' has no devices.")
 
@@ -314,7 +336,7 @@ class AndesEnv(gymnasium.Env):
                     raise ValueError(
                         f"Model '{target}' has no attribute '{setpoint}'."
                     )
-                idx_list = list(model.idx.v)
+                idx_list = user_idx if user_idx is not None else list(model.idx.v)
                 if not idx_list:
                     raise ValueError(f"Model '{target}' has no devices.")
                 act_info.append(('model', target, setpoint, idx_list))

@@ -11,6 +11,7 @@ ANDES Documentation
 
    about
    tutorials/index
+   gallery/index
    modeling/index
    reference/index
    verification/index

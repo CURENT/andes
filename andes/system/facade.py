@@ -2030,10 +2030,15 @@ class System:
             else:
                 return name
 
+        seen = set()
         pairs = list()
         for g in self.groups:
+            group = self.groups[g]
+            if id(group) in seen:
+                continue
+            seen.add(id(group))
             models = list()
-            for m in self.groups[g].models:
+            for m in group.models:
                 models.append(rst_ref(m, export))
             if len(models) > 0:
                 pairs.append((rst_ref(g, export), ', '.join(models)))
