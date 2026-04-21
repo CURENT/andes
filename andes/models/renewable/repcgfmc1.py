@@ -33,7 +33,10 @@ class REPCGFMC1Data(ModelData):
                              info='Optional remote bus for measurements',
                              default=None,
                              )
-
+        self.Sn = NumParam(default=100.0, tex_name='S_n',
+                           info='Model MVA base',
+                           unit='MVA',
+                           )
         self.busf = IdxParam(model='BusFreq',
                             info='Optional BusFreq device (if None, auto-created)',
                             default=None,
@@ -229,7 +232,7 @@ class REPCGFMC1Data(ModelData):
                               unit='s',
                               )
 
-        self.FFRFlag = NumParam(default=0.0,
+        self.FFRFlag = NumParam(default=1.0,
                                 tex_name='FFR_{Flag}',
                                 info='FFR flag (0 or 1)',
                                 unit='bool',
@@ -248,13 +251,13 @@ class REPCGFMC1Data(ModelData):
                                      )
 
         # --- GFL Reactive Power Path Parameters ---
-        self.Qref_max = NumParam(default=0.3122,
+        self.Qref_max = NumParam(default=0.6,               # sometimes need to adjust 
                                  tex_name='Q_{ref,max}',
                                  info='Maximum reactive power reference',
                                  unit='p.u.',
                                  )
 
-        self.Qref_min = NumParam(default=-0.3122,
+        self.Qref_min = NumParam(default=-0.6,
                                  tex_name='Q_{ref,min}',
                                  info='Minimum reactive power reference',
                                  unit='p.u.',
@@ -284,13 +287,13 @@ class REPCGFMC1Data(ModelData):
                                  unit='p.u.',
                                  )
 
-        self.dbVLI = NumParam(default=-0.001,
+        self.dbVLI = NumParam(default=-0.01,
                               tex_name='db_{VLI}',
                               info='Voltage deadband lower limit',
                               unit='p.u.',
                               )
 
-        self.dbVHI = NumParam(default=0.001,
+        self.dbVHI = NumParam(default=0.01,
                               tex_name='db_{VHI}',
                               info='Voltage deadband upper limit',
                               unit='p.u.',
@@ -312,25 +315,25 @@ class REPCGFMC1Data(ModelData):
                             unit='s',
                             )
 
-        self.Qvc_max = NumParam(default=0.31,
+        self.Qvc_max = NumParam(default=0.6,             # sometimes need to adjust(same with Qref_max)
                                 tex_name='Q_{vc,max}',
                                 info='Maximum voltage control output',
                                 unit='p.u.',
                                 )
 
-        self.Qvc_min = NumParam(default=-0.31,
+        self.Qvc_min = NumParam(default=-0.6,
                                 tex_name='Q_{vc,min}',
                                 info='Minimum voltage control output',
                                 unit='p.u.',
                                 )
 
-        self.Qcmd_GFL_max = NumParam(default=0.8,
+        self.Qcmd_GFL_max = NumParam(default=0.6,
                                      tex_name='Q_{cmd,GFL,max}',
                                      info='Maximum reactive power command for GFL',
                                      unit='p.u.',
                                      )
 
-        self.Qcmd_GFL_min = NumParam(default=-0.8,
+        self.Qcmd_GFL_min = NumParam(default=-0.6,
                                      tex_name='Q_{cmd,GFL,min}',
                                      info='Minimum reactive power command for GFL',
                                      unit='p.u.',
@@ -487,6 +490,9 @@ class REPCGFMC1Model(Model):
         self.Vref0= ExtService(model='RenGen', src='Vref0', indexer=self.reg, tex_name='V_{ref0}',  # MODIFIED
                            info='Vref0 of REGFMC1',
                            )
+        self.regSn = ExtParam(model='RenGen', src='Sn', indexer=self.reg, export=False,
+                              info='REGFMC1 model base MVA',
+                              )
         self.p0 = ExtService(model='RenGen', src='p0', indexer=self.reg, tex_name='P_0',
                              info='Initial active power of REGFMC1',
                              )
@@ -494,6 +500,18 @@ class REPCGFMC1Model(Model):
         self.q0 = ExtService(model='RenGen', src='q0', indexer=self.reg, tex_name='Q_0',
                              info='Initial reactive power of REGFMC1',
                              )
+        self.SbSn = ConstService(v_str='sys_mva / regSn',
+                                 tex_name=r'S_b/S_n',
+                                 info='System-base to device-base power factor',
+                                 )
+        self.Pe_dev = VarService(v_str='Pe * SbSn',
+                                 tex_name=r'P_{e,dev}',
+                                 info='Active power output on device base',
+                                 )
+        self.Qe_dev = VarService(v_str='Qe * SbSn',
+                                 tex_name=r'Q_{e,dev}',
+                                 info='Reactive power output on device base',
+                                 )
 
         # Internal reference values from power flow
         self.Pref_site_0 = ConstService(v_str='p0',
@@ -768,7 +786,7 @@ class REPCGFMC1Model(Model):
         # p target
         self.Ptarget_1_initial = Algeb(tex_name='P_{target1_initial}',  # modified
                                        info='active power P target_initial',
-                                       v_str='Pe ',
+                                       v_str='Pe_dev',
                                        e_str='Pfreq_droop_lim+ Pref_site+ FFRCSW_s1*P_FFR - Ptarget_1_initial',
                                        )
         self.Ptarget_1_lim = Limiter(self.Ptarget_1_initial, lower=self.Pref_min, upper=self.Pref_max,  # modified
@@ -776,11 +794,11 @@ class REPCGFMC1Model(Model):
                                      )
         self.Ptarget_1 = Algeb(tex_name='P_{target1}',  # modified
                                info='active power P target',
-                               v_str='Pe',
+                               v_str='Pe_dev',
                                e_str='Ptarget_1_initial * Ptarget_1_lim_zi + Pref_max * Ptarget_1_lim_zu + Pref_min * Ptarget_1_lim_zl - Ptarget_1',
                                )
         # Site power measurement
-        self.Psite = Lag(u='Pe', T=self.Tfrq, K=1,
+        self.Psite = Lag(u='Pe_dev', T=self.Tfrq, K=1,
                          info='Site power measurement',
                          tex_name='P_{site}',
                          )
@@ -943,7 +961,7 @@ class REPCGFMC1Model(Model):
         #                                )
 
         # Reactive power control with lag
-        self.Qsite_filt = Lag(u='Qe', T=self.Tqlag, K=1,
+        self.Qsite_filt = Lag(u='Qe_dev', T=self.Tqlag, K=1,
                               info='Site reactive power measurement',
                               tex_name='Q_{site,filt}',
                               )
