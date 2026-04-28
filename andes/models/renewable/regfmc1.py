@@ -72,6 +72,7 @@ class REGFMC1Data(ModelData):
         self.kq = NumParam(default=1,
                            tex_name='k_q',
                            info='Reactive power gain in voltage control',
+                           current=True,
                            )
         self.mq = NumParam(default=0.4,
                            tex_name='m_q',
@@ -80,10 +81,12 @@ class REGFMC1Data(ModelData):
         self.kpE = NumParam(default=0.333,
                             tex_name='k_{pE}',
                             info='Proportional gain for voltage magnitude error',
+                            ipower=True,
                             )
         self.kiE = NumParam(default=3.333,
                             tex_name='k_{iE}',
                             info='Integral gain for voltage magnitude error',
+                            ipower=True,
                             )
         self.Tvsm = NumParam(default=0.318,
                             tex_name='T_{vsm}',
@@ -119,6 +122,7 @@ class REGFMC1Data(ModelData):
         self.mp = NumParam(default=0.041667,
                            tex_name='m_p',
                            info='Active power droop gain',
+                           ipower=True,
                            )
         self.Tomegacmd = NumParam(default=0.02,
                                   tex_name=r'T_{\omega cmd}',
@@ -134,14 +138,17 @@ class REGFMC1Data(ModelData):
                            tex_name='H_s',
                            info='Inertia constant (2H)',
                            unit='s',
+                           power=True,
                            )
         self.D1 = NumParam(default=5,
                            tex_name='D_1',
                            info='Primary damping coefficient',
+                           power=True,
                            )
         self.D2 = NumParam(default=90/3.14,
                            tex_name='D_2',
                            info='Secondary damping coefficient',
+                           power=True,
                            )
         self.omegaD = NumParam(default=3.14,
                                tex_name=r'\omega_D',
@@ -159,10 +166,12 @@ class REGFMC1Data(ModelData):
         self.dPGFMmax = NumParam(default=1.36,
                                  tex_name=r'\Delta P_{GFM,max}',
                                  info='Maximum active power deviation for GFM (PLACEHOLDER)',
+                                 power=True,
                                  )
         self.dPGFMmin = NumParam(default=-1.36,
                                  tex_name=r'\Delta P_{GFM,min}',
                                  info='Minimum active power deviation for GFM (PLACEHOLDER)',
+                                 power=True,
                                  )
         self.Tpf = NumParam(default=0.02,
                             tex_name='T_{pf}',
@@ -184,6 +193,7 @@ class REGFMC1Data(ModelData):
         self.kqv = NumParam(default=2,        # modified
                             tex_name='k_{qv}',
                             info='Voltage error gain in GFL',
+                            current=True,
                             )
         self.dbVLI = NumParam(default=-0.12,
                               tex_name='db_{VLI}',
@@ -215,28 +225,31 @@ class REGFMC1Data(ModelData):
                              info='Minimum voltage for current limiting (PLACEHOLDER)',
                              )
         
-        
         self.Pcmd_GFL_max = NumParam(default=1.2,
                                      tex_name='P_{cmd,GFL,max}',
                                      info='Maximum active power command for GFL',
                                      unit='p.u.',
+                                     power=True,
                                      )
 
         self.Pcmd_GFL_min = NumParam(default=-1.0,
                                      tex_name='P_{cmd,GFL,min}',
                                      info='Minimum active power command for GFL',
                                      unit='p.u.',
+                                     power=True,
                                      )
         self.Qcmd_GFL_max = NumParam(default=0.6,
                                      tex_name='Q_{cmd,GFL,max}',
                                      info='Maximum reactive power command for GFL',
                                      unit='p.u.',
+                                     power=True,
                                      )
 
         self.Qcmd_GFL_min = NumParam(default=-0.6,
                                      tex_name='Q_{cmd,GFL,min}',
                                      info='Minimum reactive power command for GFL',
                                      unit='p.u.',
+                                     power=True,
                                      )
 
 class REGFMC1Model(Model):
@@ -280,37 +293,17 @@ class REGFMC1Model(Model):
                               )
 
         # --- Initialization Services ---
-        # Keep both system-base and device-base copies so the network-facing
-        # power balance remains on system base while the controller uses
-        # device-base references internally.
-        self.SbSn = ConstService(v_str='sys_mva / Sn',
-                                 tex_name=r'S_b/S_n',
-                                 info='System-base to device-base power factor',
-                                 )
-        self.SnSb = ConstService(v_str='Sn / sys_mva',
-                                 tex_name=r'S_n/S_b',
-                                 info='Device-base to system-base power factor',
-                                 )
-        self.p0_sys = ConstService(v_str='gammap * p0s',
-                                   tex_name=r'P_{0,sys}',
-                                   info='Initial P for this device on system base',
-                                   )
-        self.q0_sys = ConstService(v_str='gammaq * q0s',
-                                   tex_name=r'Q_{0,sys}',
-                                   info='Initial Q for this device on system base',
-                                   )
-        self.p0 = ConstService(v_str='p0_sys * SbSn',
+        # Power, current, and impedance parameters marked with ``power=True``,
+        # ``current=True``, and ``z=True`` are converted by ANDES to system base.
+        # Keep the internal controller equations on system base as well.
+        self.p0 = ConstService(v_str='gammap * p0s',
                                tex_name='P_0',
-                               info='Initial P for this device on device base',
+                               info='Initial P for this device on system base',
                                )
-        self.q0 = ConstService(v_str='q0_sys * SbSn',
+        self.q0 = ConstService(v_str='gammaq * q0s',
                                tex_name='Q_0',
-                               info='Initial Q for this device on device base',
+                               info='Initial Q for this device on system base',
                                )
-        self.Imax_dev = ConstService(v_str='Imax * SbSn',
-                                     tex_name=r'I_{max,dev}',
-                                     info='Maximum total output current on device base',
-                                     )
 
         # Initial current calculations (for both branches)
         self.Id0_GFL = ConstService(tex_name=r'I_{d0,GFL}',
@@ -335,20 +328,8 @@ class REGFMC1Model(Model):
         # GFM branch impedance squared (for current calculation)
         self.Zs2 = ConstService(v_str='Rs**2 + Xs**2',
                                 tex_name='Z_s^2',
-                                info='GFM series impedance magnitude squared',
+                                info='GFM series impedance magnitude squared on system base',
                                 )
-        self.Rs_dev = ConstService(v_str='Rs * SnSb',
-                                   tex_name=r'R_{s,dev}',
-                                   info='GFM series resistance on device base',
-                                   )
-        self.Xs_dev = ConstService(v_str='Xs * SnSb',
-                                   tex_name=r'X_{s,dev}',
-                                   info='GFM series reactance on device base',
-                                   )
-        self.Zs2_dev = ConstService(v_str='Rs_dev**2 + Xs_dev**2',
-                                    tex_name=r'Z_{s,dev}^2',
-                                    info='GFM series impedance magnitude squared on device base',
-                                    )
 
         # --- External reference variables (to be controlled by plant controller) ---
         # GFM voltage reference (external input to voltage control)                # mistake
@@ -682,35 +663,35 @@ class REGFMC1Model(Model):
         # )
         
         self.Ipmaxsq0_GFL1 = ConstService(
-            v_str='Piecewise((0, Le(Imax_dev**2 - (kqv * (Vref0 - v) + Iq0_GFL) **2, 0.0)), (Imax_dev**2 - (kqv * (Vref0 - v) + Iq0_GFL)**2 , True), evaluate=False)'
+            v_str='Piecewise((0, Le(Imax**2 - (kqv * (Vref0 - v) + Iq0_GFL) **2, 0.0)), (Imax**2 - (kqv * (Vref0 - v) + Iq0_GFL)**2 , True), evaluate=False)'
         )
 
         self.Iqmaxsq0_GFL1 = ConstService(
-            v_str='Piecewise((0, Le(Imax_dev**2 - Id0_GFL**2, 0.0)), (Imax_dev**2 - Id0_GFL**2, True), evaluate=False)'
+            v_str='Piecewise((0, Le(Imax**2 - Id0_GFL**2, 0.0)), (Imax**2 - Id0_GFL**2, True), evaluate=False)'
         )
                 
         self.Ipmaxsq_GFL1 = VarService(
-            v_str='Piecewise((0, Le(Imax_dev**2 - Iqcmd_sat_val**2, 0.0)), (Imax_dev**2 - Iqcmd_sat_val**2, True), evaluate=False)',
+            v_str='Piecewise((0, Le(Imax**2 - Iqcmd_sat_val**2, 0.0)), (Imax**2 - Iqcmd_sat_val**2, True), evaluate=False)',
             tex_name='I_{p,max,GFL}^2',
         )
 
         self.Iqmaxsq_GFL1 = VarService(
-            v_str='Piecewise((0, Le(Imax_dev**2 - Ipcmd_sat_val**2, 0.0)), (Imax_dev**2 - Ipcmd_sat_val**2, True), evaluate=False)',
+            v_str='Piecewise((0, Le(Imax**2 - Ipcmd_sat_val**2, 0.0)), (Imax**2 - Ipcmd_sat_val**2, True), evaluate=False)',
             tex_name='I_{q,max,GFL}^2',
         )
 
         self.Ipmax_GFL1 = Algeb(
             tex_name='I_{p,max,GFL}',
             info='Ipmax_GFL for Current Limiting Algorithm',
-            v_str='PQFlag * Imax_dev + (1 - PQFlag) * sqrt(Ipmaxsq0_GFL1)',
-            e_str='PQFlag * Imax_dev + (1 - PQFlag) * sqrt(Ipmaxsq_GFL1) - Ipmax_GFL1'
+            v_str='PQFlag * Imax + (1 - PQFlag) * sqrt(Ipmaxsq0_GFL1)',
+            e_str='PQFlag * Imax + (1 - PQFlag) * sqrt(Ipmaxsq_GFL1) - Ipmax_GFL1'
         )
 
         self.Iqmax_GFL1 = Algeb(
             tex_name='I_{q,max,GFL}',
             info='Iqmax_GFL for Current Limiting Algorithm',
-            v_str='(1 - PQFlag) * Imax_dev + PQFlag * sqrt(Iqmaxsq0_GFL1)',
-            e_str='(1 - PQFlag) * Imax_dev + PQFlag * sqrt(Iqmaxsq_GFL1) - Iqmax_GFL1'
+            v_str='(1 - PQFlag) * Imax + PQFlag * sqrt(Iqmaxsq0_GFL1)',
+            e_str='(1 - PQFlag) * Imax + PQFlag * sqrt(Iqmaxsq_GFL1) - Iqmax_GFL1'
         )
 
         self.Ipmin_GFL1 = Algeb(
@@ -835,7 +816,7 @@ class REGFMC1Model(Model):
                             )
 
         self.k_scale = VarService(
-            v_str='1.0 + Indicator(Itotal > Imax_dev) * (Itotal / (Imax_dev) - 1.0)',
+            v_str='1.0 + Indicator(Itotal > Imax) * (Itotal / Imax - 1.0)',
             tex_name='k',
             info='Scaling factor (>=1) for total current limiting'
         )
@@ -867,7 +848,7 @@ class REGFMC1Model(Model):
         self.Id_VSM_lim = Algeb(
             name='Id_VSM_lim',
             v_str='0.0',
-            e_str='((Ed_VSM_lim - v) * Rs_dev + Eq_VSM_lim * Xs_dev) / Zs2_dev - Id_VSM_lim',
+            e_str='((Ed_VSM_lim - v) * Rs + Eq_VSM_lim * Xs) / Zs2 - Id_VSM_lim',
             tex_name='I_{d,VSM}^{lim}',
             info='Limited GFM d-axis current'
         )
@@ -875,7 +856,7 @@ class REGFMC1Model(Model):
         self.Iq_VSM_lim = Algeb(
             name='Iq_VSM_lim',
             v_str='0.0',
-            e_str='((Ed_VSM_lim - v) * Xs_dev - Eq_VSM_lim * Rs_dev) / Zs2_dev - Iq_VSM_lim',
+            e_str='((Ed_VSM_lim - v) * Xs - Eq_VSM_lim * Rs) / Zs2 - Iq_VSM_lim',
             tex_name='I_{q,VSM}^{lim}',
             info='Limited GFM q-axis current'
         )
@@ -965,14 +946,14 @@ class REGFMC1Model(Model):
         self.Id_VSM = Algeb(tex_name='I_{d,VSM}',
                             info='GFM d-axis current',
                             v_str='0',
-                            e_str='((EVSM * cos(dVSM - a) - v) * Rs_dev + EVSM * sin(dVSM - a) * Xs_dev) / Zs2_dev - Id_VSM',
+                            e_str='((EVSM * cos(dVSM - a) - v) * Rs + EVSM * sin(dVSM - a) * Xs) / Zs2 - Id_VSM',
                             )
         
         # should be negative?
         self.Iq_VSM = Algeb(tex_name='I_{q,VSM}',
                             info='GFM q-axis current',
                             v_str='0',
-                            e_str='-(EVSM * sin(dVSM - a) * Rs_dev - (EVSM * cos(dVSM - a) - v) * Xs_dev) / Zs2_dev - Iq_VSM',
+                            e_str='-(EVSM * sin(dVSM - a) * Rs - (EVSM * cos(dVSM - a) - v) * Xs) / Zs2 - Iq_VSM',
                             )
         
         # self.Id_VSM = Algeb(tex_name='I_{d,VSM}',
@@ -999,13 +980,13 @@ class REGFMC1Model(Model):
         self.PGFM = Algeb(tex_name='P_{GFM}',
                           info='GFM branch active power at bus',
                           v_str='0',
-                          e_str='v * Id_VSM_lim * SnSb - PGFM',
+                          e_str='v * Id_VSM_lim - PGFM',
                           )
         
         self.QGFM = Algeb(tex_name='Q_{GFM}',
                           info='GFM branch reactive power at bus',
                           v_str='0',
-                          e_str='v * Iq_VSM_lim * SnSb - QGFM',
+                          e_str='v * Iq_VSM_lim - QGFM',
                           )
         # self.PGFM = Algeb(tex_name='P_{GFM}',
         #                   info='GFM branch active power at bus',
@@ -1034,66 +1015,28 @@ class REGFMC1Model(Model):
         #                   )
         self.PGFL = Algeb(tex_name='P_{GFL}',
                           info='GFL branch active power',
-                          v_str='v * Id0_GFL * SnSb',
-                          e_str='v * Ip_GFL_lim * SnSb - PGFL',
+                          v_str='v * Id0_GFL',
+                          e_str='v * Ip_GFL_lim - PGFL',
                           )
 
         self.QGFL = Algeb(tex_name='Q_{GFL}',
                           info='GFL branch reactive power',
-                          v_str='v * (kqv * (Vref0 - v) + Iq0_GFL) * SnSb',
-                          e_str='v * Iq_GFL_lim * SnSb - QGFL',
+                          v_str='v * (kqv * (Vref0 - v) + Iq0_GFL)',
+                          e_str='v * Iq_GFL_lim - QGFL',
                           )
-
-        # Device-base branch powers for internal monitoring/debugging.
-        # The original PGFM/QGFM/PGFL/QGFL stay on system base for network balance.
-        self.PGFM_dev = Algeb(tex_name=r'P_{GFM,dev}',
-                              info='GFM branch active power on device base',
-                              v_str='PGFM * SbSn',
-                              e_str='PGFM * SbSn - PGFM_dev',
-                              )
-
-        self.QGFM_dev = Algeb(tex_name=r'Q_{GFM,dev}',
-                              info='GFM branch reactive power on device base',
-                              v_str='QGFM * SbSn',
-                              e_str='QGFM * SbSn - QGFM_dev',
-                              )
-
-        self.PGFL_dev = Algeb(tex_name=r'P_{GFL,dev}',
-                              info='GFL branch active power on device base',
-                              v_str='PGFL * SbSn',
-                              e_str='PGFL * SbSn - PGFL_dev',
-                              )
-
-        self.QGFL_dev = Algeb(tex_name=r'Q_{GFL,dev}',
-                              info='GFL branch reactive power on device base',
-                              v_str='QGFL * SbSn',
-                              e_str='QGFL * SbSn - QGFL_dev',
-                              )
 
         # Total power injection
         self.Pe = Algeb(tex_name='P_e',
                         info='Total active power injection',
-                        v_str='p0_sys',
+                        v_str='p0',
                         e_str='PGFM + PGFL - Pe',
                         )
 
         self.Qe = Algeb(tex_name='Q_e',
                         info='Total reactive power injection',
-                        v_str='q0_sys',
+                        v_str='q0',
                         e_str='QGFM + QGFL - Qe',
                         )
-
-        self.Pe_dev = Algeb(tex_name=r'P_{e,dev}',
-                            info='Total active power injection on device base',
-                            v_str='p0',
-                            e_str='Pe * SbSn - Pe_dev',
-                            )
-
-        self.Qe_dev = Algeb(tex_name=r'Q_{e,dev}',
-                            info='Total reactive power injection on device base',
-                            v_str='q0',
-                            e_str='Qe * SbSn - Qe_dev',
-                            )
 
     def v_numeric(self, **kwargs):
         """
