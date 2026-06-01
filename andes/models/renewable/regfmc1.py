@@ -26,7 +26,7 @@ class REGFMC1Data(ModelData):
 
         # --- General Parameters ---
         self.bus = IdxParam(model='Bus',
-                            info="Interface bus id",
+                            info="Inverter terminal/interface bus id",
                             mandatory=True,
                             )
         self.gen = IdxParam(info="Static generator index",
@@ -178,9 +178,9 @@ class REGFMC1Data(ModelData):
                             info='Time constant for frequency flag filter',
                             unit='s',
                             )
-        self.FFFlag = NumParam(default=0.0,
+        self.FFFlag = NumParam(default=1.0,
                                tex_name='FF_{Flag}',
-                               info='Frequency flag (0 or 1)',
+                               info='Frequency droop flag; 0-disable, 1-enable',
                                unit='bool',
                                )
 
@@ -268,14 +268,14 @@ class REGFMC1Model(Model):
                           src='a',
                           indexer=self.bus,
                           tex_name=r'\theta',
-                          info='Bus voltage angle',
+                          info='Inverter terminal/interface bus voltage angle',
                           e_str='-u * Pe',
                           )
         self.v = ExtAlgeb(model='Bus',
                           src='v',
                           indexer=self.bus,
                           tex_name='V',
-                          info='Bus voltage magnitude',
+                          info='Inverter terminal/interface bus voltage magnitude',
                           e_str='-u * Qe',
                           )
 
@@ -332,14 +332,14 @@ class REGFMC1Model(Model):
                                 )
 
         # --- External reference variables (to be controlled by plant controller) ---
-        # GFM voltage reference (external input to voltage control)                # mistake
+        # GFM voltage reference (external input to voltage control)             
         self.Vref_GFM = Algeb(tex_name='V_{ref,GFM}',
                               info='Voltage reference for GFM branch (from plant controller)',
                               v_str='Vref0',  # modified
                               e_str='Vref0 - Vref_GFM',  # Default: maintain initial bus voltage
                               )
 
-        # GFM frequency reference (external input to VSM control)       # mistake
+        # GFM frequency reference (external input to VSM control)       
         self.fref_GFM = Algeb(tex_name='f_{ref,GFM}',
                               info='Frequency reference for GFM branch (from plant controller)',
                               v_str='1.0',
@@ -363,18 +363,6 @@ class REGFMC1Model(Model):
         # Reactive power measurement path (per diagram: Iq_GFM filtered through 1/(Tif*s+1))
         self.Iq_VSMLag = Lag(u='Iq_VSM', T=self.TIf, K=1, info='Filter for I_q GFM', name='Iq_VSMLag')
 
-        # Voltage magnitude error - TESTING POSITIVE SIGN
-        # Testing: Verr = (Vref - Vinv) * kq/mq + Iq_VSMLag_y (or -Iq_VSMLag_y ??)
-
-
-        # PI controller for voltage magnitude
-        # self.VmagPI = PIController(u=self.Verr,
-        #                             kp=self.kpE,
-        #                             ki=self.kiE,
-        #                             x0='0',
-        #                             info='Voltage magnitude PI controller',
-        #                             name='VmagPI',
-        #                             )
         
         # Proportional part
         # Voltage magnitude error
@@ -424,7 +412,7 @@ class REGFMC1Model(Model):
             e_str='VmagP + VmagI_lim_val - VmagPI_raw',
         )
 
-        # Optional: also limit the final PI output to [dEmin, dEmax]
+        # Also limit the final PI output to [dEmin, dEmax]
         self.VmagPI_lim = Limiter(
             u=self.VmagPI_raw,
             lower=self.dEmin,
@@ -447,7 +435,7 @@ class REGFMC1Model(Model):
             e_str='VmagPI_lim_val + VrefLag_y - EVSM_initial',
         )
 
-        # Output filter for EVSM (TODO: add limiters for dEmax, dEmin)
+        # Output filter for EVSM 
         self.EVSMLag = Lag(u='EVSM_initial',
                            T=self.Tvsm,
                            K=1,
@@ -478,17 +466,8 @@ class REGFMC1Model(Model):
                               info='Active power reference for GFM',
                               )
 
-        # TODO: USE `fref_GFM` as the input terminal for frequency reference
-
-        # # Plant controller changes omega_ref (PLACEHOLDER - use constant 1 for now)
-        # self.omega_ref = Algeb(tex_name=r'\omega_{ref}',
-        #                        info='Omega reference',
-        #                        v_str='1.0',
-        #                        e_str='OmegarefLag_y - omega_ref',
-        #                        )
-
         # GFM branch power measurement (for droop feedback)
-        self.Pinv_GFM = Algeb(            # after limit
+        self.Pinv_GFM = Algeb(            
             tex_name='P_{inv,GFM}',
             info='GFM inverter active power at limited internal voltage source',
             v_str='0',
@@ -497,15 +476,13 @@ class REGFMC1Model(Model):
 
         # Frequency droop: converts frequency error to power command
         # dP_GFM_droop = (omegarefLag_y - omegamLag_y) / mp
+        self.SWFF = Switcher(u=self.FFFlag, options=(0, 1), tex_name='SW_{FF}', cache=True)
+
         self.dP_GFM_droop = Algeb(tex_name=r'\Delta P_{GFM,droop}',
                                   info='Power command from frequency droop',
                                   v_str='0',
-                                  e_str='(OmegarefLag_y - omegamLag_y) / mp - dP_GFM_droop',
+                                  e_str='SWFF_s1 * (OmegarefLag_y - omegamLag_y) / mp - dP_GFM_droop',
                                   )
-
-
-        # TODO: CONSIDER `FFlag` to allow turning off the droop control
-        # FFlag = 0: `dP_GFM_droop` = 0 -- this is currently missing
 
         # Power command for GFM branch
         # Pcmd_GFM = Pref_GFM + dP_GFM_droop (reference + droop correction)
@@ -516,8 +493,8 @@ class REGFMC1Model(Model):
                               )
 
         # Damping filter: sD2/(s+omegaD) using Washout
-        # Washout implements sK/(1+sT), so we need K=D2, T=1/omegaD
-        self.domegam = Algeb(                      # modified-11.6
+        # Washout implements sK/(1+sT), so K=D2, T=1/omegaD
+        self.domegam = Algeb(                    
             name='domegam',
             tex_name=r'\Delta\omega',
             info='Frequency deviation (pu)',
@@ -527,34 +504,20 @@ class REGFMC1Model(Model):
 
         self.DampWash = Washout(u='domegam',
                                 T=self.Tdamp,
-                                K=self.D2,  # should be self.D2* self.Tdamp??-11.6
+                                K=self.D2,  
                                 info='Damping washout filter',
                                 name='DampWash',
                                 )
 
-        # Inverter active power for GFM - measured at voltage source (for swing equation)
-        
-
-        
+        # Inverter active power for GFM - measured at voltage source 
         self.PGFM_pre = Algeb(
             tex_name='P_{GFM,pre}',
             info='Pre-limited GFM branch active power at bus',
             v_str='0',
             e_str='v * Id_VSM - PGFM_pre',
         )       
-                
-        
-        
-        # self.Pinv_GFM = Algeb(tex_name='P_{inv,GFM}',
-        #                       info='GFM inverter active power at voltage source',
-        #                       v_str='0',
-        #                       e_str='(EVSM * cos(dVSM - a) * Id_VSM_lim + EVSM * sin(dVSM - a) * Iq_VSM_lim) - Pinv_GFM',
-        #                       )
-        
-        
-        
-        
-        self.PGFM_pre_Lag = Lag(u='PGFM_pre',            # modified-11.6
+              
+        self.PGFM_pre_Lag = Lag(u='PGFM_pre',            
                               T=self.Tpf,
                               K=1,
                               info='Pre-limited GFM branch active power at bus',
@@ -621,7 +584,7 @@ class REGFMC1Model(Model):
                               e_str='q0 - Qcmd_GFL',  # Defaults to q0, can be overridden externally
                               )
 
-        # Current commands (PLACEHOLDER - TODO: add limiters and PQ priority)
+        # Current commands
         self.Ipcmd_GFL = Algeb(tex_name='I_{pcmd,GFL}',
                                info='Active current command for GFL',
                                v_str='Id0_GFL',
@@ -633,34 +596,6 @@ class REGFMC1Model(Model):
                                v_str='kqv * Verr_GFL_dbd_y + Iq0_GFL',
                                e_str='kqv * Verr_GFL_dbd_y + Qcmd_GFL / v - Iqcmd_GFL',
                                )
-
-        #  GFL PQ Priority Current Limiting
-        
-        #  dynamic max,min boundary (PQsel choice)
-        #  a new version of PQ priority current limiting algorithm 
-        # choose priority 1=P ,0=Q
-            
-            
-        # self.PQsel = VarService(v_str='Indicator(PQFlag >= 0.5)', tex_name='PQ_{sel}',
-        #                         info='1=P priority, 0=Q priority')
-        
-        # get Ipmax_GFL, Ipmin_GFL, Iqmax_GFL, Iqmin_GFL
-        
-
-
-        # self.Ipmax_GFL1 = Algeb(
-        #     tex_name='I_{p,max,GFL}',
-        #     info='Ipmax_GFL for Current Limiting Algorithm',
-        #     v_str='PQFlag * Imax + (1 - PQFlag) * sqrt(0.5 * ((Imax**2 - Iqcmd_sat_val**2) + sqrt( Imax**2 - Iqcmd_sat_val**2)**2  ))',
-        #     e_str='PQFlag * Imax + (1 - PQFlag) * sqrt(0.5 * ((Imax**2 - Iqcmd_sat_val**2) + sqrt( Imax**2 - Iqcmd_sat_val**2)**2  )) - Ipmax_GFL1'
-        # )
-
-        # self.Iqmax_GFL1 = Algeb(
-        #     tex_name='I_{q,max,GFL}',
-        #     info='Iqmax_GFL for Current Limiting Algorithm',
-        #     v_str='PQFlag * Imax + (1 - PQFlag) * sqrt(0.5 * ((Imax**2 - Ipcmd_sat_val**2) + sqrt( Imax**2 - Ipcmd_sat_val**2)**2  ))',
-        #     e_str='PQFlag * Imax + (1 - PQFlag) * sqrt(0.5 * ((Imax**2 - Ipcmd_sat_val**2) + sqrt( Imax**2 - Ipcmd_sat_val**2)**2  )) - Iqmax_GFL1'
-        # )
         
         self.Ipmaxsq0_GFL1 = ConstService(
             v_str='Piecewise((0, Le(Imax**2 - (kqv * (Vref0 - v) + Iq0_GFL) **2, 0.0)), (Imax**2 - (kqv * (Vref0 - v) + Iq0_GFL)**2 , True), evaluate=False)'
@@ -707,48 +642,6 @@ class REGFMC1Model(Model):
             v_str='-Iqmax_GFL1',
             e_str='-Iqmax_GFL1 - Iqmin_GFL1'
         )
-        
-        
-        
-        
-        
-        # Ipmax_GFL, Ipmin_GFL, Iqmax_GFL, Iqmin_GFL  (Algeb)
-        
-        
-
-        # self.Ipmax_GFL1 = Algeb(
-        #     tex_name='I_{p,max,GFL}',
-        #     info='Ipmax_GFL for Current Limiting Algorithm',
-        #     v_str='PQFlag*Imax + (1-PQFlag)*sqrt( Imax**2 -  (kqv * (Vref0 - v) + Iq0_GFL)**2)',  
-        #     e_str='(PQFlag*Imax + (1-PQFlag)*sqrt(0.5*((Imax**2 - Iqcmd_sat_val**2) + Abs(Imax**2 - Iqcmd_sat_val**2)))) - Ipmax_GFL1',
-        # )
-
-
-        # self.Ipmin_GFL1 = Algeb(
-        #     tex_name='I_{p,min,GFL}',
-        #     info='Ipmin_GFL for Current Limiting Algorithm ',
-        #     v_str='-PQFlag*Imax - (1-PQFlag)*sqrt( Imax**2 -  (kqv * (Vref0 - v) + Iq0_GFL)**2)',
-        #     e_str='(-Ipmax_GFL1) - Ipmin_GFL1',
-        # )
-
-        # self.Iqmax_GFL1 = Algeb(
-        #     tex_name='I_{q,max,GFL}',
-        #     info='Iqmax_GFL for Current Limiting Algorithm',
-        #     v_str='(1-PQFlag)*Imax + (PQFlag)*sqrt( Imax**2 -  Id0_GFL**2)',
-        #     e_str='((1-PQFlag)*Imax + PQFlag*sqrt(0.5*((Imax**2 - Ipcmd_sat_val**2) + Abs(Imax**2 - Ipcmd_sat_val**2)))) - Iqmax_GFL1',
-        # )
-
-        # self.Iqmin_GFL1 = Algeb(
-        #     tex_name='I_{q,min,GFL}',
-        #     info='Iqmin_GFL for Current Limiting Algorithm',
-        #     v_str='-(1-PQFlag)*Imax - (PQFlag)*sqrt( Imax**2 -  Id0_GFL**2)',
-        #     e_str='(-Iqmax_GFL1) - Iqmin_GFL1',
-        # )
-        
-        
-
-        
-        
         
         
         self.Ipcmd_sat = Limiter(u=self.Ipcmd_GFL, lower=self.Ipmin_GFL1, upper=self.Ipmax_GFL1, name='Ipcmd_sat')
@@ -829,7 +722,6 @@ class REGFMC1Model(Model):
                             )
 
         # --- Limited branch currents (both branches divided by k_scale) ---
-        
         self.Ed_VSM_lim = Algeb(
             tex_name='E_{d,VSM}^{lim}',
             info='Limited GFM internal voltage d-axis component',
@@ -875,19 +767,6 @@ class REGFMC1Model(Model):
             e_str='a + atan2(Eq_VSM_lim, Ed_VSM_lim + 1e-8) - dVSM_lim',
         )
 
-
-
-        # self.Id_VSM_lim = Algeb(
-        #     name='Id_VSM_lim', v_str='0.0',
-        #     e_str='Id_VSM / (k_scale+1e-8) - Id_VSM_lim',
-        #     tex_name='I_{d,VSM}^{lim}', info='Limited GFM d-axis current'
-        # )
-        # self.Iq_VSM_lim = Algeb(
-        #     name='Iq_VSM_lim', v_str='0.0',
-        #     e_str='Iq_VSM / (k_scale+1e-8) - Iq_VSM_lim',
-        #     tex_name='I_{q,VSM}^{lim}', info='Limited GFM q-axis current'
-        # )
-
         self.Ip_GFL_lim = Algeb(
             name='Ip_GFL_lim', v_str='Id0_GFL',
             e_str='Ipcmd_sat_val / (k_scale) - Ip_GFL_lim',
@@ -906,30 +785,6 @@ class REGFMC1Model(Model):
             tex_name='I_{total}^{lim}', info='Total output current after limiting'
         )
         
-        # Scaling factor for current limiting (PLACEHOLDER)
-        # self.k_factor = Algeb(tex_name='k_{factor}',
-        #                       info='Current scaling factor (PLACEHOLDER)',
-        #                       v_str='1.0',
-        #                       e_str='1.0 - k_factor',  # No limiting initially
-        #                       )
-
-        # self.k_factor = Algeb(
-        #     tex_name='k_{factor}',
-        #     info='Current scaling factor (PLACEHOLDER)',
-        #     v_str='Itotal/Imax',
-        #     e_str='Itotal/Imax - k_factor',
-        # )
-
-
-
-        # --- Power Calculations ---
-        # GFM branch current in dq-frame
-        # Voltage source EVSM∠dVSM behind impedance Rs+jXs to bus V∠a
-        # In dq-frame (d-axis aligned with bus voltage V∠a): whe
-        #   delta = dVSM - a (angle difference)
-        #   Ed_VSM = EVSM * cos(delta), Eq_VSM = EVSM * sin(delta)
-        #   Id_VSM = ((Ed_VSM - v)*Rs + Eq_VSM*Xs) / Zs2
-        #   Iq_VSM = (Eq_VSM*Rs - (Ed_VSM - v)*Xs) / Zs2
 
         self.Ed_VSM = Algeb(tex_name='E_{d,VSM}',
                             info='GFM d-axis voltage',
@@ -956,23 +811,11 @@ class REGFMC1Model(Model):
                             e_str='-(EVSM * sin(dVSM - a) * Rs - (EVSM * cos(dVSM - a) - v) * Xs) / Zs2 - Iq_VSM',
                             )
         
-        # self.Id_VSM = Algeb(tex_name='I_{d,VSM}',
-        #                     info='GFM d-axis current',
-        #                     v_str='0',
-        #                     e_str='( (EVSM- v * cos(dVSM - a))  * Rs  + v * sin(dVSM - a) * Xs  )/ Zs2  - Id_VSM',
-        #                     )
-
-        # self.Iq_VSM = Algeb(tex_name='I_{q,VSM}',
-        #                     info='GFM q-axis current',
-        #                     v_str='0',
-        #                     e_str='( v * sin(dVSM - a) * Rs  -  (EVSM  - v * cos(dVSM - a)) * Xs ) / Zs2 - Iq_VSM',
-        #                     )
-        
 
         # GFM branch power at bus terminals (for bus injection)
         # In dq frame aligned with bus: Vd=v, Vq=0
         # P = Vd*Id + Vq*Iq = v*Id_VSM
-        # Q = Vq*Id - Vd*Iq = -v*Iq_VSM (negative sign for generator convention) or postive?
+        # Q = Vq*Id - Vd*Iq = v*Iq_VSM 
         
         self.Vd = VarService(v_str='v*cos(a)')
         self.Vq = VarService(v_str='v*sin(a)')
@@ -988,31 +831,9 @@ class REGFMC1Model(Model):
                           v_str='0',
                           e_str='v * Iq_VSM_lim - QGFM',
                           )
-        # self.PGFM = Algeb(tex_name='P_{GFM}',
-        #                   info='GFM branch active power at bus',
-        #                   v_str='0',
-        #                   e_str='Ed_VSM * Id_VSM_lim + Eq_VSM * Iq_VSM_lim - PGFM',
-        #                   )
-
-        # self.QGFM = Algeb(tex_name='Q_{GFM}',
-        #                   info='GFM branch reactive power at bus',
-        #                   v_str='0',
-        #                   e_str='-Ed_VSM * Iq_VSM_lim + Eq_VSM * Id_VSM_lim - QGFM',  # -Ed_VSM * Iq_VSM+ Eq_VSM*Id_VSM - QGFM
-        #                   )
-
-        # GFL branch power
         
-        # self.PGFL = Algeb(tex_name='P_{GFL}',
-        #                   info='GFL branch active power',
-        #                   v_str='v*cos(a)*(Id0_GFL)  + v*sin(a)*(kqv * (Vref0 - v) + Iq0_GFL)',
-        #                   e_str='Vd * Ip_GFL_lim + Vq *Iq_GFL_lim - PGFL',
-        #                   )
-
-        # self.QGFL = Algeb(tex_name='Q_{GFL}',
-        #                   info='GFL branch reactive power',
-        #                   v_str='v*sin(a)*(Id0_GFL)- v*cos(a)*(kqv * (Vref0 - v) + Iq0_GFL)',
-        #                   e_str='Vq * Ip_GFL_lim - Vd *Iq_GFL_lim - QGFL',
-        #                   )
+        # GFL branch power
+    
         self.PGFL = Algeb(tex_name='P_{GFL}',
                           info='GFL branch active power',
                           v_str='v * Id0_GFL',

@@ -14,7 +14,8 @@ from andes.core import (Algeb, ConstService, ExtAlgeb, ExtParam, ExtService,
 from andes.core.block import DeadBand1, GainLimiter, IntegratorAntiWindup, PIController, Washout
 
 
-from andes.core.service import NumSelect, VarService, EventFlag, ExtendedEvent, VarHold
+from andes.core.service import (CurrentSign, NumSelect, VarService,
+                                EventFlag, ExtendedEvent, VarHold)
 
 class REPCGFMC1Data(ModelData):
     """
@@ -30,8 +31,13 @@ class REPCGFMC1Data(ModelData):
                             )
 
         self.busr = IdxParam(model='Bus',
-                             info='Optional remote bus for measurements',
-                             default=None,
+                             info='Plant/PCC measurement bus',
+                             mandatory=True,
+                             )
+
+        self.line = IdxParam(info='Monitored branch between inverter terminal bus and plant/PCC measurement bus',
+                             model='ACLine',
+                             mandatory=True,
                              )
         self.Sn = NumParam(default=100.0, tex_name='S_n',
                            info='Model MVA base',
@@ -99,14 +105,14 @@ class REPCGFMC1Data(ModelData):
                                 power=True,
                                 )
 
-        self.Rloss = NumParam(default=0.0,  # modified 0-->0.01 assumption
+        self.Rloss = NumParam(default=0.0,  
                               tex_name='R_{loss}',
                               info='Loss compensation resistance',
                               unit='p.u.',
                               z=True,
                               )
 
-        self.Xloss = NumParam(default=0.0,   # modified 0-->0.05assumption
+        self.Xloss = NumParam(default=0.0,   
                               tex_name='X_{loss}',
                               info='Loss compensation reactance',
                               unit='p.u.',
@@ -267,7 +273,7 @@ class REPCGFMC1Data(ModelData):
                                      )
 
         # --- GFL Reactive Power Path Parameters ---
-        self.Qref_max = NumParam(default=0.6,               # sometimes need to adjust
+        self.Qref_max = NumParam(default=0.6,               
                                  tex_name='Q_{ref,max}',
                                  info='Maximum reactive power reference',
                                  unit='p.u.',
@@ -335,7 +341,7 @@ class REPCGFMC1Data(ModelData):
                             unit='s',
                             )
 
-        self.Qvc_max = NumParam(default=0.6,             # sometimes need to adjust(same with Qref_max)
+        self.Qvc_max = NumParam(default=0.6,             
                                 tex_name='Q_{vc,max}',
                                 info='Maximum voltage control output',
                                 unit='p.u.',
@@ -374,13 +380,13 @@ class REPCGFMC1Data(ModelData):
                               info='Cross-coupling gain',
                               )
 
-        self.Qerr_max = NumParam(default=0.1,         # modified
+        self.Qerr_max = NumParam(default=0.1,         
                                      tex_name='Q_{err,max}',
                                      info='Maximum reactive power error limit',
                                      unit='p.u.',
                                      power=True,
                                      )
-        self.Qerr_min = NumParam(default=-0.1,         # modified
+        self.Qerr_min = NumParam(default=-0.1,         
                                      tex_name='Q_{err,min}',
                                      info='Minimum reactive power error limit',
                                      unit='p.u.',
@@ -451,41 +457,167 @@ class REPCGFMC1Model(Model):
         self.bus = ExtParam(model='RenGen', src='bus', indexer=self.reg, export=False,
                             info='Retrieved bus idx', vtype=str, default=None,
                             )
-        # self.busf = IdxParam(model='BusFreq', info='Bus for frequency measurement')
 
-        # Select bus for measurements (remote bus if provided, otherwise converter bus)
-        from andes.core.service import DataSelect,DeviceFinder
-        self.buss = DataSelect(self.busr, self.bus, info='Selected bus for measurements')
+        # Plant/PCC measurement bus. Frequency is measured at this same bus.
+        from andes.core.service import DeviceFinder
 
-
-        # self.busfreq = DeviceFinder(self.busr, link=self.buss, idx_name='bus')
-        self.busfreq = DeviceFinder(self.busf, link=self.buss, idx_name='bus', default_model='BusFreq')# modified
-        self.busRocof= DeviceFinder(self.busrocof, link=self.buss, idx_name='bus', default_model='BusROCOF')  # modified
+        self.busfreq = DeviceFinder(self.busf, link=self.busr, idx_name='bus', default_model='BusFreq')
+        self.busRocof = DeviceFinder(self.busrocof, link=self.busr, idx_name='bus', default_model='BusROCOF')
         # --- External Variables from Bus ---
-        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.buss, tex_name='V',
-                          info='Bus (or busr, if given) terminal voltage',
+        self.v = ExtAlgeb(model='Bus', src='v', indexer=self.busr, tex_name='V',
+                          info='Plant/PCC measurement bus voltage',
                           e_str='0',
                           )
 
-        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.buss, tex_name=r'\theta',
-                          info='Bus (or busr, if given) phase angle',
+        self.vsite = ExtAlgeb(model='Bus', src='v', indexer=self.busr, tex_name='V_{site}',
+                              info='Plant/PCC measurement bus voltage',
+                              e_str='0',
+                              )
+
+        self.vinv = ExtAlgeb(model='Bus', src='v', indexer=self.bus, tex_name='V_{inv}',
+                             info='Inverter terminal voltage',
+                             e_str='0',
+                             )
+
+        self.a = ExtAlgeb(model='Bus', src='a', indexer=self.busr, tex_name=r'\theta',
+                          info='Plant/PCC measurement bus phase angle',
                           e_str='0',
                           )
 
-        self.v0 = ExtService(model='Bus', src='v', indexer=self.buss, tex_name="V_0",
-                             info='Initial bus voltage',
+        self.v0 = ExtService(model='Bus', src='v', indexer=self.busr, tex_name="V_0",
+                             info='Initial plant/PCC measurement bus voltage',
                              )
 
         self.f = ExtAlgeb(model='BusFreq', src='f', indexer=self.busfreq,
-                          tex_name="f", info='bus frequency (p.u.)')   #  f - dynamic
+                          tex_name="f", info='Plant/PCC measurement bus frequency (p.u.)')
 
         self.rocof = ExtService(model='BusROCOF', src='Wf_y', indexer=self.busRocof, tex_name="ROCOF",
                              info='bus ROCOF',
                              )
 
-        # self.f = ExtAlgeb(model='BusFreq', src='f', indexer=self.buss, tex_name="F",
-        #                      info='bus frequency (Hz)',
-        #                      )         # modified
+        # --- Monitored branch for plant/PCC power measurement ---
+        self.bus1 = ExtParam(model='ACLine', src='bus1', indexer=self.line, export=False,
+                             info='Retrieved monitored branch Line.bus1 idx', vtype=str,
+                             )
+
+        self.bus2 = ExtParam(model='ACLine', src='bus2', indexer=self.line, export=False,
+                             info='Retrieved monitored branch Line.bus2 idx', vtype=str,
+                             )
+
+        self.line_phi = ExtParam(model='ACLine', src='phi', indexer=self.line, export=False,
+                                 info='Retrieved monitored branch phase shift', vtype=float,
+                                 )
+
+        self.v1 = ExtAlgeb(model='ACLine', src='v1', indexer=self.line, tex_name='V_1',
+                           info='Voltage at monitored branch Line.bus1',
+                           )
+
+        self.v2 = ExtAlgeb(model='ACLine', src='v2', indexer=self.line, tex_name='V_2',
+                           info='Voltage at monitored branch Line.bus2',
+                           )
+
+        self.a1 = ExtAlgeb(model='ACLine', src='a1', indexer=self.line, tex_name=r'\theta_1',
+                           info='Angle at monitored branch Line.bus1',
+                           )
+
+        self.a2 = ExtAlgeb(model='ACLine', src='a2', indexer=self.line, tex_name=r'\theta_2',
+                           info='Angle at monitored branch Line.bus2',
+                           )
+
+        self.gh = ExtService(model='ACLine', src='gh', indexer=self.line,
+                             info='Retrieved monitored branch Line.gh',
+                             )
+
+        self.bh = ExtService(model='ACLine', src='bh', indexer=self.line,
+                             info='Retrieved monitored branch Line.bh',
+                             )
+
+        self.gk = ExtService(model='ACLine', src='gk', indexer=self.line,
+                             info='Retrieved monitored branch Line.gk',
+                             )
+
+        self.bk = ExtService(model='ACLine', src='bk', indexer=self.line,
+                             info='Retrieved monitored branch Line.bk',
+                             )
+
+        self.ghk = ExtService(model='ACLine', src='ghk', indexer=self.line,
+                              info='Retrieved monitored branch Line.ghk',
+                              )
+
+        self.bhk = ExtService(model='ACLine', src='bhk', indexer=self.line,
+                              info='Retrieved monitored branch Line.bhk',
+                              )
+
+        self.itap = ExtService(model='ACLine', src='itap', indexer=self.line,
+                               info='Retrieved monitored branch Line.itap',
+                               )
+
+        self.itap2 = ExtService(model='ACLine', src='itap2', indexer=self.line,
+                                info='Retrieved monitored branch Line.itap2',
+                                )
+
+        self.MeasBusSign = CurrentSign(self.busr, self.bus1, self.bus2,
+                                       tex_name='I_{site,sign}',
+                                       info='Sign of monitored branch current outflow at the plant/PCC measurement bus',
+                                       )
+
+        Pij = ('v1 ** 2 * (gh + ghk) * itap2 - '
+               'v1 * v2 * (ghk * cos(a1 - a2 - line_phi) + '
+               'bhk * sin(a1 - a2 - line_phi)) * itap')
+        Qij = ('-v1 ** 2 * (bh + bhk) * itap2 - '
+               'v1 * v2 * (ghk * sin(a1 - a2 - line_phi) - '
+               'bhk * cos(a1 - a2 - line_phi)) * itap')
+        Pji = ('v2 ** 2 * (gk + ghk) - '
+               'v1 * v2 * (ghk * cos(a1 - a2 - line_phi) - '
+               'bhk * sin(a1 - a2 - line_phi)) * itap')
+        Qji = ('-v2 ** 2 * (bk + bhk) + '
+               'v1 * v2 * (ghk * sin(a1 - a2 - line_phi) + '
+               'bhk * cos(a1 - a2 - line_phi)) * itap')
+
+        self.Pline_bus1 = Algeb(tex_name='P_{ij}',
+                                info='Monitored branch active power out of Line.bus1',
+                                v_str=Pij,
+                                e_str=f'{Pij} - Pline_bus1',
+                                )
+
+        self.Qline_bus1 = Algeb(tex_name='Q_{ij}',
+                                info='Monitored branch reactive power out of Line.bus1',
+                                v_str=Qij,
+                                e_str=f'{Qij} - Qline_bus1',
+                                )
+
+        self.Pline_bus2 = Algeb(tex_name='P_{ji}',
+                                info='Monitored branch active power out of Line.bus2',
+                                v_str=Pji,
+                                e_str=f'{Pji} - Pline_bus2',
+                                )
+
+        self.Qline_bus2 = Algeb(tex_name='Q_{ji}',
+                                info='Monitored branch reactive power out of Line.bus2',
+                                v_str=Qji,
+                                e_str=f'{Qji} - Qline_bus2',
+                                )
+
+        # Line-side Pij/Pji and Qij/Qji are positive out of the bus into the
+        # branch. Site injection is power entering the PCC from the plant, so
+        # the selected PCC-side branch outflow is negated.
+        Psite_raw = ('-(0.5 * (1 + MeasBusSign) * Pline_bus1 + '
+                     '0.5 * (1 - MeasBusSign) * Pline_bus2)')
+        Qsite_raw = ('-(0.5 * (1 + MeasBusSign) * Qline_bus1 + '
+                     '0.5 * (1 - MeasBusSign) * Qline_bus2)')
+
+        self.Psite_raw = Algeb(tex_name='P_{site,raw}',
+                               info='Plant/PCC active power injection from monitored branch; positive means plant output',
+                               v_str=Psite_raw,
+                               e_str=f'{Psite_raw} - Psite_raw',
+                               )
+
+        self.Qsite_raw = Algeb(tex_name='Q_{site,raw}',
+                               info='Plant/PCC reactive power injection from monitored branch; positive means plant output',
+                               v_str=Qsite_raw,
+                               e_str=f'{Qsite_raw} - Qsite_raw',
+                               )
+
 
         # --- External Variables from REGFMC1 ---
         self.Vref_GFM = ExtAlgeb(model='RenGen', src='Vref_GFM', indexer=self.reg,
@@ -516,7 +648,7 @@ class REPCGFMC1Model(Model):
         self.Qe = ExtAlgeb(model='RenGen', src='Qe', indexer=self.reg, export=False,
                            info='Reactive power output of REGFMC1',
                            )
-        self.Vref0= ExtService(model='RenGen', src='Vref0', indexer=self.reg, tex_name='V_{ref0}',  # MODIFIED
+        self.Vref0= ExtService(model='RenGen', src='Vref0', indexer=self.reg, tex_name='V_{ref0}',  
                            info='Vref0 of REGFMC1',
                            )
         self.p0 = ExtService(model='RenGen', src='p0', indexer=self.reg, tex_name='P_0',
@@ -527,13 +659,23 @@ class REPCGFMC1Model(Model):
                              info='Initial reactive power of REGFMC1',
                              )
 
-        # Internal reference values from power flow
-        self.Pref_site_0 = ConstService(v_str='p0',
+        self.Ploss_0 = ConstService(v_str='(p0**2 + q0**2) * Rloss',
+                                    tex_name='P_{loss,0}',
+                                    info='Initial active power loss compensation',
+                                    )
+
+        self.Qloss_0 = ConstService(v_str='(p0**2 + q0**2) * Xloss',
+                                    tex_name='Q_{loss,0}',
+                                    info='Initial reactive power loss compensation',
+                                    )
+
+        # Internal reference values from power flow, expressed at the PCC.
+        self.Pref_site_0 = ConstService(v_str='p0 - Ploss_0',
                                         tex_name='P_{ref,site,0}',
                                         info='Initial site active power reference from power flow',
                                         )
 
-        self.Qref_site_0 = ConstService(v_str='q0',
+        self.Qref_site_0 = ConstService(v_str='q0 - Qloss_0',
                                         tex_name='Q_{ref,site,0}',
                                         info='Initial site reactive power reference from power flow',
                                         )
@@ -543,10 +685,39 @@ class REPCGFMC1Model(Model):
                                         info='Initial site frequency reference (nominal)',
                                         )
 
-        self.Vref_site_0 = ConstService(v_str='v',
+        self.Ki_vc_nonzero = ConstService(v_str='Indicator(Ki_vc > 0) + Indicator(Ki_vc < 0)',
+                                          tex_name='z_{Ki,vc}',
+                                          info='Voltage-control integral gain is nonzero',
+                                          )
+
+        self.Qref_site_pos = ConstService(v_str='Indicator(Qref_site_0 > 0)',
+                                          tex_name='z_{Qref>0}',
+                                          info='Initial site reactive power is positive',
+                                          )
+
+        self.Qref_site_neg = ConstService(v_str='Indicator(Qref_site_0 < 0)',
+                                          tex_name='z_{Qref<0}',
+                                          info='Initial site reactive power is negative',
+                                          )
+
+        self.Vref_site_0 = ConstService(v_str='Ki_vc_nonzero * v + (1 - Ki_vc_nonzero) * '
+                                              '((1 - Qref_site_pos - Qref_site_neg) * v + '
+                                              'Qref_site_pos * (v + dbVHI + Qref_site_0 / Kp_vc) + '
+                                              'Qref_site_neg * (v + dbVLI + Qref_site_0 / Kp_vc))',
                                         tex_name='V_{ref,site,0}',
                                         info='Initial site voltage reference from power flow',
                                         )
+
+        self.Vest_0 = ConstService(v_str='sqrt((v0 + Rloss * Pref_site_0 + Xloss * Qref_site_0)**2 + '
+                                         '(Pref_site_0 * Xloss - Qref_site_0 * Rloss)**2)',
+                                   tex_name='V_{est,0}',
+                                   info='Initial estimated inverter terminal voltage from site quantities',
+                                   )
+
+        self.dVerr = ConstService(v_str='Vref0 - Vest_0',
+                                  tex_name=r'\Delta V_{err}',
+                                  info='Initialization offset for GFM voltage reference',
+                                  )
 
         self.Ptarget_0 = NumSelect(self.Ptarget, self.p0,
                                     tex_name='P_{target,0}',
@@ -590,18 +761,15 @@ class REPCGFMC1Model(Model):
                          tex_name='V_{site}',
                          )
 
-        # Site frequency measurement (PLACEHOLDER - simplified to 1.0)
+        # Site frequency measurement 
         self.fsite = Lag(u='f', T=self.Tfrq, K=1,
                          info='Site frequency measurement',
-                         tex_name='f_{site}',               # mistake: u shouldnt be 1.0 ,should be the measured freq
+                         tex_name='f_{site}',              
                          )
 
-        # --- GFM Frequency Reference Generator (Image 3) ---
+        # --- GFM Frequency Reference Generator ---
         # Frequency reference filter (using internal fref_site Algeb)
-
-
-
-        # modified: add logic
+    
         self.Vsite_gate = Limiter(
             self.Vsite_y,
             lower=self.Vfth,
@@ -624,39 +792,39 @@ class REPCGFMC1Model(Model):
         fref_out = 'frefLag_y'
         self.fref_GFM.e_str = f'{fref_out} -1'
 
-        # --- GFM Voltage Reference Generator (Image 3) ---
+        # --- GFM Voltage Reference Generator ---
         # Site voltage measurement (already defined above as Vsite)
 
         # Loss compensation calculation
         # Vdrop = (Rloss + jXloss) * (Ptarget - jQtarget) / Vsite_meas
         # Note: This is a simplified version; full implementation needs complex calculations
         self.Vsite_meas2 = Lag(u='v', T=self.TVmeas, K=1,
-                               info='Voltage measurement for loss compensation',
+                               info='Site voltage measurement for loss compensation',
                                tex_name='V_{site,meas}',
                                )
 
-        # Loss compensation (simplified - real part only for now)
-        # ΔV_loss ≈ (Rloss * Ptarget + Xloss * Qtarget) / Vsite_meas
-        # self.dVloss = VarService(v_str='(Rloss * Ptarget_1 + Xloss * Qtarget_0) / (Vsite_meas2_y + 1e-8)',
-        #                          tex_name=r'\Delta V_{loss}',
-        #                          info='Voltage drop due to losses',
-        #                          )
-
-        self.dVloss = VarService(v_str='( (Vsite_meas2_y+Rloss * Ptarget_1 + Xloss * Qtarget_1)**2 + (Ptarget_1*Xloss-Qtarget_1*Rloss)**2  )**0.5',
-                                 tex_name=r'\Delta V_{loss}',
-                                 info='Voltage drop due to losses',
-                                 )                          # modified
+        self.Vest = Algeb(tex_name='V_{est}',
+                          info='Estimated inverter terminal voltage from site voltage and loss compensation',
+                          v_str='Vest_0',
+                          e_str='sqrt((Vsite_meas2_y + Rloss * Ptarget_1 + Xloss * Qtarget_1)**2 + '
+                                '(Ptarget_1 * Xloss - Qtarget_1 * Rloss)**2) - Vest',
+                          )
 
         # Voltage calculation with loss compensation
         self.Vcalc = Algeb(tex_name='V_{calc}',
                            info='Calculated voltage with loss compensation',
-                           v_str='( (v0+Rloss * Pref_site_0 + Xloss * Qref_site_0)**2 + (Pref_site_0*Xloss-Qref_site_0*Rloss)**2  )**0.5',
-                           e_str='dVloss - Vcalc',
+                           v_str='Vref0',
+                           e_str='Vest + dVerr - Vcalc',
                            )
 
         # Inverter voltage measurement (another filter)
-        self.Vinv_meas = Lag(u='v', T=self.TVlag, K=1,
-                             info='Inverter voltage measurement',
+        self.Vinv_meas0 = Lag(u='vinv', T=self.TVmeas, K=1,
+                              info='Inverter terminal voltage measurement',
+                              tex_name='V_{inv,meas0}',
+                              )
+
+        self.Vinv_meas = Lag(u='Vinv_meas0_y', T=self.TVlag, K=1,
+                             info='Delayed inverter terminal voltage measurement',
                              tex_name='V_{inv,meas}',
                              )
 
@@ -666,8 +834,8 @@ class REPCGFMC1Model(Model):
         # When VFlag=1, use V_GFM_ref (complex calculation); when 0, use initial voltage
         self.VGFM_ref = Algeb(tex_name='V_{GFM,ref}',
                               info='GFM voltage reference before filter',
-                              v_str='( (v0+Rloss * Pref_site_0 + Xloss * Qref_site_0)**2 + (Pref_site_0*Xloss-Qref_site_0*Rloss)**2  )**0.5',
-                              e_str='VrefSW_s1 * Vcalc + VrefSW_s0 * Vinv_meas_y - VGFM_ref',  # modified
+                              v_str='Vref0',
+                              e_str='VrefSW_s1 * Vcalc + VrefSW_s0 * Vinv_meas_y - VGFM_ref',  
                               )
 
         # Apply limits
@@ -677,7 +845,7 @@ class REPCGFMC1Model(Model):
 
         self.VGFM_ref_lim = Algeb(tex_name='V_{GFM,ref,lim}',
                                   info='Limited GFM voltage reference',
-                                  v_str='( (v0+Rloss * Pref_site_0 + Xloss * Qref_site_0)**2 + (Pref_site_0*Xloss-Qref_site_0*Rloss)**2  )**0.5',
+                                  v_str='Vref0',
                                   e_str='VGFM_ref * VrefLim_zi + Vrefmax * VrefLim_zu + Vrefmin * VrefLim_zl - VGFM_ref_lim',
                                   )
 
@@ -689,14 +857,10 @@ class REPCGFMC1Model(Model):
 
         # Output to REGFMC1 voltage reference
         Vref_out = 'VrefGFMLag_y'
-        # self.Vref_GFM.e_str = f'{Vref_out} - Vref_site_0'
         self.Vref_GFM.e_str = f'{Vref_out} - (Vref0)'
-        # self.Vref_GFM.e_str = f'{Vref_out} -Vref_GFM'
 
-        # --- GFL Active Power Path (Image 5) ---
+        # --- GFL Active Power Path ---
         # Frequency deadband
-
-
         self.fsite_err = Algeb(tex_name='f_{site,err}',
                                info='Site frequency error',
                                v_str='0',
@@ -732,8 +896,8 @@ class REPCGFMC1Model(Model):
                                      v_str='0',
                                      e_str='Pfreq_droop * Pfreq_lim_zi + Pfreq_max * Pfreq_lim_zu + Pfreq_min * Pfreq_lim_zl - Pfreq_droop_lim',
                                      )
-        # FFR
         
+        # FFR module
         self.f_rocof = Algeb(v_str='rocof',
                                e_str='rocof - f_rocof',
                                tex_name='f_{rocof,freq}',
@@ -744,46 +908,6 @@ class REPCGFMC1Model(Model):
         self.FFRCSW = Switcher(u=self.FFRFlag, options=(0, 1), tex_name='FFR_{SW}')
 
 
-        # self.P_FFR = Algeb(tex_name='P_{ffr}',
-        #                              info='Limited frequency droop output',
-        #                              v_str='0',
-        #                              e_str='(Indicator(rocof > 0.002) + Indicator(rocof < -0.002))'
-        #                          '*(fsite_err * k_FFR) - P_FFR',
-        #                              )
-        
-
-        # FFR output is NOT a simple algebraic function of ROCOF or frequency error.
-        # It is a latched hybrid logic:
-        #   trigger -> fixed output -> hold TFFR -> ramp back with DFFR -> re-arm
-        
- 
-        # self.z_ffr_low = VarService(v_str='Indicator(fsite_meas < fFFR_low)')
-        # self.z_ffr_high = VarService(v_str='Indicator(fsite_meas > fFFR_high)')
-        # self.z_ffr_thr = VarService(v_str='Indicator(z_ffr_low + z_ffr_high > 0)')
-
-        # # busy / armed
-        # self.z_ffr_busy = VarService(v_str='Indicator(Abs(P_FFR) > 1e-6)')
-        # self.z_ffr_armed = VarService(v_str='FFRCSW_s1 * (1 - z_ffr_busy)')
-
-        # # only armed condition can fire  0 or 1
-        # self.z_ffr_pick = VarService(v_str='z_ffr_armed * z_ffr_thr')   
-
-        # # convert conditionz_ffr_armed * z_ffr_thr')
-
-        # # convert condition into event  0 or 1
-        # self.ffr_evt = EventFlag(self.z_ffr_pick)
-
-        # # hold window for TFFR seconds  only trig from 0-->1 
-        # self.ffr_hold = ExtendedEvent(self.ffr_evt, t_ext=self.TFFR, trig="rise")
-
-        # # choose fixed step value  determine the P_FFR
-        # self.Pffr_pick = VarService(
-        #     v_str='z_ffr_low * PFFR_low + z_ffr_high * PFFR_high'
-        # )
-
-        # # hold the chosen value
-        # self.Pffr_hold = VarHold(self.Pffr_pick, hold=self.ffr_hold)
-
         # algebraic output placeholder, final value still updated in g_numeric()
         self.P_FFR = Algeb(
             tex_name='P_{FFR}',
@@ -792,57 +916,44 @@ class REPCGFMC1Model(Model):
             e_str='0.0 - P_FFR',
             diag_eps=True
         )
-                
-        
-        
-        
 
-        # p target
+        self.Paux = Algeb(tex_name='P_{aux}',
+                          info='Auxiliary active power reference',
+                          v_str='0.0',
+                          e_str='0.0 - Paux',
+                          diag_eps=True,
+                          )
+
+        # P target
         self.Ptarget_1_initial = Algeb(tex_name='P_{target1_initial}',  # modified
                                        info='active power P target_initial',
-                                       v_str='Pe',
-                                       e_str='Pfreq_droop_lim+ Pref_site+ FFRCSW_s1*P_FFR - Ptarget_1_initial',
+                                       v_str='Pref_site_0',
+                                       e_str='Pfreq_droop_lim + Pref_site + FFRCSW_s1 * P_FFR + Paux - Ptarget_1_initial',
                                        )
         self.Ptarget_1_lim = Limiter(self.Ptarget_1_initial, lower=self.Pref_min, upper=self.Pref_max,  # modified
                                      tex_name='P_{target1_limit}',
                                      )
         self.Ptarget_1 = Algeb(tex_name='P_{target1}',  # modified
                                info='active power P target',
-                               v_str='Pe',
+                               v_str='Pref_site_0',
                                e_str='Ptarget_1_initial * Ptarget_1_lim_zi + Pref_max * Ptarget_1_lim_zu + Pref_min * Ptarget_1_lim_zl - Ptarget_1',
                                )
-        # Site power measurement
-        self.Psite = Lag(u='Pe', T=self.Tfrq, K=1,
-                         info='Site power measurement',
+        # Site power measurement from the monitored branch at the PCC side.
+        self.Psite = Lag(u='Psite_raw', T=self.Tfrq, K=1,
+                         info='Site active power measurement from monitored branch',
                          tex_name='P_{site}',
                          )
 
-
-
         # Site power reference limits
-        # self.Pref_site_lim = Limiter(u=self.Pref_site, lower=self.Pref_min, upper=self.Pref_max,
-        #                              tex_name='P_{ref,site,lim}',
-        #                              )
-        #
-        # self.Pref_site_lim_val = Algeb(tex_name='P_{ref,site,lim}',
-        #                                info='Limited site power reference',
-        #                                v_str='Pref_site_0',
-        #                                e_str='Pref_site * Pref_site_lim_zi + Pref_max * Pref_site_lim_zu + Pref_min * Pref_site_lim_zl - Pref_site_lim_val',
-        #                                )
-
+        
         # Active power reference with frequency droop
         # Ptarget is a parameter, so Pref = Ptarget
-
-        # self.Ptarget_val = ConstService(v_str='Ptarget',
-        #                                 tex_name='P_{target,val}',
-        #                                 )
-
         # Power error calculation
 
 
         self.Perr = Algeb(tex_name='P_{err}',
                           info='Site power error',
-                          v_str='0',
+                          v_str='Ptarget_1 - Psite_y',
                           e_str='Ptarget_1 - Psite_y  - Perr',  # mistake
                           )
 
@@ -853,43 +964,37 @@ class REPCGFMC1Model(Model):
 
         self.Perr_lim_val = Algeb(tex_name='P_{err,lim}',
                                   info='Limited power error',
-                                  v_str='0',
+                                  v_str='Perr * Perr_lim_zi + Perr_max * Perr_lim_zu + Perr_min * Perr_lim_zl',
                                   e_str='Perr * Perr_lim_zi + Perr_max * Perr_lim_zu + Perr_min * Perr_lim_zl - Perr_lim_val',
                                   )
 
-        # Integrator state for PI controller        [mistake]:theres no pi actually
+        # Integrator state for PI controller       
         self.xpwr = State(tex_name='x_{pwr}',
                           info='Integrator state for active power PI',
-                          v_str='0',
+                          v_str='p0 - (Pref_site_0**2 + Qref_site_0**2) * Rloss - Pref_site_0',
                           e_str='Kip_Perr * Perr_lim_val',
                           )
 
 
-        # Ploss   modified
-        self.Ploss = Algeb(tex_name='P_{loss,GFL}',  # modified
+        # Ploss   
+        self.Ploss = Algeb(tex_name='P_{loss,GFL}',  
                                 info='active power loss value',
-                                v_str='(Pref_site_0**2+Qref_site_0**2)*Rloss',
+                                v_str='(Pref_site_0**2 + Qref_site_0**2) * Rloss',
                                 e_str='(Ptarget_1**2+ Qtarget_1**2)*Rloss - Ploss',
                            )
 
 
         # Active power command with lag filter
 
-        self.Pcmd_sum = Algeb(tex_name='P_{cmd,sum}',    # modified
+        self.Pcmd_sum = Algeb(tex_name='P_{cmd,sum}',    
                               info='Sum for active power command before lag',
-                              v_str='(Pref_site_0**2+Qref_site_0**2)*Rloss + Pref_site_0  ',
+                              v_str='p0',
                               e_str='Ploss + xpwr + Ptarget_1 - Pcmd_sum')
 
         self.Pcmd_GFL_lag = Lag(u='Pcmd_sum',
                                 T=self.Tplag, K=1,
                                 info='Active power command lag filter',
                                 tex_name='P_{cmd,GFL,lag}')
-
-        # self.Pcmd_GFL_lag = Lag(u=' Ploss + xpwr  +  Ptarget_1',   # modified
-        #                         T=self.Tplag, K=1,
-        #                         info='Active power command lag filter',
-        #                         tex_name='P_{cmd,GFL,lag}',
-        #                         )
 
         # Apply Pcmd limits
         self.Pcmd_lim = Limiter(self.Pcmd_GFL_lag_y, lower=self.Pcmd_GFL_min, upper=self.Pcmd_GFL_max,
@@ -899,13 +1004,12 @@ class REPCGFMC1Model(Model):
         # Output to REGFMC1 active power command
         Pcmd_out = 'Pcmd_GFL_lag_y * Pcmd_lim_zi +Pcmd_GFL_max * Pcmd_lim_zu + Pcmd_GFL_min * Pcmd_lim_zl'
         self.Pcmd_GFL.e_str = f'{Pcmd_out} - (p0)'
-        # self.Pcmd_GFL.e_str = f'{Pcmd_out} - Pcmd_GFL'
 
         # --- GFL Reactive Power Path  ---
         # Voltage control path (using internal Vref_site Algeb)
         self.Verr_site = Algeb(tex_name='V_{err,site}',
                                info='Site voltage error',
-                               v_str='0',
+                               v_str='Vref_site_0 - v',
                                e_str='Vref_site - Vsite_y - Verr_site',
                                )
 
@@ -923,7 +1027,7 @@ class REPCGFMC1Model(Model):
 
         self.Verr_lim_val = Algeb(tex_name='V_{err,lim}',
                                   info='Limited voltage error',
-                                  v_str='0',
+                                  v_str='Vdbd_y * Verr_lim_zi + Verr_max * Verr_lim_zu + Verr_min * Verr_lim_zl',
                                   e_str='Vdbd_y * Verr_lim_zi + Verr_max * Verr_lim_zu + Verr_min * Verr_lim_zl - Verr_lim_val',
                                   )
 
@@ -931,7 +1035,7 @@ class REPCGFMC1Model(Model):
         self.Qvc_int = IntegratorAntiWindup(u=self.Verr_lim_val,
                                             T=1.0,
                                             K=self.Ki_vc,
-                                            y0=0,
+                                            y0='Ki_vc_nonzero * Qref_site_0',
                                             lower=self.Qvc_min,
                                             upper=self.Qvc_max,
                                             name='Qvc_int',
@@ -942,7 +1046,7 @@ class REPCGFMC1Model(Model):
         # Voltage control PI output (proportional + integral)
         self.Qvc = Algeb(tex_name='Q_{vc}',
                          info='Voltage control PI output',
-                         v_str='0',
+                         v_str='Qref_site_0',
                          e_str='Kp_vc * Verr_lim_val + Qvc_int_y - Qvc',
                          )
 
@@ -953,7 +1057,7 @@ class REPCGFMC1Model(Model):
 
         self.Qvc_lim_val = Algeb(tex_name='Q_{vc,lim}',
                                  info='Limited voltage control output',
-                                 v_str='0',
+                                 v_str='Qvc * Qvc_lim_zi + Qvc_max * Qvc_lim_zu + Qvc_min * Qvc_lim_zl',
                                  e_str='Qvc * Qvc_lim_zi + Qvc_max * Qvc_lim_zu + Qvc_min * Qvc_lim_zl - Qvc_lim_val',
                                  )
 
@@ -963,62 +1067,47 @@ class REPCGFMC1Model(Model):
                            tex_name='Q_{vc,lag}',
                            )
 
-        # Reactive power reference path (simplified)
-        # self.Qref_site_lim = Limiter(self.Qref_site, lower=self.Qref_min, upper=self.Qref_max,
-        #                              tex_name='Q_{ref,site,lim}',
-        #                              )
-
-        # self.Qref_site_lim_val = Algeb(tex_name='Q_{ref,site,lim}',
-        #                                info='Limited reactive power reference',
-        #                                v_str='Qref_site_0',
-        #                                e_str='Qref_site * Qref_site_lim_zi + Qref_max * Qref_site_lim_zu + Qref_min * Qref_site_lim_zl - Qref_site_lim_val',
-        #                                )
-
         # Reactive power control with lag
-        self.Qsite_filt = Lag(u='Qe', T=self.Tqlag, K=1,
-                              info='Site reactive power measurement',
-                              tex_name='Q_{site,filt}',
-                              )
+        self.Qsite = Lag(u='Qsite_raw', T=self.Tqlag, K=1,
+                         info='Site reactive power measurement from monitored branch',
+                         tex_name='Q_{site}',
+                         )
 
         # VFlag selector
         self.VFlagSW = Switcher(u=self.VFlag, options=(0, 1), tex_name='V_{FlagSW}')
 
-        # When VFlag=1, use Qvc_lag (voltage control); when 0, use Q reference
-        # self.Qerr = Algeb(tex_name='Q_{err}',
-        #                   info='Reactive power error',
-        #                   v_str='0',
-        #                   e_str='Qref_site_lim_val - Qsite_filt_y + VFlagSW_s1 * Kiq * Qvc_lag_y - Qerr',
-        #                   )
+        self.Qaux = Algeb(tex_name='Q_{aux}',
+                          info='Auxiliary reactive power reference',
+                          v_str='0.0',
+                          e_str='0.0 - Qaux',
+                          diag_eps=True,
+                          )
 
-        self.Qtarget_1_initial = Algeb(tex_name='Q_{target1_initial}',          # modified
+
+        self.Qtarget_1_initial = Algeb(tex_name='Q_{target1_initial}',          
                                info='Reactive power Q target_initial',
                                v_str='Qref_site_0 ',
-                               e_str='VFlagSW_s1*(Qref_site+Qvc_lag_y) +VFlagSW_s0*(Qref_site)-Qtarget_1_initial ',
+                               e_str='VFlagSW_s1 * Qvc_lag_y + VFlagSW_s0 * Qref_site + Qaux - Qtarget_1_initial ',
                                )
-        self.Qtarget_1_lim = Limiter(self.Qtarget_1_initial, lower=self.Qref_min, upper=self.Qref_max, # modified
+        self.Qtarget_1_lim = Limiter(self.Qtarget_1_initial, lower=self.Qref_min, upper=self.Qref_max, 
                                 tex_name='Q_{target1_limit}',
                                 )
-        self.Qtarget_1= Algeb(tex_name='Q_{target1}', # modified
+        self.Qtarget_1= Algeb(tex_name='Q_{target1}', 
                                        info='Reactive power Q target',
                                        v_str='Qref_site_0',
                                        e_str='Qtarget_1_lim_zi * Qtarget_1_initial + Qref_max * Qtarget_1_lim_zu + Qref_min * Qtarget_1_lim_zl - Qtarget_1',
                                        )
-        self.Qerr0 = Algeb(tex_name='Q_{err0}',  # modified
+        self.Qerr0 = Algeb(tex_name='Q_{err0}',
                           info='Reactive power error_0',
-                          v_str='0',
-                          e_str='Qtarget_1 - Qsite_filt_y  - Qerr0',
+                          v_str='Qtarget_1 - Qsite_y',
+                          e_str='Qtarget_1 - Qsite_y  - Qerr0',
                           )
-        # self.Qerr_int= State(tex_name='Q_{err_integral}',           # modified
-        #                   info='Integrator state for Qerror',
-        #                   v_str='0',
-        #                   e_str='Kiq *Qerr0',
-        #                   )
 
         # Integral path with anti-windup
         self.Qerr_int = IntegratorAntiWindup(u=self.Qerr0,
                                             T=1.0,
                                             K=self.Kiq,
-                                            y0=0,
+                                            y0='q0 - (Pref_site_0**2 + Qref_site_0**2) * Xloss - Qref_site_0',
                                             lower=self.Qerr_min,
                                             upper=self.Qerr_max,
                                             name='Qerr_int',
@@ -1029,36 +1118,32 @@ class REPCGFMC1Model(Model):
         # Voltage control PI output (proportional + integral)
         self.Qerr_pi = Algeb(tex_name='Q_{vc}',
                          info='Qerror PI output',
-                         v_str='0',
+                         v_str='q0 - (Pref_site_0**2 + Qref_site_0**2) * Xloss - Qref_site_0',
                          e_str='Qerr_int_y - Qerr_pi',
                          )
 
-
-
-
-
-        self.Qerr_lim = Limiter(self.Qerr_pi, lower=self.Qerr_min, upper=self.Qerr_max,  # modified
+        self.Qerr_lim = Limiter(self.Qerr_pi, lower=self.Qerr_min, upper=self.Qerr_max,  
                                tex_name='Q_{err,lim}',
                                )
 
-        self.Qerr_lim_val = Algeb(tex_name='Q_{vc,lim}',     # modified
+        self.Qerr_lim_val = Algeb(tex_name='Q_{vc,lim}',     
                                  info='Limited voltage control output',
-                                 v_str='0',
+                                 v_str='q0 - (Pref_site_0**2 + Qref_site_0**2) * Xloss - Qref_site_0',
                                  e_str='Qerr_pi * Qerr_lim_zi + Qerr_max * Qerr_lim_zu + Qerr_min * Qerr_lim_zl - Qerr_lim_val',
                                  )
-        self.Qloss = Algeb(tex_name='Q_{loss,GFL}',  # modified
+        self.Qloss = Algeb(tex_name='Q_{loss,GFL}',  
                                 info='Reactive power loss value',
-                                v_str='(Pref_site_0**2+Qref_site_0**2)*Xloss',
+                                v_str='(Pref_site_0**2 + Qref_site_0**2) * Xloss',
                                 e_str='(Ptarget_1**2+ Qtarget_1**2)*Xloss - Qloss',
                                 )
-        self.Qcmd_GFL_0 = Algeb(tex_name='Q_{cmd,GFL,0}',              # modified
+        self.Qcmd_GFL_0 = Algeb(tex_name='Q_{cmd,GFL,0}',              
                           info='Reactive power command value(no lag)',
-                          v_str='(Pref_site_0**2+Qref_site_0**2)*Xloss+Qref_site_0',
+                          v_str='q0',
                           e_str='Qloss + Qerr_lim_val + Qtarget_1 - Qcmd_GFL_0',
                           )
 
 
-        self.Qcmd_GFLLag = Lag(u='Qcmd_GFL_0', T=self.Tqlag , K=1,  # modified
+        self.Qcmd_GFLLag = Lag(u='Qcmd_GFL_0', T=self.Tqlag , K=1,  
                            info='Reactive power command value',
                            tex_name='Q_{cmd,GFL}',
                            )
@@ -1068,10 +1153,9 @@ class REPCGFMC1Model(Model):
                                 )
 
         Qcmd_out = 'Qcmd_GFLLag_y * Qcmd_lim_zi + Qcmd_GFL_max * Qcmd_lim_zu + Qcmd_GFL_min * Qcmd_lim_zl'
+        
       # Output to REGFMC1 reactive power command
-      #   Qcmd_out = 'Qcmd_GFLLag_y'  # modified
         self.Qcmd_GFL.e_str = f'{Qcmd_out} - (q0)'
-      #   self.Qcmd_GFL.e_str = f'{Qcmd_out} - Qcmd_GFL'
       
       
     # # FFR update function 
@@ -1167,9 +1251,9 @@ class REPCGFMC1(REPCGFMC1Data, REPCGFMC1Model):
     4. GFL reactive power and voltage control
 
     Notes:
-    - Site measurements are taken from the converter bus or optional remote bus
-    - Frequency measurement is simplified (uses constant 1.0 pu)
-    - Loss compensation uses simplified real-part calculation
+    - Voltage and frequency measurements are taken from ``busr``.
+    - Site P/Q measurements are taken from the monitored branch at ``busr``.
+    - ``Rloss`` and ``Xloss`` are user-specified loss-compensation values.
     """
 
     def __init__(self, system, config):
