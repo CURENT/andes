@@ -190,7 +190,7 @@ class REGFMC1Data(ModelData):
                             info='Time constant for voltage filter in GFL',
                             unit='s',
                             )
-        self.kqv = NumParam(default=2,        # modified
+        self.kqv = NumParam(default=2,        
                             tex_name='k_{qv}',
                             info='Voltage error gain in GFL',
                             current=True,
@@ -360,7 +360,7 @@ class REGFMC1Model(Model):
                            )
 
 
-        # Reactive power measurement path (per diagram: Iq_GFM filtered through 1/(Tif*s+1))
+        # Reactive power measurement path 
         self.Iq_VSMLag = Lag(u='Iq_VSM', T=self.TIf, K=1, info='Filter for I_q GFM', name='Iq_VSMLag')
 
         
@@ -553,13 +553,13 @@ class REGFMC1Model(Model):
                               K=1,
                               info='GFL voltage filter',
                               name='VinvGFLLag',
-                              )   # same as VinvLag_y
+                              )   
 
         # Voltage error for GFL
         self.Verr_GFL = Algeb(tex_name='V_{err,GFL}',
                               info='Voltage error for GFL',
                               v_str='Vref0 - v',
-                              e_str='Vref0 - VinvGFLLag_y - Verr_GFL',   # Vref0 or VrefLag_y? shouldbe Vref0!
+                              e_str='Vref0 - VinvGFLLag_y - Verr_GFL',   
                               )
 
         # Offset piecewise-linear deadband for GFL voltage error:
@@ -661,14 +661,14 @@ class REGFMC1Model(Model):
                                   )
 
 
-        # --- Current Calculation (PLACEHOLDER - simplified) ---
-        # GFM branch current magnitude (simplified)
+        # --- Current Calculation ---
+        # GFM branch current magnitude 
         self.IVSM_mag = VarService(tex_name='I_{VSM,mag}',
                                    info='GFM branch current magnitude',
                                    v_str='sqrt(Id_VSM_lim**2 + Iq_VSM_lim**2)',
                                    )
 
-        # GFM branch current angle (simplified)
+        # GFM branch current angle 
         self.IVSM_ang = VarService(tex_name=r'\phi_{VSM}',
                                     info='GFM branch current angle',
                                     v_str='a - atan2(Iq_VSM_lim, Id_VSM_lim + 1e-8)',
@@ -677,7 +677,7 @@ class REGFMC1Model(Model):
         
         # GFL branch current magnitude
         # ---------- dq -> xy(αβ) rotation for GFL current ----------
-        self.deltaV = VarService(v_str='a', tex_name=r'\delta_V', info='dq to xy rotation angle') # relative angle?
+        self.deltaV = VarService(v_str='a', tex_name=r'\delta_V', info='dq to xy rotation angle') 
 
         self.Ialpha_GFL = Algeb(
             name='Ialpha_GFL', v_str='Id0_GFL* cos(a) + ( kqv * (Vref0 - v) + Iq0_GFL )* sin(a)  ',
@@ -691,7 +691,7 @@ class REGFMC1Model(Model):
         )
         self.phi_gfl = Algeb(
             name='phi_gfl', v_str='atan2(Id0_GFL * sin(a) - (kqv * (Vref0 - v) + Iq0_GFL) * cos(a), Id0_GFL * cos(a) + (kqv * (Vref0 - v) + Iq0_GFL) * sin(a))',
-            e_str='atan2(Ibeta_GFL, Ialpha_GFL) - phi_gfl',                         # might have problem! 
+            e_str='atan2(Ibeta_GFL, Ialpha_GFL) - phi_gfl',                         
             tex_name=r'\phi_{GFL}', info='GFL current angle in xy'
         )
 
@@ -701,11 +701,11 @@ class REGFMC1Model(Model):
                               e_str='sqrt(Ip_GFL_lim**2 + Iq_GFL_lim**2) - IGFL_mag',
                               )
 
-        # Total current magnitude (PLACEHOLDER - vector sum needed)
+        # Total current magnitude
         self.Itotal = Algeb(tex_name='I_{total}',
                             info='Total current magnitude (PLACEHOLDER)',
                             v_str='sqrt(Id0_GFL**2 + (kqv * (Vref0 - v) + Iq0_GFL)**2)',
-                            e_str='sqrt((Id_VSM + Ipcmd_sat_val)**2 + (Iq_VSM + Iqcmd_sat_val)**2 ) - Itotal',  # Simplified, should be vector sum
+                            e_str='sqrt((Id_VSM + Ipcmd_sat_val)**2 + (Iq_VSM + Iqcmd_sat_val)**2 ) - Itotal',  
                             )
 
         self.k_scale = VarService(
@@ -868,7 +868,7 @@ class REGFMC1Model(Model):
 
 class REGFMC1(REGFMC1Data, REGFMC1Model):
     """
-    Hybrid Grid-Forming Converter Model (REGFMC1).
+    Hybrid GFL/GFM Converter Model (REGFMC1).
 
     This model represents a parallel combination of:
     - Grid-forming (GFM) voltage source with series impedance and VSM control

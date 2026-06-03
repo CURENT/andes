@@ -236,7 +236,7 @@ class REPCGFMC1Data(ModelData):
                                  power=True,
                                  )
 
-        self.Kip = NumParam(default=0.1,   #0
+        self.Kip = NumParam(default=0.1,   
                             tex_name='K_{ip}',
                             info='Proportional gain for active power PI controller',
                             )
@@ -323,13 +323,13 @@ class REPCGFMC1Data(ModelData):
                               unit='p.u.',
                               )
 
-        self.Kp_vc = NumParam(default=2,  # 40
+        self.Kp_vc = NumParam(default=2,  
                               tex_name='K_{p,vc}',
                               info='Voltage control proportional gain',
                               power=True,
                               )
 
-        self.Ki_vc = NumParam(default=6,  # 2
+        self.Ki_vc = NumParam(default=6, 
                               tex_name='K_{i,vc}',
                               info='Voltage control integral gain',
                               power=True,
@@ -598,9 +598,6 @@ class REPCGFMC1Model(Model):
                                 e_str=f'{Qji} - Qline_bus2',
                                 )
 
-        # Line-side Pij/Pji and Qij/Qji are positive out of the bus into the
-        # branch. Site injection is power entering the PCC from the plant, so
-        # the selected PCC-side branch outflow is negated.
         Psite_raw = ('-(0.5 * (1 + MeasBusSign) * Pline_bus1 + '
                      '0.5 * (1 - MeasBusSign) * Pline_bus2)')
         Qsite_raw = ('-(0.5 * (1 + MeasBusSign) * Qline_bus1 + '
@@ -949,8 +946,6 @@ class REPCGFMC1Model(Model):
         # Active power reference with frequency droop
         # Ptarget is a parameter, so Pref = Ptarget
         # Power error calculation
-
-
         self.Perr = Algeb(tex_name='P_{err}',
                           info='Site power error',
                           v_str='Ptarget_1 - Psite_y',
@@ -1006,7 +1001,7 @@ class REPCGFMC1Model(Model):
         self.Pcmd_GFL.e_str = f'{Pcmd_out} - (p0)'
 
         # --- GFL Reactive Power Path  ---
-        # Voltage control path (using internal Vref_site Algeb)
+        # Voltage control path 
         self.Verr_site = Algeb(tex_name='V_{err,site}',
                                info='Site voltage error',
                                v_str='Vref_site_0 - v',
@@ -1043,7 +1038,7 @@ class REPCGFMC1Model(Model):
                                             info='Voltage control integrator with anti-windup',
                                             )
 
-        # Voltage control PI output (proportional + integral)
+        # Voltage control PI output 
         self.Qvc = Algeb(tex_name='Q_{vc}',
                          info='Voltage control PI output',
                          v_str='Qref_site_0',
@@ -1115,7 +1110,7 @@ class REPCGFMC1Model(Model):
                                             info='Integrator state for Qerror',
                                             )
 
-        # Voltage control PI output (proportional + integral)
+        # Voltage control PI output 
         self.Qerr_pi = Algeb(tex_name='Q_{vc}',
                          info='Qerror PI output',
                          v_str='q0 - (Pref_site_0**2 + Qref_site_0**2) * Xloss - Qref_site_0',
@@ -1238,7 +1233,7 @@ class REPCGFMC1Model(Model):
 
 class REPCGFMC1(REPCGFMC1Data, REPCGFMC1Model):
     """
-    REPCGFMC1: Plant controller for REGFMC1 (hybrid grid-forming converter).
+    REPCGFMC1: Plant controller for REGFMC1 (hybrid GFL/GFM converter).
 
     This model provides reference signals to REGFMC1:
     - GFM Branch: Voltage reference (Vref_GFM) and frequency reference (fref_GFM)
