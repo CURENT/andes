@@ -1188,7 +1188,7 @@ class RenPlant(GroupBase):
 
     def __init__(self):
         super().__init__()
-        self.common_params.extend(('ree',))
+        # self.common_params.extend(('ree',))
 
 
 class RenGovernor(GroupBase):
